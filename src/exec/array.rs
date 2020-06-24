@@ -1,5 +1,5 @@
+use crate::gc::Trace;
 use crate::Type;
-use gc::Trace;
 
 #[derive(Debug)]
 pub struct Array {

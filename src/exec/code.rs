@@ -20,6 +20,14 @@ impl CodeBuilder {
         self
     }
 
+    pub fn emit_iconst(self, i: i64) -> Self {
+        self.emit_op(Op::iconst).emit_const(i)
+    }
+
+    pub fn emit_uconst(self, u: u64) -> Self {
+        self.emit_op(Op::uconst).emit_const(u)
+    }
+
     /// writes a 8 byte constant into the code
     pub fn emit_const(mut self, c: impl As8Bytes) -> Self {
         self.code.extend_from_slice(&c.as_bytes());
@@ -27,16 +35,13 @@ impl CodeBuilder {
     }
 
     pub fn emit_array(self, ty: Type, size: u64) -> Self {
-        self.emit_op(Op::uconst)
-            .emit_const(size)
+        self.emit_uconst(size)
             .emit_op(Op::newarr)
             .emit_byte(ty as u8)
     }
 
     pub fn emit_iaload(self, index: isize) -> Self {
-        self.emit_op(Op::iconst)
-            .emit_const(index)
-            .emit_op(Op::iaload)
+        self.emit_iconst(index as i64).emit_op(Op::iaload)
     }
 
     pub fn emit_loadl(self, index: u64) -> Self {
@@ -44,10 +49,8 @@ impl CodeBuilder {
     }
 
     pub fn emit_iastore(self, index: isize, value: i64) -> Self {
-        self.emit_op(Op::iconst)
-            .emit_const(index)
-            .emit_op(Op::iconst)
-            .emit_const(value)
+        self.emit_iconst(index as i64)
+            .emit_iconst(value)
             .emit_op(Op::iastore)
     }
 

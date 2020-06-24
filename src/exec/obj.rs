@@ -1,5 +1,5 @@
 use super::Array;
-use gc::{GCStateMap, Trace};
+use crate::gc::{GCStateMap, Trace};
 
 #[derive(Debug)]
 pub enum Obj {

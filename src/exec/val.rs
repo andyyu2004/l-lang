@@ -1,6 +1,6 @@
 use super::Obj;
 use crate::from_inner;
-use gc::Gc;
+use crate::gc::{GCStateMap, Gc, Trace};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Val {
@@ -27,6 +27,15 @@ impl Val {
         match *self {
             Self::Obj(obj) => obj,
             _ => panic!("expected primitive value found `{:?}`", self),
+        }
+    }
+}
+
+impl Trace for Val {
+    fn mark(&self, map: &mut GCStateMap) {
+        match self {
+            Self::Obj(ptr) => ptr.mark(map),
+            Self::Prim(_) | Self::Unit => {}
         }
     }
 }

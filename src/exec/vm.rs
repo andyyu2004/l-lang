@@ -1,48 +1,97 @@
 use super::*;
 use crate::error::*;
-use gc::{Gc, GC};
+use crate::gc::{GCStateMap, Gc, Trace, GC};
 use std::mem;
 
 const FRAMES_MAX: usize = 1;
 const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
 
-pub struct VM {
-    /// frame pointer to the index of the current frame
-    /// note this is different to the stack pointer (in frame) which points to the top of the stack
-    fp: usize,
-    frames: [Frame; FRAMES_MAX],
-    stack: [Val; STACK_MAX],
+#[derive(Default, Debug)]
+pub struct Heap {
     gc: GC,
 }
 
-impl VM {
-    pub fn new(main: Function) -> Self {
+impl Heap {
+    pub fn alloc_and_gc<T>(&mut self, t: T, root: impl Trace) -> Gc<T>
+    where
+        T: Trace + 'static,
+    {
+        self.gc.mark_sweep(root);
+        self.gc.alloc(t)
+    }
+}
+
+/// contains the fields that need to be gced
+pub struct Ctx {
+    stack: [Val; STACK_MAX],
+    frames: [Frame; FRAMES_MAX],
+}
+
+impl Trace for Ctx {
+    fn mark(&self, map: &mut GCStateMap) {
+        for val in self.stack.iter() {
+            val.mark(map)
+        }
+    }
+}
+impl Ctx {
+    fn new(main: Function) -> Self {
         // safety: we will never access the unintialized memory before explicitly setting the frame
         const N: usize = FRAMES_MAX * mem::size_of::<Frame>() / mem::size_of::<u32>();
         let mut frames: [Frame; FRAMES_MAX] = unsafe { mem::transmute([0u32; N]) };
         frames[0] = Frame::new(main);
 
         Self {
-            fp: 0,
-            frames,
             stack: [Val::default(); STACK_MAX],
-            gc: GC::default(),
+            frames,
+        }
+    }
+}
+
+/// the virtual machine
+/// note the nested fields are to allow certain simultaneous mutable borrows of its fields
+pub struct VM {
+    /// frame pointer to the index of the current frame
+    /// note this is different to the stack pointer (in frame) which points to the top of the stack
+    fp: usize,
+    ctx: Ctx,
+    heap: Heap,
+}
+
+impl VM {
+    pub fn new(main: Function) -> Self {
+        Self {
+            fp: 0,
+            ctx: Ctx::new(main),
+            heap: Heap::default(),
         }
     }
 
     pub fn run(&mut self) -> VMResult<Val> {
-        let frame = &mut self.frames[self.fp];
+        let frame = &mut self.ctx.frames[self.fp] as *mut Frame;
+        macro_rules! frame {
+            () => {
+                unsafe { &*frame }
+            };
+        }
+
+        macro_rules! frame_mut {
+            () => {
+                unsafe { &mut *frame }
+            };
+        }
+
         macro_rules! push {
             ($value:expr) => {{
-                self.stack[self.fp + frame.sp] = $value.into();
-                frame.sp += 1;
+                self.ctx.stack[self.fp + frame!().sp] = $value.into();
+                frame_mut!().sp += 1;
             }};
         }
 
         macro_rules! pop {
             () => {{
-                frame.sp -= 1;
-                self.stack[self.fp + frame.sp]
+                frame_mut!().sp -= 1;
+                self.ctx.stack[self.fp + frame!().sp]
             }};
         }
 
@@ -75,9 +124,10 @@ impl VM {
         }
 
         Ok(loop {
-            match frame.read_opcode()? {
+            // println!("{:?}", &self.ctx.stack[..frame!().sp]);
+            match frame_mut!().read_opcode()? {
                 Op::nop => {}
-                Op::iconst | Op::uconst | Op::dconst => push!(frame.read_u64()),
+                Op::iconst | Op::uconst | Op::dconst => push!(frame_mut!().read_u64()),
                 Op::iadd => arith!(+, i64),
                 Op::uadd => arith!(+, u64),
                 Op::dadd => farith!(+),
@@ -90,7 +140,7 @@ impl VM {
                 Op::idiv => arith!(/, i64),
                 Op::udiv => arith!(/, u64),
                 Op::ddiv => farith!(/),
-                Op::pop => frame.sp -= 1,
+                Op::pop => frame_mut!().sp -= 1,
                 // how to differentiate return types?
                 Op::ret => break Val::Unit,
                 Op::iret | Op::uret | Op::dret => break pop!(),
@@ -102,13 +152,13 @@ impl VM {
                 Op::rloadl => {}
                 Op::rstorel => {}
                 Op::istorel | Op::ustorel | Op::dstorel => {
-                    let val = self.stack[self.fp + frame.sp - 1];
-                    let index = frame.read_byte();
-                    self.stack[index as usize] = val;
+                    let val = self.ctx.stack[self.fp + frame!().sp - 1];
+                    let index = frame_mut!().read_byte();
+                    self.ctx.stack[index as usize] = val;
                 }
                 Op::iloadl | Op::uloadl | Op::dloadl => {
-                    let index = frame.read_byte();
-                    push!(self.stack[index as usize])
+                    let index = frame_mut!().read_byte();
+                    push!(self.ctx.stack[index as usize])
                 }
                 Op::iaload | Op::uaload | Op::daload => {
                     let index = pop!().as_prim() as isize;
@@ -117,9 +167,9 @@ impl VM {
                 }
                 Op::newarr => {
                     let len = pop!().as_prim() as usize;
-                    let ty = frame.read_type()?;
+                    let ty = frame_mut!().read_type()?;
                     let obj = Obj::Array(Array::new(len, ty));
-                    push!(self.gc.alloc(obj));
+                    push!(self.heap.alloc_and_gc(obj, &self.ctx));
                 }
             }
         })
@@ -183,6 +233,65 @@ mod test {
         let mut vm = VM::new(Function::new(code));
         let ret = vm.run()?;
         assert_eq!(ret, Val::Prim(3));
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn gc_release_unused_array() -> VMResult<()> {
+        let code = CodeBuilder::default()
+            .emit_array(Type::U, 4)
+            .emit_iastore(0, 8)
+            // when the second array is allocated the first should be freed as there are no
+            // references to it
+            .emit_array(Type::U, 8)
+            .emit_op(Op::ret)
+            .build();
+        let mut vm = VM::new(Function::new(code));
+        vm.run()?;
+        // assert that the first thing that was allocated is now freed
+        assert!(vm.heap.gc.dbg_allocations[0].is_none());
+        // assert that the first thing that was allocated is NOT freed
+        assert!(vm.heap.gc.dbg_allocations[1].is_some());
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn gc_maintain_arrays() -> VMResult<()> {
+        let code = CodeBuilder::default()
+            .emit_array(Type::U, 4)
+            .emit_array(Type::U, 8)
+            .emit_op(Op::ret)
+            .build();
+        let mut vm = VM::new(Function::new(code));
+        vm.run()?;
+        // println!("{:?}", vm.heap.gc);
+        assert!(vm.heap.gc.dbg_allocations[0].is_some());
+        assert!(vm.heap.gc.dbg_allocations[1].is_some());
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn gc_release_multiple_unused_arrays() -> VMResult<()> {
+        let code = CodeBuilder::default()
+            .emit_array(Type::U, 4)
+            .emit_array(Type::U, 8)
+            .emit_iastore(0, 3)
+            .emit_array(Type::U, 8)
+            .emit_iastore(0, 5)
+            .emit_array(Type::U, 8)
+            .emit_op(Op::ret)
+            .build();
+
+        let mut vm = VM::new(Function::new(code));
+        vm.run()?;
+        // println!("{:?}", vm.heap.gc);
+        assert!(vm.heap.gc.dbg_allocations[0].is_some());
+        assert!(vm.heap.gc.dbg_allocations[1].is_none());
+        assert!(vm.heap.gc.dbg_allocations[2].is_none());
+        assert!(vm.heap.gc.dbg_allocations[3].is_some());
         Ok(())
     }
 }
