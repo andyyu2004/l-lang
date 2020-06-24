@@ -1,6 +1,6 @@
 use super::Function;
 use crate::error::{VMError, VMResult};
-use crate::exec::Op;
+use crate::{exec::Op, Type};
 use std::convert::{TryFrom, TryInto};
 
 /// stack frame
@@ -34,5 +34,9 @@ impl Frame {
 
     pub fn read_u64(&mut self) -> u64 {
         u64::from_le_bytes(self.read(8).try_into().unwrap())
+    }
+
+    pub fn read_type(&mut self) -> VMResult<Type> {
+        Type::try_from(self.read_byte()).map_err(|e| VMError::InvalidType(e.number))
     }
 }

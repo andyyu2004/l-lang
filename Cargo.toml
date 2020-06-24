@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 num_enum = "0.5.0"
 thiserror = "1"
+gc = { path = "../gc" }
