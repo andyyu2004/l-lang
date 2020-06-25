@@ -19,6 +19,5 @@ mod test {
     #[test]
     fn size_of() {
         assert_eq!(std::mem::size_of::<Val>(), 16);
-        assert_eq!(std::mem::size_of::<Gc<Obj>>(), 8);
     }
 }

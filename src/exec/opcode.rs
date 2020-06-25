@@ -71,4 +71,5 @@ pub enum Op {
     /// invoke <argc>
     /// <f> <arg_0>...<arg_argc> -> <f> <arg_0> ... <arg_argc>
     invoke  = 0xA0,
+    clsr    = 0xA1,
 }

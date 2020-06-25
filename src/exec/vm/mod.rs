@@ -4,7 +4,7 @@ mod gc_tests;
 use super::*;
 use crate::compiler::{Constant, Executable};
 use crate::error::*;
-use crate::gc::{Gc, Trace, GC};
+use crate::gc::{Gc, Trace, GC2 as GC};
 use ctx::Ctx;
 
 #[derive(Default, Debug)]
@@ -109,6 +109,13 @@ impl VM {
             }};
         }
 
+        macro_rules! read_const {
+            () => {{
+                let index = frame_mut!().read_byte() as usize;
+                self.ctx.constants[index]
+            }};
+        }
+
         Ok(loop {
             // println!("{:?}", &self.ctx.stack[..frame!().sp]);
             match frame_mut!().read_opcode()? {
@@ -163,27 +170,41 @@ impl VM {
                 Op::newarr => {
                     let len = pop!().as_prm() as usize;
                     let ty = frame_mut!().read_type()?;
-                    let array = Array::new(len, ty);
-                    push!(self.heap.alloc_and_gc(array, &self.ctx));
+                    let array = self.alloc(Array::new(len, ty));
+                    push!(array)
+                }
+                Op::clsr => {
+                    let f = read_const!().as_fn();
+                    let clsr = self.alloc(Closure::new(f.ptr));
+                    push!(clsr);
                 }
                 Op::invoke => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = frame_mut!().read_byte() as usize;
                     // index of the function pointer
                     let f_idx = self.bp + frame!().sp - argc - 1;
-                    let f = self.ctx.stack[f_idx].as_fn();
-                    self.ctx.frames[self.ctx.fp] = Frame::new(f, self.bp);
-                    frame = &mut self.ctx.frames[self.ctx.fp];
-                    self.ctx.fp += 1;
-                    // set base pointer to the function of the frame
-                    self.bp = f_idx;
+                    let f = self.ctx.stack[f_idx];
+                    match f {
+                        Val::Fn(f) => {
+                            self.ctx.frames[self.ctx.fp] = Frame::new(f, self.bp);
+                            frame = &mut self.ctx.frames[self.ctx.fp];
+                            self.ctx.fp += 1;
+                            // set base pointer to the function of the frame
+                            self.bp = f_idx;
+                        }
+                        Val::Clsr(f) => todo!(),
+                        x => panic!("expected invokable, found `{:?}`", x),
+                    }
                 }
-                Op::ldc => {
-                    let index = frame_mut!().read_byte() as usize;
-                    let constant = self.ctx.constants[index];
-                    push!(constant)
-                }
+                Op::ldc => push!(read_const!()),
             }
         })
+    }
+
+    fn alloc<T>(&mut self, t: T) -> Gc<T>
+    where
+        T: Trace + 'static,
+    {
+        self.heap.alloc_and_gc(t, &self.ctx)
     }
 }
