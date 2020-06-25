@@ -4,6 +4,7 @@ mod frame;
 mod function;
 mod obj;
 mod opcode;
+mod test;
 mod ty;
 mod val;
 mod vm;

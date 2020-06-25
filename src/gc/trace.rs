@@ -34,6 +34,7 @@ impl DerefMut for GCStateMap {
 
 pub trait Trace {
     fn mark(&self, map: &mut GCStateMap) {
+        let _ = map;
     }
 }
 
