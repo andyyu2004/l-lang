@@ -1,4 +1,5 @@
 use super::Code;
+use crate::gc::Trace;
 
 #[derive(Debug)]
 pub struct Function {
@@ -9,4 +10,7 @@ impl Function {
     pub fn new(code: Code) -> Self {
         Self { code }
     }
+}
+
+impl Trace for Function {
 }

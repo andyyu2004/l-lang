@@ -37,6 +37,9 @@ pub trait Trace {
     }
 }
 
+impl Trace for String {
+}
+
 impl<T> Trace for &T
 where
     T: Trace,

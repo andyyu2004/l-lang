@@ -1,6 +1,8 @@
 use super::Function;
 use crate::error::{VMError, VMResult};
-use crate::{exec::Op, Type};
+use crate::{
+    exec::Op, gc::{GCStateMap, Gc, Trace}, Type
+};
 use std::convert::{TryFrom, TryInto};
 
 /// stack frame
@@ -10,12 +12,26 @@ pub struct Frame {
     pub(crate) ip: usize,
     /// stack pointer (index of top of the stack relative to the current frame)
     pub(crate) sp: usize,
-    pub(crate) f: Function,
+    /// the function the stack frame is executing
+    pub(crate) f: Gc<Function>,
+    /// return address as an index,
+    pub(crate) ret_addr: usize,
+}
+
+impl Trace for Frame {
+    fn mark(&self, map: &mut GCStateMap) {
+        self.f.mark(map)
+    }
 }
 
 impl Frame {
-    pub fn new(f: Function) -> Self {
-        Self { f, ip: 0, sp: 0 }
+    pub fn new(f: Gc<Function>, ret_addr: usize) -> Self {
+        Self {
+            f,
+            ip: 0,
+            sp: 0,
+            ret_addr,
+        }
     }
 
     pub fn read(&mut self, size: usize) -> &[u8] {
@@ -24,8 +40,9 @@ impl Frame {
     }
 
     pub fn read_byte(&mut self) -> u8 {
+        let byte = self.f.code[self.ip];
         self.ip += 1;
-        self.f.code[self.ip - 1]
+        byte
     }
 
     pub fn read_opcode(&mut self) -> VMResult<Op> {

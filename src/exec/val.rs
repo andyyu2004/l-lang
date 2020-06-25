@@ -1,44 +1,50 @@
-use super::Obj;
-use crate::from_inner;
 use crate::gc::{GCStateMap, Gc, Trace};
+use crate::{impl_from_inner, impl_into, Array, Function};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Val {
-    Obj(Gc<Obj>),
-    Prim(u64),
+    Array(Gc<Array>),
+    Fn(Gc<Function>),
+    Str(Gc<String>),
+    Prm(u64),
     Unit,
 }
 
 impl Default for Val {
     fn default() -> Self {
-        Self::Prim(0)
+        Self::Prm(0)
     }
 }
 
+impl_into!(Val, Prm, u64);
+impl_into!(Val, Array, Gc<Array>);
+impl_into!(Val, Fn, Gc<Function>);
+
+impl_from_inner!(Gc<Function>, Val, Fn);
+impl_from_inner!(Gc<Array>, Val, Array);
+impl_from_inner!(u64, Val, Prm);
+
 impl Val {
-    pub fn as_prim(&self) -> u64 {
-        match *self {
-            Self::Prim(u) => u,
-            _ => panic!("expected obj found `{:?}`", self),
-        }
+    pub fn as_prm(&self) -> u64 {
+        (*self).into()
     }
 
-    pub fn as_obj(&self) -> Gc<Obj> {
-        match *self {
-            Self::Obj(obj) => obj,
-            _ => panic!("expected primitive value found `{:?}`", self),
-        }
+    pub fn as_array(&self) -> Gc<Array> {
+        (*self).into()
+    }
+
+    pub fn as_fn(&self) -> Gc<Function> {
+        (*self).into()
     }
 }
 
 impl Trace for Val {
     fn mark(&self, map: &mut GCStateMap) {
         match self {
-            Self::Obj(ptr) => ptr.mark(map),
-            Self::Prim(_) | Self::Unit => {}
+            Self::Fn(f) => f.mark(map),
+            Self::Array(xs) => xs.mark(map),
+            Self::Str(s) => s.mark(map),
+            Self::Prm(_) | Self::Unit => {}
         }
     }
 }
-
-from_inner!(Gc<Obj>, Val, Obj);
-from_inner!(u64, Val, Prim);

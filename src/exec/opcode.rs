@@ -32,6 +32,7 @@ pub enum Op {
     uret    = 0x11,
     dret    = 0x12,
     ret     = 0x13,
+    unit    = 0x14,
     // reserve some space for all the other operators
     /// discard top of stack
     pop     = 0x60,
@@ -49,17 +50,25 @@ pub enum Op {
     ustorel = 0x77,
     dstorel = 0x78,
     rstorel = 0x79,
+    /// load from constant pool
+    /// ldx <index>
+    ///     -> <constant>
+    ldc     = 0x80,
     /// alloc new array of <type> (array_size from stack)
-    newarr  = 0x80,
+    newarr  = 0x90,
     /// load from array
     /// <arrayref> <index> <val> ->
-    iaload  = 0x82,
-    uaload  = 0x83,
-    daload  = 0x84,
-    raload  = 0x85,
+    iaload  = 0x92,
+    uaload  = 0x93,
+    daload  = 0x94,
+    raload  = 0x95,
     /// <arrayref> <index> -> <val>
-    iastore = 0x86,
-    uastore = 0x87,
-    dastore = 0x88,
-    rastore = 0x89,
+    iastore = 0x96,
+    uastore = 0x97,
+    dastore = 0x98,
+    rastore = 0x99,
+
+    /// invoke <argc>
+    /// <f> <arg_0>...<arg_argc> -> <f> <arg_0> ... <arg_argc>
+    invoke  = 0xA0,
 }

@@ -15,7 +15,7 @@ impl CodeBuilder {
         self.emit_byte(op as u8)
     }
 
-    pub fn emit_byte(mut self, byte: u8) -> Self {
+    fn emit_byte(mut self, byte: u8) -> Self {
         self.code.push(byte);
         self
     }
@@ -32,6 +32,14 @@ impl CodeBuilder {
     pub fn emit_const(mut self, c: impl As8Bytes) -> Self {
         self.code.extend_from_slice(&c.as_bytes());
         self
+    }
+
+    pub fn emit_invoke(self, argc: u8) -> Self {
+        self.emit_op(Op::invoke).emit_byte(argc)
+    }
+
+    pub fn emit_ldc(self, idx: u8) -> Self {
+        self.emit_op(Op::ldc).emit_byte(idx)
     }
 
     pub fn emit_array(self, ty: Type, size: u64) -> Self {

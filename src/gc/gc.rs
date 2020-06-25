@@ -18,13 +18,11 @@ impl GC {
         T: Trace + 'static,
     {
         self.allocated_bytes += std::mem::size_of_val(&t);
-        let ptr = Box::into_raw(Box::new(t));
-
-        let non_null = NonNull::new(ptr).unwrap();
+        let ptr = NonNull::from(Box::leak(Box::new(t)));
         #[cfg(debug_assertions)]
-        self.dbg_allocations.push(Some(non_null));
-        self.allocated.insert(non_null);
-        Gc::new(non_null)
+        self.dbg_allocations.push(Some(ptr));
+        self.allocated.insert(ptr);
+        Gc::new(ptr)
     }
 
     pub fn mark_sweep(&mut self, root: impl Trace) {
@@ -42,8 +40,8 @@ impl GC {
                 continue;
             }
 
-            // otherwise free the pointer
             // what about the Gc<T> itself?
+            // otherwise free the pointer
             to_release.insert(ptr);
             self.allocated_bytes -= std::mem::size_of_val(unsafe { &*ptr.as_ptr() });
             unsafe { Box::from_raw(ptr.as_ptr()) };
