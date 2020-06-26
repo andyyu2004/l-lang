@@ -1,9 +1,11 @@
-use super::{GCStateMap, Gc, Trace};
+use super::{GCStateMap, GarbageCollector, Gc, Trace};
+use alloc::Layout;
 use rustc_hash::FxHashSet;
+use std::alloc;
 use std::ptr::NonNull;
 
 /// the garbage collector
-/// not to be confused with Gc
+/// not to be confused with the Gc ptr
 #[derive(Debug, Default)]
 pub struct GC {
     allocated_bytes: usize,
@@ -13,19 +15,32 @@ pub struct GC {
 }
 
 impl GC {
-    pub fn alloc<T>(&mut self, t: T) -> Gc<T>
+    fn alloc_t<T: ?Sized>(t: &T) -> *mut u8 {
+        unsafe { alloc::alloc(Layout::for_value(t)) }
+    }
+
+    fn dealloc_t<T: ?Sized>(ptr: NonNull<T>) {
+        let r = unsafe { ptr.as_ref() };
+        unsafe { alloc::dealloc(ptr.as_ptr().cast(), Layout::for_value(r)) }
+    }
+}
+
+impl GarbageCollector for GC {
+    fn alloc<T>(&mut self, t: T) -> Gc<T>
     where
         T: Trace + 'static,
     {
         self.allocated_bytes += std::mem::size_of_val(&t);
-        let ptr = NonNull::from(Box::leak(Box::new(t)));
+        let ptr = Self::alloc_t(&t).cast::<T>();
+        unsafe { std::ptr::write(ptr, t) };
+        let ptr = NonNull::new(ptr).unwrap();
         #[cfg(debug_assertions)]
         self.dbg_allocations.push(Some(ptr));
         self.allocated.insert(ptr);
         Gc::new(ptr)
     }
 
-    pub fn mark_sweep(&mut self, root: impl Trace) {
+    fn mark_sweep(&mut self, root: impl Trace) {
         let mut reachable = GCStateMap::default();
         root.mark(&mut reachable);
 
@@ -40,11 +55,10 @@ impl GC {
                 continue;
             }
 
-            // what about the Gc<T> itself?
             // otherwise free the pointer
             to_release.insert(ptr);
             self.allocated_bytes -= std::mem::size_of_val(unsafe { &*ptr.as_ptr() });
-            unsafe { Box::from_raw(ptr.as_ptr()) };
+            Self::dealloc_t(ptr)
         }
 
         // set the deallocated pointers to None

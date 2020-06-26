@@ -4,15 +4,22 @@ mod gc_tests;
 use super::*;
 use crate::compiler::{Constant, Executable};
 use crate::error::*;
-use crate::gc::{Gc, Trace, GC2 as GC};
+use crate::gc::{GarbageCollector, Gc, Trace, GC};
 use ctx::Ctx;
 
 #[derive(Default, Debug)]
-pub struct Heap {
-    gc: GC,
+pub struct Heap<G> {
+    gc: G,
 }
 
-impl Heap {
+impl<G> Heap<G>
+where
+    G: GarbageCollector,
+{
+    pub fn new(gc: G) -> Self {
+        Self { gc }
+    }
+
     pub fn alloc_and_gc<T>(&mut self, t: T, root: impl Trace) -> Gc<T>
     where
         T: Trace + 'static,
@@ -23,17 +30,26 @@ impl Heap {
 }
 
 /// the virtual machine
-pub struct VM {
+pub struct VM<G> {
     /// base pointer; points to where in the stack the current frame starts (i.e. the index of the
     /// currently executing function ptr)
     bp: usize,
     ctx: Ctx,
-    heap: Heap,
+    heap: Heap<G>,
 }
 
-impl VM {
-    pub fn new(executable: Executable) -> Self {
-        let mut heap = Heap::default();
+impl VM<GC> {
+    pub fn with_default_gc(executable: Executable) -> Self {
+        Self::new(GC::default(), executable)
+    }
+}
+
+impl<G> VM<G>
+where
+    G: GarbageCollector,
+{
+    pub fn new(gc: G, executable: Executable) -> Self {
+        let mut heap = Heap::new(gc);
 
         let Executable { constants, start } = executable;
         let f = heap.gc.alloc(start);

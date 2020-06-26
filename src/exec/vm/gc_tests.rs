@@ -12,7 +12,7 @@ mod test {
             .emit_op(Op::ret)
             .build();
         let executable = Executable::from(Function::new(main_code));
-        let mut vm = VM::new(executable);
+        let mut vm = VM::with_default_gc(executable);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Prm(5));
         Ok(())
@@ -30,7 +30,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
         let executable = Executable::from(Function::new(code));
-        let mut vm = VM::new(executable);
+        let mut vm = VM::with_default_gc(executable);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Prm(2));
         Ok(())
@@ -42,7 +42,7 @@ mod test {
             .emit_array(Type::U, 4)
             .emit_op(Op::ret)
             .build();
-        let mut vm = VM::new(Function::new(code).into());
+        let mut vm = VM::with_default_gc(Function::new(code).into());
         let _ret = vm.run()?;
         // dbg!(vm.gc);
         // assert_eq!(ret, Val::Prim(2));
@@ -69,7 +69,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let mut vm = VM::new(Function::new(code).into());
+        let mut vm = VM::with_default_gc(Function::new(code).into());
         let ret = vm.run()?;
         assert_eq!(ret, Val::Prm(3));
         Ok(())
@@ -86,7 +86,7 @@ mod test {
             .emit_array(Type::U, 8)
             .emit_op(Op::ret)
             .build();
-        let mut vm = VM::new(Function::new(code).into());
+        let mut vm = VM::with_default_gc(Function::new(code).into());
         vm.run()?;
         // assert that the first array that was allocated is now freed
         assert!(vm.heap.gc.dbg_allocations[2].is_none());
@@ -103,7 +103,7 @@ mod test {
             .emit_array(Type::U, 8)
             .emit_op(Op::ret)
             .build();
-        let mut vm = VM::new(Function::new(code).into());
+        let mut vm = VM::with_default_gc(Function::new(code).into());
         vm.run()?;
         // println!("{:?}", vm.heap.gc);
         assert!(vm.heap.gc.dbg_allocations[0].is_some());
@@ -124,7 +124,7 @@ mod test {
             .emit_op(Op::ret)
             .build();
 
-        let mut vm = VM::new(Function::new(code).into());
+        let mut vm = VM::with_default_gc(Function::new(code).into());
         vm.run()?;
         assert!(vm.heap.gc.dbg_allocations[2].is_some());
         assert!(vm.heap.gc.dbg_allocations[3].is_none());

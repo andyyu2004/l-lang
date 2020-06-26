@@ -1,5 +1,5 @@
-[00:00:00.000] (7fcebde16700) TRACE  registering with poller
-[00:00:00.008] (7fcebde16700) TRACE  init_client
-[00:00:00.008] (7fcebcb10700) TRACE  registering with poller
-[00:00:00.008] (7fcebcb10700) TRACE  registering with poller
-[00:00:00.980] (7fcebde16700) TRACE  deregistering handle with poller
+[00:00:00.000] (7f98c8415700) TRACE  registering with poller
+[00:00:00.007] (7f98c8415700) TRACE  init_client
+[00:00:00.008] (7f98a2ff7700) TRACE  registering with poller
+[00:00:00.008] (7f98a2ff7700) TRACE  registering with poller
+[00:00:04.281] (7f98c8415700) TRACE  deregistering handle with poller
