@@ -12,7 +12,7 @@ mod test {
     fn it_works() -> VMResult<()> {
         let main_code = CodeBuilder::default()
             .emit_iconst(5)
-            .emit_op(Op::ret)
+            .emit_op(Op::iret)
             .build();
         let executable = Executable::from(Function::new(main_code));
         let mut vm = VM::with_default_gc(executable);
@@ -40,19 +40,6 @@ mod test {
     }
 
     #[test]
-    fn vm_array() -> VMResult<()> {
-        let code = CodeBuilder::default()
-            .emit_array(Type::U, 4)
-            .emit_op(Op::ret)
-            .build();
-        let mut vm = VM::with_default_gc(Function::new(code).into());
-        let _ret = vm.run()?;
-        // dbg!(vm.gc);
-        // assert_eq!(ret, Val::Prim(2));
-        Ok(())
-    }
-
-    #[test]
     fn vm_array_load_store() -> VMResult<()> {
         // let xs = [0u8; 4];
         // xs[3] = 5;
@@ -60,13 +47,13 @@ mod test {
         // xs[3] - xs[1]
         let code = CodeBuilder::default()
             .emit_array(Type::U, 4)
-            .emit_loadl(0)
+            .emit_iloadl(0)
             .emit_iastore(3, 5)
-            .emit_loadl(1)
+            .emit_iloadl(1)
             .emit_iastore(1, 2)
-            .emit_loadl(0)
+            .emit_iloadl(0)
             .emit_iaload(3)
-            .emit_loadl(0)
+            .emit_iloadl(0)
             .emit_iaload(1)
             .emit_op(Op::isub)
             .emit_op(Op::iret)
@@ -133,12 +120,6 @@ mod test {
         assert!(vm.heap.gc.dbg_allocations[1 + OFFSET].is_none());
         assert!(vm.heap.gc.dbg_allocations[2 + OFFSET].is_none());
         assert!(vm.heap.gc.dbg_allocations[3 + OFFSET].is_some());
-        Ok(())
-    }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    fn gc_release_fn() -> VMResult<()> {
         Ok(())
     }
 }

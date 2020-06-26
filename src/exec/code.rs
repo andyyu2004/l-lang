@@ -11,13 +11,25 @@ pub struct CodeBuilder {
 }
 
 impl CodeBuilder {
+    fn emit_byte(mut self, byte: u8) -> Self {
+        self.code.push(byte);
+        self
+    }
+
     pub fn emit_op(self, op: Op) -> Self {
         self.emit_byte(op as u8)
     }
 
-    fn emit_byte(mut self, byte: u8) -> Self {
-        self.code.push(byte);
-        self
+    pub fn emit_closure(self, f_idx: u8, upvalues: Vec<(bool, u8)>) -> Self {
+        let mut this = self.emit_op(Op::clsr).emit_byte(f_idx);
+        for (in_enclosing, index) in upvalues {
+            this = this.emit_upval(in_enclosing, index);
+        }
+        this
+    }
+
+    fn emit_upval(self, in_enclosing: bool, index: u8) -> Self {
+        self.emit_byte(in_enclosing as u8).emit_byte(index)
     }
 
     pub fn emit_iconst(self, i: i64) -> Self {
@@ -52,8 +64,12 @@ impl CodeBuilder {
         self.emit_uconst(index as u64).emit_op(Op::iaload)
     }
 
-    pub fn emit_loadl(self, index: u64) -> Self {
-        self.emit_op(Op::iloadl).emit_const(index)
+    pub fn emit_iloadl(self, index: u8) -> Self {
+        self.emit_op(Op::iloadl).emit_byte(index)
+    }
+
+    pub fn emit_iloadu(self, index: u8) -> Self {
+        self.emit_op(Op::iloadu).emit_byte(index)
     }
 
     pub fn emit_iastore(self, index: u64, value: i64) -> Self {

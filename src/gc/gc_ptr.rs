@@ -49,6 +49,9 @@ where
     T: Trace + 'static,
 {
     fn mark(&self, map: &mut GCStateMap) {
+        if map.contains(&self.ptr.cast()) {
+            return;
+        }
         self.ptr.mark(map);
         map.mark_gc_ptr(self);
     }

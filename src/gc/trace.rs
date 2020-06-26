@@ -3,7 +3,7 @@ use rustc_hash::FxHashSet;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 
-type Inner = FxHashSet<NonNull<u8>>;
+type Inner = FxHashSet<NonNull<()>>;
 
 #[derive(Default, Debug)]
 // we can't use NonNull<dyn Trace> as this messes up equality (because of vtable ptr)

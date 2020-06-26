@@ -9,7 +9,11 @@ pub struct Function {
 
 impl Function {
     pub fn new(code: Code) -> Self {
-        Self { code, upvalc: 0 }
+        Self::with_upvalc(code, 0)
+    }
+
+    pub fn with_upvalc(code: Code, upvalc: u8) -> Self {
+        Self { code, upvalc }
     }
 }
 

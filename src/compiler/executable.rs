@@ -9,19 +9,32 @@ pub struct Executable {
     pub start: Function,
 }
 
-/// execute a main function
-impl From<Function> for Executable {
-    fn from(f: Function) -> Self {
+impl Executable {
+    // takes a function and constant pool
+    // wraps the given function in code that will call it
+    pub fn new(mut constants: ConstantPool, main: Function) -> Self {
+        let main_index = constants.len();
+        constants.push(main.into());
         let start_code = CodeBuilder::default()
             // load the given function from index 0
-            .emit_ldc(0)
+            .emit_ldc(main_index as u8)
             .emit_invoke(0)
             .emit_op(Op::ret)
             .build();
 
         Self {
-            constants: vec![f.into()],
+            constants,
             start: Function::new(start_code),
         }
+    }
+}
+/// execute a main function
+impl From<Function> for Executable {
+    /// given function f
+    /// fn main() {
+    ///     return f();
+    /// }
+    fn from(f: Function) -> Self {
+        Self::new(vec![], f)
     }
 }

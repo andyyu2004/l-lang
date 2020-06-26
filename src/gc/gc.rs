@@ -48,7 +48,7 @@ impl GarbageCollector for GC {
         let mut to_release = FxHashSet::default();
         for &ptr in &self.allocated {
             // pointer used for comparison
-            let cmp_ptr = ptr.cast();
+            let cmp_ptr: NonNull<()> = ptr.cast();
 
             // if p was reached during mark phase
             if reachable.contains(&cmp_ptr) {

@@ -16,7 +16,7 @@ pub enum Val {
 
 impl Default for Val {
     fn default() -> Self {
-        Self::Int(0)
+        Self::Unit
     }
 }
 

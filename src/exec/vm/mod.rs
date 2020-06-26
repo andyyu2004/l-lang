@@ -1,4 +1,6 @@
+mod closure_tests;
 mod ctx;
+mod function_tests;
 mod gc_tests;
 
 use super::*;
@@ -6,10 +8,12 @@ use crate::compiler::{Constant, Executable};
 use crate::error::*;
 use crate::gc::{GarbageCollector, Gc, Trace, GC};
 use ctx::Ctx;
+use std::{cell::Cell, ptr::NonNull};
 
 #[derive(Default, Debug)]
 pub struct Heap<G> {
     gc: G,
+    disabled: Cell<bool>,
 }
 
 impl<G> Heap<G>
@@ -17,14 +21,27 @@ where
     G: GarbageCollector,
 {
     pub fn new(gc: G) -> Self {
-        Self { gc }
+        Self {
+            gc,
+            disabled: Cell::new(false),
+        }
+    }
+
+    pub fn disable_gc(&self) {
+        self.disabled.set(true)
+    }
+
+    pub fn enable_gc(&self) {
+        self.disabled.set(false)
     }
 
     pub fn alloc_and_gc<T>(&mut self, t: T, root: impl Trace) -> Gc<T>
     where
         T: Trace + 'static,
     {
-        self.gc.mark_sweep(root);
+        if !self.disabled.get() {
+            self.gc.mark_sweep(root);
+        }
         self.gc.alloc(t)
     }
 }
@@ -74,6 +91,11 @@ where
             };
         }
 
+        macro_rules! read_byte {
+            () => {
+                frame_mut!().read_byte()
+            };
+        }
         macro_rules! frame_mut {
             () => {
                 unsafe { &mut *frame }
@@ -129,7 +151,7 @@ where
         /// load constant from constant pool
         macro_rules! load_const {
             () => {{
-                let index = frame_mut!().read_byte() as usize;
+                let index = read_byte!() as usize;
                 self.ctx.constants[index]
             }};
         }
@@ -137,7 +159,7 @@ where
         /// read constant from code
         macro_rules! read_const {
             ($ty:ty) => {
-                push!(frame_mut!().read_u64() as $ty)
+                frame_mut!().read_u64() as $ty
             };
         }
 
@@ -150,11 +172,13 @@ where
         }
 
         Ok(loop {
-            // println!("{:?}", &self.ctx.stack[..frame!().sp]);
-            match frame_mut!().read_opcode()? {
-                Op::nop => {}
-                Op::iconst => read_const!(i64),
-                Op::uconst => read_const!(u64),
+            // println!("{:?}", &self.ctx.stack[..self.ctx.bp + frame!().sp]);
+            let opcode = frame_mut!().read_opcode()?;
+            // println!("{:?}: {:?}", opcode, &self.ctx.stack[..]);
+            match opcode {
+                Op::nop => panic!("no-op probably an accident"),
+                Op::iconst => push!(read_const!(i64)),
+                Op::uconst => push!(read_const!(u64)),
                 Op::dconst => push!(f64::from_bits(frame_mut!().read_u64())),
                 Op::iadd => iarith!(+),
                 Op::uadd => uarith!(+),
@@ -199,12 +223,12 @@ where
                 Op::rstorel => {}
                 Op::istorel | Op::ustorel | Op::dstorel => {
                     let val = self.ctx.stack[self.ctx.bp + frame!().sp - 1];
-                    let index = frame_mut!().read_byte();
-                    self.ctx.stack[index as usize] = val;
+                    let index = read_byte!();
+                    self.ctx.stack[self.ctx.bp + index as usize] = val;
                 }
                 Op::iloadl | Op::uloadl | Op::dloadl => {
-                    let index = frame_mut!().read_byte();
-                    push!(self.ctx.stack[index as usize])
+                    let index = read_byte!();
+                    push!(self.ctx.stack[self.ctx.bp + index as usize])
                 }
                 Op::iaload => aload!(i64),
                 Op::uaload => aload!(u64),
@@ -212,40 +236,76 @@ where
                 Op::newarr => {
                     let len = pop!().as_u64() as usize;
                     let ty = frame_mut!().read_type()?;
-                    let array = self.alloc(Array::new(len, ty));
-                    push!(array)
+                    push!(self.alloc(Array::new(len, ty)))
                 }
                 Op::clsr => {
                     let f = load_const!().as_fn();
-                    let clsr = self.alloc(Closure::new(f));
+                    // we may be allocating unrooted upvalues so we must disable gc for this section
+                    self.heap.disable_gc();
+                    let mut clsr = self.alloc(Closure::new(f));
+                    for i in 0..clsr.f.upvalc as usize {
+                        let in_enclosing = read_byte!();
+                        let index = read_byte!() as usize;
+                        let upvalue = if in_enclosing == 0 {
+                            // if the upvalue is not in the directly enclosing scope, get the
+                            // upvalue from the enclosing closure
+                            frame!().clsr.upvals[index]
+                        } else {
+                            // if the upvalue closes over a variable in the enclosing function, capture it
+                            self.capture_upval(index)
+                        };
+                        assert_eq!(clsr.upvals.len(), i);
+                        clsr.upvals.push(upvalue);
+                    }
+                    self.heap.enable_gc();
                     push!(clsr);
                 }
                 Op::invoke => {
                     // ... <f> <arg0> ... <argn> <stack_top>
-                    let argc = frame_mut!().read_byte() as usize;
+                    let argc = read_byte!() as usize;
                     // index of the function pointer
                     let f_idx = self.ctx.bp + frame!().sp - argc - 1;
                     let f = self.ctx.stack[f_idx];
                     let clsr = match f {
-                        Val::Fn(f) => self.alloc(Closure::new(f)),
+                        Val::Fn(f) => {
+                            // if f is just a function not a closure, it shouldn't have any upvalues
+                            assert!(f.upvalc == 0);
+                            self.alloc(Closure::new(f))
+                        }
                         Val::Clsr(clsr) => clsr,
                         x => panic!("expected invokable, found `{:?}`", x),
                     };
                     self.ctx.frames[self.ctx.fp] = Frame::new(clsr, self.ctx.bp);
                     frame = &mut self.ctx.frames[self.ctx.fp];
+                    frame_mut!().sp = argc;
                     self.ctx.fp += 1;
-                    // set base pointer to the function of the frame
-                    self.ctx.bp = f_idx;
-
-                    // for i in 0..clsr.f.upvalc as usize {
-                    //     let in_enclosing = frame_mut!().read_byte();
-                    //     let index = frame_mut!().read_byte() as usize;
-                    //     clsr.upvals[i] = if in_enclosing == 0 { todo!() } else { todo!() };
-                    // }
+                    // set base pointer to the slot above the function of the frame (so locals are
+                    // indexed from 0)
+                    self.ctx.bp = f_idx + 1;
                 }
                 Op::ldc => push!(load_const!()),
+                Op::iloadu => {
+                    let i = read_byte!() as usize;
+                    let upval = &*frame!().clsr.upvals[i];
+                    // use deref trait to deref upval to val
+                    let val = **upval;
+                    push!(val)
+                }
+                Op::uloadu => {}
+                Op::dloadu => {}
+                Op::rloadu => {}
+                Op::istoreu => {}
+                Op::ustoreu => {}
+                Op::dstoreu => {}
+                Op::rstoreu => {}
             }
         })
+    }
+
+    fn capture_upval(&mut self, index: usize) -> Gc<Upval> {
+        let ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
+        let upval = Upval::Open(ptr);
+        self.alloc(upval)
     }
 
     fn alloc<T>(&mut self, t: T) -> Gc<T>

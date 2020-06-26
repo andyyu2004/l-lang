@@ -39,17 +39,29 @@ pub enum Op {
     /// load from local variable
     /// loadl <stack_index>
     ///     -> <val>
-    iloadl  = 0x72,
-    uloadl  = 0x73,
-    dloadl  = 0x74,
-    rloadl  = 0x75,
+    iloadl  = 0x70,
+    uloadl  = 0x71,
+    dloadl  = 0x72,
+    rloadl  = 0x73,
     /// store into local variable
     /// storel <stack_index>
     /// <val> -> <val>
-    istorel = 0x76,
-    ustorel = 0x77,
-    dstorel = 0x78,
-    rstorel = 0x79,
+    istorel = 0x74,
+    ustorel = 0x75,
+    dstorel = 0x76,
+    rstorel = 0x77,
+    /// load from upvalue
+    /// loadu <index> (index into upvalue array)
+    ///     -> <val>
+    iloadu  = 0x78,
+    uloadu  = 0x79,
+    dloadu  = 0x7A,
+    rloadu  = 0x7B,
+    /// store into upvalue
+    istoreu = 0x7C,
+    ustoreu = 0x7D,
+    dstoreu = 0x7E,
+    rstoreu = 0x7F,
     /// load from constant pool
     /// ldx <index>
     ///     -> <constant>
@@ -71,5 +83,8 @@ pub enum Op {
     /// invoke <argc>
     /// <f> <arg_0>...<arg_argc> -> <f> <arg_0> ... <arg_argc>
     invoke  = 0xA0,
+    /// pushes a closure onto the stack
+    /// clsr (<in_enclosing> <index>)+
+    /// <f_idx> -> <closure>
     clsr    = 0xA1,
 }

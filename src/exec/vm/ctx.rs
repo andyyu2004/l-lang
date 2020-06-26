@@ -3,7 +3,8 @@ use crate::gc::{GCStateMap, Gc, Trace};
 use std::mem;
 
 const FRAMES_MAX: usize = 4;
-const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
+const STACK_MAX: usize = 8;
+// const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
 
 /// contains the fields that need to be gced
 pub struct Ctx {
