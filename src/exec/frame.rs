@@ -1,8 +1,7 @@
-use super::Function;
+use super::Closure;
 use crate::error::{VMError, VMResult};
-use crate::{
-    exec::Op, gc::{GCStateMap, Gc, Trace}, Type
-};
+use crate::exec::{Op, Type};
+use crate::gc::{GCStateMap, Gc, Trace};
 use std::convert::{TryFrom, TryInto};
 
 /// stack frame
@@ -13,21 +12,21 @@ pub struct Frame {
     /// stack pointer (index of top of the stack relative to the current frame)
     pub(crate) sp: usize,
     /// the function the stack frame is executing
-    pub(crate) f: Gc<Function>,
+    pub(crate) clsr: Gc<Closure>,
     /// return address as an index,
     pub(crate) ret_addr: usize,
 }
 
 impl Trace for Frame {
     fn mark(&self, map: &mut GCStateMap) {
-        self.f.mark(map)
+        self.clsr.mark(map)
     }
 }
 
 impl Frame {
-    pub fn new(f: Gc<Function>, ret_addr: usize) -> Self {
+    pub fn new(clsr: Gc<Closure>, ret_addr: usize) -> Self {
         Self {
-            f,
+            clsr,
             ip: 0,
             sp: 0,
             ret_addr,
@@ -36,11 +35,11 @@ impl Frame {
 
     pub fn read(&mut self, size: usize) -> &[u8] {
         self.ip += size;
-        &self.f.code[self.ip - size..self.ip]
+        &self.clsr.f.code[self.ip - size..self.ip]
     }
 
     pub fn read_byte(&mut self) -> u8 {
-        let byte = self.f.code[self.ip];
+        let byte = self.clsr.f.code[self.ip];
         self.ip += 1;
         byte
     }

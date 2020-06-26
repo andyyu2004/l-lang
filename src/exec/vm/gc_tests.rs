@@ -1,9 +1,12 @@
-/// note the two first allocations are for the start function and the main function
 #[cfg(test)]
 mod test {
     use crate::compiler::Executable;
     use crate::error::VMResult;
-    use crate::*;
+    use crate::exec::*;
+
+    /// note the four first allocations are for the start function and the main function and their
+    /// closure wrappers
+    const OFFSET: usize = 4;
 
     #[test]
     fn it_works() -> VMResult<()> {
@@ -14,7 +17,7 @@ mod test {
         let executable = Executable::from(Function::new(main_code));
         let mut vm = VM::with_default_gc(executable);
         let ret = vm.run()?;
-        assert_eq!(ret, Val::Prm(5));
+        assert_eq!(ret, Val::Int(5));
         Ok(())
     }
 
@@ -32,7 +35,7 @@ mod test {
         let executable = Executable::from(Function::new(code));
         let mut vm = VM::with_default_gc(executable);
         let ret = vm.run()?;
-        assert_eq!(ret, Val::Prm(2));
+        assert_eq!(ret, Val::Int(2));
         Ok(())
     }
 
@@ -71,7 +74,7 @@ mod test {
 
         let mut vm = VM::with_default_gc(Function::new(code).into());
         let ret = vm.run()?;
-        assert_eq!(ret, Val::Prm(3));
+        assert_eq!(ret, Val::Int(3));
         Ok(())
     }
 
@@ -79,19 +82,19 @@ mod test {
     #[cfg(debug_assertions)]
     fn gc_release_unused_array() -> VMResult<()> {
         let code = CodeBuilder::default()
-            .emit_array(Type::U, 4)
-            .emit_iastore(0, 8)
+            .emit_array(Type::I, 4)
+            .emit_iastore(0, 6)
             // when the second array is allocated the first should be freed as there are no
             // references to it
-            .emit_array(Type::U, 8)
+            .emit_array(Type::U, 9)
             .emit_op(Op::ret)
             .build();
         let mut vm = VM::with_default_gc(Function::new(code).into());
         vm.run()?;
         // assert that the first array that was allocated is now freed
-        assert!(vm.heap.gc.dbg_allocations[2].is_none());
+        assert!(vm.heap.gc.dbg_allocations[0 + OFFSET].is_none());
         // assert that the first thing that was allocated is NOT freed
-        assert!(vm.heap.gc.dbg_allocations[3].is_some());
+        assert!(vm.heap.gc.dbg_allocations[1 + OFFSET].is_some());
         Ok(())
     }
 
@@ -126,10 +129,10 @@ mod test {
 
         let mut vm = VM::with_default_gc(Function::new(code).into());
         vm.run()?;
-        assert!(vm.heap.gc.dbg_allocations[2].is_some());
-        assert!(vm.heap.gc.dbg_allocations[3].is_none());
-        assert!(vm.heap.gc.dbg_allocations[4].is_none());
-        assert!(vm.heap.gc.dbg_allocations[5].is_some());
+        assert!(vm.heap.gc.dbg_allocations[0 + OFFSET].is_some());
+        assert!(vm.heap.gc.dbg_allocations[1 + OFFSET].is_none());
+        assert!(vm.heap.gc.dbg_allocations[2 + OFFSET].is_none());
+        assert!(vm.heap.gc.dbg_allocations[3 + OFFSET].is_some());
         Ok(())
     }
 

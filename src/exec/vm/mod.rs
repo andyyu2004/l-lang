@@ -31,9 +31,6 @@ where
 
 /// the virtual machine
 pub struct VM<G> {
-    /// base pointer; points to where in the stack the current frame starts (i.e. the index of the
-    /// currently executing function ptr)
-    bp: usize,
     ctx: Ctx,
     heap: Heap<G>,
 }
@@ -53,6 +50,7 @@ where
 
         let Executable { constants, start } = executable;
         let f = heap.gc.alloc(start);
+        let clsr = heap.gc.alloc(Closure::new(f));
         // allocate all the constants once upfront
         let constants = constants
             .into_iter()
@@ -63,9 +61,8 @@ where
             .collect();
 
         Self {
-            bp: 0,
             heap,
-            ctx: Ctx::new(f, constants),
+            ctx: Ctx::new(clsr, constants),
         }
     }
 
@@ -85,7 +82,7 @@ where
 
         macro_rules! push {
             ($value:expr) => {{
-                self.ctx.stack[self.bp + frame!().sp] = $value.into();
+                self.ctx.stack[self.ctx.bp + frame!().sp] = $value.into();
                 frame_mut!().sp += 1;
             }};
         }
@@ -93,42 +90,62 @@ where
         macro_rules! pop {
             () => {{
                 frame_mut!().sp -= 1;
-                self.ctx.stack[self.bp + frame!().sp]
+                self.ctx.stack[self.ctx.bp + frame!().sp]
             }};
         }
 
-        macro_rules! arith {
-            ($op: tt, $ty:ty) => {{
-                // don't inline as the evaluation order needs to be this way (pop second operand first)
-                let r = pop!().as_prm() as $ty;
-                let l = pop!().as_prm() as $ty;
-                let res = (l $op r) as u64;
-                push!(res)
+        macro_rules! iarith {
+            ($op: tt) => {{
+                let r = pop!().as_i64();
+                let l = pop!().as_i64();
+                push!(l $op r);
+            }}
+        }
+
+        macro_rules! uarith {
+            ($op: tt) => {{
+                let r = pop!().as_u64();
+                let l = pop!().as_u64();
+                push!(l $op r);
             }}
         }
 
         macro_rules! farith {
             ($op: tt) => {{
-                let r = f64::from_bits(pop!().as_prm());
-                let l = f64::from_bits(pop!().as_prm());
-                let res = (l $op r) as u64;
-                push!(res)
+                let r = pop!().as_f64();
+                let l = pop!().as_f64();
+                push!(l $op r);
             }}
         }
 
         macro_rules! astore {
-            ($ty:ty) => {{
-                let value = pop!().as_prm() as $ty;
-                let index = pop!().as_prm() as isize;
+            ($value:expr) => {{
+                let index = pop!().as_u64() as isize;
                 let array_ref = pop!();
-                array_ref.as_array().set::<$ty>(index, value);
+                array_ref.as_array().set(index, $value);
             }};
         }
 
-        macro_rules! read_const {
+        /// load constant from constant pool
+        macro_rules! load_const {
             () => {{
                 let index = frame_mut!().read_byte() as usize;
                 self.ctx.constants[index]
+            }};
+        }
+
+        /// read constant from code
+        macro_rules! read_const {
+            ($ty:ty) => {
+                push!(frame_mut!().read_u64() as $ty)
+            };
+        }
+
+        macro_rules! aload {
+            ($ty:ty) => {{
+                let index = pop!().as_u64() as isize;
+                let array_ref = pop!();
+                push!(array_ref.as_array().get::<$ty>(index));
             }};
         }
 
@@ -136,41 +153,52 @@ where
             // println!("{:?}", &self.ctx.stack[..frame!().sp]);
             match frame_mut!().read_opcode()? {
                 Op::nop => {}
-                Op::iconst | Op::uconst | Op::dconst => push!(frame_mut!().read_u64()),
-                Op::iadd => arith!(+, i64),
-                Op::uadd => arith!(+, u64),
+                Op::iconst => read_const!(i64),
+                Op::uconst => read_const!(u64),
+                Op::dconst => push!(f64::from_bits(frame_mut!().read_u64())),
+                Op::iadd => iarith!(+),
+                Op::uadd => uarith!(+),
                 Op::dadd => farith!(+),
-                Op::isub => arith!(-, i64),
-                Op::usub => arith!(-, u64),
+                Op::isub => iarith!(-),
+                Op::usub => uarith!(-),
                 Op::dsub => farith!(-),
-                Op::imul => arith!(*, i64),
-                Op::umul => arith!(*, u64),
+                Op::imul => iarith!(*),
+                Op::umul => uarith!(*),
                 Op::dmul => farith!(*),
-                Op::idiv => arith!(/, i64),
-                Op::udiv => arith!(/, u64),
+                Op::idiv => iarith!(/),
+                Op::udiv => uarith!(/),
                 Op::ddiv => farith!(/),
                 Op::pop => frame_mut!().sp -= 1,
-                // how to differentiate return types?
                 Op::ret | Op::uret | Op::dret | Op::iret => {
                     let ret = pop!();
                     self.ctx.fp -= 1;
                     if self.ctx.fp == 0 {
                         break ret;
                     }
-                    self.bp = frame!().ret_addr;
+                    self.ctx.bp = frame!().ret_addr;
                     frame = &mut self.ctx.frames[self.ctx.fp - 1];
                     push!(ret);
                 }
-                Op::iastore => astore!(i64),
-                Op::uastore => astore!(u64),
+                Op::iastore => {
+                    // this can't be inlined as macro expansion is lazy and we must pop the value first
+                    let value = pop!().as_i64();
+                    astore!(value);
+                }
+                Op::uastore => {
+                    let value = pop!().as_u64();
+                    astore!(value)
+                }
+                Op::dastore => {
+                    let value = pop!().as_f64();
+                    astore!(value)
+                }
                 Op::unit => push!(Val::Unit),
-                Op::dastore => astore!(f64),
                 Op::rastore => {}
                 Op::raload => {}
                 Op::rloadl => {}
                 Op::rstorel => {}
                 Op::istorel | Op::ustorel | Op::dstorel => {
-                    let val = self.ctx.stack[self.bp + frame!().sp - 1];
+                    let val = self.ctx.stack[self.ctx.bp + frame!().sp - 1];
                     let index = frame_mut!().read_byte();
                     self.ctx.stack[index as usize] = val;
                 }
@@ -178,41 +206,44 @@ where
                     let index = frame_mut!().read_byte();
                     push!(self.ctx.stack[index as usize])
                 }
-                Op::iaload | Op::uaload | Op::daload => {
-                    let index = pop!().as_prm() as isize;
-                    let array_ref = pop!();
-                    push!(array_ref.as_array().get::<u64>(index));
-                }
+                Op::iaload => aload!(i64),
+                Op::uaload => aload!(u64),
+                Op::daload => aload!(f64),
                 Op::newarr => {
-                    let len = pop!().as_prm() as usize;
+                    let len = pop!().as_u64() as usize;
                     let ty = frame_mut!().read_type()?;
                     let array = self.alloc(Array::new(len, ty));
                     push!(array)
                 }
                 Op::clsr => {
-                    let f = read_const!().as_fn();
-                    let clsr = self.alloc(Closure::new(f.ptr));
+                    let f = load_const!().as_fn();
+                    let clsr = self.alloc(Closure::new(f));
                     push!(clsr);
                 }
                 Op::invoke => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = frame_mut!().read_byte() as usize;
                     // index of the function pointer
-                    let f_idx = self.bp + frame!().sp - argc - 1;
+                    let f_idx = self.ctx.bp + frame!().sp - argc - 1;
                     let f = self.ctx.stack[f_idx];
-                    match f {
-                        Val::Fn(f) => {
-                            self.ctx.frames[self.ctx.fp] = Frame::new(f, self.bp);
-                            frame = &mut self.ctx.frames[self.ctx.fp];
-                            self.ctx.fp += 1;
-                            // set base pointer to the function of the frame
-                            self.bp = f_idx;
-                        }
-                        Val::Clsr(f) => todo!(),
+                    let clsr = match f {
+                        Val::Fn(f) => self.alloc(Closure::new(f)),
+                        Val::Clsr(clsr) => clsr,
                         x => panic!("expected invokable, found `{:?}`", x),
-                    }
+                    };
+                    self.ctx.frames[self.ctx.fp] = Frame::new(clsr, self.ctx.bp);
+                    frame = &mut self.ctx.frames[self.ctx.fp];
+                    self.ctx.fp += 1;
+                    // set base pointer to the function of the frame
+                    self.ctx.bp = f_idx;
+
+                    // for i in 0..clsr.f.upvalc as usize {
+                    //     let in_enclosing = frame_mut!().read_byte();
+                    //     let index = frame_mut!().read_byte() as usize;
+                    //     clsr.upvals[i] = if in_enclosing == 0 { todo!() } else { todo!() };
+                    // }
                 }
-                Op::ldc => push!(read_const!()),
+                Op::ldc => push!(load_const!()),
             }
         })
     }

@@ -1,5 +1,5 @@
+use crate::exec::Type;
 use crate::gc::Trace;
-use crate::Type;
 
 #[derive(Debug)]
 pub struct Array {
@@ -17,13 +17,10 @@ impl Array {
         Self { len, ty, vec }
     }
 
-    pub fn get<T>(&self, index: isize) -> u64
-    where
-        T: Into<u64>,
-    {
+    pub fn get<T>(&self, index: isize) -> T {
         assert!(index < self.len as isize);
         let ptr = self.vec.as_ptr() as *const T;
-        unsafe { std::ptr::read(ptr.offset(index)).into() }
+        unsafe { std::ptr::read(ptr.offset(index)) }
     }
 
     pub fn set<T>(&mut self, index: isize, value: T) {

@@ -1,5 +1,5 @@
 use super::Op;
-use crate::{util::As8Bytes, Type};
+use crate::{exec::Type, util::As8Bytes};
 use std::ops::{Deref, DerefMut};
 
 #[derive(Debug)]
@@ -48,16 +48,16 @@ impl CodeBuilder {
             .emit_byte(ty as u8)
     }
 
-    pub fn emit_iaload(self, index: isize) -> Self {
-        self.emit_iconst(index as i64).emit_op(Op::iaload)
+    pub fn emit_iaload(self, index: u64) -> Self {
+        self.emit_uconst(index as u64).emit_op(Op::iaload)
     }
 
     pub fn emit_loadl(self, index: u64) -> Self {
         self.emit_op(Op::iloadl).emit_const(index)
     }
 
-    pub fn emit_iastore(self, index: isize, value: i64) -> Self {
-        self.emit_iconst(index as i64)
+    pub fn emit_iastore(self, index: u64, value: i64) -> Self {
+        self.emit_uconst(index)
             .emit_iconst(value)
             .emit_op(Op::iastore)
     }

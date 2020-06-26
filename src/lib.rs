@@ -2,19 +2,17 @@
 #![feature(box_syntax)]
 #![feature(raw)]
 #![feature(box_into_raw_non_null)]
+#![feature(concat_idents)]
 
-mod compiler;
+pub mod compiler;
 mod error;
-mod exec;
+pub mod exec;
 mod gc;
 mod util;
-
-pub use exec::*;
 
 #[cfg(test)]
 mod test {
     use crate::exec::*;
-    use crate::gc::*;
 
     #[test]
     fn size_of() {

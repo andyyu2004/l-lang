@@ -1,5 +1,5 @@
 use super::ConstantPool;
-use crate::{CodeBuilder, Function, Op};
+use crate::exec::{CodeBuilder, Function, Op};
 
 /// this struct defines the executable format that the vm will run, and the compiler compiles to
 #[derive(Debug)]

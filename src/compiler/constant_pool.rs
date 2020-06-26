@@ -1,4 +1,4 @@
-use crate::{gc::Trace, impl_from_inner, Function};
+use crate::{exec::Function, gc::Trace, impl_from_inner};
 
 pub type ConstantPool = Vec<Constant>;
 
