@@ -30,6 +30,9 @@ impl Trace for Ctx {
             .iter()
             .for_each(|frame| frame.mark(map));
         self.constants.iter().for_each(|val| val.mark(map));
+        self.open_upvalues
+            .values()
+            .for_each(|ptr| Gc::mark(ptr, map));
     }
 }
 impl Ctx {

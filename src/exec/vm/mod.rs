@@ -9,7 +9,7 @@ use crate::compiler::{Constant, Executable};
 use crate::error::*;
 use crate::gc::{GarbageCollector, Gc, Trace, GC};
 use ctx::Ctx;
-use std::{cell::Cell, ptr::NonNull};
+use std::{cell::Cell, collections::BTreeMap, ptr::NonNull};
 
 #[derive(Default, Debug)]
 pub struct Heap<G> {
@@ -324,20 +324,29 @@ where
         t
     }
 
-    /// moves the upvalue that points at the value at `index` onto the heap
+    /// moves the upvalues that points at the value at `index` or above onto the heap
     fn close_upvalue(&mut self, index: u8) {
         let val_ref = &mut self.ctx.stack[self.ctx.bp + index as usize];
         let val_ptr = NonNull::new(val_ref).unwrap();
-        let mut upval_ptr = self.ctx.open_upvalues.remove(&val_ptr).unwrap();
-        // assert that the upvalue actually points at the value we are moving onto the heap
-        debug_assert_eq!(val_ref, &**upval_ptr);
-        // allocate the value and mutate the open upvalue to a closed upvalue
-        *upval_ptr = Upval::Closed(self.alloc(**upval_ptr));
+
+        // this vector contains all the open upvalues that are above the given stack index
+        let to_close: Vec<Gc<Upval>> = self
+            .ctx
+            .open_upvalues
+            .drain_filter(|ptr, _| *ptr >= val_ptr)
+            .map(|(_, upval_ptr)| upval_ptr)
+            .collect();
+
+        // allocate the value pointed to by the upvalue and mutate the open upvalue to a closed upvalue
+        for mut upval_ptr in to_close {
+            *upval_ptr = Upval::Closed(self.alloc(**upval_ptr));
+        }
     }
 
     /// captures the value at `index` in an upvalue
     fn capture_upval(&mut self, index: usize) -> Gc<Upval> {
         let val_ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
+        // if the upvalue already exists, reuse it, otherwise, allocate a new one
         match self.ctx.open_upvalues.get(&val_ptr) {
             Some(&upvalue) => upvalue,
             None => {

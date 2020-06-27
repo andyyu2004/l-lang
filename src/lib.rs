@@ -3,6 +3,7 @@
 #![feature(raw)]
 #![feature(box_into_raw_non_null)]
 #![feature(concat_idents)]
+#![feature(btree_drain_filter)]
 
 pub mod compiler;
 mod error;
