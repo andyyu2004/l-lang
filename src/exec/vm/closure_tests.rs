@@ -12,8 +12,7 @@ mod test {
     /// assert_eq!(main(), -3);
     ///
     #[test]
-    fn test_access_nonlocal_var() -> VMResult<()> {
-        // it crashes when read_byte!() of the inner closure
+    fn load_nonlocal_var() -> VMResult<()> {
         let inner = CodeBuilder::default()
             .emit_iloadu(0)
             .emit_iloadl(0)
@@ -39,6 +38,43 @@ mod test {
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-3));
+
+        Ok(())
+    }
+
+    /// fn main() -> i64 {
+    ///     var x = 5;
+    ///     let inner = fn() -> i64 => x = -4;
+    ///     inner();
+    ///     x
+    /// }
+    ///
+    /// assert(main(), -4);
+    ///
+    #[test]
+    fn store_nonlocal_var() -> VMResult<()> {
+        let inner = CodeBuilder::default()
+            .emit_istoreu(0, -4)
+            .emit_op(Op::iret)
+            .build();
+
+        let main = CodeBuilder::default()
+            // instruct the vm to create a closure
+            .emit_iconst(5)
+            .emit_closure(0, vec![(true, 0)])
+            .emit_invoke(0)
+            .emit_op(Op::pop) // pop the return of the closure
+            .emit_iloadl(0)
+            .emit_op(Op::iret)
+            .build();
+
+        let exec = Executable::new(
+            vec![Function::with_upvalc(inner, 1).into()],
+            Function::new(main),
+        );
+        let mut vm = VM::with_default_gc(exec);
+        let ret = vm.run()?;
+        assert_eq!(ret, Val::Int(-4));
 
         Ok(())
     }

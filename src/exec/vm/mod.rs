@@ -2,6 +2,7 @@ mod closure_tests;
 mod ctx;
 mod function_tests;
 mod gc_tests;
+mod var_tests;
 
 use super::*;
 use crate::compiler::{Constant, Executable};
@@ -171,6 +172,12 @@ where
             }};
         }
 
+        macro_rules! peek {
+            ($i:expr) => {
+                self.ctx.stack[self.ctx.bp + frame!().sp - $i - 1];
+            };
+        }
+
         Ok(loop {
             // println!("{:?}", &self.ctx.stack[..self.ctx.bp + frame!().sp]);
             let opcode = frame_mut!().read_opcode()?;
@@ -222,13 +229,10 @@ where
                 Op::rloadl => {}
                 Op::rstorel => {}
                 Op::istorel | Op::ustorel | Op::dstorel => {
-                    let val = self.ctx.stack[self.ctx.bp + frame!().sp - 1];
-                    let index = read_byte!();
-                    self.ctx.stack[self.ctx.bp + index as usize] = val;
+                    self.ctx.stack[self.ctx.bp + read_byte!() as usize] = peek!(0)
                 }
                 Op::iloadl | Op::uloadl | Op::dloadl => {
-                    let index = read_byte!();
-                    push!(self.ctx.stack[self.ctx.bp + index as usize])
+                    push!(self.ctx.stack[self.ctx.bp + read_byte!() as usize])
                 }
                 Op::iaload => aload!(i64),
                 Op::uaload => aload!(u64),
@@ -238,6 +242,24 @@ where
                     let ty = frame_mut!().read_type()?;
                     push!(self.alloc(Array::new(len, ty)))
                 }
+                Op::uloadu => {}
+                Op::dloadu => {}
+                Op::rloadu => {}
+                Op::iloadu => {
+                    let i = read_byte!() as usize;
+                    let upval = &*frame!().clsr.upvals[i];
+                    let val = **upval;
+                    push!(val)
+                }
+                Op::istoreu => {
+                    let val = peek!(0);
+                    let i = read_byte!() as usize;
+                    **frame_mut!().clsr.upvals[i] = val;
+                }
+                Op::ustoreu => todo!(),
+                Op::dstoreu => todo!(),
+                Op::rstoreu => todo!(),
+                Op::ldc => push!(load_const!()),
                 Op::clsr => {
                     let f = load_const!().as_fn();
                     // we may be allocating unrooted upvalues so we must disable gc for this section
@@ -283,21 +305,6 @@ where
                     // indexed from 0)
                     self.ctx.bp = f_idx + 1;
                 }
-                Op::ldc => push!(load_const!()),
-                Op::iloadu => {
-                    let i = read_byte!() as usize;
-                    let upval = &*frame!().clsr.upvals[i];
-                    // use deref trait to deref upval to val
-                    let val = **upval;
-                    push!(val)
-                }
-                Op::uloadu => {}
-                Op::dloadu => {}
-                Op::rloadu => {}
-                Op::istoreu => {}
-                Op::ustoreu => {}
-                Op::dstoreu => {}
-                Op::rstoreu => {}
             }
         })
     }

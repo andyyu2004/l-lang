@@ -68,8 +68,20 @@ impl CodeBuilder {
         self.emit_op(Op::iloadl).emit_byte(index)
     }
 
+    pub fn emit_istorel(self, index: u8, value: i64) -> Self {
+        self.emit_iconst(value)
+            .emit_op(Op::istorel)
+            .emit_byte(index)
+    }
+
     pub fn emit_iloadu(self, index: u8) -> Self {
         self.emit_op(Op::iloadu).emit_byte(index)
+    }
+
+    pub fn emit_istoreu(self, index: u8, value: i64) -> Self {
+        self.emit_iconst(value)
+            .emit_op(Op::istoreu)
+            .emit_byte(index)
     }
 
     pub fn emit_iastore(self, index: u64, value: i64) -> Self {
