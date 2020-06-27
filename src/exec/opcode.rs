@@ -31,8 +31,9 @@ pub enum Op {
     iret    = 0x10,
     uret    = 0x11,
     dret    = 0x12,
-    ret     = 0x13,
-    unit    = 0x14,
+    rret    = 0x13,
+    ret     = 0x14,
+    unit    = 0x15,
     // reserve some space for all the other operators
     /// discard top of stack
     pop     = 0x60,

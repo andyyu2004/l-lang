@@ -33,15 +33,15 @@ impl CodeBuilder {
     }
 
     pub fn emit_iconst(self, i: i64) -> Self {
-        self.emit_op(Op::iconst).emit_const(i)
+        self.emit_op(Op::iconst).write_const(i)
     }
 
     pub fn emit_uconst(self, u: u64) -> Self {
-        self.emit_op(Op::uconst).emit_const(u)
+        self.emit_op(Op::uconst).write_const(u)
     }
 
     /// writes a 8 byte constant into the code
-    pub fn emit_const(mut self, c: impl As8Bytes) -> Self {
+    pub fn write_const(mut self, c: impl As8Bytes) -> Self {
         self.code.extend_from_slice(&c.as_bytes());
         self
     }

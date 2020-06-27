@@ -16,8 +16,9 @@ impl Executable {
         let main_index = constants.len();
         constants.push(main.into());
         let start_code = CodeBuilder::default()
-            // load the given function from index 0
+            // load the given function from index `main_index`
             .emit_ldc(main_index as u8)
+            // invoke it
             .emit_invoke(0)
             .emit_op(Op::ret)
             .build();

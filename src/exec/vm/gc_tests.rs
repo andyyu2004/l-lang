@@ -26,9 +26,9 @@ mod test {
     fn vm_arith_order() -> VMResult<()> {
         let code = CodeBuilder::default()
             .emit_op(Op::iconst)
-            .emit_const(7i64)
+            .write_const(7i64)
             .emit_op(Op::iconst)
-            .emit_const(5i64)
+            .write_const(5i64)
             .emit_op(Op::isub)
             .emit_op(Op::iret)
             .build();

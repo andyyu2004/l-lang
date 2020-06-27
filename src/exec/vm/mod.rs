@@ -179,9 +179,14 @@ where
         }
 
         Ok(loop {
-            // println!("{:?}", &self.ctx.stack[..self.ctx.bp + frame!().sp]);
             let opcode = frame_mut!().read_opcode()?;
-            // println!("{:?}: {:?}", opcode, &self.ctx.stack[..]);
+            println!(
+                "op:{:?} bp:{} sp:{} {:?}",
+                opcode,
+                self.ctx.bp,
+                frame!().sp,
+                &self.ctx.stack[..self.ctx.bp + frame!().sp]
+            );
             match opcode {
                 Op::nop => panic!("no-op probably an accident"),
                 Op::iconst => push!(read_const!(i64)),
@@ -200,7 +205,7 @@ where
                 Op::udiv => uarith!(/),
                 Op::ddiv => farith!(/),
                 Op::pop => frame_mut!().sp -= 1,
-                Op::ret | Op::uret | Op::dret | Op::iret => {
+                Op::ret | Op::uret | Op::dret | Op::iret | Op::rret => {
                     let ret = pop!();
                     self.ctx.fp -= 1;
                     if self.ctx.fp == 0 {
@@ -262,24 +267,25 @@ where
                 Op::ldc => push!(load_const!()),
                 Op::clsr => {
                     let f = load_const!().as_fn();
-                    // we may be allocating unrooted upvalues so we must disable gc for this section
-                    self.heap.disable_gc();
-                    let mut clsr = self.alloc(Closure::new(f));
-                    for i in 0..clsr.f.upvalc as usize {
-                        let in_enclosing = read_byte!();
-                        let index = read_byte!() as usize;
-                        let upvalue = if in_enclosing == 0 {
-                            // if the upvalue is not in the directly enclosing scope, get the
-                            // upvalue from the enclosing closure
-                            frame!().clsr.upvals[index]
-                        } else {
-                            // if the upvalue closes over a variable in the enclosing function, capture it
-                            self.capture_upval(index)
-                        };
-                        assert_eq!(clsr.upvals.len(), i);
-                        clsr.upvals.push(upvalue);
-                    }
-                    self.heap.enable_gc();
+                    // we may be allocating unrooted upvalues in this section so we must disable gc
+                    let clsr = self.without_gc(|this| {
+                        let mut clsr = this.alloc(Closure::new(f));
+                        for i in 0..clsr.f.upvalc as usize {
+                            let in_enclosing = read_byte!();
+                            let index = read_byte!() as usize;
+                            let upvalue = if in_enclosing == 0 {
+                                // if the upvalue is not in the directly enclosing scope, get the
+                                // upvalue from the enclosing closure
+                                frame!().clsr.upvals[index]
+                            } else {
+                                // if the upvalue closes over a variable in the immediately enclosing function, capture it
+                                this.capture_upval(index)
+                            };
+                            assert_eq!(clsr.upvals.len(), i);
+                            clsr.upvals.push(upvalue);
+                        }
+                        clsr
+                    });
                     push!(clsr);
                 }
                 Op::invoke => {
@@ -297,6 +303,7 @@ where
                         Val::Clsr(clsr) => clsr,
                         x => panic!("expected invokable, found `{:?}`", x),
                     };
+                    frame_mut!().sp -= 1 + argc;
                     self.ctx.frames[self.ctx.fp] = Frame::new(clsr, self.ctx.bp);
                     frame = &mut self.ctx.frames[self.ctx.fp];
                     frame_mut!().sp = argc;
@@ -309,6 +316,12 @@ where
         })
     }
 
+    fn without_gc<T>(&mut self, f: impl FnOnce(&mut Self) -> T) -> T {
+        self.heap.disable_gc();
+        let t = f(self);
+        self.heap.enable_gc();
+        t
+    }
     fn capture_upval(&mut self, index: usize) -> Gc<Upval> {
         let ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
         let upval = Upval::Open(ptr);
