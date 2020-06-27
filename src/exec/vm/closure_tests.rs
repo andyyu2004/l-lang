@@ -229,15 +229,16 @@ mod test {
     }
 
     /// tests that sibling closures capture the same variable and can see mutations
+    /// i.e. inner should see the mutation performed by inner_mut
     /// fn main() -> i64 {
     ///     let outer = fn() -> fn() -> i64 => {
     ///         let x = -20;
-    ///         let inner1 = fn() -> i64 => x - 1;
-    ///         let inner1 = fn() -> i64 => x - 1;
+    ///         let inner = fn() -> i64 => x;
+    ///         let inner_mut = fn() -> i64 => x = -50;
+    ///         inner_mut();
     ///         inner
     ///     }
-    ///     let f = outer();
-    ///     f()
+    ///     outer()()
     /// }
     ///
     /// assert(main(), -21);
@@ -248,24 +249,25 @@ mod test {
             .emit_ldc(0)
             .emit_iloadl(0)
             .emit_invoke(0)
-            .emit_iconst(-99)
-            .emit_iconst(-99)
-            .emit_iconst(-99)
-            .emit_iloadl(1)
             .emit_invoke(0)
-            .emit_op(Op::ret)
+            .emit_op(Op::iret)
             .build();
         let outer = CodeBuilder::default()
             .emit_iconst(-20)
             .emit_closure(1, vec![(true, 0)])
+            .emit_closure(2, vec![(true, 0)])
+            .emit_iloadl(2)
+            .emit_invoke(0)
+            .emit_op(Op::pop)
             .emit_iloadl(1)
-            .emit_close_upvalue(0)
             .emit_op(Op::rret)
             .build();
         let inner = CodeBuilder::default()
             .emit_iloadu(0)
-            .emit_iconst(1)
-            .emit_op(Op::isub)
+            .emit_op(Op::iret)
+            .build();
+        let inner_mut = CodeBuilder::default()
+            .emit_istoreu(0, -50)
             .emit_op(Op::iret)
             .build();
 
@@ -273,13 +275,14 @@ mod test {
             vec![
                 Function::new(outer).into(),
                 Function::with_upvalc(inner, 1).into(),
+                Function::with_upvalc(inner_mut, 1).into(),
             ],
             Function::new(main),
         );
 
         let mut vm = VM::with_default_gc(exec);
-        // let ret = vm.run()?;
-        // assert_eq!(ret, Val::Int(-21));
+        let ret = vm.run()?;
+        assert_eq!(ret, Val::Int(-50));
 
         Ok(())
     }
