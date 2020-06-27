@@ -68,7 +68,7 @@ impl CodeBuilder {
         self.emit_uconst(index as u64).emit_op(Op::iaload)
     }
 
-    pub fn emit_iloadl(self, index: u8) -> Self {
+    pub fn emit_loadl(self, index: u8) -> Self {
         self.emit_op(Op::iloadl).emit_byte(index)
     }
 
@@ -78,14 +78,17 @@ impl CodeBuilder {
             .emit_byte(index)
     }
 
-    pub fn emit_iloadu(self, index: u8) -> Self {
+    pub fn emit_loadu(self, index: u8) -> Self {
         self.emit_op(Op::iloadu).emit_byte(index)
     }
 
-    pub fn emit_istoreu(self, index: u8, value: i64) -> Self {
-        self.emit_iconst(value)
-            .emit_op(Op::istoreu)
-            .emit_byte(index)
+    /// store a constant into an upvalue
+    pub fn emit_istoreu_const(self, index: u8, value: i64) -> Self {
+        self.emit_iconst(value).emit_storeu(index)
+    }
+
+    pub fn emit_storeu(self, index: u8) -> Self {
+        self.emit_op(Op::istoreu).emit_byte(index)
     }
 
     pub fn emit_iastore(self, index: u64, value: i64) -> Self {

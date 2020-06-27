@@ -18,8 +18,8 @@ mod test {
     #[test]
     fn simple_function_call() -> VMResult<()> {
         let f = CodeBuilder::default()
-            .emit_iloadl(0)
-            .emit_iloadl(1)
+            .emit_loadl(0)
+            .emit_loadl(1)
             .emit_op(Op::isub)
             .emit_op(Op::ret)
             .build();
@@ -53,7 +53,7 @@ mod test {
     #[test]
     fn multiple_flat_function_calls() -> VMResult<()> {
         let f = CodeBuilder::default()
-            .emit_iloadl(0)
+            .emit_loadl(0)
             .emit_iconst(1)
             .emit_op(Op::isub)
             .emit_op(Op::ret)
@@ -61,15 +61,15 @@ mod test {
         let main = CodeBuilder::default()
             .emit_iconst(2)
             .emit_ldc(0)
-            .emit_iloadl(0)
+            .emit_loadl(0)
             .emit_invoke(1)
             .emit_op(Op::pop)
             .emit_ldc(0)
-            .emit_iloadl(0)
+            .emit_loadl(0)
             .emit_invoke(1)
             .emit_op(Op::pop)
             .emit_ldc(0)
-            .emit_iloadl(0)
+            .emit_loadl(0)
             .emit_invoke(1)
             .emit_op(Op::ret)
             .build();

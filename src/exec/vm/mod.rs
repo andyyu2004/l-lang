@@ -231,12 +231,11 @@ where
                 Op::unit => push!(Val::Unit),
                 Op::rastore => {}
                 Op::raload => {}
-                Op::rloadl => {}
                 Op::rstorel => {}
                 Op::istorel | Op::ustorel | Op::dstorel => {
                     self.ctx.stack[self.ctx.bp + read_byte!() as usize] = peek!(0)
                 }
-                Op::iloadl | Op::uloadl | Op::dloadl => {
+                Op::iloadl | Op::uloadl | Op::dloadl | Op::rloadl => {
                     push!(self.ctx.stack[self.ctx.bp + read_byte!() as usize])
                 }
                 Op::iaload => aload!(i64),
@@ -256,14 +255,11 @@ where
                     let val = **upval;
                     push!(val)
                 }
-                Op::istoreu => {
+                Op::istoreu | Op::ustoreu | Op::dstoreu | Op::rstoreu => {
                     let val = peek!(0);
                     let i = read_byte!() as usize;
                     **frame_mut!().clsr.upvals[i] = val;
                 }
-                Op::ustoreu => todo!(),
-                Op::dstoreu => todo!(),
-                Op::rstoreu => todo!(),
                 Op::ldc => push!(load_const!()),
                 Op::clsr => {
                     let f = load_const!().as_fn();
