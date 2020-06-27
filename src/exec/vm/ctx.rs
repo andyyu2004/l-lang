@@ -1,10 +1,9 @@
-use crate::exec::{Closure, Frame, Val};
+use crate::exec::{Closure, Frame, Upval, Val};
 use crate::gc::{GCStateMap, Gc, Trace};
-use std::mem;
+use std::{collections::BTreeMap, mem, ptr::NonNull};
 
 const FRAMES_MAX: usize = 4;
-const STACK_MAX: usize = 8;
-// const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
+const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
 
 /// contains the fields that need to be gced
 pub struct Ctx {
@@ -16,6 +15,9 @@ pub struct Ctx {
     pub(crate) stack: [Val; STACK_MAX],
     pub(crate) frames: [Frame; FRAMES_MAX],
     pub(crate) constants: Vec<Val>,
+    /// map from a stack address to the upvalue that captures the value at that address
+    /// there will only be one upvalue as it can be reused
+    pub(crate) open_upvalues: BTreeMap<NonNull<Val>, Gc<Upval>>,
 }
 
 impl Trace for Ctx {
@@ -42,6 +44,7 @@ impl Ctx {
             stack,
             frames,
             constants,
+            open_upvalues: Default::default(),
             fp: 1,
             bp: 0,
         }

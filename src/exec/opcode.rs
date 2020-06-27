@@ -88,4 +88,7 @@ pub enum Op {
     /// clsr (<in_enclosing> <index>)+
     /// <f_idx> -> <closure>
     clsr    = 0xA1,
+    /// close upvalue and move it onto the heap
+    /// clsupv <index>
+    clsupv  = 0xA2,
 }

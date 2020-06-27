@@ -188,7 +188,7 @@ where
                 &self.ctx.stack[..self.ctx.bp + frame!().sp]
             );
             match opcode {
-                Op::nop => panic!("no-op probably an accident"),
+                Op::nop => panic!("no-op"),
                 Op::iconst => push!(read_const!(i64)),
                 Op::uconst => push!(read_const!(u64)),
                 Op::dconst => push!(f64::from_bits(frame_mut!().read_u64())),
@@ -288,6 +288,7 @@ where
                     });
                     push!(clsr);
                 }
+                Op::clsupv => self.close_upvalue(read_byte!()),
                 Op::invoke => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = read_byte!() as usize;
@@ -322,10 +323,30 @@ where
         self.heap.enable_gc();
         t
     }
+
+    /// moves the upvalue that points at the value at `index` onto the heap
+    fn close_upvalue(&mut self, index: u8) {
+        let val_ref = &mut self.ctx.stack[self.ctx.bp + index as usize];
+        let val_ptr = NonNull::new(val_ref).unwrap();
+        let mut upval_ptr = self.ctx.open_upvalues.remove(&val_ptr).unwrap();
+        // assert that the upvalue actually points at the value we are moving onto the heap
+        debug_assert_eq!(val_ref, &**upval_ptr);
+        // allocate the value and mutate the open upvalue to a closed upvalue
+        *upval_ptr = Upval::Closed(self.alloc(**upval_ptr));
+    }
+
+    /// captures the value at `index` in an upvalue
     fn capture_upval(&mut self, index: usize) -> Gc<Upval> {
-        let ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
-        let upval = Upval::Open(ptr);
-        self.alloc(upval)
+        let val_ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
+        match self.ctx.open_upvalues.get(&val_ptr) {
+            Some(&upvalue) => upvalue,
+            None => {
+                let upval = Upval::Open(val_ptr);
+                let upval_gc_ptr = self.alloc(upval);
+                self.ctx.open_upvalues.insert(val_ptr, upval_gc_ptr);
+                upval_gc_ptr
+            }
+        }
     }
 
     fn alloc<T>(&mut self, t: T) -> Gc<T>

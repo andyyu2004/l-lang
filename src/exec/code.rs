@@ -28,6 +28,10 @@ impl CodeBuilder {
         this
     }
 
+    pub fn emit_close_upvalue(self, index: u8) -> Self {
+        self.emit_op(Op::clsupv).emit_byte(index)
+    }
+
     fn emit_upval(self, in_enclosing: bool, index: u8) -> Self {
         self.emit_byte(in_enclosing as u8).emit_byte(index)
     }

@@ -1,6 +1,5 @@
-[00:00:00.000] (7f1cb6c01700) TRACE  registering with poller
-[00:00:00.003] (7f1cb6c01700) TRACE  init_client
-[00:00:00.003] (7f1cb58fb700) TRACE  registering with poller
-[00:00:00.003] (7f1cb58fb700) TRACE  registering with poller
-[00:00:04.824] (7f1cb7c0e4c0) WARN   unknown key combination Ctrl('x')
-[00:00:05.353] (7f1cb6c01700) TRACE  deregistering handle with poller
+[00:00:00.000] (7f18b2523700) TRACE  registering with poller
+[00:00:00.008] (7f18b2523700) TRACE  init_client
+[00:00:00.008] (7f18b121d700) TRACE  registering with poller
+[00:00:00.008] (7f18b121d700) TRACE  registering with poller
+[00:00:03.260] (7f18b2523700) TRACE  deregistering handle with poller

@@ -26,6 +26,7 @@ mod test {
             // first parameter is the constant table index of the function
             // the variable we wish to close over is `x` which has relative index 0 on the stack
             .emit_closure(0, vec![(true, 0)])
+            .emit_iloadl(1)
             .emit_iconst(5)
             .emit_invoke(1)
             .emit_op(Op::iret)
@@ -62,6 +63,7 @@ mod test {
             // instruct the vm to create a closure
             .emit_iconst(5)
             .emit_closure(0, vec![(true, 0)])
+            .emit_iloadl(1)
             .emit_invoke(0)
             .emit_op(Op::pop) // pop the return of the closure
             .emit_iloadl(0)
@@ -92,11 +94,13 @@ mod test {
         let main = CodeBuilder::default()
             .emit_iconst(-9)
             .emit_closure(0, vec![(true, 0)])
+            .emit_iloadl(1)
             .emit_invoke(0)
             .emit_op(Op::iret)
             .build();
         let outer = CodeBuilder::default()
             .emit_closure(1, vec![(false, 0)])
+            .emit_iloadl(0)
             .emit_invoke(0)
             .emit_op(Op::iret)
             .build();
@@ -123,7 +127,7 @@ mod test {
     /// fn main() -> i64 {
     ///     let x = -20;
     ///     let outer = fn() -> fn() -> i64 => {
-    ///         let inner = fn() -> i64 => x + 1;
+    ///         let inner = fn() -> i64 => x - 1;
     ///         inner
     ///     }
     ///     let f = outer();
@@ -137,12 +141,14 @@ mod test {
         let main = CodeBuilder::default()
             .emit_iconst(-20)
             .emit_closure(0, vec![(true, 0)])
+            .emit_iloadl(1)
             .emit_invoke(0) // this will leave `inner` on the stack
             .emit_invoke(0)
             .emit_op(Op::ret)
             .build();
         let outer = CodeBuilder::default()
             .emit_closure(1, vec![(false, 0)])
+            .emit_iloadl(0)
             .emit_op(Op::rret)
             .build();
         let inner = CodeBuilder::default()
@@ -163,6 +169,117 @@ mod test {
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-21));
+
+        Ok(())
+    }
+
+    /// fn main() -> i64 {
+    ///     let outer = fn() -> fn() -> i64 => {
+    ///         let x = -20;
+    ///         let inner = fn() -> i64 => x - 1;
+    ///         inner
+    ///     }
+    ///     let f = outer();
+    ///     f()
+    /// }
+    ///
+    /// assert(main(), -21);
+    ///
+    #[test]
+    fn closed_upvalues() -> VMResult<()> {
+        let main = CodeBuilder::default()
+            .emit_ldc(0)
+            .emit_iloadl(0)
+            .emit_invoke(0)
+            // emit a few constants to overwrite where the closed upvalue is pointing to
+            .emit_iconst(-99)
+            .emit_iconst(-99)
+            .emit_iconst(-99)
+            .emit_iloadl(1)
+            .emit_invoke(0)
+            .emit_op(Op::ret)
+            .build();
+        let outer = CodeBuilder::default()
+            .emit_iconst(-20)
+            .emit_closure(1, vec![(true, 0)])
+            .emit_iloadl(1)
+            .emit_close_upvalue(0)
+            .emit_op(Op::rret)
+            .build();
+        let inner = CodeBuilder::default()
+            .emit_iloadu(0)
+            .emit_iconst(1)
+            .emit_op(Op::isub)
+            .emit_op(Op::iret)
+            .build();
+
+        let exec = Executable::new(
+            vec![
+                Function::new(outer).into(),
+                Function::with_upvalc(inner, 1).into(),
+            ],
+            Function::new(main),
+        );
+
+        let mut vm = VM::with_default_gc(exec);
+        let ret = vm.run()?;
+        assert_eq!(ret, Val::Int(-21));
+
+        Ok(())
+    }
+
+    /// tests that sibling closures capture the same variable and can see mutations
+    /// fn main() -> i64 {
+    ///     let outer = fn() -> fn() -> i64 => {
+    ///         let x = -20;
+    ///         let inner1 = fn() -> i64 => x - 1;
+    ///         let inner1 = fn() -> i64 => x - 1;
+    ///         inner
+    ///     }
+    ///     let f = outer();
+    ///     f()
+    /// }
+    ///
+    /// assert(main(), -21);
+    ///
+    #[test]
+    fn sibling_upvalues() -> VMResult<()> {
+        let main = CodeBuilder::default()
+            .emit_ldc(0)
+            .emit_iloadl(0)
+            .emit_invoke(0)
+            .emit_iconst(-99)
+            .emit_iconst(-99)
+            .emit_iconst(-99)
+            .emit_iloadl(1)
+            .emit_invoke(0)
+            .emit_op(Op::ret)
+            .build();
+        let outer = CodeBuilder::default()
+            .emit_iconst(-20)
+            .emit_closure(1, vec![(true, 0)])
+            .emit_iloadl(1)
+            .emit_close_upvalue(0)
+            .emit_op(Op::rret)
+            .build();
+        let inner = CodeBuilder::default()
+            .emit_iloadu(0)
+            .emit_iconst(1)
+            .emit_op(Op::isub)
+            .emit_op(Op::iret)
+            .build();
+
+        let exec = Executable::new(
+            vec![
+                Function::new(outer).into(),
+                Function::with_upvalc(inner, 1).into(),
+            ],
+            Function::new(main),
+        );
+
+        let mut vm = VM::with_default_gc(exec);
+        // let ret = vm.run()?;
+        // assert_eq!(ret, Val::Int(-21));
 
         Ok(())
     }
