@@ -1,13 +1,15 @@
+use super::Parse;
 use crate::{ast::*, error::ParseResult};
-use regexlexer::Token;
 
-pub struct Parser<'src> {
-    tokens: Vec<Token<'src>>,
+#[derive(Copy, Clone)]
+pub struct Token;
+pub struct Parser {
+    tokens: Vec<Token>,
     i: usize,
 }
 
-impl<'src> Iterator for Parser<'src> {
-    type Item = Token<'src>;
+impl Iterator for Parser {
+    type Item = Token;
     fn next(&mut self) -> Option<Self::Item> {
         if self.i >= self.tokens.len() - 1 {
             None
@@ -17,8 +19,8 @@ impl<'src> Iterator for Parser<'src> {
     }
 }
 
-impl<'src> Parser<'src> {
-    pub fn new(tokens: Vec<Token<'src>>) -> Self {
+impl Parser {
+    pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, i: 0 }
     }
 
@@ -31,6 +33,6 @@ impl<'src> Parser<'src> {
     }
 
     pub fn parse_expr(&mut self) -> ParseResult<Expr> {
-        todo!()
+        Expr::parse(self)
     }
 }

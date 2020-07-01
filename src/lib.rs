@@ -12,6 +12,7 @@ mod driver;
 mod error;
 pub mod exec;
 mod gc;
+mod lexer;
 mod parser;
 mod util;
 
