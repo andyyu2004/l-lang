@@ -1,7 +1,8 @@
-//! lexing stuff from rustc
-//!
+//! lexing (some from rustc)
 
 mod cursor;
+mod lexer;
 mod lexing;
+crate mod symbol;
 
-use lexing::{tokenize, Token, TokenKind};
+pub use lexing::{tokenize, Token, TokenKind};

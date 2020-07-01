@@ -7,14 +7,24 @@
 #![feature(crate_visibility_modifier)]
 
 mod ast;
-pub mod compiler;
+mod compiler;
+mod ctx;
 mod driver;
 mod error;
-pub mod exec;
+mod exec;
 mod gc;
 mod lexer;
 mod parser;
 mod util;
+
+use driver::Driver;
+use error::LResult;
+
+pub fn exec(src: &str) -> LResult<()> {
+    let driver = Driver::default();
+    let tokens = driver.lex(src);
+    Ok(())
+}
 
 // in tir every expression has a type (i.e. a ty field))
 // mod tir;
