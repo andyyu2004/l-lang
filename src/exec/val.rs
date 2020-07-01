@@ -1,3 +1,4 @@
+use super::{Data, Instance};
 use crate::exec::{Array, Closure, Function};
 use crate::gc::{GCStateMap, Gc, Trace};
 use crate::{impl_from_inner, impl_into};
@@ -6,6 +7,8 @@ use crate::{impl_from_inner, impl_into};
 pub enum Val {
     Array(Gc<Array>),
     Fn(Gc<Function>),
+    Data(Gc<Data>),
+    Instance(Gc<Instance>),
     Clsr(Gc<Closure>),
     Str(Gc<String>),
     UInt(u64),
@@ -27,6 +30,8 @@ impl_into!(Val, Array, Gc<Array>);
 impl_into!(Val, Fn, Gc<Function>);
 
 impl_from_inner!(Gc<Function>, Val, Fn);
+impl_from_inner!(Gc<Data>, Val, Data);
+impl_from_inner!(Gc<Instance>, Val, Instance);
 impl_from_inner!(Gc<Closure>, Val, Clsr);
 impl_from_inner!(Gc<Array>, Val, Array);
 impl_from_inner!(u64, Val, UInt);
@@ -58,10 +63,12 @@ impl Val {
 impl Trace for Val {
     fn mark(&self, map: &mut GCStateMap) {
         match self {
-            Self::Fn(f) => f.mark(map),
-            Self::Clsr(f) => f.mark(map),
-            Self::Array(xs) => xs.mark(map),
-            Self::Str(s) => s.mark(map),
+            Self::Data(d) => Gc::mark(d, map),
+            Self::Instance(d) => Gc::mark(d, map),
+            Self::Fn(f) => Gc::mark(f, map),
+            Self::Clsr(f) => Gc::mark(f, map),
+            Self::Array(xs) => Gc::mark(xs, map),
+            Self::Str(s) => Gc::mark(s, map),
             Self::Double(_) | Self::Int(_) | Self::UInt(_) | Self::Unit => {}
         }
     }

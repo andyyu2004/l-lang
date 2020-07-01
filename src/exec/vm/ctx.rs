@@ -1,4 +1,4 @@
-use crate::exec::{Closure, Frame, Upval, Val};
+use crate::exec::{Closure, Frame, Upvar, Val};
 use crate::gc::{GCStateMap, Gc, Trace};
 use std::{collections::BTreeMap, mem, ptr::NonNull};
 
@@ -17,7 +17,7 @@ pub struct Ctx {
     pub(crate) constants: Vec<Val>,
     /// map from a stack address to the upvalue that captures the value at that address
     /// there will only be one upvalue as it can be reused
-    pub(crate) open_upvalues: BTreeMap<NonNull<Val>, Gc<Upval>>,
+    pub(crate) open_upvalues: BTreeMap<NonNull<Val>, Gc<Upvar>>,
 }
 
 impl Trace for Ctx {

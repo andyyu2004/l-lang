@@ -5,14 +5,14 @@ use std::{
 };
 
 #[derive(Debug)]
-pub enum Upval {
+pub enum Upvar {
     /// points to the value on the stack
     Open(NonNull<Val>),
     /// moved onto the heap
     Closed(Gc<Val>),
 }
 
-impl Deref for Upval {
+impl Deref for Upvar {
     type Target = Val;
     fn deref(&self) -> &Self::Target {
         match self {
@@ -22,7 +22,7 @@ impl Deref for Upval {
     }
 }
 
-impl DerefMut for Upval {
+impl DerefMut for Upvar {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Self::Open(ptr) => unsafe { ptr.as_mut() },
@@ -31,7 +31,7 @@ impl DerefMut for Upval {
     }
 }
 
-impl Trace for Upval {
+impl Trace for Upvar {
     fn mark(&self, map: &mut GCStateMap) {
         if let Self::Closed(ptr) = self {
             ptr.mark(map)

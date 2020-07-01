@@ -9,7 +9,7 @@ use crate::compiler::{Constant, Executable};
 use crate::error::*;
 use crate::gc::{GarbageCollector, Gc, Trace, GC};
 use ctx::Ctx;
-use std::{cell::Cell, collections::BTreeMap, ptr::NonNull};
+use std::{cell::Cell, ptr::NonNull};
 
 #[derive(Default, Debug)]
 pub struct Heap<G> {
@@ -65,10 +65,10 @@ where
 {
     pub fn new(gc: G, executable: Executable) -> Self {
         let mut heap = Heap::new(gc);
-
         let Executable { constants, start } = executable;
         let f = heap.gc.alloc(start);
         let clsr = heap.gc.alloc(Closure::new(f));
+
         // allocate all the constants once upfront
         let constants = constants
             .into_iter()
@@ -251,14 +251,14 @@ where
                 Op::rloadu => {}
                 Op::iloadu => {
                     let i = read_byte!() as usize;
-                    let upval = &*frame!().clsr.upvals[i];
-                    let val = **upval;
+                    let upvar = &*frame!().clsr.upvars[i];
+                    let val = **upvar;
                     push!(val)
                 }
                 Op::istoreu | Op::ustoreu | Op::dstoreu | Op::rstoreu => {
                     let val = peek!(0);
                     let i = read_byte!() as usize;
-                    **frame_mut!().clsr.upvals[i] = val;
+                    **frame_mut!().clsr.upvars[i] = val;
                 }
                 Op::ldc => push!(load_const!()),
                 Op::clsr => {
@@ -272,13 +272,13 @@ where
                             let upvalue = if in_enclosing == 0 {
                                 // if the upvalue is not in the directly enclosing scope, get the
                                 // upvalue from the enclosing closure
-                                frame!().clsr.upvals[index]
+                                frame!().clsr.upvars[index]
                             } else {
                                 // if the upvalue closes over a variable in the immediately enclosing function, capture it
                                 this.capture_upval(index)
                             };
-                            assert_eq!(clsr.upvals.len(), i);
-                            clsr.upvals.push(upvalue);
+                            assert_eq!(clsr.upvars.len(), i);
+                            clsr.upvars.push(upvalue);
                         }
                         clsr
                     });
@@ -297,6 +297,11 @@ where
                             assert!(f.upvalc == 0);
                             self.alloc(Closure::new(f))
                         }
+                        Val::Data(d) => {
+                            push!(self.alloc(Instance::new(d)));
+                            continue;
+                        }
+
                         Val::Clsr(clsr) => clsr,
                         x => panic!("expected invokable, found `{:?}`", x),
                     };
@@ -326,7 +331,7 @@ where
         let val_ptr = NonNull::new(val_ref).unwrap();
 
         // this vector contains all the open upvalues that are above the given stack index
-        let to_close: Vec<Gc<Upval>> = self
+        let to_close: Vec<Gc<Upvar>> = self
             .ctx
             .open_upvalues
             .drain_filter(|ptr, _| *ptr >= val_ptr)
@@ -335,18 +340,18 @@ where
 
         // allocate the value pointed to by the upvalue and mutate the open upvalue to a closed upvalue
         for mut upval_ptr in to_close {
-            *upval_ptr = Upval::Closed(self.alloc(**upval_ptr));
+            *upval_ptr = Upvar::Closed(self.alloc(**upval_ptr));
         }
     }
 
     /// captures the value at `index` in an upvalue
-    fn capture_upval(&mut self, index: usize) -> Gc<Upval> {
+    fn capture_upval(&mut self, index: usize) -> Gc<Upvar> {
         let val_ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
         // if the upvalue already exists, reuse it, otherwise, allocate a new one
         match self.ctx.open_upvalues.get(&val_ptr) {
             Some(&upvalue) => upvalue,
             None => {
-                let upval = Upval::Open(val_ptr);
+                let upval = Upvar::Open(val_ptr);
                 let upval_gc_ptr = self.alloc(upval);
                 self.ctx.open_upvalues.insert(val_ptr, upval_gc_ptr);
                 upval_gc_ptr
