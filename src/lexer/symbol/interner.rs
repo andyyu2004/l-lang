@@ -1,5 +1,5 @@
 use super::Symbol;
-use rustc_ap_arena::DroplessArena;
+use crate::arena::DroplessArena;
 use rustc_hash::FxHashMap;
 
 #[derive(Default)]

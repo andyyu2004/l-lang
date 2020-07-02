@@ -1,5 +1,5 @@
 mod parse;
 mod parser;
 
-pub use parse::Parse;
-pub use parser::Parser;
+crate use parse::Parse;
+crate use parser::Parser;

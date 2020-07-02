@@ -1,20 +1,53 @@
-use super::Span;
-use crate::{
-    error::ParseResult, parser::{Parse, Parser}
-};
+use super::{BinOp, Lit, UnaryOp, P};
+use crate::error::ParseResult;
+use crate::lexer::Span;
+use crate::parser::{Parse, Parser};
+use std::fmt::Display;
 
-pub struct Expr {
-    span: Span,
-    kind: ExprKind,
+#[derive(Debug, PartialEq)]
+crate struct Expr {
+    pub span: Span,
+    pub kind: ExprKind,
 }
 
-pub struct Lit {}
+impl Expr {
+    pub fn new(span: Span, kind: ExprKind) -> Self {
+        Self { span, kind }
+    }
+}
 
-pub enum ExprKind {
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+crate enum ExprKind {
     Lit(Lit),
+    Bin(BinOp, P<Expr>, P<Expr>),
+    Unary(UnaryOp, P<Expr>),
+    Paren(P<Expr>),
+}
+
+impl Display for ExprKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Lit(lit) => write!(f, "{}", lit),
+            Self::Bin(op, l, r) => write!(f, "({} {} {})", op, l, r),
+            Self::Unary(op, expr) => write!(f, "{}{}", op, expr),
+            Self::Paren(expr) => write!(f, "({})", expr),
+        }
+    }
 }
 
 impl Parse for Expr {
+    fn parse(parser: &mut Parser) -> ParseResult<Self> {
+        parser.parse_term()
+    }
+}
+
+impl Parse for ExprKind {
     fn parse(parser: &mut Parser) -> ParseResult<Self> {
         todo!()
     }

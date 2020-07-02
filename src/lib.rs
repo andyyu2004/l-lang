@@ -5,7 +5,11 @@
 #![feature(concat_idents)]
 #![feature(btree_drain_filter)]
 #![feature(crate_visibility_modifier)]
+#![feature(core_intrinsics)]
+#![feature(dropck_eyepatch)]
+#![feature(raw_vec_internals)]
 
+mod arena;
 mod ast;
 mod compiler;
 mod ctx;
@@ -13,16 +17,19 @@ mod driver;
 mod error;
 mod exec;
 mod gc;
+mod ir;
 mod lexer;
 mod parser;
+mod tir;
 mod util;
 
 use driver::Driver;
 use error::LResult;
 
 pub fn exec(src: &str) -> LResult<()> {
-    let driver = Driver::default();
-    let tokens = driver.lex(src);
+    let driver = Driver::new(src);
+    let expr = driver.parse();
+    println!("{:?}", expr);
     Ok(())
 }
 

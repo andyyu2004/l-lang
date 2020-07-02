@@ -1,4 +1,4 @@
-use super::Span;
+use crate::lexer::Span;
 
 pub struct Ty {
     pub span: Span,

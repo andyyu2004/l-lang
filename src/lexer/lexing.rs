@@ -27,7 +27,9 @@ pub enum TokenKind {
     /// "/* block comment */"
     /// Block comments can be recursive, so the sequence like "/* /* */"
     /// will not be considered terminated and will result in a parsing error.
-    BlockComment { terminated: bool },
+    BlockComment {
+        terminated: bool,
+    },
     /// Any whitespace characters sequence.
     Whitespace,
     /// "ident" or "continue"
@@ -40,8 +42,9 @@ pub enum TokenKind {
         kind: LiteralKind,
         suffix_start: usize,
     },
-    /// "'a"
-    Lifetime { starts_with_number: bool },
+    Lifetime {
+        starts_with_number: bool,
+    },
 
     // One-char tokens:
     /// ";"
@@ -98,6 +101,7 @@ pub enum TokenKind {
     Caret,
     /// "%"
     Percent,
+    Eof,
 
     /// Unknown token, not expected by the lexer, e.g. "№"
     Unknown,
@@ -150,15 +154,16 @@ pub enum RawStrError {
 
 /// Base of numeric literal encoding according to its prefix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
 pub enum Base {
     /// Literal starts with "0b".
-    Binary,
+    Binary  = 2,
     /// Literal starts with "0o".
-    Octal,
-    /// Literal starts with "0x".
-    Hexadecimal,
+    Octal   = 8,
     /// Literal doesn't contain a prefix.
-    Decimal,
+    Decimal = 10,
+    /// Literal starts with "0x".
+    Hex     = 16,
 }
 
 /// `rustc` allows files to have a shebang, e.g. "#!/usr/bin/rustrun",
@@ -459,7 +464,7 @@ impl Cursor<'_> {
                     self.eat_decimal_digits()
                 }
                 'x' => {
-                    base = Base::Hexadecimal;
+                    base = Base::Hex;
                     self.bump();
                     self.eat_hexadecimal_digits()
                 }
