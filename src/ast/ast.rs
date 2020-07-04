@@ -1,9 +1,31 @@
-use crate::{
-    error::ParseResult, lexer::{Tok, TokenKind}, parser::{Parse, Parser}
-};
+use crate::lexer::{Span, Symbol, Tok, TokenKind};
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug)]
+crate struct Ident {
+    span: Span,
+    symbol: Symbol,
+}
+
+#[derive(Clone, Debug)]
+crate struct Spanned<T> {
+    span: Span,
+    node: T,
+}
+
+#[derive(Clone, Debug)]
+crate struct Path {
+    pub span: Span,
+    pub segments: Vec<PathSegment>,
+}
+
+#[derive(Clone, Debug)]
+crate struct PathSegment {
+    pub ident: Ident,
+    pub args: Option<()>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 crate enum Lit {
     Int(i64),
     Uint(u64),
@@ -18,13 +40,7 @@ impl Display for Lit {
     }
 }
 
-impl Parse for Lit {
-    fn parse(parser: &mut Parser) -> ParseResult<Self> {
-        todo!()
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 crate enum BinOp {
     Mul,
     Div,
@@ -55,7 +71,7 @@ impl From<Tok> for BinOp {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 crate enum UnaryOp {
     Neg,
     Not,

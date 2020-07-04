@@ -21,6 +21,8 @@ mod ir;
 mod lexer;
 mod parser;
 mod tir;
+mod ty;
+mod typeck;
 mod util;
 
 use driver::Driver;
@@ -28,8 +30,7 @@ use error::LResult;
 
 pub fn exec(src: &str) -> LResult<()> {
     let driver = Driver::new(src);
-    let expr = driver.parse();
-    println!("{:?}", expr);
+    let expr = driver.gen_ir_expr();
     Ok(())
 }
 

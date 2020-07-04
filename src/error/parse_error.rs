@@ -1,7 +1,7 @@
 use crate::lexer::{Span, Tok, TokenKind};
 use thiserror::Error;
 
-pub type ParseResult<T> = Result<T, ParseError>;
+crate type ParseResult<T> = Result<T, ParseError>;
 
 #[derive(Debug)]
 pub struct ParseError {
@@ -14,7 +14,7 @@ impl ParseError {
         Self { span, kind }
     }
 
-    pub fn expected(kind: TokenKind, found: Tok) -> Self {
+    crate fn expected(kind: TokenKind, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::Expected(kind, found.kind))
     }
 }

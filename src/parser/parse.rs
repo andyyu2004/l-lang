@@ -2,5 +2,6 @@ use super::Parser;
 use crate::error::ParseResult;
 
 crate trait Parse: Sized {
-    fn parse(parser: &mut Parser) -> ParseResult<Self>;
+    type Output;
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output>;
 }

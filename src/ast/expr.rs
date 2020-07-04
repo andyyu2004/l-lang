@@ -1,7 +1,5 @@
 use super::{BinOp, Lit, UnaryOp, P};
-use crate::error::ParseResult;
 use crate::lexer::Span;
-use crate::parser::{Parse, Parser};
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
@@ -38,17 +36,5 @@ impl Display for ExprKind {
             Self::Unary(op, expr) => write!(f, "{}{}", op, expr),
             Self::Paren(expr) => write!(f, "({})", expr),
         }
-    }
-}
-
-impl Parse for Expr {
-    fn parse(parser: &mut Parser) -> ParseResult<Self> {
-        parser.parse_term()
-    }
-}
-
-impl Parse for ExprKind {
-    fn parse(parser: &mut Parser) -> ParseResult<Self> {
-        todo!()
     }
 }

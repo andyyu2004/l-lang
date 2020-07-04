@@ -5,17 +5,18 @@ mod lexing;
 mod span;
 crate mod symbol;
 
-pub use lexing::{LiteralKind, Token, TokenKind};
-pub use span::Span;
+crate use lexing::{LiteralKind, Token, TokenKind};
+crate use span::Span;
+crate use symbol::Symbol;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Tok {
+crate struct Tok {
     pub span: Span,
     pub kind: TokenKind,
 }
 
 /// transforms the rustc token with len into one with span
-pub fn lex(src: &str) -> impl Iterator<Item = Tok> + '_ {
+crate fn lex(src: &str) -> impl Iterator<Item = Tok> + '_ {
     let mut i = 0;
 
     // note: it is important to filter after so that the spans are correct

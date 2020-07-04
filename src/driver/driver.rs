@@ -2,6 +2,7 @@ use crate::ir;
 use crate::{ast, compiler, ctx::Ctx, error::LResult, exec, lexer, parser, tir};
 use compiler::Executable;
 use exec::VM;
+use ir::LoweringCtx;
 use itertools::Itertools;
 use lexer::Tok;
 use parser::Parser;
@@ -27,6 +28,20 @@ impl Driver {
         let expr = parser.parse_expr()?;
         println!("expr: {}", expr);
         Ok(expr)
+    }
+
+    pub fn gen_ir_expr(&self) -> LResult<&ir::Expr> {
+        let expr = self.parse_expr()?;
+        let mut lowering_ctx = LoweringCtx::new(&self.ctx.arena);
+        let ir = lowering_ctx.lower_expr(&expr);
+        println!("ir: {:?}", ir);
+        Ok(ir)
+    }
+
+    pub fn gen_tir_expr(&self) -> LResult<tir::Prog> {
+        let ir = self.gen_ir_expr()?;
+        // println!("ir: {:?}", ir);
+        todo!()
     }
 
     pub fn parse(&self) -> LResult<ast::Prog> {
