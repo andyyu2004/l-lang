@@ -1,8 +1,7 @@
 use super::*;
 use crate::{
-    ast::*, ctx::Ctx, error::{ParseError, ParseResult}, lexer::{LiteralKind, Span, Tok, TokenKind}
+    ast::*, ctx::Ctx, error::{ParseError, ParseResult}, lexer::{Tok, TokenKind}
 };
-use itertools::Itertools;
 
 crate struct Parser<'ctx> {
     tokens: Vec<Tok>,
@@ -38,10 +37,9 @@ impl<'ctx> Parser<'ctx> {
     where
         &'i I: IntoIterator<Item = &'i TokenKind>,
     {
-        let res = kinds
+        kinds
             .into_iter()
-            .fold(None, |acc, &k| acc.or(self.accept(k)));
-        return res;
+            .fold(None, |acc, &k| acc.or(self.accept(k)))
     }
 
     pub(super) fn next(&mut self) -> Tok {
@@ -87,7 +85,7 @@ impl<'ctx> Parser<'ctx> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Driver;
+    use crate::{lexer::Span, Driver};
 
     macro_rules! parse_expr {
         ($src:expr) => {{
@@ -99,7 +97,10 @@ mod test {
     #[test]
     fn parse_int_literal() {
         let expr = parse_expr!("2");
-        assert_eq!(expr, Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Int(2))));
+        assert_eq!(
+            expr,
+            Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0)))
+        );
     }
 
     #[test]
@@ -111,8 +112,8 @@ mod test {
                 Span::new(0, 5),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Int(2))),
-                    box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Int(3))),
+                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Num(3.0))),
                 )
             )
         );
@@ -127,13 +128,13 @@ mod test {
                 Span::new(0, 9),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Int(2))),
+                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))),
                     box Expr::new(
                         Span::new(4, 9),
                         ExprKind::Bin(
                             BinOp::Mul,
-                            box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Int(3))),
-                            box Expr::new(Span::new(8, 9), ExprKind::Lit(Lit::Int(4))),
+                            box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Num(3.0))),
+                            box Expr::new(Span::new(8, 9), ExprKind::Lit(Lit::Num(4.0))),
                         )
                     ),
                 )

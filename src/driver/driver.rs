@@ -1,19 +1,28 @@
 use crate::ir;
-use crate::{ast, compiler, ctx::Ctx, error::LResult, exec, lexer, parser, tir};
+use crate::{
+    ast, compiler, ctx::Ctx, error::LResult, exec, lexer, parser, shared::Arena, tir, typeck::GlobalCtx
+};
 use compiler::Executable;
 use exec::VM;
 use ir::LoweringCtx;
 use itertools::Itertools;
 use lexer::Tok;
+use once_cell::unsync::OnceCell;
 use parser::Parser;
 
-crate struct Driver {
+crate struct Driver<'tcx> {
     ctx: Ctx,
+    arena: Arena<'tcx>,
+    global_ctx: OnceCell<GlobalCtx<'tcx>>,
 }
 
-impl Driver {
+impl<'tcx> Driver<'tcx> {
     pub fn new(src: &str) -> Self {
-        Self { ctx: Ctx::new(src) }
+        Self {
+            ctx: Ctx::new(src),
+            arena: Arena::default(),
+            global_ctx: OnceCell::new(),
+        }
     }
 
     pub fn lex(&self) -> LResult<Vec<Tok>> {
@@ -38,10 +47,12 @@ impl Driver {
         Ok(ir)
     }
 
-    pub fn gen_tir_expr(&self) -> LResult<tir::Prog> {
+    pub fn gen_tir_expr(&'tcx self) -> LResult<&'tcx tir::Expr> {
         let ir = self.gen_ir_expr()?;
-        // println!("ir: {:?}", ir);
-        todo!()
+        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena));
+        let tir = gcx.enter_tcx(|tcx| tcx.type_expr(ir)).unwrap();
+        println!("tir: {}", tir);
+        Ok(tir)
     }
 
     pub fn parse(&self) -> LResult<ast::Prog> {

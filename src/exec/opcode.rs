@@ -9,7 +9,7 @@ use num_enum::TryFromPrimitive;
 pub enum Op {
     ///     ->
     nop     = 0x00,
-    /// iconst <val>
+    /// const <val>
     ///     -> i64
     iconst  = 0x01,
     uconst  = 0x02,

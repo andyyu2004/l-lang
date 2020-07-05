@@ -3,8 +3,8 @@ use crate::lexer::Span;
 
 #[derive(Debug)]
 crate struct Expr<'ir> {
-    span: Span,
-    kind: ExprKind<'ir>,
+    pub span: Span,
+    pub kind: ExprKind<'ir>,
 }
 
 impl<'ir> Expr<'ir> {
@@ -18,5 +18,4 @@ crate enum ExprKind<'ir> {
     Lit(ast::Lit),
     Bin(ast::BinOp, &'ir Expr<'ir>, &'ir Expr<'ir>),
     Unary(ast::UnaryOp, &'ir Expr<'ir>),
-    Paren(&'ir Expr<'ir>),
 }

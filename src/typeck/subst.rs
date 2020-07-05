@@ -1,0 +1,1 @@
+crate trait Subst<'tcx> {}

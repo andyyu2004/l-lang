@@ -1,6 +1,6 @@
 use super::{Parse, Parser};
 use crate::{
-    ast::{BinOp, Expr, ExprKind, Lit, UnaryOp}, error::ParseResult, lexer::{LiteralKind, Span, TokenKind}
+    ast::{BinOp, Expr, ExprKind, Lit, UnaryOp}, error::ParseResult, lexer::{LiteralKind, Span, Tok, TokenKind}
 };
 
 const UNARY_OPS: [TokenKind; 2] = [TokenKind::Not, TokenKind::Minus];
@@ -73,9 +73,28 @@ impl Parse for PrimaryExprParser {
         } else if let TokenKind::Literal { kind, .. } = parser.peek().kind {
             let span = parser.next().span;
             LiteralExprParser { kind, span }.parse(parser)
+        } else if let Some(ident) = parser.accept(TokenKind::Ident) {
+            IdentParser { ident }.parse(parser)
         } else {
             todo!()
         }
+    }
+}
+
+pub(super) struct IdentParser {
+    ident: Tok,
+}
+
+impl Parse for IdentParser {
+    type Output = Expr;
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let slice = &parser.ctx.main_file()[self.ident.span];
+        let kind = match slice {
+            "false" => ExprKind::Lit(Lit::Bool(false)),
+            "true" => ExprKind::Lit(Lit::Bool(true)),
+            _ => todo!(),
+        };
+        Ok(Expr::new(self.ident.span, kind))
     }
 }
 
@@ -88,10 +107,9 @@ impl Parse for LiteralExprParser {
     type Output = Expr;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let literal = match self.kind {
-            LiteralKind::Int { base, .. } => {
+            LiteralKind::Int { base, .. } | LiteralKind::Float { base, .. } => {
                 let slice = &parser.ctx.main_file()[self.span];
-                println!("slice: {}", slice);
-                Lit::Int(i64::from_str_radix(slice, base as u32).unwrap())
+                Lit::Num(i64::from_str_radix(slice, base as u32).unwrap() as f64)
             }
             _ => todo!(),
         };

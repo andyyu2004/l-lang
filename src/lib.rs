@@ -1,6 +1,7 @@
 #![feature(type_name_of_val)]
 #![feature(box_syntax)]
 #![feature(raw)]
+#![feature(hash_set_entry)]
 #![feature(box_into_raw_non_null)]
 #![feature(concat_idents)]
 #![feature(btree_drain_filter)]
@@ -8,6 +9,9 @@
 #![feature(core_intrinsics)]
 #![feature(dropck_eyepatch)]
 #![feature(raw_vec_internals)]
+
+#[macro_use]
+extern crate derive_deref;
 
 mod arena;
 mod ast;
@@ -20,6 +24,7 @@ mod gc;
 mod ir;
 mod lexer;
 mod parser;
+mod shared;
 mod tir;
 mod ty;
 mod typeck;
@@ -30,7 +35,7 @@ use error::LResult;
 
 pub fn exec(src: &str) -> LResult<()> {
     let driver = Driver::new(src);
-    let expr = driver.gen_ir_expr();
+    let expr = driver.gen_tir_expr()?;
     Ok(())
 }
 

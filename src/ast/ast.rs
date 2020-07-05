@@ -25,17 +25,17 @@ crate struct PathSegment {
     pub args: Option<()>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 crate enum Lit {
-    Int(i64),
-    Uint(u64),
+    Num(f64),
+    Bool(bool),
 }
 
 impl Display for Lit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Int(i) => write!(f, "{}", i),
-            Self::Uint(u) => write!(f, "{}", u),
+            Self::Num(i) => write!(f, "{}", i),
+            Self::Bool(b) => write!(f, "{}", b),
         }
     }
 }
