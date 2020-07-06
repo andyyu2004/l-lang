@@ -10,8 +10,10 @@ crate enum TypeError<'tcx> {
     InferError(InferError<'tcx>),
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Copy, Clone)]
 crate enum InferError<'tcx> {
     #[error("Failed to unify type `{0}` with `{1}`")]
     UnificationFailure(Ty<'tcx>, Ty<'tcx>),
+    #[error("Require type annotations")]
+    InferenceFailure,
 }

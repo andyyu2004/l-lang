@@ -1,6 +1,6 @@
-use super::{subst::Substitutions, InferCtxUndoLogs};
+use super::InferCtxUndoLogs;
 use crate::{
-    ty::{InferTy, Ty, TyKind}, typeck::{InferError, InferResult}
+    ty::Ty, typeck::{InferError, InferResult}
 };
 use ena::unify as ut;
 use std::marker::PhantomData;
@@ -20,6 +20,8 @@ crate enum TyVarValue<'tcx> {
 #[derive(Default, Debug)]
 crate struct TypeVariableStorage<'tcx> {
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
+    /// the number of type variables that have been generated
+    tyvid_count: u32,
 }
 
 impl<'tcx> TypeVariableStorage<'tcx> {
@@ -41,12 +43,19 @@ crate struct TypeVariableTable<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
-    pub fn generate_substitutions(&self) -> InferResult<&'a Substitutions<'tcx>> {
-        todo!()
-    }
-
     fn eq_relations(&mut self) -> UnificationTable<'_, 'tcx, TyVidEqKey<'tcx>> {
         self.storage.eq_relations.with_log(&mut self.undo_log)
+    }
+
+    /// generates an indexed substitution based on the contents of the UnificationTable
+    pub fn gen_substs(&mut self) -> InferResult<'tcx, Vec<Ty<'tcx>>> {
+        (0..self.storage.tyvid_count)
+            .map(|index| self.probe(TyVid { index }))
+            .map(|val| match val {
+                TyVarValue::Known(ty) => Ok(ty),
+                TyVarValue::Unknown => Err(InferError::InferenceFailure),
+            })
+            .collect()
     }
 
     pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> InferResult<'tcx, ()> {
@@ -69,6 +78,8 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     pub fn new_ty_var(&mut self) -> TyVid {
         let mut tables = self.eq_relations();
         let key = tables.new_key(TyVarValue::Unknown);
+        debug_assert_eq!(key.vid.index, self.storage.tyvid_count);
+        self.storage.tyvid_count += 1;
         key.vid
     }
 }

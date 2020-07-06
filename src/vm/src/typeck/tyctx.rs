@@ -1,5 +1,5 @@
-use super::inference::InferCtxBuilder;
-use super::{InferResult, TypeResult};
+use super::inference::{InferCtxBuilder, SubstRef};
+use super::{InferResult, List, TypeResult};
 use crate::shared::{Arena, CtxInterners};
 use crate::{
     ir, tir, ty::{Ty, TyKind}
@@ -12,11 +12,19 @@ crate struct TyCtx<'tcx> {
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn alloc_tir<T>(&self, tir: T) -> &'tcx T {
-        self.gcx.interners.intern_tir(tir)
+        self.interners.intern_tir(tir)
     }
 
     pub fn mk_ty(&self, ty: TyKind<'tcx>) -> Ty<'tcx> {
-        self.gcx.interners.intern_ty(ty)
+        self.interners.intern_ty(ty)
+    }
+
+    pub fn intern_substs(self, substs: &[Ty<'tcx>]) -> SubstRef<'tcx> {
+        if substs.is_empty() {
+            List::empty()
+        } else {
+            List::from_arena(&self.interners.arena, substs)
+        }
     }
 }
 

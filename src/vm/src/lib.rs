@@ -2,6 +2,7 @@
 #![feature(box_syntax)]
 #![feature(raw)]
 #![feature(hash_set_entry)]
+#![feature(extern_types)]
 #![feature(box_into_raw_non_null)]
 #![feature(concat_idents)]
 #![feature(btree_drain_filter)]

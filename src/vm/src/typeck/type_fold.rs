@@ -1,31 +1,57 @@
 use super::TyCtx;
 use crate::ty::{Ty, TyKind};
 
-crate trait TypeFoldable<'tcx> {
-    fn fold_with<F>(&self, folder: &mut F) -> Self
+crate trait TypeFoldable<'tcx>: Sized {
+    fn super_fold_with<F>(&self, folder: &mut F) -> Self
     where
         F: TypeFolder<'tcx>;
 
-    fn visit_with<V>(&self, visitor: &mut V) -> bool
+    fn super_visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>;
-}
 
-impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     fn fold_with<F>(&self, folder: &mut F) -> Self
     where
         F: TypeFolder<'tcx>,
     {
+        self.super_fold_with(folder)
+    }
+
+    fn visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        self.super_visit_with(visitor)
+    }
+}
+
+impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
+    fn super_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
         let kind = match self.kind {
-            TyKind::_Phantom(_) => return self,
-            TyKind::Infer(_) => todo!(),
-            TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => return self,
+            TyKind::Infer(_)
+            | TyKind::Unit
+            | TyKind::Char
+            | TyKind::Num
+            | TyKind::Bool
+            | TyKind::_Phantom(_) => {
+                return self;
+            }
         };
 
         if kind == self.kind { self } else { folder.tcx().mk_ty(kind) }
     }
 
-    fn visit_with<V>(&self, visitor: &mut V) -> bool
+    fn fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        folder.fold_ty(self)
+    }
+
+    fn super_visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>,
     {

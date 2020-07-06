@@ -48,9 +48,15 @@ crate struct InferCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
+    pub fn gen_substs(&self) -> InferResult<'tcx, SubstRef<'tcx>> {
+        let substs = self.inner.borrow_mut().type_variables().gen_substs()?;
+        Ok(self.tcx.intern_substs(&substs))
+    }
+
     pub fn infer_expr(&'a self, expr: &ir::Expr<'_>) -> InferResult<'tcx, &'tcx tir::Expr<'tcx>> {
-        let expr = self.type_expr(expr);
-        expr
+        let tir_expr = self.type_expr(expr)?;
+        let substs = self.gen_substs()?;
+        Ok(tir_expr.subst(self.tcx, substs))
     }
 
     fn type_expr(&'a self, expr: &ir::Expr<'_>) -> InferResult<'tcx, &'tcx tir::Expr<'tcx>> {

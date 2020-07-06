@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use std::{borrow::Borrow, cell::RefCell};
 
 crate struct CtxInterners<'tcx> {
-    arena: &'tcx Arena<'tcx>,
+    pub arena: &'tcx Arena<'tcx>,
     /// map from tykind to the allocated ty ptr
     types: RefCell<FxHashMap<TyKind<'tcx>, Ty<'tcx>>>,
 }
@@ -18,10 +18,7 @@ impl<'tcx> Borrow<TyKind<'tcx>> for TyS<'tcx> {
 
 impl<'tcx> CtxInterners<'tcx> {
     pub fn new(arena: &'tcx Arena<'tcx>) -> Self {
-        Self {
-            arena,
-            types: Default::default(),
-        }
+        Self { arena, types: Default::default() }
     }
 
     pub(crate) fn intern_ty(&self, kind: TyKind<'tcx>) -> Ty<'tcx> {
@@ -36,7 +33,7 @@ impl<'tcx> CtxInterners<'tcx> {
         }
     }
 
-    pub fn intern_tir<T>(&self, tir: T) -> &T {
+    pub fn intern_tir<T>(&self, tir: T) -> &'tcx T {
         self.arena.alloc_tir(tir)
     }
 }
