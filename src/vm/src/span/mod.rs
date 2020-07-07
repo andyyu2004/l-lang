@@ -4,7 +4,7 @@ mod source_map;
 crate use ctx::Ctx;
 crate use source_map::SourceMap;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Span {
     /// lo is inclusive
     pub lo: usize,
@@ -18,9 +18,6 @@ impl Span {
     }
 
     pub fn merge(&self, with: &Span) -> Self {
-        Self {
-            lo: self.lo,
-            hi: with.hi,
-        }
+        Self { lo: self.lo, hi: with.hi }
     }
 }

@@ -22,11 +22,7 @@ pub(super) struct TermExprParser;
 impl Parse for TermExprParser {
     type Output = Expr;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        LBinaryExprParser {
-            ops: &TERM_OPS,
-            inner: FactorExprParser,
-        }
-        .parse(parser)
+        LBinaryExprParser { ops: &TERM_OPS, inner: FactorExprParser }.parse(parser)
     }
 }
 
@@ -35,11 +31,7 @@ pub(super) struct FactorExprParser;
 impl Parse for FactorExprParser {
     type Output = Expr;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        LBinaryExprParser {
-            ops: &FACTOR_OPS,
-            inner: UnaryExprParser,
-        }
-        .parse(parser)
+        LBinaryExprParser { ops: &FACTOR_OPS, inner: UnaryExprParser }.parse(parser)
     }
 }
 
@@ -51,10 +43,7 @@ impl Parse for UnaryExprParser {
         if let Some(t) = parser.accept_one_of(&UNARY_OPS) {
             let unary_op = UnaryOp::from(t);
             let expr = box self.parse(parser)?;
-            Ok(Expr::new(
-                t.span.merge(&expr.span),
-                ExprKind::Unary(unary_op, expr),
-            ))
+            Ok(Expr::new(t.span.merge(&expr.span), ExprKind::Unary(unary_op, expr)))
         } else {
             PrimaryExprParser.parse(parser)
         }
@@ -73,8 +62,9 @@ impl Parse for PrimaryExprParser {
             Ok(Expr::new(span, ExprKind::Paren(expr)))
         } else if let Some((kind, span)) = parser.accept_literal() {
             LiteralExprParser { kind, span }.parse(parser)
-        } else if let Some((ident, span)) = parser.accept_ident() {
-            IdentParser { ident, span }.parse(parser)
+        } else if let Some(ident) = parser.accept_ident() {
+            todo!()
+        // Expr::new(ident.span, ExprKInd::)
         } else if let Some(tok) = parser.accept(TokenType::False) {
             Ok(Expr::new(tok.span, ExprKind::Lit(Lit::Bool(false))))
         } else if let Some(tok) = parser.accept(TokenType::True) {
@@ -82,19 +72,6 @@ impl Parse for PrimaryExprParser {
         } else {
             todo!()
         }
-    }
-}
-
-pub(super) struct IdentParser {
-    span: Span,
-    ident: Symbol,
-}
-
-impl Parse for IdentParser {
-    type Output = Expr;
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        // Ok(Expr::new(self.span, kind));
-        todo!()
     }
 }
 

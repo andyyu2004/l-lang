@@ -8,9 +8,12 @@ use std::collections::HashMap;
 
 const KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
     hashmap! {
-    "false" => TokenType::False,
-    "true" => TokenType::True,
-    "fn" => TokenType::Fn
+        "false" => TokenType::False,
+        "true" => TokenType::True,
+        "fn" => TokenType::Fn,
+        "pub" => TokenType::Pub,
+        "enum" => TokenType::Enum,
+        "struct" => TokenType::Struct,
     }
 });
 
@@ -104,6 +107,9 @@ impl<'ctx> Lexer<'ctx> {
 /// token kind that has been further processed to include keywords
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
+    Pub,
+    Struct,
+    Enum,
     Fn,
     False,
     True,

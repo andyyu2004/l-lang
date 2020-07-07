@@ -4,8 +4,7 @@ use crate::ir;
 
 impl<'ir> LoweringCtx<'ir> {
     fn lower_exprs(&mut self, exprs: &[Box<Expr>]) -> &'ir [ir::Expr<'ir>] {
-        self.arena
-            .alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
+        self.arena.alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
     }
 
     crate fn lower_expr(&mut self, e: &Expr) -> &'ir ir::Expr<'ir> {
@@ -20,6 +19,7 @@ impl<'ir> LoweringCtx<'ir> {
             }
             ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(&expr)),
             ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
+            ExprKind::Block(_) => todo!(),
         };
         ir::Expr::new(e.span, kind)
     }

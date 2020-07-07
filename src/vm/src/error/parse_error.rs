@@ -15,8 +15,16 @@ impl ParseError {
         Self { span, kind }
     }
 
+    crate fn unexpected_eof(span: Span) -> Self {
+        Self { span, kind: ParseErrorKind::Eof }
+    }
+
     crate fn expected(ttype: TokenType, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::Expected(ttype, found.ttype))
+    }
+
+    crate fn expected_one_of(ttypes: Vec<TokenType>, found: Tok) -> Self {
+        Self::new(found.span, ParseErrorKind::ExpectedOneOf(ttypes, found.ttype))
     }
 }
 
@@ -24,6 +32,8 @@ impl ParseError {
 pub enum ParseErrorKind {
     #[error("expected `{0:?}` found `{1:?}`")]
     Expected(TokenType, TokenType),
-    #[error("found <eof>")]
+    #[error("expected one of `{0:?}` found `{1:?}`")]
+    ExpectedOneOf(Vec<TokenType>, TokenType),
+    #[error("unexpected <eof>")]
     Eof,
 }

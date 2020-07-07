@@ -14,7 +14,7 @@ where
     T: TypeFoldable<'tcx>,
 {
     fn subst_spanned(&self, tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>, span: Option<Span>) -> Self {
-        let mut folder = SubstFolder { tcx, substs };
+        let mut folder = InferenceVarSubstFolder { tcx, substs };
         self.fold_with(&mut folder)
     }
 }
@@ -24,12 +24,13 @@ where
 /// i.e. the type for InferTy::TyVid(i) is Substitutions[i]
 crate type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
 
-crate struct SubstFolder<'tcx> {
+/// substitute inference variables according to some substitution
+crate struct InferenceVarSubstFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstRef<'tcx>,
 }
 
-impl<'tcx> TypeFolder<'tcx> for SubstFolder<'tcx> {
+impl<'tcx> TypeFolder<'tcx> for InferenceVarSubstFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             &TyKind::Infer(InferTy::TyVar(tyvid)) => return self.substs[tyvid.index as usize],

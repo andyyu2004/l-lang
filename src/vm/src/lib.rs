@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
-#![feature(box_syntax)]
+#![feature(box_syntax, box_patterns)]
+#![feature(iterator_fold_self)]
 #![feature(raw)]
 #![feature(hash_set_entry)]
 #![feature(extern_types)]

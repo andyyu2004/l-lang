@@ -18,6 +18,16 @@ impl<'ctx> Parser<'ctx> {
         Self { tokens: tokens.into_iter().collect(), ctx, idx: 0 }
     }
 
+    /// runs some parser and returns the result and the span that it consumed
+    pub fn with_span<R>(&mut self, mut parser: impl Parse<Output = R>) -> ParseResult<(R, Span)> {
+        let lo = self.idx;
+        Ok((parser.parse(self)?, Span::new(lo, self.idx)))
+    }
+
+    pub fn empty_span(&self) -> Span {
+        Span { lo: self.idx, hi: self.idx }
+    }
+
     pub fn parse(&mut self) -> ParseResult<Prog> {
         todo!()
     }
@@ -28,13 +38,6 @@ impl<'ctx> Parser<'ctx> {
 
     pub fn parse_expr(&mut self) -> ParseResult<Expr> {
         ExprParser.parse(self)
-    }
-
-    pub(super) fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
-    where
-        &'i I: IntoIterator<Item = &'i TokenType>,
-    {
-        ttypes.into_iter().fold(None, |acc, &t| acc.or(self.accept(t)))
     }
 
     pub(super) fn try_parse<R>(&mut self, mut parser: impl Parse<Output = R>) -> Option<R> {
@@ -51,11 +54,15 @@ impl<'ctx> Parser<'ctx> {
         tok
     }
 
-    pub(super) fn safe_peek(&self) -> Option<Tok> {
-        if self.idx < self.tokens.len() { Some(self.tokens[self.idx]) } else { None }
+    pub(super) fn safe_peek(&self) -> ParseResult<Tok> {
+        if self.idx < self.tokens.len() {
+            Ok(self.tokens[self.idx])
+        } else {
+            Err(ParseError::unexpected_eof(self.empty_span()))
+        }
     }
 
-    pub(super) fn safe_peek_ttype(&self) -> Option<TokenType> {
+    pub(super) fn safe_peek_ttype(&self) -> ParseResult<TokenType> {
         self.safe_peek().map(|t| t.ttype)
     }
 
@@ -64,7 +71,7 @@ impl<'ctx> Parser<'ctx> {
     }
 
     pub(super) fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
-        let Tok { span, ttype } = self.safe_peek()?;
+        let Tok { span, ttype } = self.safe_peek().ok()?;
         match ttype {
             TokenType::Literal { kind, .. } => {
                 self.idx += 1;
@@ -74,19 +81,25 @@ impl<'ctx> Parser<'ctx> {
         }
     }
 
-    pub(super) fn accept_ident(&mut self) -> Option<(Symbol, Span)> {
-        let Tok { span, ttype } = self.safe_peek()?;
+    pub(super) fn expect_ident(&mut self) -> ParseResult<Ident> {
+        let err_ident = TokenType::Ident(Symbol(0));
+        let tok = self.safe_peek()?;
+        let Tok { span, ttype } = tok;
         match ttype {
-            TokenType::Ident(ident) => {
+            TokenType::Ident(symbol) => {
                 self.idx += 1;
-                Some((ident, span))
+                Ok(Ident { span, symbol })
             }
-            _ => None,
+            _ => Err(ParseError::expected(err_ident, tok)),
         }
     }
 
+    pub(super) fn accept_ident(&mut self) -> Option<Ident> {
+        self.expect_ident().ok()
+    }
+
     pub(super) fn accept(&mut self, ttype: TokenType) -> Option<Tok> {
-        self.safe_peek().and_then(|t| {
+        self.safe_peek().ok().and_then(|t| {
             if t.ttype == ttype {
                 self.idx += 1;
                 Some(t)
@@ -94,6 +107,13 @@ impl<'ctx> Parser<'ctx> {
                 None
             }
         })
+    }
+
+    pub(super) fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
+    where
+        &'i I: IntoIterator<Item = &'i TokenType>,
+    {
+        ttypes.into_iter().fold(None, |acc, &t| acc.or(self.accept(t)))
     }
 
     pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<Tok> {
@@ -104,6 +124,15 @@ impl<'ctx> Parser<'ctx> {
         } else {
             Err(ParseError::expected(ttype, t))
         }
+    }
+
+    pub(super) fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<Tok>
+    where
+        &'i I: IntoIterator<Item = &'i TokenType>,
+    {
+        self.accept_one_of(ttypes).ok_or_else(|| {
+            ParseError::expected_one_of(ttypes.into_iter().cloned().collect(), self.peek())
+        })
     }
 }
 

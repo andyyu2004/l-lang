@@ -1,26 +1,59 @@
+use super::{Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use std::fmt::Display;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct Ident {
-    span: Span,
-    symbol: Symbol,
+    pub span: Span,
+    pub symbol: Symbol,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Clone)]
+crate struct Block {
+    span: Span,
+    stmts: Vec<Stmt>,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+crate struct Generics {
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+crate struct FnSig {
+    pub inputs: Vec<Param>,
+    pub output: Option<P<Ty>>,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+crate struct Param {
+    pub span: Span,
+    pub pattern: Pattern,
+    pub ty: Ty,
+}
+
+crate type Visibility = Spanned<VisibilityKind>;
+
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+crate enum VisibilityKind {
+    Public,
+    Private,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct Spanned<T> {
-    span: Span,
-    node: T,
+    pub span: Span,
+    pub node: T,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Path {
     pub span: Span,
     pub segments: Vec<PathSegment>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct PathSegment {
     pub ident: Ident,
     pub args: Option<()>,

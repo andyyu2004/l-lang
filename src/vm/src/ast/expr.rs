@@ -1,8 +1,8 @@
-use super::{BinOp, Lit, UnaryOp, P};
+use super::{BinOp, Block, Lit, UnaryOp, P};
 use crate::span::Span;
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 crate struct Expr {
     pub span: Span,
     pub kind: ExprKind,
@@ -20,12 +20,13 @@ impl Display for Expr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 crate enum ExprKind {
     Lit(Lit),
     Bin(BinOp, P<Expr>, P<Expr>),
     Unary(UnaryOp, P<Expr>),
     Paren(P<Expr>),
+    Block(Block),
 }
 
 impl Display for ExprKind {
@@ -35,6 +36,7 @@ impl Display for ExprKind {
             Self::Bin(op, l, r) => write!(f, "({} {} {})", op, l, r),
             Self::Unary(op, expr) => write!(f, "{}{}", op, expr),
             Self::Paren(expr) => write!(f, "({})", expr),
+            Self::Block(_) => todo!(),
         }
     }
 }
