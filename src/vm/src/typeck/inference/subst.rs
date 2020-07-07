@@ -33,7 +33,7 @@ impl<'tcx> TypeFolder<'tcx> for SubstFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             &TyKind::Infer(InferTy::TyVar(tyvid)) => return self.substs[tyvid.index as usize],
-            _ => ty.super_fold_with(self),
+            _ => ty.inner_fold_with(self),
         }
     }
 

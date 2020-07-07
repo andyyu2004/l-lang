@@ -14,7 +14,7 @@ crate trait Folder<'tcx>: Sized {
 }
 
 impl<'tcx> TypeFoldable<'tcx> for &'tcx tir::Expr<'tcx> {
-    fn super_fold_with<F>(&self, f: &mut F) -> Self
+    fn inner_fold_with<F>(&self, f: &mut F) -> Self
     where
         F: TypeFolder<'tcx>,
     {
@@ -28,7 +28,7 @@ impl<'tcx> TypeFoldable<'tcx> for &'tcx tir::Expr<'tcx> {
         f.tcx().alloc_tir(tir::Expr { span: self.span, kind, ty })
     }
 
-    fn super_visit_with<V>(&self, visitor: &mut V) -> bool
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>,
     {

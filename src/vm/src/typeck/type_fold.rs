@@ -2,11 +2,12 @@ use super::TyCtx;
 use crate::ty::{Ty, TyKind};
 
 crate trait TypeFoldable<'tcx>: Sized {
-    fn super_fold_with<F>(&self, folder: &mut F) -> Self
+    /// recursively fold inner `Ty<'tcx>`s
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
     where
         F: TypeFolder<'tcx>;
 
-    fn super_visit_with<V>(&self, visitor: &mut V) -> bool
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>;
 
@@ -14,19 +15,19 @@ crate trait TypeFoldable<'tcx>: Sized {
     where
         F: TypeFolder<'tcx>,
     {
-        self.super_fold_with(folder)
+        self.inner_fold_with(folder)
     }
 
     fn visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>,
     {
-        self.super_visit_with(visitor)
+        self.inner_visit_with(visitor)
     }
 }
 
 impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
-    fn super_fold_with<F>(&self, folder: &mut F) -> Self
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
     where
         F: TypeFolder<'tcx>,
     {
@@ -51,7 +52,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         folder.fold_ty(self)
     }
 
-    fn super_visit_with<V>(&self, visitor: &mut V) -> bool
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
     where
         V: TypeVisitor<'tcx>,
     {

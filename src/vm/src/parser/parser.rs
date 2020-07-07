@@ -15,11 +15,7 @@ impl<'ctx> Parser<'ctx> {
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self {
-            tokens: tokens.into_iter().collect(),
-            ctx,
-            idx: 0,
-        }
+        Self { tokens: tokens.into_iter().collect(), ctx, idx: 0 }
     }
 
     pub fn parse(&mut self) -> ParseResult<Prog> {
@@ -38,9 +34,7 @@ impl<'ctx> Parser<'ctx> {
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
-        ttypes
-            .into_iter()
-            .fold(None, |acc, &t| acc.or(self.accept(t)))
+        ttypes.into_iter().fold(None, |acc, &t| acc.or(self.accept(t)))
     }
 
     pub(super) fn try_parse<R>(&mut self, mut parser: impl Parse<Output = R>) -> Option<R> {
@@ -58,11 +52,7 @@ impl<'ctx> Parser<'ctx> {
     }
 
     pub(super) fn safe_peek(&self) -> Option<Tok> {
-        if self.idx < self.tokens.len() {
-            Some(self.tokens[self.idx])
-        } else {
-            None
-        }
+        if self.idx < self.tokens.len() { Some(self.tokens[self.idx]) } else { None }
     }
 
     pub(super) fn safe_peek_ttype(&self) -> Option<TokenType> {
@@ -120,7 +110,7 @@ impl<'ctx> Parser<'ctx> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{lexer::Span, Driver};
+    use crate::{span::Span, Driver};
 
     macro_rules! parse_expr {
         ($src:expr) => {{
@@ -132,10 +122,7 @@ mod test {
     #[test]
     fn parse_int_literal() {
         let expr = parse_expr!("2");
-        assert_eq!(
-            expr,
-            Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0)))
-        );
+        assert_eq!(expr, Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))));
     }
 
     #[test]
