@@ -2,6 +2,7 @@ use crate::ir;
 use crate::{
     ast, compiler, error::{LError, LResult}, exec, lexer, parser, shared::Arena, span, tir, typeck::GlobalCtx
 };
+use ast::P;
 use compiler::Executable;
 use exec::VM;
 use ir::LoweringCtx;
@@ -33,7 +34,7 @@ impl<'tcx> Driver<'tcx> {
         Ok(tokens)
     }
 
-    pub fn parse_expr(&self) -> LResult<ast::Expr> {
+    pub fn parse_expr(&self) -> LResult<P<ast::Expr>> {
         let tokens = self.lex()?;
         let span_ctx = self.span_ctx.borrow();
         let mut parser = Parser::new(&span_ctx, tokens);

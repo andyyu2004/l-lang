@@ -1,4 +1,4 @@
-use super::{Pattern, Stmt, Ty, P};
+use super::{NodeId, Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use std::fmt::Display;
@@ -6,18 +6,21 @@ use std::fmt::Display;
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct Ident {
     pub span: Span,
+    pub id: NodeId,
     pub symbol: Symbol,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 crate struct Block {
-    span: Span,
-    stmts: Vec<Stmt>,
+    pub span: Span,
+    pub id: NodeId,
+    pub stmts: Vec<Stmt>,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct Generics {
     pub span: Span,
+    pub id: NodeId,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
@@ -29,7 +32,8 @@ crate struct FnSig {
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Param {
     pub span: Span,
-    pub pattern: Pattern,
+    pub id: NodeId,
+    pub pattern: P<Pattern>,
     pub ty: Ty,
 }
 
@@ -53,9 +57,16 @@ crate struct Path {
     pub segments: Vec<PathSegment>,
 }
 
+impl std::fmt::Display for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct PathSegment {
     pub ident: Ident,
+    pub id: NodeId,
     pub args: Option<()>,
 }
 

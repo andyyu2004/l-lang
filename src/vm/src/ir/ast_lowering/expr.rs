@@ -20,6 +20,7 @@ impl<'ir> LoweringCtx<'ir> {
             ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(&expr)),
             ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
             ExprKind::Block(_) => todo!(),
+            ExprKind::Path(_) => todo!(),
         };
         ir::Expr::new(e.span, kind)
     }

@@ -1,16 +1,17 @@
-use super::{BinOp, Block, Lit, UnaryOp, P};
+use super::{BinOp, Block, Lit, NodeId, Path, UnaryOp, P};
 use crate::span::Span;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Clone)]
 crate struct Expr {
     pub span: Span,
+    pub id: NodeId,
     pub kind: ExprKind,
 }
 
 impl Expr {
-    pub fn new(span: Span, kind: ExprKind) -> Self {
-        Self { span, kind }
+    pub fn new(span: Span, id: NodeId, kind: ExprKind) -> Self {
+        Self { span, id, kind }
     }
 }
 
@@ -26,6 +27,7 @@ crate enum ExprKind {
     Bin(BinOp, P<Expr>, P<Expr>),
     Unary(UnaryOp, P<Expr>),
     Paren(P<Expr>),
+    Path(Path),
     Block(Block),
 }
 
@@ -37,6 +39,7 @@ impl Display for ExprKind {
             Self::Unary(op, expr) => write!(f, "{}{}", op, expr),
             Self::Paren(expr) => write!(f, "({})", expr),
             Self::Block(_) => todo!(),
+            Self::Path(path) => write!(f, "{}", path),
         }
     }
 }

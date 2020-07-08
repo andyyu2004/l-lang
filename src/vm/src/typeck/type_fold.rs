@@ -32,12 +32,8 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         F: TypeFolder<'tcx>,
     {
         let kind = match self.kind {
-            TyKind::Infer(_)
-            | TyKind::Unit
-            | TyKind::Char
-            | TyKind::Num
-            | TyKind::Bool
-            | TyKind::_Phantom(_) => {
+            TyKind::Array(ty) => TyKind::Array(ty.fold_with(folder)),
+            TyKind::Infer(_) | TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => {
                 return self;
             }
         };
@@ -57,9 +53,9 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         V: TypeVisitor<'tcx>,
     {
         match self.kind {
+            TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => todo!(),
             TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => return false,
-            TyKind::_Phantom(_) => false,
         }
     }
 }

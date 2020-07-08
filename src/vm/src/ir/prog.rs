@@ -1,0 +1,1 @@
+crate struct Prog;

@@ -3,11 +3,13 @@ use crate::ast::*;
 use crate::error::*;
 use crate::lexer::*;
 use crate::span::{self, Span};
+use std::cell::Cell;
 
 crate struct Parser<'ctx> {
     tokens: Vec<Tok>,
     idx: usize,
     pub(super) ctx: &'ctx span::Ctx,
+    id_counter: Cell<u32>,
 }
 
 impl<'ctx> Parser<'ctx> {
@@ -15,11 +17,14 @@ impl<'ctx> Parser<'ctx> {
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self { tokens: tokens.into_iter().collect(), ctx, idx: 0 }
+        Self { tokens: tokens.into_iter().collect(), ctx, idx: 0, id_counter: Cell::new(0) }
     }
 
     /// runs some parser and returns the result and the span that it consumed
-    pub fn with_span<R>(&mut self, mut parser: impl Parse<Output = R>) -> ParseResult<(R, Span)> {
+    pub(super) fn with_span<R>(
+        &mut self,
+        parser: &mut impl Parse<Output = R>,
+    ) -> ParseResult<(R, Span)> {
         let lo = self.idx;
         Ok((parser.parse(self)?, Span::new(lo, self.idx)))
     }
@@ -32,20 +37,51 @@ impl<'ctx> Parser<'ctx> {
         todo!()
     }
 
-    pub fn parse_item(&mut self) -> ParseResult<Item> {
+    pub fn parse_item(&mut self) -> ParseResult<P<Item>> {
         ItemParser.parse(self)
     }
 
-    pub fn parse_expr(&mut self) -> ParseResult<Expr> {
+    pub fn parse_expr(&mut self) -> ParseResult<P<Expr>> {
         ExprParser.parse(self)
     }
 
-    pub(super) fn try_parse<R>(&mut self, mut parser: impl Parse<Output = R>) -> Option<R> {
+    pub(super) fn mk_id(&self) -> NodeId {
+        let id = self.id_counter.get();
+        self.id_counter.set(id + 1);
+        NodeId(id)
+    }
+
+    pub(super) fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
+    where
+        P: Parse<Output = R>,
+    {
         let backtrack_idx = self.idx;
         parser.parse(self).ok().or_else(|| {
             self.idx = backtrack_idx;
             None
         })
+    }
+
+    pub(super) fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
+        box Expr { span, id: self.mk_id(), kind }
+    }
+
+    pub(super) fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
+        box Pattern { span, id: self.mk_id(), kind }
+    }
+
+    pub(super) fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
+        box Stmt { span, id: self.mk_id(), kind }
+    }
+
+    pub(super) fn mk_item(
+        &self,
+        span: Span,
+        vis: Visibility,
+        ident: Ident,
+        kind: ItemKind,
+    ) -> P<Item> {
+        box Item { span, id: self.mk_id(), ident, vis, kind }
     }
 
     pub(super) fn next(&mut self) -> Tok {
@@ -88,7 +124,7 @@ impl<'ctx> Parser<'ctx> {
         match ttype {
             TokenType::Ident(symbol) => {
                 self.idx += 1;
-                Ok(Ident { span, symbol })
+                Ok(Ident { span, id: self.mk_id(), symbol })
             }
             _ => Err(ParseError::expected(err_ident, tok)),
         }
@@ -151,7 +187,7 @@ mod test {
     #[test]
     fn parse_int_literal() {
         let expr = parse_expr!("2");
-        assert_eq!(expr, Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))));
+        assert_eq!(expr, box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))));
     }
 
     #[test]
@@ -159,12 +195,13 @@ mod test {
         let expr = parse_expr!("2 + 3");
         assert_eq!(
             expr,
-            Expr::new(
+            box Expr::new(
                 Span::new(0, 5),
+                NodeId(2),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))),
-                    box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Num(3.0))),
+                    box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(4, 5), NodeId(1), ExprKind::Lit(Lit::Num(3.0))),
                 )
             )
         );
@@ -175,17 +212,19 @@ mod test {
         let expr = parse_expr!("2 + 3 * 4");
         assert_eq!(
             expr,
-            Expr::new(
+            box Expr::new(
                 Span::new(0, 9),
+                NodeId(4),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))),
                     box Expr::new(
                         Span::new(4, 9),
+                        NodeId(3),
                         ExprKind::Bin(
                             BinOp::Mul,
-                            box Expr::new(Span::new(4, 5), ExprKind::Lit(Lit::Num(3.0))),
-                            box Expr::new(Span::new(8, 9), ExprKind::Lit(Lit::Num(4.0))),
+                            box Expr::new(Span::new(4, 5), NodeId(1), ExprKind::Lit(Lit::Num(3.0))),
+                            box Expr::new(Span::new(8, 9), NodeId(2), ExprKind::Lit(Lit::Num(4.0))),
                         )
                     ),
                 )

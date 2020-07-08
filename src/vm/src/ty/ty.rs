@@ -1,8 +1,7 @@
 use crate::typeck::inference::TyVid;
 use std::fmt::{self, Display, Formatter};
-use std::{
-    hash::{Hash, Hasher}, marker::PhantomData, ptr
-};
+use std::hash::{Hash, Hasher};
+use std::ptr;
 
 crate type Ty<'tcx> = &'tcx TyS<'tcx>;
 
@@ -18,6 +17,7 @@ impl<'tcx> Hash for TyS<'tcx> {
 }
 
 /// we can perform equality using pointers as we ensure that at most one of each TyS is allocated
+/// (by doing a deep compare on TyKind during allocation)
 impl<'tcx> PartialEq for TyS<'tcx> {
     fn eq(&self, other: &Self) -> bool {
         ptr::eq(self, other)
@@ -26,12 +26,12 @@ impl<'tcx> PartialEq for TyS<'tcx> {
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 crate enum TyKind<'tcx> {
-    _Phantom(&'tcx PhantomData<()>),
     Bool,
     Unit,
     Char,
     Num,
     Infer(InferTy),
+    Array(Ty<'tcx>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

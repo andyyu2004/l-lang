@@ -67,6 +67,7 @@ impl<'ctx> Lexer<'ctx> {
                         todo!("maybe use lifetime syntax as generic parameter (like ocaml)")
                     }
                     TokenKind::Semi => TokenType::Semi,
+                    TokenKind::Underscore => TokenType::Underscore,
                     TokenKind::Comma => TokenType::Comma,
                     TokenKind::Dot => TokenType::Dot,
                     TokenKind::OpenParen => TokenType::OpenParen,
@@ -194,6 +195,8 @@ pub enum TokenType {
     Eof,
     /// Unknown token, not expected by the lexer, e.g. "№"
     Unknown,
+    /// "_"
+    Underscore,
     Type(Symbol),
     Ident(Symbol),
 }

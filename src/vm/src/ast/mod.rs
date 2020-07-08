@@ -6,6 +6,9 @@ mod prog;
 mod stmt;
 mod ty;
 
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+crate struct NodeId(pub u32);
+
 crate type P<T> = Box<T>;
 
 crate use ast::*;

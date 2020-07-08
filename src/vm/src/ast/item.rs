@@ -1,11 +1,12 @@
-use super::{Block, FnSig, Generics, Ident, Visibility, P};
+use super::{Block, FnSig, Generics, Ident, NodeId, Visibility, P};
 use crate::span::Span;
 
 #[derive(Debug, PartialEq, Clone)]
 crate struct Item {
     pub span: Span,
-    pub ident: Ident,
+    pub id: NodeId,
     pub vis: Visibility,
+    pub ident: Ident,
     pub kind: ItemKind,
 }
 

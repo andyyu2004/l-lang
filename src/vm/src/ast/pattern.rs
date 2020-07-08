@@ -1,9 +1,10 @@
-use super::{Ident, P};
+use super::{Ident, NodeId, P};
 use crate::span::Span;
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Pattern {
     pub span: Span,
+    pub id: NodeId,
     pub kind: PatternKind,
 }
 
