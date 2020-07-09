@@ -67,8 +67,11 @@ impl Parse for PrimaryExprParser {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(false))))
         } else if let Some(tok) = parser.accept(TokenType::True) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(true))))
+        } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+            let block = BlockParser { open_brace }.parse(parser)?;
+            Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
         } else {
-            todo!()
+            todo!("found token {:?}", parser.safe_peek());
         }
     }
 }
@@ -113,5 +116,78 @@ where
             expr = parser.mk_expr(span, ExprKind::Bin(binop, expr, right));
         }
         Ok(expr)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{span::Span, Driver};
+    use indexed_vec::Idx;
+
+    macro_rules! parse_expr {
+        ($src:expr) => {{
+            let driver = Driver::new($src);
+            driver.parse_expr().unwrap()
+        }};
+    }
+
+    #[test]
+    fn parse_int_literal() {
+        let expr = parse_expr!("2");
+        assert_eq!(
+            expr,
+            box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0)))
+        );
+    }
+
+    #[test]
+    fn parse_simple_binary_expr() {
+        let expr = parse_expr!("2 + 3");
+        assert_eq!(
+            expr,
+            box Expr::new(
+                Span::new(0, 5),
+                NodeId::new(2),
+                ExprKind::Bin(
+                    BinOp::Add,
+                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Num(3.0))),
+                )
+            )
+        );
+    }
+
+    #[test]
+    fn parse_precedence_expr() {
+        let expr = parse_expr!("2 + 3 * 4");
+        assert_eq!(
+            expr,
+            box Expr::new(
+                Span::new(0, 9),
+                NodeId::new(4),
+                ExprKind::Bin(
+                    BinOp::Add,
+                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(
+                        Span::new(4, 9),
+                        NodeId::new(3),
+                        ExprKind::Bin(
+                            BinOp::Mul,
+                            box Expr::new(
+                                Span::new(4, 5),
+                                NodeId::new(1),
+                                ExprKind::Lit(Lit::Num(3.0))
+                            ),
+                            box Expr::new(
+                                Span::new(8, 9),
+                                NodeId::new(2),
+                                ExprKind::Lit(Lit::Num(4.0))
+                            ),
+                        )
+                    ),
+                )
+            )
+        );
     }
 }

@@ -68,6 +68,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
             ir::ExprKind::Lit(lit) => Ok(self.type_expr_lit(expr, lit)),
             ir::ExprKind::Bin(op, lhs, rhs) => self.type_expr_binary(expr, op, lhs, rhs),
             ir::ExprKind::Unary(op, expr) => todo!(),
+            ir::ExprKind::Block(block) => todo!(),
         }
     }
 

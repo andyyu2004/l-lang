@@ -1,8 +1,8 @@
 //! general use parsers
 
-use super::{Parse, Parser};
-use crate::ast::{Ident, Path, PathSegment, Visibility, VisibilityKind};
-use crate::error::ParseResult;
+use super::{Parse, Parser, StmtParser};
+use crate::ast::{Block, Ident, Path, PathSegment, StmtKind, Visibility, VisibilityKind, P};
+use crate::error::{ParseError, ParseResult};
 use crate::{
     lexer::{Tok, TokenType}, span::Span
 };
@@ -153,5 +153,32 @@ impl Parse for PathSegmentParser {
         let ident = parser.expect_ident()?;
         // with the generics of the initial ident
         Ok(PathSegment { ident, id: parser.mk_id(), args: None })
+    }
+}
+
+crate struct BlockParser {
+    pub open_brace: Tok,
+}
+
+impl Parse for BlockParser {
+    type Output = P<Block>;
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let mut stmts = vec![];
+        let close_brace = loop {
+            if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
+                break close_brace;
+            }
+            stmts.push(StmtParser.parse(parser)?);
+        };
+        let span = self.open_brace.span.merge(&close_brace.span);
+        // check there are no missing semicolons in expression statements
+        if stmts.len() > 1 {
+            for stmt in &stmts[..stmts.len() - 1] {
+                if let StmtKind::Expr(_) = stmt.kind {
+                    return Err(ParseError::expected_semi(stmt.span));
+                }
+            }
+        }
+        Ok(box Block { span, id: parser.mk_id(), stmts })
     }
 }

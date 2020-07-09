@@ -14,6 +14,7 @@ const KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
         "pub" => TokenType::Pub,
         "enum" => TokenType::Enum,
         "struct" => TokenType::Struct,
+        "let" => TokenType::Let,
     }
 });
 
@@ -48,14 +49,16 @@ impl<'ctx> Lexer<'ctx> {
                     TokenKind::BlockComment { terminated } => TokenType::Whitespace,
                     TokenKind::Whitespace => TokenType::Whitespace,
                     TokenKind::Ident => {
-                        let symbol = self.ctx.symbol_interner.intern(slice);
                         // by convention, uppercase idents are Types
                         if let Some(&keyword) = KEYWORDS.get(slice) {
                             keyword
-                        } else if slice.chars().next().unwrap().is_uppercase() {
-                            TokenType::Type(symbol)
                         } else {
-                            TokenType::Ident(symbol)
+                            let symbol = self.ctx.symbol_interner.intern(slice);
+                            if slice.chars().next().unwrap().is_uppercase() {
+                                TokenType::Type(symbol)
+                            } else {
+                                TokenType::Ident(symbol)
+                            }
                         }
                     }
 
@@ -109,6 +112,7 @@ impl<'ctx> Lexer<'ctx> {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Pub,
+    Let,
     Struct,
     Enum,
     Fn,

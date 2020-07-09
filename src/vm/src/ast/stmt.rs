@@ -12,8 +12,6 @@ crate struct Stmt {
 crate enum StmtKind {
     /// let binding
     Let(P<Let>),
-    /// item declaration
-    Item(P<Item>),
     /// no trailing semicoon
     Expr(P<Expr>),
     /// expression statement (with trailing semicolon)

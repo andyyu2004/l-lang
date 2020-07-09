@@ -3,13 +3,14 @@ use crate::ast::*;
 use crate::error::*;
 use crate::lexer::*;
 use crate::span::{self, Span};
+use indexed_vec::Idx;
 use std::cell::Cell;
 
 crate struct Parser<'ctx> {
     tokens: Vec<Tok>,
     idx: usize,
     pub(super) ctx: &'ctx span::Ctx,
-    id_counter: Cell<u32>,
+    id_counter: Cell<usize>,
 }
 
 impl<'ctx> Parser<'ctx> {
@@ -33,8 +34,8 @@ impl<'ctx> Parser<'ctx> {
         Span { lo: self.idx, hi: self.idx }
     }
 
-    pub fn parse(&mut self) -> ParseResult<Prog> {
-        todo!()
+    pub fn parse(&mut self) -> ParseResult<P<Prog>> {
+        ProgParser.parse(self)
     }
 
     pub fn parse_item(&mut self) -> ParseResult<P<Item>> {
@@ -48,7 +49,7 @@ impl<'ctx> Parser<'ctx> {
     pub(super) fn mk_id(&self) -> NodeId {
         let id = self.id_counter.get();
         self.id_counter.set(id + 1);
-        NodeId(id)
+        NodeId::new(id)
     }
 
     pub(super) fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
@@ -90,8 +91,12 @@ impl<'ctx> Parser<'ctx> {
         tok
     }
 
+    pub(super) fn reached_eof(&self) -> bool {
+        self.idx >= self.tokens.len()
+    }
+
     pub(super) fn safe_peek(&self) -> ParseResult<Tok> {
-        if self.idx < self.tokens.len() {
+        if !self.reached_eof() {
             Ok(self.tokens[self.idx])
         } else {
             Err(ParseError::unexpected_eof(self.empty_span()))
@@ -169,66 +174,5 @@ impl<'ctx> Parser<'ctx> {
         self.accept_one_of(ttypes).ok_or_else(|| {
             ParseError::expected_one_of(ttypes.into_iter().cloned().collect(), self.peek())
         })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::{span::Span, Driver};
-
-    macro_rules! parse_expr {
-        ($src:expr) => {{
-            let driver = Driver::new($src);
-            driver.parse_expr().unwrap()
-        }};
-    }
-
-    #[test]
-    fn parse_int_literal() {
-        let expr = parse_expr!("2");
-        assert_eq!(expr, box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))));
-    }
-
-    #[test]
-    fn parse_simple_binary_expr() {
-        let expr = parse_expr!("2 + 3");
-        assert_eq!(
-            expr,
-            box Expr::new(
-                Span::new(0, 5),
-                NodeId(2),
-                ExprKind::Bin(
-                    BinOp::Add,
-                    box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))),
-                    box Expr::new(Span::new(4, 5), NodeId(1), ExprKind::Lit(Lit::Num(3.0))),
-                )
-            )
-        );
-    }
-
-    #[test]
-    fn parse_precedence_expr() {
-        let expr = parse_expr!("2 + 3 * 4");
-        assert_eq!(
-            expr,
-            box Expr::new(
-                Span::new(0, 9),
-                NodeId(4),
-                ExprKind::Bin(
-                    BinOp::Add,
-                    box Expr::new(Span::new(0, 1), NodeId(0), ExprKind::Lit(Lit::Num(2.0))),
-                    box Expr::new(
-                        Span::new(4, 9),
-                        NodeId(3),
-                        ExprKind::Bin(
-                            BinOp::Mul,
-                            box Expr::new(Span::new(4, 5), NodeId(1), ExprKind::Lit(Lit::Num(3.0))),
-                            box Expr::new(Span::new(8, 9), NodeId(2), ExprKind::Lit(Lit::Num(4.0))),
-                        )
-                    ),
-                )
-            )
-        );
     }
 }

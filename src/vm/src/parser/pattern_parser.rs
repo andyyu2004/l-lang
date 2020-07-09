@@ -1,6 +1,6 @@
 use super::{parsers::ParenParser, Parse, Parser};
 use crate::ast::{Pattern, PatternKind, P};
-use crate::error::ParseResult;
+use crate::error::{ParseError, ParseResult};
 use crate::lexer::TokenType;
 
 pub struct PatternParser;
@@ -16,7 +16,7 @@ impl Parse for PatternParser {
             let (pattern, span) = ParenParser { open_paren, inner: PatternParser }.parse(parser)?;
             Ok(parser.mk_pat(span, PatternKind::Paren(pattern)))
         } else {
-            todo!()
+            Err(ParseError::unimpl())
         }
     }
 }

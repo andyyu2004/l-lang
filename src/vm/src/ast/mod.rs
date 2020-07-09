@@ -5,9 +5,9 @@ mod pattern;
 mod prog;
 mod stmt;
 mod ty;
+mod visit;
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
-crate struct NodeId(pub u32);
+newtype_index!(NodeId);
 
 crate type P<T> = Box<T>;
 
@@ -16,5 +16,5 @@ crate use expr::{Expr, ExprKind};
 crate use item::{Item, ItemKind};
 crate use pattern::{Pattern, PatternKind};
 crate use prog::Prog;
-crate use stmt::{Stmt, StmtKind};
+crate use stmt::{Let, Stmt, StmtKind};
 crate use ty::{Ty, TyKind};

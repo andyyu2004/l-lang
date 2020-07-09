@@ -22,10 +22,7 @@ where
     G: GarbageCollector,
 {
     pub fn new(gc: G) -> Self {
-        Self {
-            gc,
-            disabled: Cell::new(false),
-        }
+        Self { gc, disabled: Cell::new(false) }
     }
 
     pub fn disable_gc(&self) {
@@ -78,10 +75,7 @@ where
             })
             .collect();
 
-        Self {
-            heap,
-            ctx: VMCtx::new(clsr, constants),
-        }
+        Self { heap, ctx: VMCtx::new(clsr, constants) }
     }
 
     pub fn run(&mut self) -> VMResult<Val> {
@@ -180,13 +174,13 @@ where
 
         Ok(loop {
             let opcode = frame_mut!().read_opcode()?;
-            println!(
-                "op:{:?} bp:{} sp:{} {:?}",
-                opcode,
-                self.ctx.bp,
-                frame!().sp,
-                &self.ctx.stack[..self.ctx.bp + frame!().sp]
-            );
+            // println!(
+            //     "op:{:?} bp:{} sp:{} {:?}",
+            //     opcode,
+            //     self.ctx.bp,
+            //     frame!().sp,
+            //     &self.ctx.stack[..self.ctx.bp + frame!().sp]
+            // );
             match opcode {
                 Op::nop => panic!("no-op"),
                 Op::iconst => push!(read_const!(i64)),

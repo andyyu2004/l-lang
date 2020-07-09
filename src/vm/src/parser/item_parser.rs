@@ -15,7 +15,7 @@ impl Parse for ItemParser {
         let ident = parser.expect_ident()?;
         let (kind, kind_span) =
             parser.with_span(&mut |parser: &mut Parser| match item_kind_keyword.ttype {
-                TokenType::Fn => FnParser { fn_keyword: item_kind_keyword }.parse(parser),
+                TokenType::Fn => FnParser { fn_kw: item_kind_keyword }.parse(parser),
                 TokenType::Struct => todo!(),
                 TokenType::Enum => todo!(),
                 _ => unreachable!(),
@@ -26,7 +26,7 @@ impl Parse for ItemParser {
 }
 
 crate struct FnParser {
-    fn_keyword: Tok,
+    fn_kw: Tok,
 }
 
 impl Parse for FnParser {
@@ -35,7 +35,12 @@ impl Parse for FnParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let generics = Generics { id: parser.mk_id(), span: parser.empty_span() };
         let sig = FnSigParser.parse(parser)?;
-        let block = if parser.accept(TokenType::Semi).is_some() { None } else { None };
+        let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+            Some(BlockParser { open_brace }.parse(parser)?)
+        } else {
+            parser.expect(TokenType::Semi)?;
+            None
+        };
         Ok(ItemKind::Fn(sig, generics, block))
     }
 }
@@ -46,9 +51,10 @@ impl Parse for FnSigParser {
     type Output = FnSig;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         parser.expect(TokenType::OpenParen)?;
-        PunctuatedParser { inner: ParamParser, separator: TokenType::Comma };
+        let mut param_parser = PunctuatedParser { inner: ParamParser, separator: TokenType::Comma };
+        let inputs = param_parser.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
-        todo!()
+        Ok(FnSig { inputs, output: None })
     }
 }
 

@@ -27,8 +27,8 @@ crate enum ExprKind {
     Bin(BinOp, P<Expr>, P<Expr>),
     Unary(UnaryOp, P<Expr>),
     Paren(P<Expr>),
+    Block(P<Block>),
     Path(Path),
-    Block(Block),
 }
 
 impl Display for ExprKind {

@@ -19,12 +19,19 @@ impl ParseError {
         Self { span, kind: ParseErrorKind::Eof }
     }
 
+    crate fn expected_semi(span: Span) -> Self {
+        Self { span, kind: ParseErrorKind::MissingSemi }
+    }
     crate fn expected(ttype: TokenType, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::Expected(ttype, found.ttype))
     }
 
     crate fn expected_one_of(ttypes: Vec<TokenType>, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::ExpectedOneOf(ttypes, found.ttype))
+    }
+
+    crate fn unimpl() -> Self {
+        Self::new(Span { lo: 0, hi: 0 }, ParseErrorKind::Unimpl)
     }
 }
 
@@ -36,4 +43,8 @@ pub enum ParseErrorKind {
     ExpectedOneOf(Vec<TokenType>, TokenType),
     #[error("unexpected <eof>")]
     Eof,
+    #[error("expected semicolon after expression statement")]
+    MissingSemi,
+    #[error("unimplemented")]
+    Unimpl,
 }

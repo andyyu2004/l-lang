@@ -1,3 +1,4 @@
+use super::Block;
 use crate::ast;
 use crate::span::Span;
 
@@ -18,4 +19,5 @@ crate enum ExprKind<'ir> {
     Lit(ast::Lit),
     Bin(ast::BinOp, &'ir Expr<'ir>, &'ir Expr<'ir>),
     Unary(ast::UnaryOp, &'ir Expr<'ir>),
+    Block(&'ir Block<'ir>),
 }

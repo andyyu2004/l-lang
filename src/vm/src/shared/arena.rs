@@ -6,7 +6,6 @@ use crate::{
 #[derive(Default)]
 crate struct Arena<'tcx> {
     pub dropless: DroplessArena,
-    pub ir: DroplessArena,
     tys: TypedArena<TyS<'tcx>>,
     tir: DroplessArena,
 }

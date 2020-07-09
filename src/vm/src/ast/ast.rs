@@ -14,7 +14,7 @@ crate struct Ident {
 crate struct Block {
     pub span: Span,
     pub id: NodeId,
-    pub stmts: Vec<Stmt>,
+    pub stmts: Vec<P<Stmt>>,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
@@ -34,7 +34,7 @@ crate struct Param {
     pub span: Span,
     pub id: NodeId,
     pub pattern: P<Pattern>,
-    pub ty: Ty,
+    pub ty: P<Ty>,
 }
 
 crate type Visibility = Spanned<VisibilityKind>;
@@ -63,7 +63,7 @@ impl std::fmt::Display for Path {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct PathSegment {
     pub ident: Ident,
     pub id: NodeId,

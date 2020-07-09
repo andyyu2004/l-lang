@@ -11,11 +11,13 @@
 #![feature(core_intrinsics)]
 #![feature(dropck_eyepatch)]
 #![feature(raw_vec_internals)]
+#![feature(const_fn)]
 #![allow(dead_code)]
 
 #[macro_use]
 extern crate derive_deref;
-
+#[macro_use]
+extern crate indexed_vec;
 #[macro_use]
 extern crate vm_derive;
 
@@ -29,6 +31,7 @@ mod gc;
 mod ir;
 mod lexer;
 mod parser;
+mod resolve;
 mod shared;
 mod span;
 mod tir;
