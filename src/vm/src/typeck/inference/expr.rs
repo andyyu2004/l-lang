@@ -5,7 +5,7 @@ use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn check_expr(&self, expr: &ir::Expr) -> Ty<'tcx> {
+    pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
         let ty = match &expr.kind {
             ir::ExprKind::Lit(lit) => self.check_lit(lit),
             ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
@@ -16,7 +16,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ty
     }
 
-    pub fn check_binop(&self, op: ast::BinOp, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
+    pub fn check_block(&mut self, block: &ir::Block) -> Ty<'tcx> {
+        block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
+        match &block.expr {
+            Some(expr) => self.check_expr(expr),
+            None => self.tcx.types.unit,
+        }
+    }
+
+    pub fn check_binop(&mut self, op: ast::BinOp, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {

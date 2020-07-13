@@ -86,6 +86,25 @@ impl<'tcx> TypeFoldable<'tcx> for &'tcx List<Ty<'tcx>> {
     }
 }
 
+impl<'tcx, T> TypeFoldable<'tcx> for &'tcx [T]
+where
+    T: TypeFoldable<'tcx>,
+{
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        folder.tcx().alloc_tir_iter(self.iter().map(|t| t.fold_with(folder)))
+    }
+
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        self.iter().any(|x| x.visit_with(visitor))
+    }
+}
+
 // from rustc structural_impls.rs
 // Does the equivalent of
 // ```

@@ -12,7 +12,7 @@ use std::{cell::RefCell, ops::Deref};
 
 crate struct FnCtx<'a, 'tcx> {
     infcx: &'a InferCtx<'a, 'tcx>,
-    locals: RefCell<FxHashMap<ir::Id, Ty<'tcx>>>,
+    locals: FxHashMap<ir::Id, Ty<'tcx>>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -36,39 +36,25 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    pub fn type_pattern(&self, pat: &ir::Pattern, expected: Ty<'tcx>) -> &'tcx tir::Pattern<'tcx> {
-        let &ir::Pattern { span, id, ref kind } = pat;
-        let (kind, ty) = match kind {
-            ir::PatternKind::Wildcard => (tir::PatternKind::Wildcard, expected),
-            &ir::PatternKind::Binding(ident, ref sub) => {
-                if sub.is_some() {
-                    unimplemented!()
-                }
-                (tir::PatternKind::Binding(ident, None), self.local_ty(pat.id))
-            }
-        };
-        self.write_ty(pat.id, ty);
-        self.tcx.alloc_tir(tir::Pattern { span, id, kind, ty })
-    }
-
-    pub fn check_block(&self, block: &ir::Block) -> Ty<'tcx> {
-        block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
-        match &block.expr {
-            Some(expr) => self.check_expr(expr),
-            None => self.tcx.types.unit,
+    pub fn check_let_stmt(&mut self, l: &ir::Let) {
+        let ty = l.ty.map(|ty| self.lower_ty(ty)).unwrap_or(self.new_infer_var());
+        let pat_ty = self.check_pat(l.pat, ty);
+        self.expect_eq(l.span, ty, pat_ty);
+        let init_ty = l.init.as_ref().map(|expr| self.check_expr(expr));
+        if let Some(init_ty) = init_ty {
+            self.expect_eq(l.span, init_ty, ty)
         }
     }
 
-    pub fn check_let_stmt(&self, l: &ir::Let) {
-        let local_ty = self.local_ty(l.id);
-        let init_ty = l.init.as_ref().map(|expr| self.check_expr(expr));
+    pub fn def_local(&mut self, id: ir::Id, ty: Ty<'tcx>) {
+        self.locals.insert(id, ty);
     }
 
     pub fn local_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        self.locals.borrow().get(&id).cloned().expect("no entry for local variable")
+        self.locals.get(&id).cloned().expect("no entry for local variable")
     }
 
-    pub fn check_stmt(&self, stmt: &ir::Stmt) {
+    pub fn check_stmt(&mut self, stmt: &ir::Stmt) {
         match &stmt.kind {
             ir::StmtKind::Let(l) => self.check_let_stmt(l),
             ir::StmtKind::Expr(expr) => {

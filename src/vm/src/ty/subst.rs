@@ -9,16 +9,6 @@ crate trait Subst<'tcx>: Sized {
     }
 }
 
-impl<'tcx, T> Subst<'tcx> for T
-where
-    T: TypeFoldable<'tcx>,
-{
-    fn subst_spanned(&self, tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>, span: Option<Span>) -> Self {
-        let mut folder = InferenceVarSubstFolder { tcx, substs };
-        self.fold_with(&mut folder)
-    }
-}
-
 /// a substitution is simply a slice of `Ty`s, where the index of the Ty is the TyVid of the
 /// inference variable.
 /// i.e. the type for InferTy::TyVid(i) is Substitutions[i]
@@ -29,6 +19,12 @@ crate type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
 crate struct InferenceVarSubstFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstRef<'tcx>,
+}
+
+impl<'tcx> InferenceVarSubstFolder<'tcx> {
+    pub fn new(tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>) -> Self {
+        Self { tcx, substs }
+    }
 }
 
 impl<'tcx> TypeFolder<'tcx> for InferenceVarSubstFolder<'tcx> {

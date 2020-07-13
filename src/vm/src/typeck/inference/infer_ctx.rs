@@ -1,7 +1,8 @@
 use super::*;
 use crate::ir::DefId;
+use crate::ty::{InferTy, SubstRef, Ty, TyConv, TyKind};
 use crate::typeck::{TyCtx, TypeckTables};
-use crate::{ast, ir, tir, ty::Ty};
+use crate::{ast, error::TypeResult, ir, tir};
 use std::cell::RefCell;
 
 crate struct InferCtxBuilder<'tcx> {
@@ -44,6 +45,14 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         Self { tcx, tables, inner: Default::default() }
     }
 
+    /// creates the substitutions for the inference variables
+    pub fn inference_substs(&self) -> TypeResult<'tcx, SubstRef<'tcx>> {
+        let vec = self.inner.borrow_mut().type_variables().gen_substs()?;
+        let substs = self.tcx.intern_substs(&vec);
+        Ok(substs)
+    }
+
+    /// top level entry point for typechecking a function item
     pub fn check_fn(
         &'a self,
         item: &ir::Item,
@@ -51,18 +60,38 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         generics: &ir::Generics,
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
-        let fcx = FnCtx::new(&self);
+        let mut fcx = FnCtx::new(&self);
         let (_, ret_ty) = self.tcx.item_ty(item.id.def_id).expect_fn();
         let body_ty = fcx.check_expr(body.expr);
+        info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
         fcx.expect_eq(item.span, ret_ty, body_ty);
         fcx
     }
 
-    pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        *self.tables.borrow().node_types().get(id).expect("no entry for id in typecktables")
+    /// create new type inference variable
+    pub fn new_infer_var(&self) -> Ty<'tcx> {
+        let vid = self.inner.borrow_mut().type_variables().new_ty_var();
+        self.tcx.mk_ty(TyKind::Infer(InferTy::TyVar(vid)))
     }
 
-    pub fn write_ty(&self, id: ir::Id, ty: Ty<'tcx>) {
+    pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
+        self.tables.borrow().node_type(id)
+    }
+
+    pub fn lower_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
+        TyConv::ir_ty_to_ty(self, ir_ty)
+    }
+
+    /// records the type for the given id in the tables
+    /// returns the same type purely for convenience
+    pub fn write_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
+        ty
+    }
+}
+
+impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
+    fn tcx(&self) -> TyCtx<'tcx> {
+        self.tcx
     }
 }

@@ -1,20 +1,24 @@
 use crate::ir::{self, DefId};
 use crate::tir;
+use crate::ty::{InferenceVarSubstFolder, Subst};
 use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use std::marker::PhantomData;
 
 /// ir -> tir
-#[derive(Deref)]
+/// simple procedure of basically just injecting type annotations into expressions and patterns
 crate struct IrLoweringCtx<'a, 'tcx> {
+    tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
+    tables: &'a TypeckTables<'tcx>,
 }
 
 impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
-        Self { infcx }
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckTables<'tcx>) -> Self {
+        Self { infcx, tcx: infcx.tcx, tables }
     }
 
     pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
+        // this may still have unsubstituted inference variables in it
         item.to_tir(self)
     }
 }
@@ -50,7 +54,16 @@ impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     type Output = &'tcx tir::Pattern<'tcx>;
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
-        todo!()
+        let &Self { id, span, ref kind } = self;
+        let kind = match kind {
+            ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
+            ir::PatternKind::Binding(ident, sub) => {
+                let subpat = sub.map(|pat| pat.to_tir(ctx));
+                tir::PatternKind::Binding(*ident, subpat)
+            }
+        };
+        let ty = ctx.tables.node_type(id);
+        ctx.tcx.alloc_tir(tir::Pattern { id, span, kind, ty })
     }
 }
 
@@ -74,11 +87,11 @@ impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
     type Output = &'tcx tir::Let<'tcx>;
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
-        ctx.tcx.alloc_tir(tir::Let {
+        let tcx = ctx.tcx;
+        tcx.alloc_tir(tir::Let {
             id: self.id,
             pat: self.pat.to_tir(ctx),
-            init: self.init.as_ref().map(|init| init.to_tir(ctx)),
-            ty: todo!(),
+            init: self.init.map(|init| init.to_tir(ctx)),
         })
     }
 }
@@ -103,7 +116,7 @@ impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         let stmts = tcx.alloc_tir_iter(self.stmts.iter().map(|stmt| stmt.to_tir(ctx)));
-        let expr = self.expr.as_ref().map(|expr| expr.to_tir(ctx));
+        let expr = self.expr.map(|expr| expr.to_tir(ctx));
         let block = tir::Block { id: self.id, stmts, expr };
         ctx.tcx.alloc_tir(block)
     }
@@ -118,8 +131,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir(ctx)),
         };
-        // read type from context tables
-        let ty = ctx.node_ty(self.id);
+        let ty = ctx.tables.node_type(self.id);
         ctx.tcx.alloc_tir(tir::Expr { span: self.span, kind, ty })
     }
 }

@@ -22,6 +22,8 @@ extern crate derive_deref;
 extern crate indexed_vec;
 #[macro_use]
 extern crate vm_derive;
+#[macro_use]
+extern crate log;
 
 mod arena;
 mod ast;
@@ -43,11 +45,13 @@ mod util;
 
 use driver::Driver;
 use error::LResult;
+use log::LevelFilter;
 
 pub fn exec(src: &str) -> LResult<()> {
+    simple_logging::log_to_file("log.txt", LevelFilter::Info);
     let driver = Driver::new(src);
     let tir = driver.gen_tir()?;
-    println!("{:#?}", tir);
+    // println!("{:#?}", tir);
     println!("{}", tir);
     Ok(())
 }

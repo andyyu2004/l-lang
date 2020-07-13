@@ -55,8 +55,9 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 crate struct GlobalCtx<'tcx> {
-    interners: CtxInterners<'tcx>,
+    pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
+    interners: CtxInterners<'tcx>,
     defs: &'tcx Definitions,
     /// where the results of type collection are stored
     item_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
@@ -65,7 +66,13 @@ crate struct GlobalCtx<'tcx> {
 impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(arena: &'tcx Arena<'tcx>, defs: &'tcx Definitions) -> Self {
         let interners = CtxInterners::new(arena);
-        Self { types: CommonTypes::new(&interners), interners, defs, item_tys: Default::default() }
+        Self {
+            types: CommonTypes::new(&interners),
+            arena,
+            interners,
+            defs,
+            item_tys: Default::default(),
+        }
     }
 
     pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
@@ -118,14 +125,13 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// ir::Item -> tir::Item
     fn type_item(self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
-        self.infer_ctx(item.id.def_id).enter(|infcx| {
-            match item.kind {
-                ir::ItemKind::Fn(sig, generics, body) => {
-                    let fcx = infcx.check_fn(item, sig, generics, body);
-                }
+        self.infer_ctx(item.id.def_id).enter(|infcx| match item.kind {
+            ir::ItemKind::Fn(sig, generics, body) => {
+                let fcx = infcx.check_fn(item, sig, generics, body);
+                let tables = fcx.resolve_inference_variables(body);
+                let mut lctx = IrLoweringCtx::new(&infcx, tables);
+                lctx.lower_item(item)
             }
-            let mut lctx = IrLoweringCtx::new(&infcx);
-            lctx.lower_item(item)
         })
     }
 }

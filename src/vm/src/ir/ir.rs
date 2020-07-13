@@ -1,10 +1,24 @@
 use crate::ir;
-use crate::{ast::Ident, span::Span};
+use crate::{lexer::Symbol, span::Span};
 use ir::{Expr, Id, Res};
+use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 crate struct BodyId(ir::Id);
+
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+crate struct Ident {
+    pub span: Span,
+    pub id: ir::Id,
+    pub symbol: Symbol,
+}
+
+impl Display for ir::Ident {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "${}", self.symbol.0)
+    }
+}
 
 #[derive(Debug)]
 crate struct Generics<'ir> {
@@ -44,7 +58,7 @@ crate struct Param<'ir> {
 
 #[derive(Debug)]
 crate struct PathSegment<'ir> {
-    pub ident: Ident,
+    pub ident: ir::Ident,
     pd: PhantomData<&'ir ()>,
 }
 

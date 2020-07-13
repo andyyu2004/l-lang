@@ -1,6 +1,6 @@
-use crate::ir::Id;
+use crate::ir::{self, Id};
 use crate::span::Span;
-use crate::{ast::Ident, tir, ty::Ty};
+use crate::{tir, ty::Ty};
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
@@ -20,7 +20,7 @@ impl<'tcx> Display for Pattern<'tcx> {
 #[derive(Debug)]
 crate enum PatternKind<'tcx> {
     Wildcard,
-    Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
+    Binding(ir::Ident, Option<&'tcx tir::Pattern<'tcx>>),
 }
 
 impl<'tcx> Display for PatternKind<'tcx> {

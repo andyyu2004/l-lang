@@ -1,5 +1,5 @@
 use super::*;
-use crate::ast::{Ident, Visibility};
+use crate::ast::Visibility;
 use crate::ir;
 use crate::{lexer::Symbol, span::Span, ty::Ty};
 use std::fmt::{self, Display, Formatter};
@@ -10,7 +10,7 @@ crate struct Item<'tcx> {
     pub span: Span,
     pub id: ir::Id,
     pub vis: Visibility,
-    pub ident: Ident,
+    pub ident: ir::Ident,
     pub kind: ItemKind<'tcx>,
 }
 

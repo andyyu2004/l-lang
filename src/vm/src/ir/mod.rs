@@ -7,6 +7,7 @@ mod pattern;
 mod prog;
 mod stmt;
 mod ty;
+mod visit;
 
 newtype_index!(DefId);
 newtype_index!(LocalId);
@@ -28,3 +29,4 @@ crate use pattern::{Pattern, PatternKind};
 crate use prog::Prog;
 crate use stmt::{Stmt, StmtKind};
 crate use ty::*;
+crate use visit::*;

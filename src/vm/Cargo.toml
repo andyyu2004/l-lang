@@ -16,6 +16,8 @@ path = "src/bin.rs"
 
 [dependencies]
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
+log = "0.4.8"
+simple-logging = "2.0.2"
 vm-derive = { path = "../vm-derive" }
 maplit = "1"
 once_cell = "1.4"

@@ -3,6 +3,7 @@ use crate::ast::NodeId;
 use crate::ast::{self, Prog};
 use crate::ir::{self, DefId, Id, LocalId};
 use crate::resolve::Resolver;
+use ast::Ident;
 use indexed_vec::{Idx, IndexVec};
 use std::collections::BTreeMap;
 
@@ -35,6 +36,11 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let (popped_def_id, popped_counter) = self.item_stack.pop().unwrap();
         debug_assert_eq!(popped_def_id, def_id);
         ret
+    }
+
+    pub(super) fn lower_ident(&mut self, ident: Ident) -> ir::Ident {
+        let Ident { span, id, symbol } = ident;
+        ir::Ident { span, symbol, id: self.lower_node_id(id) }
     }
 
     pub(super) fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {

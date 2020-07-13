@@ -58,24 +58,23 @@ crate struct Block<'tcx> {
 impl<'tcx> Display for Block<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.stmts.iter().map(|stmt| writeln!(f, "{}", stmt)).count();
-        self.expr.as_ref().map(|expr| writeln!(f, "{}", expr));
+        self.expr.map(|expr| writeln!(f, "{}", expr));
         Ok(())
     }
 }
 
 #[derive(Debug)]
 crate struct Let<'tcx> {
+    // note that the type annotation is redundant now that we have a typed `Pattern`
     pub id: Id,
     pub pat: &'tcx tir::Pattern<'tcx>,
-    pub ty: Option<&'tcx Ty<'tcx>>,
     pub init: Option<&'tcx tir::Expr<'tcx>>,
 }
 
 impl<'tcx> Display for Let<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.pat)?;
-        self.ty.as_ref().map(|ty| write!(f, ": {}", ty));
-        self.init.as_ref().map(|init| write!(f, " = {}", init));
+        self.init.map(|init| write!(f, " = {}", init));
         Ok(())
     }
 }

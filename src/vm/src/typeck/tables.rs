@@ -2,6 +2,7 @@ use crate::ir::{self, DefId, LocalId};
 use crate::ty::Ty;
 use rustc_hash::FxHashMap;
 
+#[derive(Debug)]
 crate struct TypeckTables<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
     pub def_id: DefId,
@@ -11,6 +12,14 @@ crate struct TypeckTables<'tcx> {
 impl<'tcx> TypeckTables<'tcx> {
     pub fn new(def_id: DefId) -> Self {
         Self { def_id, node_types: Default::default() }
+    }
+
+    pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
+        self.node_type_opt(id).expect("no entry for node in typecktables")
+    }
+
+    pub fn node_type_opt(&self, id: ir::Id) -> Option<Ty<'tcx>> {
+        self.node_types().get(id).cloned()
     }
 
     pub fn node_types(&self) -> TableDefIdValidator<Ty<'tcx>> {
