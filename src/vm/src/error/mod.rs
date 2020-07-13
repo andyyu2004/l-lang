@@ -1,8 +1,12 @@
 mod parse_error;
+mod resolution_error;
+mod type_error;
 mod vm_error;
 
 use crate::impl_from_inner;
 crate use parse_error::{ParseError, ParseResult};
+crate use resolution_error::{ResolutionError, ResolutionResult};
+crate use type_error::{TypeError, TypeResult};
 crate use vm_error::{VMError, VMResult};
 
 pub type LResult<T> = Result<T, LError>;

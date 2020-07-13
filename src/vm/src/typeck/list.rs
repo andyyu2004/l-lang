@@ -1,4 +1,4 @@
-use crate::shared::Arena;
+use crate::core::Arena;
 use std::alloc::Layout;
 use std::cmp::Ordering;
 use std::fmt;
@@ -44,7 +44,7 @@ impl<T: Copy> List<T> {
 
         let (layout, _offset) =
             Layout::new::<usize>().extend(Layout::for_value::<[T]>(slice)).unwrap();
-        let mem = arena.dropless.alloc_raw(layout);
+        let mem = arena.alloc_raw(layout);
         unsafe {
             let result = &mut *(mem as *mut List<T>);
             // Write the length

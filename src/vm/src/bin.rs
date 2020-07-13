@@ -1,3 +1,4 @@
+use clap::App;
 use libvm;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -6,6 +7,14 @@ const HISTORY_PATH: &'static str = "repl_history";
 
 fn main() {
     let mut rl = Editor::<()>::new();
+    let yaml = clap::load_yaml!("cli.yaml");
+    let matches = App::from(yaml).get_matches();
+
+    if let Some(path) = matches.value_of("INPUT") {
+        let src = std::fs::read_to_string(path).unwrap();
+        return libvm::exec(&src).unwrap();
+    }
+
     if rl.load_history(HISTORY_PATH).is_err() {}
 
     loop {
@@ -16,7 +25,7 @@ fn main() {
                     continue;
                 }
                 rl.add_history_entry(line.as_str());
-                if let Err(err) = libvm::exec(&line) {
+                if let Err(err) = libvm::exec_expr(&line) {
                     println!("{:?}", err);
                 }
             }

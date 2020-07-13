@@ -1,6 +1,5 @@
-use crate::{
-    shared::Arena, ty::TyKind, ty::{Ty, TyS}
-};
+use crate::core::Arena;
+use crate::ty::{Ty, TyKind, TyS};
 use rustc_hash::FxHashMap;
 use std::{borrow::Borrow, cell::RefCell};
 
@@ -31,9 +30,5 @@ impl<'tcx> CtxInterners<'tcx> {
                 ty
             }
         }
-    }
-
-    pub fn intern_tir<T>(&self, tir: T) -> &'tcx T {
-        self.arena.alloc_tir(tir)
     }
 }

@@ -1,18 +1,39 @@
-use crate::ir;
+use crate::ir::{self, DefId};
+use indexed_vec::{Idx, IndexVec};
+use rustc_hash::FxHashMap;
+use std::cell::Cell;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
     Local(Id),
 }
 
+#[derive(Default)]
+crate struct Definitions {
+    /// just use a counter for DefIds for now
+    def_id_counter: Cell<usize>,
+    id_to_def_id: FxHashMap<ir::Id, DefId>,
+    def_id_to_hir_id: IndexVec<DefId, Option<ir::Id>>,
+}
+
+impl Definitions {
+    pub fn alloc_def_id(&self) -> DefId {
+        let def_id = self.def_id_counter.get();
+        self.def_id_counter.set(1 + def_id);
+        DefId::new(def_id)
+    }
+}
+
 /// namespaces for types and values
+#[derive(Debug)]
 crate enum NS {
     Type,
     Value,
 }
 
 /// a `T` for each namespace
+#[derive(Default, Debug)]
 crate struct PerNS<T> {
     pub value: T,
     pub ty: T,

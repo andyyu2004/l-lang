@@ -1,9 +1,9 @@
-use super::LoweringCtx;
+use super::AstLoweringCtx;
 use crate::ast::*;
 use crate::ir;
 use itertools::Itertools;
 
-impl<'ir> LoweringCtx<'ir> {
+impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_exprs(&mut self, exprs: &[Box<Expr>]) -> &'ir [ir::Expr<'ir>] {
         self.arena.alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
     }
@@ -23,10 +23,10 @@ impl<'ir> LoweringCtx<'ir> {
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),
             ExprKind::Path(path) => todo!(),
         };
-        ir::Expr::new(expr.span, kind)
+        ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
     }
 
-    fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {
+    pub(super) fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {
         let mut expr = None;
         let mut stmts = block.stmts.iter().map(|stmt| self.lower_stmt_inner(stmt)).collect_vec();
         if let Some(&ir::StmtKind::Expr(e)) = stmts.last().map(|s| &s.kind) {

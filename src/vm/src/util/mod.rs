@@ -4,4 +4,4 @@ mod impl_as;
 mod join;
 
 crate use as_bytes::As8Bytes;
-crate use join::join;
+crate use join::{join, join2};

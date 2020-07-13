@@ -18,3 +18,4 @@ crate use pattern::{Pattern, PatternKind};
 crate use prog::Prog;
 crate use stmt::{Let, Stmt, StmtKind};
 crate use ty::{Ty, TyKind};
+crate use visit::*;

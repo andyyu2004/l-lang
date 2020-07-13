@@ -1,0 +1,8 @@
+name: vm
+about: vm
+args:
+  - INPUT:
+      about: Input file
+      required: false
+      index: 1
+

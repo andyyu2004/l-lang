@@ -48,10 +48,7 @@ struct TypedArenaChunk<T> {
 impl<T> TypedArenaChunk<T> {
     #[inline]
     unsafe fn new(capacity: usize) -> TypedArenaChunk<T> {
-        TypedArenaChunk {
-            storage: RawVec::with_capacity(capacity),
-            entries: 0,
-        }
+        TypedArenaChunk { storage: RawVec::with_capacity(capacity), entries: 0 }
     }
 
     /// Destroys this arena chunk.
@@ -121,8 +118,7 @@ impl<T> TypedArena<T> {
 
         unsafe {
             if mem::size_of::<T>() == 0 {
-                self.ptr
-                    .set(intrinsics::arith_offset(self.ptr.get() as *mut u8, 1) as *mut T);
+                self.ptr.set(intrinsics::arith_offset(self.ptr.get() as *mut u8, 1) as *mut T);
                 let ptr = mem::align_of::<T>() as *mut T;
                 // Don't drop the object. This `write` is equivalent to `forget`.
                 ptr::write(ptr, object);
@@ -539,10 +535,9 @@ impl DropArena {
         let result = &mut *mem;
         // Record the destructor after doing the allocation as that may panic
         // and would cause `object`'s destuctor to run twice if it was recorded before
-        self.destructors.borrow_mut().push(DropType {
-            drop_fn: drop_for_type::<T>,
-            obj: result as *mut T as *mut u8,
-        });
+        self.destructors
+            .borrow_mut()
+            .push(DropType { drop_fn: drop_for_type::<T>, obj: result as *mut T as *mut u8 });
         result
     }
 

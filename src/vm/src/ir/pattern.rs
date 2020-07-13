@@ -1,15 +1,15 @@
-use super::{Expr, Id};
-use crate::span::Span;
+use crate::ir;
+use crate::{ast::Ident, span::Span};
 
 #[derive(Debug)]
 crate struct Pattern<'ir> {
-    pub id: Id,
+    pub id: ir::Id,
     pub span: Span,
-    pub kind: PatternKind<'ir>,
+    pub kind: ir::PatternKind<'ir>,
 }
 
 #[derive(Debug)]
 crate enum PatternKind<'ir> {
     Wildcard,
-    Todo(Expr<'ir>),
+    Binding(Ident, Option<&'ir ir::Pattern<'ir>>),
 }

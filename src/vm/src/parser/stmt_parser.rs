@@ -11,8 +11,6 @@ impl Parse for StmtParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(let_kw) = parser.accept(TokenType::Let) {
             LetParser { let_kw }.parse(parser)
-        } else if let Some(semi) = parser.accept(TokenType::Semi) {
-            Ok(parser.mk_stmt(semi.span, StmtKind::Empty))
         } else {
             let expr = ExprParser.parse(parser)?;
             if let Some(semi) = parser.accept(TokenType::Semi) {
@@ -37,6 +35,6 @@ impl Parse for LetParser {
         let init = parser.accept(TokenType::Eq).map(|_| ExprParser.parse(parser)).transpose()?;
         let semi = parser.expect(TokenType::Semi)?;
         let span = self.let_kw.span.merge(&semi.span);
-        Ok(parser.mk_stmt(span, StmtKind::Let(box Let { span, pat, ty, init })))
+        Ok(parser.mk_stmt(span, StmtKind::Let(box Let { id: parser.mk_id(), span, pat, ty, init })))
     }
 }

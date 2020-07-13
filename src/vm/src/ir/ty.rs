@@ -1,23 +1,22 @@
-use super::{ir, Id};
-use crate::span::Span;
+use crate::ir;
+use crate::{span::Span, typeck::List};
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum PrimTy {
     Char,
     Bool,
-    Uint,
-    Int,
-    Float,
+    Num,
 }
 
 #[derive(Debug)]
 crate struct Ty<'ir> {
-    pub id: Id,
+    pub id: ir::Id,
     pub span: Span,
-    pub kind: TyKind<'ir>,
+    pub kind: ir::TyKind<'ir>,
 }
 
 #[derive(Debug)]
 crate enum TyKind<'ir> {
-    Array(&'ir Ty<'ir>),
+    Path(&'ir ir::Path<'ir>),
+    Array(&'ir ir::Ty<'ir>),
 }

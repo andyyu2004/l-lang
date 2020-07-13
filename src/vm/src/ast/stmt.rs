@@ -16,12 +16,12 @@ crate enum StmtKind {
     Expr(P<Expr>),
     /// expression statement (with trailing semicolon)
     Semi(P<Expr>),
-    Empty,
 }
 
 /// let <pat>:<ty> = <init>;
 #[derive(Debug, PartialEq, Clone)]
 crate struct Let {
+    pub id: NodeId,
     pub span: Span,
     pub pat: P<Pattern>,
     pub ty: Option<P<Ty>>,

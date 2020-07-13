@@ -1,13 +1,21 @@
 use super::{NodeId, Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
-use std::fmt::Display;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 crate struct Ident {
     pub span: Span,
     pub id: NodeId,
     pub symbol: Symbol,
+}
+
+/// we don't have access to the actual identifier without further context
+/// so simply display it as $i where `i` is the symbol index
+impl Display for Ident {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "${}", self.symbol.0)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -43,6 +51,15 @@ crate type Visibility = Spanned<VisibilityKind>;
 crate enum VisibilityKind {
     Public,
     Private,
+}
+
+impl Display for VisibilityKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Public => write!(f, "pub"),
+            Self::Private => write!(f, ""),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]

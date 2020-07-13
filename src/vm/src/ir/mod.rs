@@ -15,14 +15,15 @@ newtype_index!(LocalId);
 crate struct Id {
     /// id of the immediately enclosing item
     pub def_id: DefId,
-    /// id of node relaative to the def_id
+    /// id of node relative to the enclosing def_id
     pub local_id: LocalId,
 }
 
-crate use ast_lowering::LoweringCtx;
+crate use ast_lowering::AstLoweringCtx;
 crate use def::*;
 crate use expr::{Expr, ExprKind};
 crate use ir::*;
+crate use item::{Item, ItemKind};
 crate use pattern::{Pattern, PatternKind};
 crate use prog::Prog;
 crate use stmt::{Stmt, StmtKind};

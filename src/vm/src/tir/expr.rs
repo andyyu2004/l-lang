@@ -1,3 +1,4 @@
+use crate::tir;
 use crate::{ast, span::Span, ty::Ty};
 use fmt::Display;
 use std::fmt::{self, Formatter};
@@ -18,8 +19,9 @@ impl Default for Expr<'_> {
 #[derive(Debug)]
 crate enum ExprKind<'tcx> {
     Lit(ast::Lit),
-    Bin(ast::BinOp, &'tcx Expr<'tcx>, &'tcx Expr<'tcx>),
-    Unary(ast::UnaryOp, &'tcx Expr<'tcx>),
+    Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
+    Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
+    Block(&'tcx tir::Block<'tcx>),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -34,6 +36,7 @@ impl<'tcx> Display for ExprKind<'tcx> {
             Self::Lit(l) => write!(f, "{}", l),
             Self::Bin(op, l, r) => write!(f, "({} {} {})", op, l, r),
             Self::Unary(op, expr) => write!(f, "({} {})", op, expr),
+            Self::Block(block) => write!(f, "{}", block),
         }
     }
 }

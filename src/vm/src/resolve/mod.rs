@@ -2,5 +2,6 @@ mod late;
 mod resolver;
 mod scope;
 
-crate use resolver::Resolver;
+use crate::span::Span;
+crate use resolver::{Resolver, ResolverOutputs};
 crate use scope::{Scope, Scopes};

@@ -4,19 +4,14 @@ use super::*;
 /// by default, just recursively visits each substructure
 crate trait Visitor<'ast>: Sized {
     fn visit_item(&mut self, item: &'ast Item) {
-        let Item { vis, ident, kind, .. } = &item;
-        self.visit_vis(vis);
-        self.visit_ident(*ident);
-        match kind {
-            ItemKind::Fn(sig, generics, body) => {
-                self.visit_generics(generics);
-                self.visit_fn(sig, body.as_deref())
-            }
-        }
+        walk_item(self, item)
+    }
+
+    fn visit_prog(&mut self, prog: &'ast Prog) {
+        prog.items.iter().for_each(|item| self.visit_item(item));
     }
 
     fn visit_generics(&mut self, generics: &'ast Generics) {
-        todo!()
     }
 
     fn visit_vis(&mut self, vis: &'ast Visibility) {
@@ -30,7 +25,7 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
-        block.stmts.iter().for_each(|stmt| self.visit_stmt(stmt))
+        walk_block(self, block);
     }
 
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
@@ -40,17 +35,7 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
-        match &expr.kind {
-            ExprKind::Lit(_) => {}
-            ExprKind::Bin(_, l, r) => {
-                self.visit_expr(l);
-                self.visit_expr(r);
-            }
-            ExprKind::Unary(_, expr) => self.visit_expr(expr),
-            ExprKind::Paren(expr) => self.visit_expr(expr),
-            ExprKind::Block(block) => self.visit_block(block),
-            ExprKind::Path(path) => self.visit_path(path),
-        }
+        walk_expr(self, expr)
     }
 
     fn visit_stmt(&mut self, stmt: &'ast Stmt) {
@@ -58,7 +43,6 @@ crate trait Visitor<'ast>: Sized {
             StmtKind::Let(l) => self.visit_let(l),
             StmtKind::Expr(expr) => self.visit_expr(expr),
             StmtKind::Semi(expr) => self.visit_expr(expr),
-            StmtKind::Empty => {}
         }
     }
 
@@ -105,5 +89,35 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_ident(&mut self, _ident: Ident) {
+    }
+}
+
+crate fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
+    block.stmts.iter().for_each(|stmt| visitor.visit_stmt(stmt))
+}
+
+crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
+    match &expr.kind {
+        ExprKind::Lit(_) => {}
+        ExprKind::Bin(_, l, r) => {
+            visitor.visit_expr(l);
+            visitor.visit_expr(r);
+        }
+        ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
+        ExprKind::Paren(expr) => visitor.visit_expr(expr),
+        ExprKind::Block(block) => visitor.visit_block(block),
+        ExprKind::Path(path) => visitor.visit_path(path),
+    }
+}
+
+crate fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
+    let Item { vis, ident, kind, .. } = &item;
+    visitor.visit_vis(vis);
+    visitor.visit_ident(*ident);
+    match kind {
+        ItemKind::Fn(sig, generics, body) => {
+            visitor.visit_generics(generics);
+            visitor.visit_fn(sig, body.as_deref())
+        }
     }
 }

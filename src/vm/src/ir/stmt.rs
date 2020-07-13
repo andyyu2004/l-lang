@@ -10,7 +10,7 @@ crate struct Stmt<'ir> {
 
 #[derive(Debug)]
 crate enum StmtKind<'ir> {
-    Local(&'ir Let<'ir>),
+    Let(&'ir Let<'ir>),
     Expr(&'ir Expr<'ir>),
     Semi(&'ir Expr<'ir>),
 }

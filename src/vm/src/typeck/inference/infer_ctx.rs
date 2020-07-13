@@ -1,31 +1,23 @@
 use super::*;
-use crate::ty::*;
-use crate::{
-    ast, ir, tir, typeck::{InferResult, TyCtx}
-};
-use ena::unify as ut;
-use std::marker::PhantomData;
-use std::{cell::RefCell, ops::Deref};
+use crate::ir::DefId;
+use crate::typeck::{TyCtx, TypeckTables};
+use crate::{ast, ir, tir, ty::Ty};
+use std::cell::RefCell;
 
 crate struct InferCtxBuilder<'tcx> {
+    /// `DefId` of the item being typechecked
+    def_id: DefId,
     tcx: TyCtx<'tcx>,
-    inference_ctx: InferCtxInner<'tcx>,
+    tables: RefCell<TypeckTables<'tcx>>,
 }
 
 impl<'tcx> InferCtxBuilder<'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>) -> Self {
-        Self { tcx, inference_ctx: Default::default() }
+    pub fn new(tcx: TyCtx<'tcx>, def_id: DefId) -> Self {
+        Self { tcx, def_id, tables: RefCell::new(TypeckTables::new(def_id)) }
     }
-}
 
-impl<'tcx> InferCtxBuilder<'tcx> {
-    crate fn enter<R>(self, f: impl for<'a> FnOnce(InferCtx<'a, 'tcx>) -> R) -> R {
-        let infer_ctx = InferCtx {
-            tcx: self.tcx,
-            inner: RefCell::new(self.inference_ctx),
-            marker: &PhantomData,
-        };
-        f(infer_ctx)
+    pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(InferCtx<'a, 'tcx>) -> R) -> R {
+        f(InferCtx::new(self.tcx, &self.tables))
     }
 }
 
@@ -42,65 +34,35 @@ impl<'tcx> InferCtxInner<'tcx> {
 }
 
 crate struct InferCtx<'a, 'tcx> {
-    crate tcx: TyCtx<'tcx>,
-    crate inner: RefCell<InferCtxInner<'tcx>>,
-    marker: &'a PhantomData<()>,
+    pub tcx: TyCtx<'tcx>,
+    pub inner: RefCell<InferCtxInner<'tcx>>,
+    tables: &'a RefCell<TypeckTables<'tcx>>,
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
-    pub fn gen_substs(&self) -> InferResult<'tcx, SubstRef<'tcx>> {
-        let substs = self.inner.borrow_mut().type_variables().gen_substs()?;
-        Ok(self.tcx.intern_substs(&substs))
+    pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
+        Self { tcx, tables, inner: Default::default() }
     }
 
-    pub fn infer_expr(&'a self, expr: &ir::Expr<'_>) -> InferResult<'tcx, &'tcx tir::Expr<'tcx>> {
-        let tir_expr = self.type_expr(expr)?;
-        let substs = self.gen_substs()?;
-        Ok(tir_expr.subst(self.tcx, substs))
-    }
-
-    fn type_expr(&'a self, expr: &ir::Expr<'_>) -> InferResult<'tcx, &'tcx tir::Expr<'tcx>> {
-        Ok(self.tcx.alloc_tir(self.type_expr_inner(expr)?))
-    }
-
-    fn type_expr_inner(&'a self, expr: &ir::Expr<'_>) -> InferResult<'tcx, tir::Expr<'tcx>> {
-        match expr.kind {
-            ir::ExprKind::Lit(lit) => Ok(self.type_expr_lit(expr, lit)),
-            ir::ExprKind::Bin(op, lhs, rhs) => self.type_expr_binary(expr, op, lhs, rhs),
-            ir::ExprKind::Unary(op, expr) => todo!(),
-            ir::ExprKind::Block(block) => todo!(),
-        }
-    }
-
-    pub fn type_expr_binary(
+    pub fn check_fn(
         &'a self,
-        expr: &ir::Expr<'_>,
-        op: ast::BinOp,
-        lhs: &ir::Expr<'_>,
-        rhs: &ir::Expr<'_>,
-    ) -> InferResult<'tcx, tir::Expr<'tcx>> {
-        let l = self.type_expr(lhs)?;
-        let r = self.type_expr(rhs)?;
-        let kind = tir::ExprKind::Bin(op, l, r);
-        let ty = match op {
-            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => {
-                let new_var = self.inner.borrow_mut().type_variables().new_ty_var();
-                let infer_var = self.tcx.mk_ty(TyKind::Infer(InferTy::TyVar(new_var)));
-                self.at(expr.span).ceq(infer_var, &self.tcx.types.num)?;
-                self.at(lhs.span).ceq(&l.ty, infer_var)?;
-                self.at(rhs.span).ceq(&r.ty, infer_var)?;
-                infer_var
-            }
-        };
-
-        Ok(tir::Expr { ty, span: expr.span, kind })
+        item: &ir::Item,
+        sig: &ir::FnSig,
+        generics: &ir::Generics,
+        body: &ir::Body,
+    ) -> FnCtx<'a, 'tcx> {
+        let fcx = FnCtx::new(&self);
+        let (_, ret_ty) = self.tcx.item_ty(item.id.def_id).expect_fn();
+        let body_ty = fcx.check_expr(body.expr);
+        fcx.expect_eq(item.span, ret_ty, body_ty);
+        fcx
     }
 
-    pub fn type_expr_lit(&self, expr: &ir::Expr<'_>, lit: ast::Lit) -> tir::Expr<'tcx> {
-        let ty = match lit {
-            ast::Lit::Num(_) => self.tcx.types.num,
-            ast::Lit::Bool(_) => self.tcx.types.boolean,
-        };
-        tir::Expr { ty, span: expr.span, kind: tir::ExprKind::Lit(lit) }
+    pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
+        *self.tables.borrow().node_types().get(id).expect("no entry for id in typecktables")
+    }
+
+    pub fn write_ty(&self, id: ir::Id, ty: Ty<'tcx>) {
+        self.tables.borrow_mut().node_types_mut().insert(id, ty);
     }
 }

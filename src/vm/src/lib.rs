@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
 #![feature(box_syntax, box_patterns)]
+#![feature(associated_type_defaults)]
 #![feature(iterator_fold_self)]
 #![feature(raw)]
 #![feature(hash_set_entry)]
@@ -13,6 +14,7 @@
 #![feature(raw_vec_internals)]
 #![feature(const_fn)]
 #![allow(dead_code)]
+#![allow(warnings)]
 
 #[macro_use]
 extern crate derive_deref;
@@ -24,6 +26,7 @@ extern crate vm_derive;
 mod arena;
 mod ast;
 mod compiler;
+mod core;
 mod driver;
 mod error;
 mod exec;
@@ -32,7 +35,6 @@ mod ir;
 mod lexer;
 mod parser;
 mod resolve;
-mod shared;
 mod span;
 mod tir;
 mod ty;
@@ -44,8 +46,16 @@ use error::LResult;
 
 pub fn exec(src: &str) -> LResult<()> {
     let driver = Driver::new(src);
-    let expr = driver.gen_tir_expr()?;
+    let tir = driver.gen_tir()?;
+    println!("{:#?}", tir);
+    println!("{}", tir);
     Ok(())
+}
+
+pub fn exec_expr(src: &str) -> LResult<()> {
+    // just stupidly wraps the expr string in a function to form a program
+    let src = format!("fn main() {{ {} }}", src);
+    exec(&src)
 }
 
 // in tir every expression has a type (i.e. a ty field))

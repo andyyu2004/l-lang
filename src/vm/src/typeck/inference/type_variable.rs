@@ -1,7 +1,6 @@
 use super::InferCtxUndoLogs;
-use crate::{
-    ty::Ty, typeck::{InferError, InferResult}
-};
+use crate::error::{TypeError, TypeResult};
+use crate::ty::Ty;
 use ena::unify as ut;
 use std::marker::PhantomData;
 
@@ -48,17 +47,17 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     }
 
     /// generates an indexed substitution based on the contents of the UnificationTable
-    pub fn gen_substs(&mut self) -> InferResult<'tcx, Vec<Ty<'tcx>>> {
+    pub fn gen_substs(&mut self) -> TypeResult<'tcx, Vec<Ty<'tcx>>> {
         (0..self.storage.tyvid_count)
             .map(|index| self.probe(TyVid { index }))
             .map(|val| match val {
                 TyVarValue::Known(ty) => Ok(ty),
-                TyVarValue::Unknown => Err(InferError::InferenceFailure),
+                TyVarValue::Unknown => Err(TypeError::InferenceFailure),
             })
             .collect()
     }
 
-    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> InferResult<'tcx, ()> {
+    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> TypeResult<'tcx, ()> {
         let root = self.root_var(vid);
         self.eq_relations().unify_var_value(root, TyVarValue::Known(ty))
     }
@@ -67,7 +66,7 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         self.eq_relations().find(vid).vid
     }
 
-    pub fn equate(&mut self, s: TyVid, t: TyVid) -> InferResult<'tcx, ()> {
+    pub fn equate(&mut self, s: TyVid, t: TyVid) -> TypeResult<'tcx, ()> {
         self.eq_relations().unify_var_var(s, t)
     }
 
@@ -94,11 +93,11 @@ impl<'tcx> TyVarValue<'tcx> {
 }
 
 impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
-    type Error = InferError<'tcx>;
+    type Error = TypeError<'tcx>;
     fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
         match (s, t) {
             (&Self::Known(a), &Self::Known(b)) if a == b => Ok(*s),
-            (&Self::Known(a), &Self::Known(b)) => Err(InferError::UnificationFailure(a, b)),
+            (&Self::Known(a), &Self::Known(b)) => Err(TypeError::UnificationFailure(a, b)),
             (&Self::Known(_), _) => Ok(*s),
             (_, &Self::Known(_)) => Ok(*t),
             (&Self::Unknown, &Self::Unknown) => Ok(TyVarValue::Unknown),
