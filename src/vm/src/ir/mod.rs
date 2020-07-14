@@ -17,7 +17,7 @@ crate struct Id {
     /// id of the immediately enclosing item
     pub def_id: DefId,
     /// id of node relative to the enclosing def_id
-    pub local_id: LocalId,
+    pub local: LocalId,
 }
 
 crate use ast_lowering::AstLoweringCtx;

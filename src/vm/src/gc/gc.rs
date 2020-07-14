@@ -1,7 +1,6 @@
 use super::{GCStateMap, GarbageCollector, Gc, Trace};
-use alloc::Layout;
 use rustc_hash::FxHashSet;
-use std::alloc;
+use std::alloc::{self, Layout};
 use std::ptr::NonNull;
 
 /// the garbage collector

@@ -17,7 +17,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             PatternKind::Wildcard => write!(f, "_"),
             // we print out the `local_id` instead of the ident symbol number
             // as the identifier is referred to by id not name in the tir
-            PatternKind::Binding(_, _) => write!(f, "${:?}", self.id.local_id),
+            PatternKind::Binding(_, _) => write!(f, "${:?}", self.id.local),
         }?;
         write!(f, ": {}", self.ty)
     }

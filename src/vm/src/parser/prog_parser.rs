@@ -73,16 +73,6 @@ mod test {
     }
 
     #[test]
-    fn parse_empty_stmts() {
-        let src = r#"
-        fn test() {
-            let y = 5;;;;;
-        }
-        "#;
-        let _prog = parse!(src).unwrap();
-        dbg!(_prog);
-    }
-    #[test]
     fn parse_missing_semi() {
         let src = r#"
         fn test() {

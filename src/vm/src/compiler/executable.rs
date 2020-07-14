@@ -5,7 +5,7 @@ use crate::exec::{CodeBuilder, Function, Op};
 #[derive(Debug)]
 pub struct Executable {
     pub constants: ConstantPool,
-    /// the starter function that will call main
+    /// the `start` function that will call the main function and begin execution
     pub start: Function,
 }
 
@@ -23,17 +23,15 @@ impl Executable {
             .emit_op(Op::ret)
             .build();
 
-        Self {
-            constants,
-            start: Function::new(start_code),
-        }
+        Self { constants, start: Function::new(start_code) }
     }
 }
+
 /// execute a main function
 impl From<Function> for Executable {
-    /// given function f
+    /// given a function f, produces
     /// fn main() {
-    ///     return f();
+    ///     return f()
     /// }
     fn from(f: Function) -> Self {
         Self::new(vec![], f)

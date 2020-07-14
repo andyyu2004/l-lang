@@ -3,6 +3,7 @@
 #![feature(associated_type_defaults)]
 #![feature(iterator_fold_self)]
 #![feature(raw)]
+#![feature(alloc)]
 #![feature(hash_set_entry)]
 #![feature(extern_types)]
 #![feature(box_into_raw_non_null)]
@@ -50,9 +51,8 @@ use log::LevelFilter;
 pub fn exec(src: &str) -> LResult<()> {
     simple_logging::log_to_file("log.txt", LevelFilter::Info);
     let driver = Driver::new(src);
-    let tir = driver.gen_tir()?;
-    // println!("{:#?}", tir);
-    println!("{}", tir);
+    let res = driver.exec();
+    println!("{:?}", res);
     Ok(())
 }
 
@@ -62,15 +62,11 @@ pub fn exec_expr(src: &str) -> LResult<()> {
     exec(&src)
 }
 
-// in tir every expression has a type (i.e. a ty field))
-// mod tir;
-// in ir, only some places will be typed
-// mod ir;
-
 #[cfg(test)]
 mod test {
     use crate::exec::*;
 
+    /// ensure this doesn't unintentionally get larger
     #[test]
     fn size_of() {
         assert_eq!(std::mem::size_of::<Val>(), 16);

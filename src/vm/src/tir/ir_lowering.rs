@@ -130,7 +130,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir(ctx)),
             ir::ExprKind::Path(path) => match path.res {
-                ir::Res::Local(id) => tir::ExprKind::Var(id),
+                ir::Res::Local(id) => tir::ExprKind::VarRef(id),
                 ir::Res::PrimTy(_) => unreachable!(),
             },
         };

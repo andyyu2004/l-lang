@@ -8,6 +8,7 @@ use num_enum::TryFromPrimitive;
 #[repr(u8)]
 pub enum Op {
     ///     ->
+    ///
     nop     = 0x00,
     /// const <val>
     ///     -> i64

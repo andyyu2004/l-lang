@@ -43,7 +43,7 @@ impl<'a, T> TableDefIdValidator<'a, T> {
 
     pub fn get(&self, id: ir::Id) -> Option<&T> {
         validate_id(self.def_id, id);
-        self.table.get(&id.local_id)
+        self.table.get(&id.local)
     }
 }
 
@@ -59,6 +59,6 @@ fn validate_id(def_id: DefId, id: ir::Id) {
 impl<'a, T> TableDefIdValidatorMut<'a, T> {
     pub fn insert(&mut self, id: ir::Id, value: T) -> Option<T> {
         validate_id(self.def_id, id);
-        self.table.insert(id.local_id, value)
+        self.table.insert(id.local, value)
     }
 }

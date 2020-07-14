@@ -84,9 +84,15 @@ pub(super) struct LiteralExprParser {
 impl Parse for LiteralExprParser {
     type Output = P<Expr>;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let slice = &parser.ctx.main_file()[self.span];
         let literal = match self.kind {
-            LiteralKind::Int { base, .. } | LiteralKind::Float { base, .. } => {
-                let slice = &parser.ctx.main_file()[self.span];
+            LiteralKind::Float { base, .. } => {
+                if base != Base::Decimal {
+                    panic!("only decimal float literals are supported")
+                }
+                Lit::Num(slice.parse().unwrap())
+            }
+            LiteralKind::Int { base, .. } => {
                 Lit::Num(i64::from_str_radix(slice, base as u32).unwrap() as f64)
             }
             _ => todo!(),

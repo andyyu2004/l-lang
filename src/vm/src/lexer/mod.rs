@@ -6,6 +6,6 @@ mod lexing;
 crate mod symbol;
 
 crate use lexer::{Lexer, Tok, TokenType};
-crate use lexing::LiteralKind;
+crate use lexing::{Base, LiteralKind};
 use lexing::{Token, TokenKind};
 crate use symbol::Symbol;

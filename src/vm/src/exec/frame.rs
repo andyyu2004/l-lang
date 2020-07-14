@@ -25,12 +25,7 @@ impl Trace for Frame {
 
 impl Frame {
     pub fn new(clsr: Gc<Closure>, ret_addr: usize) -> Self {
-        Self {
-            clsr,
-            ip: 0,
-            sp: 0,
-            ret_addr,
-        }
+        Self { clsr, ip: 0, sp: 0, ret_addr }
     }
 
     pub fn read(&mut self, size: usize) -> &[u8] {

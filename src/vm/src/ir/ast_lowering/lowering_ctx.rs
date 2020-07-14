@@ -44,7 +44,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             let &mut (def_id, ref mut counter) = this.item_stack.last_mut().unwrap();
             let local_id = *counter;
             *counter += 1;
-            Id { def_id, local_id: LocalId::new(local_id) }
+            Id { def_id, local: LocalId::new(local_id) }
         })
     }
 

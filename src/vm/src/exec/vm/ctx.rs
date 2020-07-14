@@ -2,7 +2,7 @@ use crate::exec::{Closure, Frame, Upvar, Val};
 use crate::gc::{GCStateMap, Gc, Trace};
 use std::{collections::BTreeMap, mem, ptr::NonNull};
 
-const FRAMES_MAX: usize = 4;
+const FRAMES_MAX: usize = 16;
 const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
 
 /// contains the fields that need to be gced
@@ -23,16 +23,10 @@ pub struct VMCtx {
 impl Trace for VMCtx {
     fn mark(&self, map: &mut GCStateMap) {
         let sp = self.frames[self.fp - 1].sp;
-        self.stack[..self.bp + sp]
-            .iter()
-            .for_each(|val| val.mark(map));
-        self.frames[..self.fp]
-            .iter()
-            .for_each(|frame| frame.mark(map));
+        self.stack[..self.bp + sp].iter().for_each(|val| val.mark(map));
+        self.frames[..self.fp].iter().for_each(|frame| frame.mark(map));
         self.constants.iter().for_each(|val| val.mark(map));
-        self.open_upvalues
-            .values()
-            .for_each(|ptr| Gc::mark(ptr, map));
+        self.open_upvalues.values().for_each(|ptr| Gc::mark(ptr, map));
     }
 }
 impl VMCtx {
@@ -43,13 +37,6 @@ impl VMCtx {
         frames[0] = Frame::new(f, 0);
         let stack = [Val::default(); STACK_MAX];
 
-        Self {
-            stack,
-            frames,
-            constants,
-            open_upvalues: Default::default(),
-            fp: 1,
-            bp: 0,
-        }
+        Self { stack, frames, constants, open_upvalues: Default::default(), fp: 1, bp: 0 }
     }
 }
