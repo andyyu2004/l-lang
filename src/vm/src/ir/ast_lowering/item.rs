@@ -20,13 +20,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     ir::ItemKind::Fn(lowered_sig, generics, lctx.arena.alloc(body))
                 }
             };
-            lctx.arena.alloc(ir::Item {
-                span,
-                id: lctx.lower_node_id(id),
-                vis,
-                ident: lctx.lower_ident(ident),
-                kind,
-            })
+            lctx.arena.alloc(ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind })
         })
     }
 

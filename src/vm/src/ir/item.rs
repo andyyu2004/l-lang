@@ -9,7 +9,7 @@ crate struct Item<'ir> {
     pub span: Span,
     pub id: ir::Id,
     pub vis: Visibility,
-    pub ident: ir::Ident,
+    pub ident: Ident,
     pub kind: ir::ItemKind<'ir>,
 }
 

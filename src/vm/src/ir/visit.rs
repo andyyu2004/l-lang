@@ -1,4 +1,5 @@
-use crate::{ast::Visibility, ir};
+use crate::ast::{Ident, Visibility};
+use crate::ir;
 
 crate trait Visitor<'ir>: Sized {
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
@@ -20,7 +21,7 @@ crate trait Visitor<'ir>: Sized {
     fn visit_vis(&mut self, vis: Visibility) {
     }
 
-    fn visit_ident(&mut self, ident: ir::Ident) {
+    fn visit_ident(&mut self, ident: Ident) {
     }
 
     fn visit_let(&mut self, l: &'ir ir::Let<'ir>) {
@@ -85,6 +86,7 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
         }
         ir::ExprKind::Unary(_, expr) => v.visit_expr(expr),
         ir::ExprKind::Block(block) => v.visit_block(block),
+        ir::ExprKind::Path(path) => v.visit_path(path),
         ir::ExprKind::Lit(_) => {}
     }
 }

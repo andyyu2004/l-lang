@@ -1,3 +1,4 @@
+use crate::ast::Ident;
 use crate::ir;
 use crate::span::Span;
 
@@ -11,5 +12,5 @@ crate struct Pattern<'ir> {
 #[derive(Debug)]
 crate enum PatternKind<'ir> {
     Wildcard,
-    Binding(ir::Ident, Option<&'ir ir::Pattern<'ir>>),
+    Binding(Ident, Option<&'ir ir::Pattern<'ir>>),
 }

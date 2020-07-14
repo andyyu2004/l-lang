@@ -5,7 +5,6 @@ use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use std::marker::PhantomData;
 
 /// ir -> tir
-/// simple procedure of basically just injecting type annotations into expressions and patterns
 crate struct IrLoweringCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
@@ -130,6 +129,10 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Bin(op, l, r) => tir::ExprKind::Bin(*op, l.to_tir(ctx), r.to_tir(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir(ctx)),
+            ir::ExprKind::Path(path) => match path.res {
+                ir::Res::Local(id) => tir::ExprKind::Var(id),
+                ir::Res::PrimTy(_) => unreachable!(),
+            },
         };
         let ty = ctx.tables.node_type(self.id);
         ctx.tcx.alloc_tir(tir::Expr { span: self.span, kind, ty })

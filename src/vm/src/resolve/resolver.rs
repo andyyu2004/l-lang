@@ -46,8 +46,12 @@ impl Resolver {
         self.node_id_to_def_id[&node_id]
     }
 
+    pub fn get_res(&self, id: NodeId) -> Res<NodeId> {
+        *self.res_map.get(&id).unwrap()
+    }
+
     /// writes the resolution for a given `NodeId` into the map
-    pub fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
+    pub(super) fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
         self.res_map.insert(node_id, res);
     }
 }

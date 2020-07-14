@@ -9,6 +9,15 @@ crate enum Res<Id = ir::Id> {
     Local(Id),
 }
 
+impl<Id> Res<Id> {
+    pub fn map_id<R>(self, f: impl FnOnce(Id) -> R) -> Res<R> {
+        match self {
+            Res::PrimTy(ty) => Res::PrimTy(ty),
+            Res::Local(id) => Res::Local(f(id)),
+        }
+    }
+}
+
 #[derive(Default)]
 crate struct Definitions {
     /// just use a counter for DefIds for now
@@ -26,7 +35,7 @@ impl Definitions {
 }
 
 /// namespaces for types and values
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 crate enum NS {
     Type,
     Value,

@@ -23,4 +23,5 @@ crate enum ExprKind<'ir> {
     Bin(ast::BinOp, &'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Unary(ast::UnaryOp, &'ir ir::Expr<'ir>),
     Block(&'ir ir::Block<'ir>),
+    Path(&'ir ir::Path<'ir>),
 }

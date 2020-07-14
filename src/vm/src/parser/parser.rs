@@ -129,7 +129,7 @@ impl<'ctx> Parser<'ctx> {
         match ttype {
             TokenType::Ident(symbol) => {
                 self.idx += 1;
-                Ok(Ident { span, id: self.mk_id(), symbol })
+                Ok(Ident { span, symbol })
             }
             _ => Err(ParseError::expected(err_ident, tok)),
         }

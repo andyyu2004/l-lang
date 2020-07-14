@@ -10,7 +10,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // note that the type is recorded for each identifier as well as the whole pattern
         let pat_ty = match &pat.kind {
             ir::PatternKind::Wildcard => ty,
-            ir::PatternKind::Binding(ident, _) => self.write_ty(ident.id, ty),
+            ir::PatternKind::Binding(ident, _) => self.def_local(pat.id, ty),
         };
         self.write_ty(pat.id, ty)
     }

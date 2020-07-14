@@ -5,6 +5,7 @@ use crate::ir::{self, DefId, Id, LocalId};
 use crate::resolve::Resolver;
 use ast::Ident;
 use indexed_vec::{Idx, IndexVec};
+use ir::Res;
 use std::collections::BTreeMap;
 
 crate struct AstLoweringCtx<'a, 'ir> {
@@ -38,11 +39,6 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         ret
     }
 
-    pub(super) fn lower_ident(&mut self, ident: Ident) -> ir::Ident {
-        let Ident { span, id, symbol } = ident;
-        ir::Ident { span, symbol, id: self.lower_node_id(id) }
-    }
-
     pub(super) fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {
         self.lower_node_id_generic(node_id, |this| {
             let &mut (def_id, ref mut counter) = this.item_stack.last_mut().unwrap();
@@ -50,6 +46,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             *counter += 1;
             Id { def_id, local_id: LocalId::new(local_id) }
         })
+    }
+
+    pub(super) fn lower_res(&mut self, res: Res<NodeId>) -> Res {
+        res.map_id(|id| self.lower_node_id(id))
     }
 
     fn lower_node_id_generic(

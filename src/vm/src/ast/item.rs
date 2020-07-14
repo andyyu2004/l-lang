@@ -30,7 +30,7 @@ impl From<Expr> for Item {
             span,
             id,
             vis: Visibility { node: VisibilityKind::Private, span },
-            ident: Ident { id, span, symbol: Symbol(0) },
+            ident: Ident { span, symbol: Symbol(0) },
             kind,
         }
     }

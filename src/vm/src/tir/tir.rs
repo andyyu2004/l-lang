@@ -57,9 +57,10 @@ crate struct Block<'tcx> {
 
 impl<'tcx> Display for Block<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        self.stmts.iter().map(|stmt| writeln!(f, "{}", stmt)).count();
-        self.expr.map(|expr| writeln!(f, "{}", expr));
-        Ok(())
+        writeln!(f, "{{");
+        self.stmts.iter().map(|stmt| writeln!(f, "\t{};", stmt)).count();
+        self.expr.map(|expr| writeln!(f, "\t{}", expr));
+        write!(f, "}}")
     }
 }
 
@@ -73,7 +74,7 @@ crate struct Let<'tcx> {
 
 impl<'tcx> Display for Let<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.pat)?;
+        write!(f, "let {}", self.pat)?;
         self.init.map(|init| write!(f, " = {}", init));
         Ok(())
     }

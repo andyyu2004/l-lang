@@ -1,5 +1,5 @@
 use super::*;
-use crate::ast::Visibility;
+use crate::ast::{Ident, Visibility};
 use crate::ir;
 use crate::{lexer::Symbol, span::Span, ty::Ty};
 use std::fmt::{self, Display, Formatter};
@@ -10,7 +10,7 @@ crate struct Item<'tcx> {
     pub span: Span,
     pub id: ir::Id,
     pub vis: Visibility,
-    pub ident: ir::Ident,
+    pub ident: Ident,
     pub kind: ItemKind<'tcx>,
 }
 
@@ -22,9 +22,7 @@ crate enum ItemKind<'tcx> {
 impl<'tcx> Display for Item<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ItemKind::Fn(sig, generics, body) => {
-                write!(f, "{} fn: {} {{ \n\t{}\n }}", self.vis.node, sig, body)
-            }
+            ItemKind::Fn(sig, generics, body) => write!(f, "{}fn: {} {}", self.vis.node, sig, body),
         }
     }
 }

@@ -1,3 +1,4 @@
+use crate::ir;
 use crate::tir;
 use crate::{ast, span::Span, ty::Ty};
 use fmt::Display;
@@ -7,13 +8,7 @@ use std::fmt::{self, Formatter};
 crate struct Expr<'tcx> {
     pub ty: Ty<'tcx>,
     pub span: Span,
-    pub kind: ExprKind<'tcx>,
-}
-
-impl Default for Expr<'_> {
-    fn default() -> Self {
-        todo!()
-    }
+    pub kind: tir::ExprKind<'tcx>,
 }
 
 #[derive(Debug)]
@@ -22,6 +17,7 @@ crate enum ExprKind<'tcx> {
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
     Block(&'tcx tir::Block<'tcx>),
+    Var(ir::Id),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -37,6 +33,7 @@ impl<'tcx> Display for ExprKind<'tcx> {
             Self::Bin(op, l, r) => write!(f, "({} {} {})", op, l, r),
             Self::Unary(op, expr) => write!(f, "({} {})", op, expr),
             Self::Block(block) => write!(f, "{}", block),
+            Self::Var(id) => write!(f, "${:?}", id.local_id),
         }
     }
 }

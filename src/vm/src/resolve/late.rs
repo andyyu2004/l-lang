@@ -15,23 +15,16 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         Self { resolver, pd: &PhantomData, scopes: Default::default() }
     }
 
-    pub fn with_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         self.scopes[NS::Value].push(Scope::default());
         let ret = f(self);
         self.scopes[NS::Value].pop();
         ret
     }
 
-    pub fn with_ty_scope(&mut self) {
-        todo!()
-    }
-
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         match &pat.kind {
-            PatternKind::Ident(ident, sub) => {
-                if sub.is_some() {
-                    todo!("unimplemented sub ident patterns")
-                }
+            PatternKind::Ident(ident, _sub) => {
                 let res = Res::Local(pat.id);
                 self.scopes[NS::Value].define(*ident, res);
             }
@@ -45,17 +38,17 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         }
         let segment = &path.segments[0];
 
-        let res = self.scopes[ns]
+        let res = *self.scopes[ns]
             .lookup(&segment.ident)
             .ok_or_else(|| ResolutionError::unbound_variable(segment.ident.span))?;
-        self.resolver.resolve_node(segment.id, *res);
+        self.resolver.resolve_node(segment.id, res);
         Ok(())
     }
 }
 
 impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_block(&mut self, block: &'ast Block) {
-        self.with_scope(|this| ast::walk_block(this, block));
+        self.with_val_scope(|this| ast::walk_block(this, block));
     }
 
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {

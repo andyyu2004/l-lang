@@ -12,10 +12,10 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         let &Pattern { id, span, ref kind } = pat;
         let kind = match kind {
             PatternKind::Wildcard => ir::PatternKind::Wildcard,
-            PatternKind::Ident(ident, sub) => ir::PatternKind::Binding(
-                self.lower_ident(*ident),
-                sub.as_ref().map(|pat| self.lower_pattern(pat)),
-            ),
+            PatternKind::Ident(ident, sub) => {
+                let sub = sub.as_ref().map(|pat| self.lower_pattern(pat));
+                ir::PatternKind::Binding(*ident, sub)
+            }
             PatternKind::Paren(pat) => return self.lower_pattern_inner(pat),
         };
         ir::Pattern { id: self.lower_node_id(id), span, kind }

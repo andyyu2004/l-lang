@@ -1,11 +1,11 @@
-use crate::ir::{self, Id};
+use crate::ir;
 use crate::span::Span;
-use crate::{tir, ty::Ty};
+use crate::{ast::Ident, tir, ty::Ty};
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
 crate struct Pattern<'tcx> {
-    pub id: Id,
+    pub id: ir::Id,
     pub span: Span,
     pub ty: Ty<'tcx>,
     pub kind: tir::PatternKind<'tcx>,
@@ -13,21 +13,18 @@ crate struct Pattern<'tcx> {
 
 impl<'tcx> Display for Pattern<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.kind, self.ty)
+        match self.kind {
+            PatternKind::Wildcard => write!(f, "_"),
+            // we print out the `local_id` instead of the ident symbol number
+            // as the identifier is referred to by id not name in the tir
+            PatternKind::Binding(_, _) => write!(f, "${:?}", self.id.local_id),
+        }?;
+        write!(f, ": {}", self.ty)
     }
 }
 
 #[derive(Debug)]
 crate enum PatternKind<'tcx> {
     Wildcard,
-    Binding(ir::Ident, Option<&'tcx tir::Pattern<'tcx>>),
-}
-
-impl<'tcx> Display for PatternKind<'tcx> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            PatternKind::Wildcard => write!(f, "_"),
-            PatternKind::Binding(ident, _sub) => write!(f, "{}", ident),
-        }
-    }
+    Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
 }

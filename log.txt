@@ -1,1 +1,1 @@
-[00:00:00.000] (7f7ff4979580) INFO   body type: (); ret_ty: ()
+[00:00:00.000] (7f1d1a103580) INFO   body type: TyVar(TyVid { index: 1 }); ret_ty: ()

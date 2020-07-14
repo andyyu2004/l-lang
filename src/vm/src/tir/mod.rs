@@ -1,3 +1,4 @@
+//! typed ir
 mod expr;
 mod ir_lowering;
 mod item;

@@ -2,12 +2,24 @@ use super::{NodeId, Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Eq)]
 crate struct Ident {
     pub span: Span,
-    pub id: NodeId,
     pub symbol: Symbol,
+}
+
+impl Hash for Ident {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.symbol.hash(state)
+    }
+}
+
+impl PartialEq for Ident {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol == other.symbol
+    }
 }
 
 /// we don't have access to the actual identifier without further context
@@ -56,7 +68,7 @@ crate enum VisibilityKind {
 impl Display for VisibilityKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Public => write!(f, "pub"),
+            Self::Public => write!(f, "pub "),
             Self::Private => write!(f, ""),
         }
     }
