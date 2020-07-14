@@ -93,6 +93,7 @@ crate struct TupleParser<P> {
 impl<P> Parse for TupleParser<P>
 where
     P: Parse,
+    P::Output: std::fmt::Debug,
 {
     type Output = Vec<P::Output>;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
@@ -104,6 +105,7 @@ where
             vec.push(self.inner.parse(parser)?);
             if parser.accept(TokenType::Comma).is_none() {
                 parser.expect(TokenType::CloseParen)?;
+                break;
             }
         }
         Ok(vec)
@@ -122,7 +124,7 @@ where
     type Output = P::Output;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let p = self.inner.parse(parser)?;
-        let close_paren = parser.expect(TokenType::CloseParen)?;
+        parser.expect(TokenType::CloseParen)?;
         Ok(p)
     }
 }

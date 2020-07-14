@@ -66,8 +66,10 @@ impl<'ctx> Parser<'ctx> {
         P: Parse<Output = R>,
     {
         let backtrack_idx = self.idx;
+        let backtrack_id = self.id_counter.get();
         parser.parse(self).ok().or_else(|| {
             self.idx = backtrack_idx;
+            self.id_counter.set(backtrack_id);
             None
         })
     }
@@ -149,14 +151,7 @@ impl<'ctx> Parser<'ctx> {
     }
 
     pub(super) fn accept(&mut self, ttype: TokenType) -> Option<Tok> {
-        self.safe_peek().ok().and_then(|t| {
-            if t.ttype == ttype {
-                self.idx += 1;
-                Some(t)
-            } else {
-                None
-            }
-        })
+        self.expect(ttype).ok()
     }
 
     pub(super) fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
@@ -167,7 +162,7 @@ impl<'ctx> Parser<'ctx> {
     }
 
     pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<Tok> {
-        let t = self.peek();
+        let t = self.safe_peek()?;
         if t.ttype == ttype {
             self.idx += 1;
             Ok(t)

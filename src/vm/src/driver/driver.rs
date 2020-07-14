@@ -56,7 +56,7 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {
         let ast = self.parse()?;
-        let mut resolver = Resolver::new(&ast);
+        let mut resolver = Resolver::resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
         let ir = lctx.lower_prog(&ast);
         let resolutions = resolver.complete();

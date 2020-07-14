@@ -106,7 +106,7 @@ impl<'ctx> Lexer<'ctx> {
             .filter(|t| t.ttype != TokenType::Whitespace)
             .collect_vec();
         // just add a <eof> token for easier parsing
-        tokens.push(Tok { span: Span::new(i + 1, i + 1), ttype: TokenType::Eof });
+        tokens.push(Tok { span: Span::new(i, i), ttype: TokenType::Eof });
         tokens
     }
 }

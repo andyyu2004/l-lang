@@ -79,7 +79,7 @@ impl Parse for PrimaryExprParser {
             let block = BlockParser { open_brace }.parse(parser)?;
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
         } else {
-            todo!("found token {:?}", parser.safe_peek());
+            Err(ParseError::unimpl())
         }
     }
 }
@@ -155,6 +155,29 @@ mod test {
             box Expr::new(Span::new(4, 5), NodeId::new(0), ExprKind::Lit(Lit::Num(3.0)))
         );
     }
+
+    #[test]
+    fn parse_empty_tuple() {
+        let expr = parse_expr!("()");
+        assert_eq!(expr, box Expr::new(Span::new(0, 2), NodeId::new(0), ExprKind::Tuple(vec![])));
+    }
+
+    #[test]
+    fn parse_tuple() {
+        let expr = parse_expr!("(2, 3)");
+        assert_eq!(
+            expr,
+            box Expr::new(
+                Span::new(0, 6),
+                NodeId::new(2),
+                ExprKind::Tuple(vec![
+                    box Expr::new(Span::new(1, 2), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Num(3.0)))
+                ])
+            )
+        );
+    }
+
     #[test]
     fn parse_int_literal() {
         let expr = parse_expr!("2");

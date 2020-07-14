@@ -16,7 +16,8 @@ crate struct ResolverOutputs {
 }
 
 impl Resolver {
-    pub fn new(prog: &Prog) -> Self {
+    /// construct a resolver and run resolution
+    pub fn resolve(prog: &Prog) -> Self {
         let mut resolver = Self {
             res_map: Default::default(),
             defs: Default::default(),
