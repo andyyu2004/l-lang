@@ -13,7 +13,8 @@ impl Parse for PatternParser {
         } else if let Some(ident) = parser.accept_ident() {
             Ok(parser.mk_pat(ident.span, PatternKind::Ident(ident, None)))
         } else if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
-            let (pattern, span) = ParenParser { open_paren, inner: PatternParser }.parse(parser)?;
+            let (span, pattern) =
+                ParenParser { inner: PatternParser }.spanned(true).parse(parser)?;
             Ok(parser.mk_pat(span, PatternKind::Paren(pattern)))
         } else {
             Err(ParseError::unimpl())

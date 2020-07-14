@@ -53,6 +53,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         2
     }
 
+    /// prints out one instruction at a time and returns the length of the instruction
     fn fmt_inst(&mut self) -> usize {
         let f = &mut self.f;
         match self.op() {

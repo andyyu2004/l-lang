@@ -3,6 +3,7 @@
 #![feature(associated_type_defaults)]
 #![feature(iterator_fold_self)]
 #![feature(raw)]
+#![feature(const_panic)]
 #![feature(alloc)]
 #![feature(hash_set_entry)]
 #![feature(extern_types)]

@@ -22,16 +22,25 @@ impl<'ctx> Parser<'ctx> {
     }
 
     /// runs some parser and returns the result and the span that it consumed
+    /// `include_prev` indicates whether the previous token is to be included in the span or not
     pub(super) fn with_span<R>(
         &mut self,
         parser: &mut impl Parse<Output = R>,
-    ) -> ParseResult<(R, Span)> {
-        let lo = self.idx;
-        Ok((parser.parse(self)?, Span::new(lo, self.idx)))
+        include_prev: bool,
+    ) -> ParseResult<(Span, R)> {
+        let lo =
+            if include_prev { self.tokens[self.idx - 1].span.lo } else { self.curr_span_start() };
+        let p = parser.parse(self)?;
+        Ok((Span::new(lo, self.curr_span_start()), p))
+    }
+
+    pub fn curr_span_start(&self) -> usize {
+        self.tokens[self.idx].span.lo
     }
 
     pub fn empty_span(&self) -> Span {
-        Span { lo: self.idx, hi: self.idx }
+        let idx = self.curr_span_start();
+        Span { lo: idx, hi: idx }
     }
 
     pub fn parse(&mut self) -> ParseResult<P<Prog>> {
@@ -92,7 +101,7 @@ impl<'ctx> Parser<'ctx> {
     }
 
     pub(super) fn reached_eof(&self) -> bool {
-        self.idx >= self.tokens.len()
+        self.tokens[self.idx].ttype == TokenType::Eof
     }
 
     pub(super) fn safe_peek(&self) -> ParseResult<Tok> {

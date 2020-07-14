@@ -1,5 +1,5 @@
 use super::Parser;
-use crate::error::ParseResult;
+use crate::{error::ParseResult, span::Span};
 
 crate trait Parse: Sized {
     type Output;
@@ -11,6 +11,10 @@ crate trait Parse: Sized {
     {
         OrParser { fst: self, snd: other }
     }
+
+    fn spanned(self, include_prev: bool) -> SpannedParser<Self> {
+        SpannedParser { inner: self, include_prev }
+    }
 }
 
 // implement Parser for all `parser-like` functions
@@ -21,6 +25,18 @@ where
     type Output = R;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         self(parser)
+    }
+}
+
+crate struct SpannedParser<P> {
+    inner: P,
+    include_prev: bool,
+}
+
+impl<P: Parse> Parse for SpannedParser<P> {
+    type Output = (Span, P::Output);
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        parser.with_span(&mut self.inner, self.include_prev)
     }
 }
 

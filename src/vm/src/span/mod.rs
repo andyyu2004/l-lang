@@ -14,6 +14,7 @@ pub struct Span {
 
 impl Span {
     pub const fn new(lo: usize, hi: usize) -> Self {
+        assert!(lo <= hi);
         Self { lo, hi }
     }
 

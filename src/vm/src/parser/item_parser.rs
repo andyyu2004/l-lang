@@ -13,13 +13,15 @@ impl Parse for ItemParser {
         let vis = VisibilityParser.parse(parser)?;
         let item_kind_keyword = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
-        let (kind, kind_span) =
-            parser.with_span(&mut |parser: &mut Parser| match item_kind_keyword.ttype {
+        let (kind_span, kind) = parser.with_span(
+            &mut |parser: &mut Parser| match item_kind_keyword.ttype {
                 TokenType::Fn => FnParser { fn_kw: item_kind_keyword }.parse(parser),
                 TokenType::Struct => todo!(),
                 TokenType::Enum => todo!(),
                 _ => unreachable!(),
-            })?;
+            },
+            false,
+        )?;
 
         Ok(parser.mk_item(vis.span.merge(&kind_span), vis, ident, kind))
     }

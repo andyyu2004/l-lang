@@ -39,7 +39,7 @@ impl<'ctx> Lexer<'ctx> {
         let mut i = 0;
 
         // note: it is important to filter after so that the spans are correct
-        lexing::tokenize(&src)
+        let mut tokens = lexing::tokenize(&src)
             .map(|t| {
                 let span = Span::new(i, i + t.len);
                 i += t.len;
@@ -104,7 +104,10 @@ impl<'ctx> Lexer<'ctx> {
                 Tok { span, ttype: kind }
             })
             .filter(|t| t.ttype != TokenType::Whitespace)
-            .collect_vec()
+            .collect_vec();
+        // just add a <eof> token for easier parsing
+        tokens.push(Tok { span: Span::new(i + 1, i + 1), ttype: TokenType::Eof });
+        tokens
     }
 }
 

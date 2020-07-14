@@ -15,19 +15,6 @@ pub(super) struct Compiler {
     localc: u8,
 }
 
-impl Deref for Compiler {
-    type Target = CodeBuilder;
-    fn deref(&self) -> &Self::Target {
-        &self.code
-    }
-}
-
-impl DerefMut for Compiler {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.code
-    }
-}
-
 impl Compiler {
     pub fn new() -> Self {
         Self { code: Default::default(), locals: Default::default(), localc: 0 }
@@ -78,6 +65,8 @@ impl Compiler {
             /// if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => return self.pop(),
             tir::PatternKind::Binding(ident, _) => {
+                // this relies on the observation that the nth local variable resides
+                // in slot n of the current frame
                 self.locals.insert(l.pat.id.local, self.localc);
                 self.localc += 1;
             }
@@ -120,5 +109,18 @@ impl Compiler {
     /// emits unit instruction
     fn unit(&mut self) {
         self.emit_op(Op::pop);
+    }
+}
+
+impl Deref for Compiler {
+    type Target = CodeBuilder;
+    fn deref(&self) -> &Self::Target {
+        &self.code
+    }
+}
+
+impl DerefMut for Compiler {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.code
     }
 }

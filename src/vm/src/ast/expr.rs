@@ -29,6 +29,7 @@ crate enum ExprKind {
     Paren(P<Expr>),
     Block(P<Block>),
     Path(Path),
+    Tuple(Vec<P<Expr>>),
 }
 
 impl Display for ExprKind {
@@ -40,6 +41,7 @@ impl Display for ExprKind {
             Self::Paren(expr) => write!(f, "({})", expr),
             Self::Block(_) => todo!(),
             Self::Path(path) => write!(f, "{}", path),
+            Self::Tuple(xs) => todo!(),
         }
     }
 }

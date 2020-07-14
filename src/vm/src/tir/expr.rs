@@ -17,6 +17,7 @@ crate enum ExprKind<'tcx> {
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
     Block(&'tcx tir::Block<'tcx>),
+    /// reference to a local variable (reference not in the rust sense, but just a usage of the variable)
     VarRef(ir::Id),
 }
 

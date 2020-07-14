@@ -56,8 +56,16 @@ impl Parse for PrimaryExprParser {
     type Output = P<Expr>;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
-            let (expr, span) = ParenParser { open_paren, inner: ExprParser }.parse(parser)?;
-            Ok(parser.mk_expr(span, ExprKind::Paren(expr)))
+            // we first try to parse as a parenthesization, if there is a comma then it will fail
+            // and we will backtrack and parse it as a tuple instead
+            let mut paren_parser = ParenParser { inner: ExprParser }.spanned(true);
+            if let Some((span, expr)) = parser.try_parse(&mut paren_parser) {
+                Ok(parser.mk_expr(span, ExprKind::Paren(expr)))
+            } else {
+                let mut tuple_parser = TupleParser { inner: ExprParser }.spanned(true);
+                let (span, elements) = tuple_parser.parse(parser)?;
+                Ok(parser.mk_expr(span, ExprKind::Tuple(elements)))
+            }
         } else if let Some((kind, span)) = parser.accept_literal() {
             LiteralExprParser { kind, span }.parse(parser)
         } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
@@ -138,6 +146,15 @@ mod test {
         }};
     }
 
+    #[test]
+    fn test_parser_span() {
+        let expr = parse_expr!("    3");
+        dbg!(&expr);
+        assert_eq!(
+            expr,
+            box Expr::new(Span::new(4, 5), NodeId::new(0), ExprKind::Lit(Lit::Num(3.0)))
+        );
+    }
     #[test]
     fn parse_int_literal() {
         let expr = parse_expr!("2");

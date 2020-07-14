@@ -88,7 +88,6 @@ where
 /// <tuple> = () | '(' ( <inner> , )+ <inner>? ')'
 crate struct TupleParser<P> {
     pub inner: P,
-    pub open_paren: Tok,
 }
 
 impl<P> Parse for TupleParser<P>
@@ -113,7 +112,6 @@ where
 
 /// parser some inner parser within parentheses
 crate struct ParenParser<P> {
-    pub open_paren: Tok,
     pub inner: P,
 }
 
@@ -121,12 +119,11 @@ impl<P> Parse for ParenParser<P>
 where
     P: Parse,
 {
-    type Output = (P::Output, Span);
+    type Output = P::Output;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let p = self.inner.parse(parser)?;
         let close_paren = parser.expect(TokenType::CloseParen)?;
-        let span = self.open_paren.span.merge(&close_paren.span);
-        Ok((p, span))
+        Ok(p)
     }
 }
 
@@ -139,8 +136,8 @@ impl Parse for PathParser {
             parser.expect(TokenType::Colon)?;
             parser.expect(TokenType::Colon)
         };
-        let (segments, span) =
-            parser.with_span(&mut Punctuated1Parser { inner: PathSegmentParser, separator })?;
+        let (span, segments) = parser
+            .with_span(&mut Punctuated1Parser { inner: PathSegmentParser, separator }, false)?;
         Ok(Path { span, segments })
     }
 }
