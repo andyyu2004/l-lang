@@ -14,5 +14,7 @@ crate enum TyKind {
     Tuple(Vec<P<Ty>>),
     Paren(P<Ty>),
     Path(Path),
+    /// fn(<ty>...) (-> <ty>)?
+    Fn(Vec<P<Ty>>, Option<P<Ty>>),
     Infer,
 }

@@ -214,6 +214,26 @@ mod test {
     }
 
     #[test]
+    fn parse_parameterless_lambda() {
+        parse_expr!("fn () => 5");
+    }
+
+    #[test]
+    fn parse_lambda() {
+        let _expr = parse_expr!("fn (x, y) => (2,3,4)");
+    }
+
+    #[test]
+    fn parse_typed_lambda() {
+        let _expr = parse_expr!("fn (x: i64, y: f64) => (2,3,4)");
+    }
+
+    #[test]
+    fn parse_typed_lambda_with_ret_ty() {
+        let _expr = parse_expr!("fn (x: i64, y: f64) -> (u64, u64, u64) => (2,3,4)");
+    }
+
+    #[test]
     fn parse_precedence_expr() {
         let expr = parse_expr!("2 + 3 * 4");
         assert_eq!(

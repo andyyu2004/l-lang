@@ -53,16 +53,18 @@ impl<'ctx> Lexer<'ctx> {
                 let kind = match t.kind {
                     TokenKind::Whitespace => continue,
                     TokenKind::Eq => {
-                        if tokens[i + 1].kind == TokenKind::Gt {
+                        if tokens[i].kind == TokenKind::Gt {
                             i += 1;
-                            TokenType::RArrow
+                            span_index += 1;
+                            TokenType::RFArrow
                         } else {
                             TokenType::Eq
                         }
                     }
                     TokenKind::Minus => {
-                        if tokens[i + 1].kind == TokenKind::Gt {
+                        if tokens[i].kind == TokenKind::Gt {
                             i += 1;
+                            span_index += 1;
                             TokenType::RArrow
                         } else {
                             TokenType::Minus
@@ -100,8 +102,8 @@ impl<'ctx> Lexer<'ctx> {
                     TokenKind::CloseParen => TokenType::CloseParen,
                     TokenKind::OpenBrace => TokenType::OpenBrace,
                     TokenKind::CloseBrace => TokenType::CloseBrace,
-                    TokenKind::OpenBracket => TokenType::OpenBracket,
-                    TokenKind::CloseBracket => TokenType::CloseBracket,
+                    TokenKind::OpenBracket => TokenType::OpenSqBracket,
+                    TokenKind::CloseBracket => TokenType::CloseSqBracket,
                     TokenKind::At => TokenType::At,
                     TokenKind::Pound => TokenType::Pound,
                     TokenKind::Tilde => TokenType::Tilde,
@@ -186,9 +188,9 @@ pub enum TokenType {
     /// "}"
     CloseBrace,
     /// "["
-    OpenBracket,
+    OpenSqBracket,
     /// "]"
-    CloseBracket,
+    CloseSqBracket,
     /// "@"
     At,
     /// "#"

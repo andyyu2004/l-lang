@@ -76,6 +76,7 @@ crate trait Visitor<'ast>: Sized {
             TyKind::Tuple(tys) => tys.iter().for_each(|ty| self.visit_ty(ty)),
             TyKind::Paren(ty) => self.visit_ty(ty),
             TyKind::Path(path) => self.visit_path(path),
+            TyKind::Fn(_, _) => todo!(),
             TyKind::Infer => {}
         }
     }

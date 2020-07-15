@@ -22,7 +22,9 @@ impl Parse for FnSigParser {
         };
         let inputs = param_parser.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
-        Ok(FnSig { inputs, output: None })
+        let output =
+            parser.accept(TokenType::RArrow).map(|_arrow| TyParser.parse(parser)).transpose()?;
+        Ok(FnSig { inputs, output })
     }
 }
 
@@ -246,7 +248,9 @@ impl Parse for LambdaParser {
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
-        todo!()
-        // parser.expect(TokenType:)
+        parser.expect(TokenType::RFArrow)?;
+        let body = ExprParser.parse(parser)?;
+        let span = self.fn_kw.span.merge(&body.span);
+        Ok(parser.mk_expr(span, ExprKind::Lambda(sig, body)))
     }
 }
