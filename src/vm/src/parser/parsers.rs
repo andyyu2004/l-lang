@@ -98,9 +98,11 @@ where
     type Output = Vec<P::Output>;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut vec = vec![];
+
         if parser.accept(TokenType::CloseParen).is_some() {
             return Ok(vec);
         }
+
         while parser.accept(TokenType::CloseParen).is_none() {
             vec.push(self.inner.parse(parser)?);
             if parser.accept(TokenType::Comma).is_none() {

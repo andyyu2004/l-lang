@@ -16,16 +16,13 @@ crate struct FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
-        Self { infcx, locals: Default::default() }
-    }
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self { Self { infcx, locals: Default::default() } }
 }
 
 impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
-    fn deref(&self) -> &Self::Target {
-        &self.infcx
-    }
+
+    fn deref(&self) -> &Self::Target { &self.infcx }
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -40,10 +37,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ty = l.ty.map(|ty| self.lower_ty(ty)).unwrap_or(self.new_infer_var());
         let pat_ty = self.check_pat(l.pat, ty);
         self.expect_eq(l.span, ty, pat_ty);
-        let init_ty = l.init.as_ref().map(|expr| self.check_expr(expr));
-        if let Some(init_ty) = init_ty {
-            self.expect_eq(l.span, init_ty, ty)
-        }
+        let init_ty = l
+            .init
+            .as_ref()
+            .map(|expr| self.check_expr(expr))
+            .map(|init_ty| self.expect_eq(l.span, init_ty, ty));
     }
 
     pub fn def_local(&mut self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -69,7 +67,5 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> TyConv<'tcx> for FnCtx<'a, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        self.tcx
-    }
+    fn tcx(&self) -> TyCtx<'tcx> { self.tcx }
 }

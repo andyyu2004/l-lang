@@ -21,17 +21,13 @@ impl<'tcx> TyS<'tcx> {
 }
 
 impl<'tcx> Hash for TyS<'tcx> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        (self as *const TyS<'tcx>).hash(state)
-    }
+    fn hash<H: Hasher>(&self, state: &mut H) { (self as *const TyS<'tcx>).hash(state) }
 }
 
 /// we can perform equality using pointers as we ensure that at most one of each TyS is allocated
 /// (by doing a deep compare on TyKind during allocation)
 impl<'tcx> PartialEq for TyS<'tcx> {
-    fn eq(&self, other: &Self) -> bool {
-        ptr::eq(self, other)
-    }
+    fn eq(&self, other: &Self) -> bool { ptr::eq(self, other) }
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
@@ -48,6 +44,7 @@ crate enum TyKind<'tcx> {
     Array(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
     Fn(SubstRef<'tcx>, Ty<'tcx>),
+    Tuple(SubstRef<'tcx>),
     Infer(InferTy),
 }
 
@@ -63,6 +60,8 @@ impl<'tcx> Display for TyKind<'tcx> {
                 write!(f, "({}) -> {}", util::join2(params.into_iter(), ","), ret)
             }
             TyKind::Infer(infer) => write!(f, "{:?}", infer),
+            TyKind::Array(ty) => write!(f, "[{}]", ty),
+            TyKind::Tuple(tys) => write!(f, "({})", tys),
         }
     }
 }
@@ -75,7 +74,5 @@ crate enum InferTy {
 }
 
 impl<'tcx> Display for TyS<'tcx> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.kind)
-    }
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result { write!(f, "{}", self.kind) }
 }

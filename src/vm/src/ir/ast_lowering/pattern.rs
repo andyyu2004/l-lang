@@ -4,6 +4,10 @@ use crate::ir;
 use itertools::Itertools;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
+    crate fn lower_patterns(&mut self, patterns: &[Box<Pattern>]) -> &'ir [ir::Pattern<'ir>] {
+        self.arena.alloc_from_iter(patterns.iter().map(|x| self.lower_pattern_inner(x)))
+    }
+
     crate fn lower_pattern(&mut self, pat: &Pattern) -> &'ir ir::Pattern<'ir> {
         self.arena.alloc(self.lower_pattern_inner(pat))
     }
@@ -17,6 +21,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 ir::PatternKind::Binding(*ident, sub)
             }
             PatternKind::Paren(pat) => return self.lower_pattern_inner(pat),
+            PatternKind::Tuple(pats) => ir::PatternKind::Tuple(self.lower_patterns(pats)),
         };
         ir::Pattern { id: self.lower_node_id(id), span, kind }
     }

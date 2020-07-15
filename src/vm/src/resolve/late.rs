@@ -28,7 +28,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
                 let res = Res::Local(pat.id);
                 self.scopes[NS::Value].define(*ident, res);
             }
-            _ => {}
+            PatternKind::Wildcard | PatternKind::Tuple(_) | PatternKind::Paren(_) => {}
         }
     }
 
@@ -53,6 +53,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
         self.resolve_pattern(pat);
+        ast::walk_pat(self, pat);
         ty.as_ref().map(|ty| self.visit_ty(ty));
         init.as_ref().map(|expr| self.visit_expr(expr));
     }

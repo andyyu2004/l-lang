@@ -32,6 +32,7 @@ impl Compiler {
             tir::ExprKind::Unary(op, expr) => self.compile_expr_unary(op, expr),
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
+            tir::ExprKind::Tuple(_) => todo!(),
         };
     }
 
@@ -70,6 +71,7 @@ impl Compiler {
                 self.locals.insert(l.pat.id.local, self.localc);
                 self.localc += 1;
             }
+            tir::PatternKind::Field(_) => todo!(),
         }
     }
 
@@ -114,6 +116,7 @@ impl Compiler {
 
 impl Deref for Compiler {
     type Target = CodeBuilder;
+
     fn deref(&self) -> &Self::Target {
         &self.code
     }

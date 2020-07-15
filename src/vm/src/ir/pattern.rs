@@ -13,4 +13,5 @@ crate struct Pattern<'ir> {
 crate enum PatternKind<'ir> {
     Wildcard,
     Binding(Ident, Option<&'ir ir::Pattern<'ir>>),
+    Tuple(&'ir [ir::Pattern<'ir>]),
 }

@@ -1,5 +1,6 @@
 use crate::ir;
 use crate::tir;
+use crate::util;
 use crate::{ast, span::Span, ty::Ty};
 use fmt::Display;
 use std::fmt::{self, Formatter};
@@ -19,6 +20,7 @@ crate enum ExprKind<'tcx> {
     Block(&'tcx tir::Block<'tcx>),
     /// reference to a local variable (reference not in the rust sense, but just a usage of the variable)
     VarRef(ir::Id),
+    Tuple(&'tcx [tir::Expr<'tcx>]),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -35,6 +37,7 @@ impl<'tcx> Display for ExprKind<'tcx> {
             Self::Unary(op, expr) => write!(f, "({} {})", op, expr),
             Self::Block(block) => write!(f, "{}", block),
             Self::VarRef(id) => write!(f, "${:?}", id.local),
+            Self::Tuple(xs) => write!(f, "({})", util::join2(xs.iter(), ",")),
         }
     }
 }

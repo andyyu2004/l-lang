@@ -62,17 +62,13 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         self.eq_relations().unify_var_value(root, TyVarValue::Known(ty))
     }
 
-    fn root_var(&mut self, vid: TyVid) -> TyVid {
-        self.eq_relations().find(vid).vid
-    }
+    fn root_var(&mut self, vid: TyVid) -> TyVid { self.eq_relations().find(vid).vid }
 
     pub fn equate(&mut self, s: TyVid, t: TyVid) -> TypeResult<'tcx, ()> {
         self.eq_relations().unify_var_var(s, t)
     }
 
-    pub fn probe(&mut self, vid: TyVid) -> TyVarValue<'tcx> {
-        self.eq_relations().probe_value(vid)
-    }
+    pub fn probe(&mut self, vid: TyVid) -> TyVarValue<'tcx> { self.eq_relations().probe_value(vid) }
 
     pub fn new_ty_var(&mut self) -> TyVid {
         let mut tables = self.eq_relations();
@@ -94,6 +90,7 @@ impl<'tcx> TyVarValue<'tcx> {
 
 impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
     type Error = TypeError<'tcx>;
+
     fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
         match (s, t) {
             (&Self::Known(a), &Self::Known(b)) if a == b => Ok(*s),
@@ -117,22 +114,15 @@ crate struct TyVidEqKey<'tcx> {
 }
 
 impl<'tcx> From<TyVid> for TyVidEqKey<'tcx> {
-    fn from(vid: TyVid) -> Self {
-        TyVidEqKey { vid, phantom: PhantomData }
-    }
+    fn from(vid: TyVid) -> Self { TyVidEqKey { vid, phantom: PhantomData } }
 }
 
 impl<'tcx> ut::UnifyKey for TyVidEqKey<'tcx> {
     type Value = TyVarValue<'tcx>;
-    fn index(&self) -> u32 {
-        self.vid.index
-    }
 
-    fn from_index(i: u32) -> Self {
-        TyVidEqKey::from(TyVid { index: i })
-    }
+    fn index(&self) -> u32 { self.vid.index }
 
-    fn tag() -> &'static str {
-        "TyVidEqKey"
-    }
+    fn from_index(i: u32) -> Self { TyVidEqKey::from(TyVid { index: i }) }
+
+    fn tag() -> &'static str { "TyVidEqKey" }
 }

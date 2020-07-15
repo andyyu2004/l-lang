@@ -22,7 +22,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),
             ExprKind::Path(path) => ir::ExprKind::Path(self.lower_path(path)),
-            ExprKind::Tuple(xs) => todo!(),
+            ExprKind::Tuple(xs) => ir::ExprKind::Tuple(self.lower_exprs(xs)),
         };
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
     }

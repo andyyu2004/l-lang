@@ -59,16 +59,7 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_pattern(&mut self, pattern: &'ast Pattern) {
-        match &pattern.kind {
-            PatternKind::Wildcard => {}
-            PatternKind::Ident(ident, pat) => {
-                self.visit_ident(*ident);
-                if let Some(pat) = pat {
-                    self.visit_pattern(pat)
-                }
-            }
-            PatternKind::Paren(pat) => self.visit_pattern(pat),
-        }
+        walk_pat(self, pattern);
     }
 
     fn visit_path(&mut self, path: &'ast Path) {
@@ -108,6 +99,18 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
+    }
+}
+
+crate fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
+    match &pat.kind {
+        PatternKind::Wildcard => {}
+        PatternKind::Ident(ident, pat) => {
+            visitor.visit_ident(*ident);
+            pat.as_ref().map(|p| visitor.visit_pattern(p));
+        }
+        PatternKind::Paren(pat) => visitor.visit_pattern(pat),
+        PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
     }
 }
 

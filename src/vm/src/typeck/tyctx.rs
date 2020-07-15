@@ -18,9 +18,7 @@ crate struct TyCtx<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn alloc_tir<T>(&self, tir: T) -> &'tcx T {
-        self.interners.arena.alloc_tir(tir)
-    }
+    pub fn alloc_tir<T>(&self, tir: T) -> &'tcx T { self.interners.arena.alloc_tir(tir) }
 
     pub fn alloc_tir_iter<I, T>(&self, iter: I) -> &'tcx [T]
     where
@@ -29,9 +27,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_tir_iter(iter)
     }
 
-    pub fn mk_ty(&self, ty: TyKind<'tcx>) -> Ty<'tcx> {
-        self.interners.intern_ty(ty)
-    }
+    pub fn mk_ty(&self, ty: TyKind<'tcx>) -> Ty<'tcx> { self.interners.intern_ty(ty) }
 
     pub fn mk_prim_ty(&self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
         match prim_ty {
@@ -43,6 +39,13 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn item_ty(&self, def_id: DefId) -> Ty<'tcx> {
         self.item_tys.borrow().get(&def_id).expect("No type entry for item")
+    }
+
+    pub fn mk_substs<I>(self, iter: I) -> SubstRef<'tcx>
+    where
+        I: Iterator<Item = Ty<'tcx>>,
+    {
+        self.intern_substs(&iter.collect_vec())
     }
 
     pub fn intern_substs(self, substs: &[Ty<'tcx>]) -> SubstRef<'tcx> {
@@ -88,9 +91,7 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        *self
-    }
+    fn tcx(&self) -> TyCtx<'tcx> { *self }
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -108,9 +109,8 @@ impl<'tcx> TyCtx<'tcx> {
             ir::ItemKind::Fn(sig, generics, _body) => {
                 let ret_ty =
                     sig.output.map(|ty| TyConv::ir_ty_to_ty(&self, ty)).unwrap_or(self.types.unit);
-                let inputs =
-                    sig.inputs.into_iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty)).collect_vec();
-                let input_tys = self.intern_substs(&inputs);
+                let inputs = sig.inputs.into_iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
+                let input_tys = self.mk_substs(inputs);
                 let fn_ty = self.mk_ty(TyKind::Fn(input_tys, ret_ty));
                 self.item_tys.borrow_mut().insert(item.id.def_id, fn_ty);
             }

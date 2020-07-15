@@ -35,6 +35,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         let kind = match self.kind {
             TyKind::Array(ty) => TyKind::Array(ty.fold_with(folder)),
             TyKind::Fn(inputs, ret) => TyKind::Fn(inputs.fold_with(folder), ret.fold_with(folder)),
+            TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
             TyKind::Infer(_) | TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => {
                 return self;
             }
@@ -56,6 +57,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     {
         match self.kind {
             TyKind::Fn(inputs, ret) => inputs.visit_with(visitor) || ret.visit_with(visitor),
+            TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => todo!(),
             TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => return false,
@@ -65,15 +67,11 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
 
 crate trait TypeFolder<'tcx>: Sized {
     fn tcx(&self) -> TyCtx<'tcx>;
-    fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
-        ty.fold_with(self)
-    }
+    fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> { ty.fold_with(self) }
 }
 
 crate trait TypeVisitor<'tcx>: Sized {
-    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool {
-        ty.visit_with(self)
-    }
+    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool { ty.visit_with(self) }
 }
 
 impl<'tcx> TypeFoldable<'tcx> for &'tcx List<Ty<'tcx>> {
