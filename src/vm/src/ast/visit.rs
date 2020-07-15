@@ -76,7 +76,10 @@ crate trait Visitor<'ast>: Sized {
             TyKind::Tuple(tys) => tys.iter().for_each(|ty| self.visit_ty(ty)),
             TyKind::Paren(ty) => self.visit_ty(ty),
             TyKind::Path(path) => self.visit_path(path),
-            TyKind::Fn(_, _) => todo!(),
+            TyKind::Fn(params, ret) => {
+                params.iter().for_each(|ty| self.visit_ty(ty));
+                ret.as_ref().map(|ty| self.visit_ty(ty));
+            }
             TyKind::Infer => {}
         }
     }
@@ -101,7 +104,10 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
-        ExprKind::Lambda(_, _) => todo!(),
+        ExprKind::Lambda(sig, expr) => {
+            visitor.visit_fn_sig(sig);
+            visitor.visit_expr(expr)
+        }
     }
 }
 

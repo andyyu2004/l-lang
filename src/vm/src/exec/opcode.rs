@@ -92,6 +92,11 @@ pub enum Op {
     /// close upvalue and move it onto the heap
     /// clsupv <index>
     clsupv  = 0xA2,
+    /// popscope <n>
+    /// pop <n> local variables from stack while retaining value of the block
+    /// example:
+    /// [0,1,2,3,4] -> popscp 2 -> [0,1,4]
+    popscp  = 0xA4,
 
     mktup   = 0xC0,
     mklst   = 0xC1,

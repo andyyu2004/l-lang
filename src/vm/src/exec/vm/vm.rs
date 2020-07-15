@@ -275,6 +275,12 @@ where
                     // indexed from 0)
                     self.ctx.bp = f_idx + 1;
                 }
+                Op::popscp => {
+                    let n = read_byte!() as usize;
+                    let val = pop!();
+                    frame_mut!().sp -= n;
+                    push!(val);
+                }
                 Op::mktup => {
                     let n = read_byte!() as usize;
                     let top = self.ctx.bp + frame!().sp;

@@ -48,7 +48,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
 impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_block(&mut self, block: &'ast Block) {
-        self.with_val_scope(|this| ast::walk_block(this, block));
+        self.with_val_scope(|resolver| ast::walk_block(resolver, block));
     }
 
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {

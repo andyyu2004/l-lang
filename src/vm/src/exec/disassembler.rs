@@ -83,7 +83,9 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::unit
             | Op::mkmap
             | Op::pop => self.simple_inst(),
-            Op::iloadl | Op::uloadl | Op::dloadl | Op::mktup | Op::mklst => self.count_inst(),
+            Op::popscp | Op::iloadl | Op::uloadl | Op::dloadl | Op::mktup | Op::mklst => {
+                self.count_inst()
+            }
             Op::mkmap => todo!(),
             Op::rloadl => todo!(),
             Op::istorel => todo!(),

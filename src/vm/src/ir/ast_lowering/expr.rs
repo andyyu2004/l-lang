@@ -15,16 +15,19 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_expr_inner(&mut self, expr: &Expr) -> ir::Expr<'ir> {
         let kind = match &expr.kind {
             ExprKind::Lit(lit) => ir::ExprKind::Lit(*lit),
-            ExprKind::Bin(op, l, r) => {
-                ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r))
-            }
             ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(&expr)),
             ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),
             ExprKind::Path(path) => ir::ExprKind::Path(self.lower_path(path)),
             ExprKind::Tuple(xs) => ir::ExprKind::Tuple(self.lower_exprs(xs)),
-            ExprKind::Lambda(_, _) => todo!(),
+            ExprKind::Bin(op, l, r) => {
+                ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r))
+            }
+            ExprKind::Lambda(sig, expr) => {
+                ir::ExprKind::Lambda(self.lower_fn_sig(sig), self.lower_expr(expr))
+            }
         };
+
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
     }
 

@@ -93,6 +93,10 @@ impl CodeBuilder {
         self.emit_iconst(value).emit_op(Op::istorel).emit_byte(index)
     }
 
+    pub fn emit_popscp(&mut self, n: u8) -> &mut Self {
+        self.emit_op(Op::popscp).emit_byte(n)
+    }
+
     pub fn emit_loadu(&mut self, index: u8) -> &mut Self {
         self.emit_op(Op::iloadu).emit_byte(index)
     }
