@@ -1,4 +1,4 @@
-use super::{BinOp, Block, Lit, NodeId, Path, UnaryOp, P};
+use super::{BinOp, Block, FnSig, Lit, NodeId, Path, UnaryOp, P};
 use crate::span::Span;
 use std::fmt::Display;
 
@@ -30,6 +30,7 @@ crate enum ExprKind {
     Block(P<Block>),
     Path(Path),
     Tuple(Vec<P<Expr>>),
+    Lambda(FnSig, P<Expr>),
 }
 
 impl Display for ExprKind {
@@ -42,6 +43,7 @@ impl Display for ExprKind {
             Self::Block(_) => todo!(),
             Self::Path(path) => write!(f, "{}", path),
             Self::Tuple(xs) => todo!(),
+            Self::Lambda(sig, body) => write!(f, "fn ({}) => {}", sig, body),
         }
     }
 }

@@ -1,5 +1,6 @@
 use super::{Ident, NodeId, P};
 use crate::span::Span;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Pattern {

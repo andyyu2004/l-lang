@@ -2,6 +2,7 @@ use super::Block;
 use crate::ast;
 use crate::ir;
 use crate::span::Span;
+use std::fmt::Display;
 
 #[derive(Debug)]
 crate struct Expr<'ir> {
@@ -25,4 +26,5 @@ crate enum ExprKind<'ir> {
     Block(&'ir ir::Block<'ir>),
     Path(&'ir ir::Path<'ir>),
     Tuple(&'ir [ir::Expr<'ir>]),
+    Lambda(&'ir ir::FnSig<'ir>, &'ir ir::Expr<'ir>),
 }

@@ -13,7 +13,6 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
     }
 
     fn relate_tys(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>> {
-        // todo keep the span somewhere
         let infcx = self.at.infcx;
         let mut inner = infcx.inner.borrow_mut();
         let mut type_vars = inner.type_variables();

@@ -2,6 +2,7 @@ use crate::ast;
 use crate::exec::{CodeBuilder, Function, Op};
 use crate::ir::{self, LocalId};
 use crate::tir;
+use crate::ty::TyKind;
 use crate::typeck::TyCtx;
 use rustc_hash::FxHashMap;
 use std::ops::{Deref, DerefMut};
@@ -76,7 +77,10 @@ impl Compiler {
                 self.locals.insert(l.pat.id.local, self.localc);
                 self.localc += 1;
             }
-            tir::PatternKind::Field(_) => todo!(),
+            tir::PatternKind::Field(fields) => match l.pat.ty.kind {
+                TyKind::Tuple(_) => todo!(),
+                _ => todo!(),
+            },
         }
     }
 

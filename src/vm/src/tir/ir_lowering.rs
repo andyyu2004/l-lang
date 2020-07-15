@@ -185,6 +185,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 ir::Res::PrimTy(_) => unreachable!(),
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
+            ir::ExprKind::Lambda(_, _) => todo!(),
         };
         let ty = ctx.tables.node_type(self.id);
         tir::Expr { span: self.span, kind, ty }

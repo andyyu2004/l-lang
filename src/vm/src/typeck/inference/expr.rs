@@ -13,6 +13,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
+            ir::ExprKind::Lambda(_, _) => todo!(),
         };
         self.write_ty(expr.id, ty);
         ty

@@ -78,6 +78,14 @@ impl<'ctx> Parser<'ctx> {
         box Expr { span, id: self.mk_id(), kind }
     }
 
+    pub(super) fn mk_infer_ty(&self) -> P<Ty> {
+        self.mk_ty(self.empty_span(), TyKind::Infer)
+    }
+
+    pub(super) fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
+        box Ty { span, id: self.mk_id(), kind }
+    }
+
     pub(super) fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
         box Pattern { span, id: self.mk_id(), kind }
     }

@@ -12,6 +12,7 @@ pub(super) struct ExprParser;
 
 impl Parse for ExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         TermExprParser.parse(parser)
     }
@@ -21,6 +22,7 @@ pub(super) struct TermExprParser;
 
 impl Parse for TermExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         LBinaryExprParser { ops: &TERM_OPS, inner: FactorExprParser }.parse(parser)
     }
@@ -30,6 +32,7 @@ pub(super) struct FactorExprParser;
 
 impl Parse for FactorExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         LBinaryExprParser { ops: &FACTOR_OPS, inner: UnaryExprParser }.parse(parser)
     }
@@ -39,6 +42,7 @@ pub(super) struct UnaryExprParser;
 
 impl Parse for UnaryExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(t) = parser.accept_one_of(&UNARY_OPS) {
             let unary_op = UnaryOp::from(t);
@@ -54,6 +58,7 @@ pub(super) struct PrimaryExprParser;
 
 impl Parse for PrimaryExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
             // we first try to parse as a parenthesization, if there is a comma then it will fail
@@ -78,6 +83,8 @@ impl Parse for PrimaryExprParser {
         } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
             let block = BlockParser { open_brace }.parse(parser)?;
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
+        } else if let Some(fn_kw) = parser.accept(TokenType::Fn) {
+            LambdaParser { fn_kw }.parse(parser)
         } else {
             Err(ParseError::unimpl())
         }
@@ -91,6 +98,7 @@ pub(super) struct LiteralExprParser {
 
 impl Parse for LiteralExprParser {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let slice = &parser.ctx.main_file()[self.span];
         let literal = match self.kind {
@@ -121,6 +129,7 @@ where
     Q: Parse<Output = P<Expr>>,
 {
     type Output = P<Expr>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut expr = self.inner.parse(parser)?;
         while let Some(t) = parser.accept_one_of(self.ops) {

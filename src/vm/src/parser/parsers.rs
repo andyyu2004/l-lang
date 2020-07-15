@@ -1,16 +1,59 @@
 //! general use parsers
 
-use super::{Parse, Parser, StmtParser};
-use crate::ast::{Block, Ident, Path, PathSegment, StmtKind, Visibility, VisibilityKind, P};
+use super::*;
+use crate::ast::*;
 use crate::error::{ParseError, ParseResult};
-use crate::{
-    lexer::{Tok, TokenType}, span::Span
-};
+use crate::lexer::{Tok, TokenType};
+use crate::span::Span;
+
+crate struct FnSigParser {
+    pub require_type_annotations: bool,
+}
+
+impl Parse for FnSigParser {
+    type Output = FnSig;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let require_type_annotations = self.require_type_annotations;
+        parser.expect(TokenType::OpenParen)?;
+        let mut param_parser = PunctuatedParser {
+            inner: ParamParser { require_type_annotations },
+            separator: TokenType::Comma,
+        };
+        let inputs = param_parser.parse(parser)?;
+        parser.expect(TokenType::CloseParen)?;
+        Ok(FnSig { inputs, output: None })
+    }
+}
+
+/// parses function parameter <pat> (: <ty>)?
+crate struct ParamParser {
+    pub require_type_annotations: bool,
+}
+
+impl Parse for ParamParser {
+    type Output = Param;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let pattern = PatParser.parse(parser)?;
+        let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
+            TyParser.parse(parser)
+        } else {
+            if self.require_type_annotations {
+                Err(ParseError::require_type_annotations(pattern.span))
+            } else {
+                Ok(parser.mk_infer_ty())
+            }
+        }?;
+        Ok(Param { span: pattern.span.merge(&ty.span), id: parser.mk_id(), pattern, ty })
+    }
+}
 
 crate struct VisibilityParser;
 
 impl Parse for VisibilityParser {
     type Output = Visibility;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(pub_keyword) = parser.accept(TokenType::Pub) {
             Ok(Visibility { span: pub_keyword.span, node: VisibilityKind::Public })
@@ -23,6 +66,7 @@ impl Parse for VisibilityParser {
 /// implement Parser for TokenType to be used as a separator
 impl Parse for TokenType {
     type Output = Tok;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         parser.expect(*self)
     }
@@ -43,6 +87,7 @@ where
     S: Parse,
 {
     type Output = Vec<P::Output>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut vec = vec![];
         // if the first parse already fails then just return empty vector
@@ -73,6 +118,7 @@ where
     S: Parse,
 {
     type Output = Vec<P::Output>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut vec = vec![self.inner.parse(parser)?];
         while self.separator.parse(parser).is_ok() {
@@ -96,6 +142,7 @@ where
     P::Output: std::fmt::Debug,
 {
     type Output = Vec<P::Output>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut vec = vec![];
 
@@ -124,6 +171,7 @@ where
     P: Parse,
 {
     type Output = P::Output;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let p = self.inner.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
@@ -135,6 +183,7 @@ crate struct PathParser;
 
 impl Parse for PathParser {
     type Output = Path;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let separator = |parser: &mut Parser| {
             parser.expect(TokenType::Colon)?;
@@ -150,6 +199,7 @@ crate struct PathSegmentParser;
 
 impl Parse for PathSegmentParser {
     type Output = PathSegment;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let ident = parser.expect_ident()?;
         // with the generics of the initial ident
@@ -163,6 +213,7 @@ crate struct BlockParser {
 
 impl Parse for BlockParser {
     type Output = P<Block>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut stmts = vec![];
         let close_brace = loop {
@@ -181,5 +232,21 @@ impl Parse for BlockParser {
             }
         }
         Ok(box Block { span, id: parser.mk_id(), stmts })
+    }
+}
+
+/// fn (<pat>:<ty>) -> ret => <body>
+/// xs.map(fn (x) => y);
+crate struct LambdaParser {
+    pub fn_kw: Tok,
+}
+
+impl Parse for LambdaParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
+        todo!()
+        // parser.expect(TokenType:)
     }
 }

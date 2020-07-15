@@ -1,6 +1,7 @@
 use super::{NodeId, Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
+use crate::util;
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
@@ -49,12 +50,24 @@ crate struct FnSig {
     pub output: Option<P<Ty>>,
 }
 
+impl Display for FnSig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "fn {} -> {:?}", util::join(&self.inputs, ", "), self.output)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Param {
     pub span: Span,
     pub id: NodeId,
     pub pattern: P<Pattern>,
     pub ty: P<Ty>,
+}
+
+impl Display for Param {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
 }
 
 crate type Visibility = Spanned<VisibilityKind>;

@@ -36,18 +36,41 @@ impl<'ctx> Lexer<'ctx> {
     /// transforms the rustc token with len into one with span
     pub fn lex(&mut self) -> Vec<Tok> {
         let src = self.ctx.main_file().src.to_owned();
-        let mut i = 0;
+        let mut span_index = 0;
 
         // note: it is important to filter after so that the spans are correct
-        let mut tokens = lexing::tokenize(&src)
-            .map(|t| {
-                let span = Span::new(i, i + t.len);
-                i += t.len;
+        let mut tokens = lexing::tokenize(&src).collect_vec();
+        let mut i = 0;
+        let mut vec = vec![];
+
+        while i < tokens.len() {
+            let t = tokens[i];
+            i += 1;
+            let token = {
+                let span = Span::new(span_index, span_index + t.len);
+                span_index += t.len;
                 let slice = &src[span.lo..span.hi];
                 let kind = match t.kind {
+                    TokenKind::Whitespace => continue,
+                    TokenKind::Eq => {
+                        if tokens[i + 1].kind == TokenKind::Gt {
+                            i += 1;
+                            TokenType::RArrow
+                        } else {
+                            TokenType::Eq
+                        }
+                    }
+                    TokenKind::Minus => {
+                        if tokens[i + 1].kind == TokenKind::Gt {
+                            i += 1;
+                            TokenType::RArrow
+                        } else {
+                            TokenType::Minus
+                        }
+                    }
+
                     TokenKind::LineComment => TokenType::Whitespace,
                     TokenKind::BlockComment { terminated } => TokenType::Whitespace,
-                    TokenKind::Whitespace => TokenType::Whitespace,
                     TokenKind::Ident => {
                         // by convention, uppercase idents are Types
                         if let Some(&keyword) = KEYWORDS.get(slice) {
@@ -85,11 +108,9 @@ impl<'ctx> Lexer<'ctx> {
                     TokenKind::Question => TokenType::Question,
                     TokenKind::Colon => TokenType::Colon,
                     TokenKind::Dollar => TokenType::Dollar,
-                    TokenKind::Eq => TokenType::Eq,
                     TokenKind::Not => TokenType::Not,
                     TokenKind::Lt => TokenType::Lt,
                     TokenKind::Gt => TokenType::Gt,
-                    TokenKind::Minus => TokenType::Minus,
                     TokenKind::And => TokenType::And,
                     TokenKind::Or => TokenType::Or,
                     TokenKind::Plus => TokenType::Plus,
@@ -102,18 +123,23 @@ impl<'ctx> Lexer<'ctx> {
                 };
 
                 Tok { span, ttype: kind }
-            })
-            .filter(|t| t.ttype != TokenType::Whitespace)
-            .collect_vec();
-        // just add a <eof> token for easier parsing
-        tokens.push(Tok { span: Span::new(i, i), ttype: TokenType::Eof });
-        tokens
+            };
+            vec.push(token)
+        }
+
+        // just manually add a <eof> token for easier parsing
+        vec.push(Tok { span: Span::new(span_index, span_index), ttype: TokenType::Eof });
+        vec
     }
 }
 
 /// token kind that has been further processed to include keywords
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
+    /// ->
+    RArrow,
+    /// =>
+    RFArrow,
     Pub,
     Let,
     Struct,

@@ -38,7 +38,7 @@ impl Parse for FnParser {
     /// assumes that { <vis> fn <ident> } has already been parsed
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let generics = Generics { id: parser.mk_id(), span: parser.empty_span() };
-        let sig = FnSigParser.parse(parser)?;
+        let sig = FnSigParser { require_type_annotations: true }.parse(parser)?;
         let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
             Some(BlockParser { open_brace }.parse(parser)?)
         } else {
@@ -46,31 +46,5 @@ impl Parse for FnParser {
             None
         };
         Ok(ItemKind::Fn(sig, generics, block))
-    }
-}
-
-crate struct FnSigParser;
-
-impl Parse for FnSigParser {
-    type Output = FnSig;
-
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        parser.expect(TokenType::OpenParen)?;
-        let mut param_parser = PunctuatedParser { inner: ParamParser, separator: TokenType::Comma };
-        let inputs = param_parser.parse(parser)?;
-        parser.expect(TokenType::CloseParen)?;
-        Ok(FnSig { inputs, output: None })
-    }
-}
-
-crate struct ParamParser;
-
-impl Parse for ParamParser {
-    type Output = Param;
-
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let pattern = PatParser.parse(parser)?;
-        let ty = TyParser.parse(parser)?;
-        Ok(Param { span: pattern.span.merge(&ty.span), id: parser.mk_id(), pattern, ty })
     }
 }
