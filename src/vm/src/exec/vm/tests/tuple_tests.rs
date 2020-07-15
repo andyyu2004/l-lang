@@ -3,7 +3,8 @@ use crate::{compiler::Executable, exec::*};
 
 #[test]
 fn tuple_simple() -> VMResult<()> {
-    let main = CodeBuilder::default().emit_iconst(2).emit_iconst(3).emit_op(Op::ret).build();
+    let main =
+        CodeBuilder::default().emit_iconst(2).emit_iconst(3).emit_tuple(2).emit_op(Op::ret).build();
 
     let exec = Executable::from(Function::new(main));
     let mut vm = VM::with_default_gc(exec);
