@@ -30,6 +30,11 @@ impl CodeBuilder {
         self.emit_byte(op as u8)
     }
 
+    /// emits instruction for creating a `n`-tuple
+    pub fn emit_tuple(&mut self, n: u8) -> &mut Self {
+        self.emit_op(Op::mktup).emit_byte(n)
+    }
+
     pub fn emit_closure(&mut self, f_idx: u8, upvalues: Vec<(bool, u8)>) -> &mut Self {
         self.emit_op(Op::clsr).emit_byte(f_idx);
         for (in_enclosing, index) in upvalues {

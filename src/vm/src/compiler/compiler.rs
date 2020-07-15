@@ -32,8 +32,13 @@ impl Compiler {
             tir::ExprKind::Unary(op, expr) => self.compile_expr_unary(op, expr),
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
-            tir::ExprKind::Tuple(_) => todo!(),
+            tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
         };
+    }
+
+    fn compile_tuple(&mut self, xs: &[tir::Expr]) {
+        xs.iter().for_each(|x| self.compile_expr(x));
+        self.emit_tuple(xs.len() as u8);
     }
 
     fn compile_var_ref(&mut self, id: ir::Id) {

@@ -1,1 +1,1 @@
-[00:00:00.001] (7f9ba9154580) INFO   body type: (number,number); ret_ty: ()
+[00:00:00.001] (7f4829020580) INFO   body type: ((number,number)); ret_ty: ()

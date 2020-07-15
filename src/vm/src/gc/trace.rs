@@ -58,3 +58,12 @@ where
         unsafe { self.as_ref() }.mark(map)
     }
 }
+
+impl<T> Trace for Vec<T>
+where
+    T: Trace,
+{
+    fn mark(&self, map: &mut GCStateMap) {
+        self.iter().for_each(|t| t.mark(map))
+    }
+}

@@ -1,10 +1,11 @@
 use super::{GCStateMap, Trace};
+use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
-use std::{hash::Hash, ptr::NonNull};
+use std::ptr::NonNull;
 
 /// garbage collected ptr type
-/// not to be confused with GC
-#[derive(Debug)]
+/// not to be confused with `GC`
 pub struct Gc<T>
 where
     T: ?Sized,
@@ -12,19 +13,31 @@ where
     pub(crate) ptr: NonNull<T>,
 }
 
+impl<T: Debug> Debug for Gc<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let inner = unsafe { &*self.ptr.as_ptr() };
+        write!(f, "{:?}", inner)
+    }
+}
+
+impl<T: Display> Display for Gc<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let inner = unsafe { &*self.ptr.as_ptr() };
+        write!(f, "{}", inner)
+    }
+}
+
 impl<T> Copy for Gc<T> {
 }
 
 impl<T> Clone for Gc<T> {
     fn clone(&self) -> Self {
-        Self {
-            ptr: self.ptr.clone(),
-        }
+        Self { ptr: self.ptr.clone() }
     }
 }
 
 impl<T> Hash for Gc<T> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.ptr.hash(state)
     }
 }
@@ -59,6 +72,7 @@ where
 
 impl<T> Deref for Gc<T> {
     type Target = T;
+
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.ptr.as_ptr() }
     }

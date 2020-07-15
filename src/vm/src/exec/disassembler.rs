@@ -47,7 +47,9 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         9
     }
 
-    fn load_local_inst(&mut self) -> usize {
+    /// pretty printing instructions of the form
+    /// <inst> <count>
+    fn count_inst(&mut self) -> usize {
         self.write_op();
         write!(self.f, "{}", self.code[1]);
         2
@@ -79,8 +81,10 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::rret
             | Op::ret
             | Op::unit
+            | Op::mkmap
             | Op::pop => self.simple_inst(),
-            Op::iloadl | Op::uloadl | Op::dloadl => self.load_local_inst(),
+            Op::iloadl | Op::uloadl | Op::dloadl | Op::mktup | Op::mklst => self.count_inst(),
+            Op::mkmap => todo!(),
             Op::rloadl => todo!(),
             Op::istorel => todo!(),
             Op::ustorel => todo!(),

@@ -1,6 +1,7 @@
 use super::{Data, Val};
 use crate::gc::{GCStateMap, Gc, Trace};
 
+/// instantiation of a some class
 #[derive(Clone, Debug, PartialEq)]
 pub struct Instance {
     data: Gc<Data>,
@@ -9,10 +10,7 @@ pub struct Instance {
 
 impl Instance {
     pub fn new(data: Gc<Data>) -> Self {
-        Self {
-            data,
-            fields: Default::default(),
-        }
+        Self { data, fields: Default::default() }
     }
 }
 

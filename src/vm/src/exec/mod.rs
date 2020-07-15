@@ -23,6 +23,7 @@ pub use disassembler::Disassembler;
 pub use frame::Frame;
 pub use function::Function;
 pub use instance::Instance;
+pub use obj::*;
 pub use opcode::Op;
 pub use ty::Type;
 pub use upvar::Upvar;

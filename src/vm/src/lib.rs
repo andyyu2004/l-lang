@@ -52,8 +52,8 @@ use log::LevelFilter;
 pub fn exec(src: &str) -> LResult<()> {
     simple_logging::log_to_file("log.txt", LevelFilter::Info);
     let driver = Driver::new(src);
-    let res = driver.exec();
-    println!("{:?}", res);
+    let res = driver.exec()?;
+    println!("{}", res);
     Ok(())
 }
 

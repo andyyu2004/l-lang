@@ -92,4 +92,8 @@ pub enum Op {
     /// close upvalue and move it onto the heap
     /// clsupv <index>
     clsupv  = 0xA2,
+
+    mktup   = 0xC0,
+    mklst   = 0xC1,
+    mkmap   = 0xC2,
 }

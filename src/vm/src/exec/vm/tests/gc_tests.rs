@@ -10,10 +10,7 @@ mod test {
 
     #[test]
     fn it_works() -> VMResult<()> {
-        let main_code = CodeBuilder::default()
-            .emit_iconst(5)
-            .emit_op(Op::iret)
-            .build();
+        let main_code = CodeBuilder::default().emit_iconst(5).emit_op(Op::iret).build();
         let executable = Executable::from(Function::new(main_code));
         let mut vm = VM::with_default_gc(executable);
         let ret = vm.run()?;

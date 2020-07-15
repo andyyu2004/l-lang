@@ -5,7 +5,7 @@ use std::ptr::NonNull;
 
 /// the garbage collector
 /// not to be confused with the Gc ptr
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct GC {
     allocated_bytes: usize,
     allocated: FxHashSet<NonNull<dyn Trace>>,

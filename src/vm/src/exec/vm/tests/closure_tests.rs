@@ -32,10 +32,8 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::new(
-            vec![Function::with_upvalc(inner, 1).into()],
-            Function::new(main),
-        );
+        let exec =
+            Executable::new(vec![Function::with_upvalc(inner, 1).into()], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-3));
@@ -54,10 +52,7 @@ mod test {
     ///
     #[test]
     fn store_nonlocal_var() -> VMResult<()> {
-        let inner = CodeBuilder::default()
-            .emit_istoreu_const(0, -4)
-            .emit_op(Op::iret)
-            .build();
+        let inner = CodeBuilder::default().emit_istoreu_const(0, -4).emit_op(Op::iret).build();
 
         let main = CodeBuilder::default()
             // instruct the vm to create a closure
@@ -70,10 +65,8 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::new(
-            vec![Function::with_upvalc(inner, 1).into()],
-            Function::new(main),
-        );
+        let exec =
+            Executable::new(vec![Function::with_upvalc(inner, 1).into()], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-4));
@@ -104,16 +97,10 @@ mod test {
             .emit_invoke(0)
             .emit_op(Op::iret)
             .build();
-        let inner = CodeBuilder::default()
-            .emit_loadu(0)
-            .emit_op(Op::iret)
-            .build();
+        let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
 
         let exec = Executable::new(
-            vec![
-                Function::with_upvalc(outer, 1).into(),
-                Function::with_upvalc(inner, 1).into(),
-            ],
+            vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
 
@@ -159,10 +146,7 @@ mod test {
             .build();
 
         let exec = Executable::new(
-            vec![
-                Function::with_upvalc(outer, 1).into(),
-                Function::with_upvalc(inner, 1).into(),
-            ],
+            vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
 
@@ -214,10 +198,7 @@ mod test {
             .build();
 
         let exec = Executable::new(
-            vec![
-                Function::new(outer).into(),
-                Function::with_upvalc(inner, 1).into(),
-            ],
+            vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
 
@@ -262,14 +243,8 @@ mod test {
             .emit_loadl(1)
             .emit_op(Op::rret)
             .build();
-        let inner = CodeBuilder::default()
-            .emit_loadu(0)
-            .emit_op(Op::iret)
-            .build();
-        let inner_mut = CodeBuilder::default()
-            .emit_istoreu_const(0, -50)
-            .emit_op(Op::iret)
-            .build();
+        let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
+        let inner_mut = CodeBuilder::default().emit_istoreu_const(0, -50).emit_op(Op::iret).build();
 
         let exec = Executable::new(
             vec![
@@ -333,10 +308,7 @@ mod test {
             .build();
 
         let exec = Executable::new(
-            vec![
-                Function::new(outer).into(),
-                Function::with_upvalc(inner, 1).into(),
-            ],
+            vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
 
