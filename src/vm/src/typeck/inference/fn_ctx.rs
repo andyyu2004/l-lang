@@ -16,13 +16,17 @@ crate struct FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self { Self { infcx, locals: Default::default() } }
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
+        Self { infcx, locals: Default::default() }
+    }
 }
 
 impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
 
-    fn deref(&self) -> &Self::Target { &self.infcx }
+    fn deref(&self) -> &Self::Target {
+        &self.infcx
+    }
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -34,14 +38,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     pub fn check_let_stmt(&mut self, l: &ir::Let) {
+        // type of the entire binding
         let ty = l.ty.map(|ty| self.lower_ty(ty)).unwrap_or(self.new_infer_var());
+        // type of the pattern
         let pat_ty = self.check_pat(l.pat, ty);
         self.expect_eq(l.span, ty, pat_ty);
+        // type of the init expression
         let init_ty = l
             .init
             .as_ref()
             .map(|expr| self.check_expr(expr))
             .map(|init_ty| self.expect_eq(l.span, init_ty, ty));
+        // we want pty = ty = initty
     }
 
     pub fn def_local(&mut self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -67,5 +75,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> TyConv<'tcx> for FnCtx<'a, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> { self.tcx }
+    fn tcx(&self) -> TyCtx<'tcx> {
+        self.tcx
+    }
 }

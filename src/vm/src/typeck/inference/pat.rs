@@ -13,7 +13,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::PatternKind::Binding(ident, _) => self.def_local(pat.id, ty),
             ir::PatternKind::Tuple(pats) => self.check_pat_tuple(pats),
         };
-        self.write_ty(pat.id, ty)
+        self.write_ty(pat.id, pat_ty)
     }
 
     pub fn check_pat_tuple(&mut self, pats: &[ir::Pattern]) -> Ty<'tcx> {

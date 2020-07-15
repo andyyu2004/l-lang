@@ -23,6 +23,7 @@ where
     F: FnMut(&mut Parser) -> ParseResult<R>,
 {
     type Output = R;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         self(parser)
     }
@@ -35,6 +36,7 @@ crate struct SpannedParser<P> {
 
 impl<P: Parse> Parse for SpannedParser<P> {
     type Output = (Span, P::Output);
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         parser.with_span(&mut self.inner, self.include_prev)
     }
@@ -51,6 +53,7 @@ where
     Q: Parse<Output = R>,
 {
     type Output = R;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         match parser.try_parse(&mut self.fst) {
             Some(p) => Ok(p),

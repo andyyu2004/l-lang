@@ -1,6 +1,4 @@
 fn main() {
-    let x = 2;
-    let y = x + 5;
-    let z = x + y;
-    z
+    let (x, y) = (2, 3);
+    /* (x, y) */
 }

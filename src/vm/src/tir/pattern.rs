@@ -1,5 +1,6 @@
 use crate::ir;
 use crate::span::Span;
+use crate::util;
 use crate::{ast::Ident, tir, ty::Ty};
 use std::fmt::{self, Display, Formatter};
 
@@ -9,6 +10,12 @@ newtype_index!(Field);
 crate struct FieldPat<'tcx> {
     pub field: Field,
     pub pat: Pattern<'tcx>,
+}
+
+impl<'tcx> Display for FieldPat<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.pat)
+    }
 }
 
 #[derive(Debug)]
@@ -26,7 +33,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             // we print out the `local_id` instead of the ident symbol number
             // as the identifier is referred to by id not name in the tir
             PatternKind::Binding(_, _) => write!(f, "${:?}", self.id.local),
-            PatternKind::Field(_) => todo!(),
+            PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
         }?;
         write!(f, ": {}", self.ty)
     }

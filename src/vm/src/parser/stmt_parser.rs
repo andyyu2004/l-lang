@@ -8,6 +8,7 @@ crate struct StmtParser;
 
 impl Parse for StmtParser {
     type Output = P<Stmt>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(let_kw) = parser.accept(TokenType::Let) {
             LetParser { let_kw }.parse(parser)
@@ -29,8 +30,9 @@ crate struct LetParser {
 
 impl Parse for LetParser {
     type Output = P<Stmt>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let pat = PatternParser.parse(parser)?;
+        let pat = PatParser.parse(parser)?;
         let ty = parser.accept(TokenType::Colon).map(|_| TyParser.parse(parser)).transpose()?;
         let init = parser.accept(TokenType::Eq).map(|_| ExprParser.parse(parser)).transpose()?;
         let semi = parser.expect(TokenType::Semi)?;

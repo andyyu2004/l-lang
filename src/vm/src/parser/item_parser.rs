@@ -9,6 +9,7 @@ crate struct ItemParser;
 
 impl Parse for ItemParser {
     type Output = P<Item>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
         let item_kind_keyword = parser.expect_one_of(&ITEM_KEYWORDS)?;
@@ -33,6 +34,7 @@ crate struct FnParser {
 
 impl Parse for FnParser {
     type Output = ItemKind;
+
     /// assumes that { <vis> fn <ident> } has already been parsed
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let generics = Generics { id: parser.mk_id(), span: parser.empty_span() };
@@ -51,6 +53,7 @@ crate struct FnSigParser;
 
 impl Parse for FnSigParser {
     type Output = FnSig;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         parser.expect(TokenType::OpenParen)?;
         let mut param_parser = PunctuatedParser { inner: ParamParser, separator: TokenType::Comma };
@@ -64,8 +67,9 @@ crate struct ParamParser;
 
 impl Parse for ParamParser {
     type Output = Param;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let pattern = PatternParser.parse(parser)?;
+        let pattern = PatParser.parse(parser)?;
         let ty = TyParser.parse(parser)?;
         Ok(Param { span: pattern.span.merge(&ty.span), id: parser.mk_id(), pattern, ty })
     }

@@ -1,6 +1,6 @@
 use super::InferCtxUndoLogs;
 use crate::error::{TypeError, TypeResult};
-use crate::ty::Ty;
+use crate::ty::{self, Ty, TyKind};
 use ena::unify as ut;
 use std::marker::PhantomData;
 
@@ -57,18 +57,35 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
             .collect()
     }
 
-    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> TypeResult<'tcx, ()> {
+    /// if `ty` is known, return its known type, otherwise just return `t`
+    pub fn instantiate_if_known(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        match ty.kind {
+            TyKind::Infer(ty::TyVar(v)) => match self.probe(v) {
+                TyVarValue::Known(t) => t,
+                TyVarValue::Unknown => ty,
+            },
+            _ => ty,
+        }
+    }
+
+    /// assumption that `vid` has not been instantiated before
+    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) {
         let root = self.root_var(vid);
-        self.eq_relations().unify_var_value(root, TyVarValue::Known(ty))
+        self.eq_relations().union_value(root, TyVarValue::Known(ty))
     }
 
-    fn root_var(&mut self, vid: TyVid) -> TyVid { self.eq_relations().find(vid).vid }
-
-    pub fn equate(&mut self, s: TyVid, t: TyVid) -> TypeResult<'tcx, ()> {
-        self.eq_relations().unify_var_var(s, t)
+    fn root_var(&mut self, vid: TyVid) -> TyVid {
+        self.eq_relations().find(vid).vid
     }
 
-    pub fn probe(&mut self, vid: TyVid) -> TyVarValue<'tcx> { self.eq_relations().probe_value(vid) }
+    /// assumption that both `s` and `t` are unknown
+    pub fn equate(&mut self, s: TyVid, t: TyVid) {
+        self.eq_relations().union(s, t)
+    }
+
+    pub fn probe(&mut self, vid: TyVid) -> TyVarValue<'tcx> {
+        self.eq_relations().probe_value(vid)
+    }
 
     pub fn new_ty_var(&mut self) -> TyVid {
         let mut tables = self.eq_relations();
@@ -89,12 +106,11 @@ impl<'tcx> TyVarValue<'tcx> {
 }
 
 impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
-    type Error = TypeError<'tcx>;
+    type Error = ut::NoError;
 
     fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
         match (s, t) {
-            (&Self::Known(a), &Self::Known(b)) if a == b => Ok(*s),
-            (&Self::Known(a), &Self::Known(b)) => Err(TypeError::UnificationFailure(a, b)),
+            (&Self::Known(a), &Self::Known(b)) => panic!("unifying two known type variables"),
             (&Self::Known(_), _) => Ok(*s),
             (_, &Self::Known(_)) => Ok(*t),
             (&Self::Unknown, &Self::Unknown) => Ok(TyVarValue::Unknown),
@@ -114,15 +130,23 @@ crate struct TyVidEqKey<'tcx> {
 }
 
 impl<'tcx> From<TyVid> for TyVidEqKey<'tcx> {
-    fn from(vid: TyVid) -> Self { TyVidEqKey { vid, phantom: PhantomData } }
+    fn from(vid: TyVid) -> Self {
+        TyVidEqKey { vid, phantom: PhantomData }
+    }
 }
 
 impl<'tcx> ut::UnifyKey for TyVidEqKey<'tcx> {
     type Value = TyVarValue<'tcx>;
 
-    fn index(&self) -> u32 { self.vid.index }
+    fn index(&self) -> u32 {
+        self.vid.index
+    }
 
-    fn from_index(i: u32) -> Self { TyVidEqKey::from(TyVid { index: i }) }
+    fn from_index(i: u32) -> Self {
+        TyVidEqKey::from(TyVid { index: i })
+    }
 
-    fn tag() -> &'static str { "TyVidEqKey" }
+    fn tag() -> &'static str {
+        "TyVidEqKey"
+    }
 }

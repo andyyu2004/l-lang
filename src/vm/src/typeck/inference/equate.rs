@@ -1,8 +1,7 @@
 use super::At;
+use crate::error::{TypeError, TypeResult};
+use crate::ty::*;
 use crate::typeck::{TyCtx, TypeRelation};
-use crate::{
-    error::{TypeError, TypeResult}, ty::{self, Ty}
-};
 
 crate struct Equate<'a, 'tcx> {
     pub at: &'a At<'a, 'tcx>,
@@ -19,15 +18,19 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
         let mut inner = infcx.inner.borrow_mut();
         let mut type_vars = inner.type_variables();
 
+        let a = type_vars.instantiate_if_known(a);
+        let b = type_vars.instantiate_if_known(b);
+
         match (&a.kind, &b.kind) {
-            (&ty::Infer(ty::TyVar(a_id)), &ty::Infer(ty::TyVar(b_id))) => {
-                type_vars.equate(a_id, b_id)
+            _ if a == b => {}
+            (&Infer(TyVar(a_id)), &Infer(TyVar(b_id))) => type_vars.equate(a_id, b_id),
+            (&Infer(TyVar(vid)), _) => type_vars.instantiate(vid, b),
+            (_, &Infer(TyVar(vid))) => type_vars.instantiate(vid, a),
+            _ => {
+                drop(inner);
+                self.relate_inner(a, b)?;
             }
-            (&ty::Infer(ty::TyVar(vid)), _) => type_vars.instantiate(vid, b),
-            (_, &ty::Infer(ty::TyVar(vid))) => type_vars.instantiate(vid, a),
-            _ if a == b => Ok(()),
-            _ => Err(TypeError::UnificationFailure(a, b)),
-        }?;
+        };
         Ok(a)
     }
 }
