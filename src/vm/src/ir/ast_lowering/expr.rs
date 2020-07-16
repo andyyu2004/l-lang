@@ -24,7 +24,9 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r))
             }
             ExprKind::Lambda(sig, expr) => {
-                ir::ExprKind::Lambda(self.lower_fn_sig(sig), self.lower_expr(expr))
+                let lowered_sig = self.lower_fn_sig(sig);
+                let body = self.lower_body(sig, expr);
+                ir::ExprKind::Lambda(self.lower_fn_sig(sig), body)
             }
         };
 

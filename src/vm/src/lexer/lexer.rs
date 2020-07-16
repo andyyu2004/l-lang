@@ -39,7 +39,7 @@ impl<'ctx> Lexer<'ctx> {
         let mut span_index = 0;
 
         // note: it is important to filter after so that the spans are correct
-        let mut tokens = lexing::tokenize(&src).collect_vec();
+        let tokens = lexing::tokenize(&src).collect_vec();
         let mut i = 0;
         let mut vec = vec![];
 

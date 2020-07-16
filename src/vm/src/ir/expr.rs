@@ -26,5 +26,5 @@ crate enum ExprKind<'ir> {
     Block(&'ir ir::Block<'ir>),
     Path(&'ir ir::Path<'ir>),
     Tuple(&'ir [ir::Expr<'ir>]),
-    Lambda(&'ir ir::FnSig<'ir>, &'ir ir::Expr<'ir>),
+    Lambda(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
 }

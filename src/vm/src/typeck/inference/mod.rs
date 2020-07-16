@@ -4,6 +4,7 @@ mod expr;
 mod fn_ctx;
 mod infer_ctx;
 mod pat;
+mod stmt;
 mod type_variable;
 mod undo_logs;
 mod unify;

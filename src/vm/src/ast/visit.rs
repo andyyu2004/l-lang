@@ -17,11 +17,9 @@ crate trait Visitor<'ast>: Sized {
     fn visit_vis(&mut self, vis: &'ast Visibility) {
     }
 
-    fn visit_fn(&mut self, sig: &'ast FnSig, body: Option<&'ast Block>) {
+    fn visit_fn(&mut self, sig: &'ast FnSig, body: Option<&'ast Expr>) {
         self.visit_fn_sig(sig);
-        if let Some(body) = body {
-            self.visit_block(body);
-        }
+        body.as_ref().map(|body| self.visit_expr(body));
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
@@ -51,6 +49,10 @@ crate trait Visitor<'ast>: Sized {
         if let Some(ret_ty) = &sig.output {
             self.visit_ty(ret_ty)
         }
+    }
+
+    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
+        walk_lambda(self, sig, expr)
     }
 
     fn visit_param(&mut self, param: &'ast Param) {
@@ -104,11 +106,13 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
-        ExprKind::Lambda(sig, expr) => {
-            visitor.visit_fn_sig(sig);
-            visitor.visit_expr(expr)
-        }
+        ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
     }
+}
+
+crate fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {
+    visitor.visit_fn_sig(sig);
+    visitor.visit_expr(expr)
 }
 
 crate fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {

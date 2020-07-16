@@ -1,11 +1,13 @@
 //! conversion of ir::Ty to ty::Ty
 
 use crate::ir;
+use crate::span::Span;
 use crate::ty::{Ty, TyKind};
 use crate::typeck::TyCtx;
 
 crate trait TyConv<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx>;
+    fn infer_ty(&self, span: Span) -> Ty<'tcx>;
 }
 
 impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
@@ -17,6 +19,8 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                 ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
                 _ => panic!("unexpected resolution"),
             },
+            ir::TyKind::Tuple(tys) => tcx.mk_tup(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
+            ir::TyKind::Infer => self.infer_ty(ir_ty.span),
         }
     }
 }

@@ -66,7 +66,8 @@ crate struct Param {
 
 impl Display for Param {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        todo!()
+        todo!();
+        // write!(f, "{}: {}", self.pattern, self.ty)
     }
 }
 

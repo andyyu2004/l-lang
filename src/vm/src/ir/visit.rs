@@ -51,10 +51,19 @@ crate trait Visitor<'ir>: Sized {
     fn visit_path_segment(&mut self, seg: &'ir ir::PathSegment<'ir>) {
         walk_path_segment(self, seg)
     }
+
+    fn visit_fn_sig(&mut self, sig: &'ir ir::FnSig<'ir>) {
+        walk_fn_sig(self, sig)
+    }
 }
 
 crate fn walk_prog<'ir, V: Visitor<'ir>>(v: &mut V, prog: &'ir ir::Prog<'ir>) {
     prog.items.values().for_each(|item| v.visit_item(item))
+}
+
+crate fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
+    sig.inputs.iter().for_each(|ty| v.visit_ty(ty));
+    sig.output.map(|ty| v.visit_ty(ty));
 }
 
 crate fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
@@ -62,15 +71,14 @@ crate fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
     v.visit_ident(item.ident);
     match &item.kind {
         ir::ItemKind::Fn(sig, generics, body) => {
-            sig.inputs.iter().for_each(|ty| v.visit_ty(ty));
-            sig.output.map(|ty| v.visit_ty(ty));
+            v.visit_fn_sig(sig);
             v.visit_body(body);
         }
     }
 }
 
 crate fn walk_body<'ir, V: Visitor<'ir>>(v: &mut V, body: &'ir ir::Body<'ir>) {
-    body.params.iter().map(|p| v.visit_param(p));
+    body.params.iter().for_each(|p| v.visit_param(p));
     v.visit_expr(body.expr)
 }
 
@@ -88,7 +96,10 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
         ir::ExprKind::Block(block) => v.visit_block(block),
         ir::ExprKind::Path(path) => v.visit_path(path),
         ir::ExprKind::Tuple(xs) => xs.iter().for_each(|x| v.visit_expr(x)),
-        ir::ExprKind::Lambda(_, _) => todo!(),
+        ir::ExprKind::Lambda(sig, body) => {
+            v.visit_fn_sig(sig);
+            v.visit_body(body);
+        }
         ir::ExprKind::Lit(_) => {}
     }
 }
@@ -109,6 +120,8 @@ crate fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
     match &ty.kind {
         ir::TyKind::Path(path) => v.visit_path(path),
         ir::TyKind::Array(ty) => v.visit_ty(ty),
+        ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
+        ir::TyKind::Infer => {}
     }
 }
 
@@ -119,7 +132,7 @@ crate fn walk_let<'ir, V: Visitor<'ir>>(v: &mut V, l: &'ir ir::Let<'ir>) {
 }
 
 crate fn walk_path<'ir, V: Visitor<'ir>>(v: &mut V, path: &'ir ir::Path<'ir>) {
-    path.segments.iter().map(|seg| v.visit_path_segment(seg));
+    path.segments.iter().for_each(|seg| v.visit_path_segment(seg));
 }
 
 crate fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, seg: &'ir ir::PathSegment<'ir>) {

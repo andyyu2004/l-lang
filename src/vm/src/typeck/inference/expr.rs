@@ -13,17 +13,34 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
-            ir::ExprKind::Lambda(_, _) => todo!(),
+            ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(expr, sig, body),
         };
         self.write_ty(expr.id, ty);
         ty
     }
 
+    fn check_lambda_expr(&mut self, expr: &ir::Expr, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
+        let param_tys = self.tcx.mk_substs(sig.inputs.iter().map(|ty| self.lower_ty(ty)));
+        let ret_ty = sig.output.map(|ty| self.lower_ty(ty)).unwrap_or(self.new_infer_var());
+        let body_ty = self.check_body(param_tys, body);
+        self.expect_eq(expr.span, ret_ty, body_ty);
+        self.tcx.mk_ty(TyKind::Fn(param_tys, ret_ty))
+    }
+
+    /// inputs are the input types from the type signature (or inference variables)
+    /// adds the parameters to locals and typechecks the expr of the body
+    pub fn check_body(&mut self, param_tys: SubstRef<'tcx>, body: &ir::Body) -> Ty<'tcx> {
+        debug_assert_eq!(param_tys.len(), body.params.len());
+        for (param, ty) in body.params.iter().zip(param_tys) {
+            self.check_pat(param.pat, ty);
+        }
+        self.check_expr(body.expr)
+    }
+
     fn check_expr_tuple(&mut self, xs: &[ir::Expr]) -> Ty<'tcx> {
         let tcx = self.tcx;
         let tys = xs.iter().map(|expr| self.check_expr(expr));
-        let tys = tcx.mk_substs(tys);
-        tcx.mk_ty(TyKind::Tuple(tys))
+        tcx.mk_tup(tys)
     }
 
     fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {

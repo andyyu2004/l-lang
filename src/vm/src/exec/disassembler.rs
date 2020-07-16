@@ -12,12 +12,13 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         Self { code, f }
     }
 
-    pub fn fmt(&mut self) {
+    pub fn fmt(&mut self) -> fmt::Result {
         while !self.code.is_empty() {
             let len = self.fmt_inst();
-            writeln!(self.f, "");
+            writeln!(self.f, "")?;
             self.code = &self.code[len..];
         }
+        Ok(())
     }
 
     fn simple_inst(&mut self) -> usize {
@@ -27,7 +28,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
 
     /// writes the current opcode into the formatter
     fn write_op(&mut self) {
-        write!(self.f, "{:?} ", self.op());
+        write!(self.f, "{:?} ", self.op()).unwrap()
     }
 
     /// returns current opcode
@@ -43,7 +44,8 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::uconst => write!(self.f, "{}", u64::from_le_bytes(bits)),
             Op::dconst => write!(self.f, "{}", f64::from_bits(u64::from_le_bytes(bits))),
             _ => unreachable!(),
-        };
+        }
+        .unwrap();
         9
     }
 
@@ -51,7 +53,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
     /// <inst> <count>
     fn count_inst(&mut self) -> usize {
         self.write_op();
-        write!(self.f, "{}", self.code[1]);
+        write!(self.f, "{}", self.code[1]).unwrap();
         2
     }
 
@@ -86,7 +88,6 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::popscp | Op::iloadl | Op::uloadl | Op::dloadl | Op::mktup | Op::mklst => {
                 self.count_inst()
             }
-            Op::mkmap => todo!(),
             Op::rloadl => todo!(),
             Op::istorel => todo!(),
             Op::ustorel => todo!(),

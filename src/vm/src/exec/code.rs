@@ -8,7 +8,7 @@ pub struct Code(Vec<u8>);
 
 impl Display for Code {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Ok(Disassembler::new(&self.0, f).fmt())
+        Disassembler::new(&self.0, f).fmt()
     }
 }
 

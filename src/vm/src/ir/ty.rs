@@ -19,4 +19,6 @@ crate struct Ty<'ir> {
 crate enum TyKind<'ir> {
     Path(&'ir ir::Path<'ir>),
     Array(&'ir ir::Ty<'ir>),
+    Tuple(&'ir [ir::Ty<'ir>]),
+    Infer,
 }

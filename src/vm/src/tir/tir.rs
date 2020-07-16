@@ -42,6 +42,12 @@ crate struct Param<'tcx> {
     pub pat: &'tcx tir::Pattern<'tcx>,
 }
 
+impl<'tcx> Display for Param<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.pat)
+    }
+}
+
 #[derive(Debug)]
 crate struct PathSegment<'tcx> {
     pub ident: Ident,
@@ -57,7 +63,7 @@ crate struct Block<'tcx> {
 
 impl<'tcx> Display for Block<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{{");
+        writeln!(f, "{{")?;
         self.stmts.iter().map(|stmt| writeln!(f, "\t{};", stmt)).count();
         self.expr.map(|expr| writeln!(f, "\t{}", expr));
         write!(f, "}}")

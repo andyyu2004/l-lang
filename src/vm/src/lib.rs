@@ -4,7 +4,6 @@
 #![feature(iterator_fold_self)]
 #![feature(raw)]
 #![feature(const_panic)]
-#![feature(alloc)]
 #![feature(hash_set_entry)]
 #![feature(extern_types)]
 #![feature(box_into_raw_non_null)]
@@ -16,7 +15,9 @@
 #![feature(raw_vec_internals)]
 #![feature(const_fn)]
 #![allow(dead_code)]
-#![allow(warnings)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(unused_macros)]
 
 #[macro_use]
 extern crate derive_deref;
@@ -50,7 +51,7 @@ use error::LResult;
 use log::LevelFilter;
 
 pub fn exec(src: &str) -> LResult<()> {
-    simple_logging::log_to_file("log.txt", LevelFilter::Info);
+    simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
     let driver = Driver::new(src);
     let res = driver.exec()?;
     println!("{}", res);

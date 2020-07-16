@@ -34,6 +34,7 @@ impl Compiler {
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
+            tir::ExprKind::Lambda(_) => todo!(),
         };
     }
 
@@ -51,10 +52,10 @@ impl Compiler {
         let m = self.localc;
         let ret = f(self);
         let n = self.localc;
-        /// `m - n` locals were declared in the scope of the new block
-        /// they need to be popped off at the end of the scope
-        /// we also need to take care to retain the value of the block (as blocks are exprs)
-        /// this is done with the novel `popscp` (pop_scope) instruction
+        // `n - m` locals were declared in the scope of the new block
+        // they need to be popped off at the end of the scope
+        // we also need to take care to retain the value of the block (as blocks are exprs)
+        // this is done with the novel `popscp` (pop_scope) instruction
         let p = n - m;
         self.localc -= p;
         // redundant if p == 0
@@ -67,7 +68,7 @@ impl Compiler {
     fn compile_block(&mut self, block: &tir::Block) {
         self.with_scope(|compiler| {
             block.stmts.iter().for_each(|stmt| compiler.compile_stmt(stmt));
-            /// blocks are expressions and must always produce a value
+            // blocks are expressions and must always produce a value
             match block.expr {
                 Some(expr) => compiler.compile_expr(expr),
                 None => compiler.unit(),
@@ -92,7 +93,7 @@ impl Compiler {
             None => self.unit(),
         };
         match l.pat.kind {
-            /// if its a wildcard, we don't bind anything so just pop the expression off
+            // if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => return self.pop(),
             tir::PatternKind::Binding(ident, _) => {
                 // this relies on the observation that the nth local variable resides

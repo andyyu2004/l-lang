@@ -11,6 +11,7 @@ crate struct Resolver {
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
 }
 
+#[derive(Debug)]
 crate struct ResolverOutputs {
     pub defs: Definitions,
 }

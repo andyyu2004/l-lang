@@ -18,7 +18,7 @@ impl<Id> Res<Id> {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 crate struct Definitions {
     /// just use a counter for DefIds for now
     def_id_counter: Cell<usize>,
@@ -50,6 +50,7 @@ crate struct PerNS<T> {
 
 impl<T> std::ops::Index<NS> for PerNS<T> {
     type Output = T;
+
     fn index(&self, ns: NS) -> &Self::Output {
         match ns {
             NS::Value => &self.value,

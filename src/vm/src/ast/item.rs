@@ -13,7 +13,7 @@ crate struct Item {
 
 #[derive(Debug, PartialEq, Clone)]
 crate enum ItemKind {
-    Fn(FnSig, Generics, Option<P<Block>>),
+    Fn(FnSig, Generics, Option<P<Expr>>),
 }
 
 /// painfully wraps an expression in a function that contains a single expression statement
@@ -24,8 +24,9 @@ impl From<Expr> for Item {
         let fn_sig = FnSig { inputs: vec![], output: None };
         let generics = Generics { span, id };
         let stmt = Stmt { span, id, kind: StmtKind::Semi(box expr) };
-        let block = Some(box Block { span, id, stmts: vec![box stmt] });
-        let kind = ItemKind::Fn(fn_sig, generics, block);
+        let block = box Block { span, id, stmts: vec![box stmt] };
+        let expr = box Expr { span, id, kind: ExprKind::Block(block) };
+        let kind = ItemKind::Fn(fn_sig, generics, Some(expr));
         Self {
             span,
             id,

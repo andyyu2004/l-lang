@@ -59,6 +59,7 @@ impl<'tcx> Driver<'tcx> {
         let mut resolver = Resolver::resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
         let ir = lctx.lower_prog(&ast);
+        info!("{:#?}", ir);
         let resolutions = resolver.complete();
         Ok((ir, resolutions))
     }

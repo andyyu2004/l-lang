@@ -1,11 +1,8 @@
 use crate::arena::DroplessArena as Arena;
-use crate::ast::NodeId;
-use crate::ast::{self, Prog};
-use crate::ir::{self, DefId, Id, LocalId};
+use crate::ast::*;
+use crate::ir::{self, DefId, Id, LocalId, Res};
 use crate::resolve::Resolver;
-use ast::Ident;
 use indexed_vec::{Idx, IndexVec};
-use ir::Res;
 use std::collections::BTreeMap;
 
 crate struct AstLoweringCtx<'a, 'ir> {
@@ -46,6 +43,24 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             *counter += 1;
             Id { def_id, local: LocalId::new(local_id) }
         })
+    }
+
+    pub(super) fn lower_body(&mut self, sig: &FnSig, expr: &Expr) -> &'ir ir::Body<'ir> {
+        let params = self.lower_params(&sig.inputs);
+        let sig = self.lower_fn_sig(sig);
+        let expr = self.lower_expr(expr);
+        self.arena.alloc(ir::Body { params, expr })
+    }
+
+    pub(super) fn lower_params(&mut self, params: &[Param]) -> &'ir [ir::Param<'ir>] {
+        self.arena.alloc_from_iter(params.iter().map(|p| self.lower_param(p)))
+    }
+
+    pub(super) fn lower_param(&mut self, param: &Param) -> ir::Param<'ir> {
+        let span = param.span;
+        let id = self.lower_node_id(param.id);
+        let pattern = self.lower_pattern(&param.pattern);
+        ir::Param { span, id, pat: pattern }
     }
 
     pub(super) fn lower_res(&mut self, res: Res<NodeId>) -> Res {

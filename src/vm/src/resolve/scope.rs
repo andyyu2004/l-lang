@@ -24,8 +24,8 @@ crate struct Scope<T> {
 }
 
 impl<T> Scopes<T> {
-    pub fn define(&mut self, ident: Ident, value: T) -> Option<T> {
-        self.scopes.last_mut().unwrap().define(ident, value)
+    pub fn def(&mut self, ident: Ident, value: T) {
+        self.scopes.last_mut().unwrap().def(ident, value);
     }
 
     pub fn lookup(&self, ident: &Ident) -> Option<&T> {
@@ -39,7 +39,7 @@ impl<T> Scopes<T> {
 }
 
 impl<T> Scope<T> {
-    pub fn define(&mut self, ident: Ident, value: T) -> Option<T> {
+    pub fn def(&mut self, ident: Ident, value: T) -> Option<T> {
         self.bindings.insert(ident, value)
     }
 

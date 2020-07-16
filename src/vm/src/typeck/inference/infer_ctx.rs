@@ -61,8 +61,8 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
         let mut fcx = FnCtx::new(&self);
-        let (_, ret_ty) = self.tcx.item_ty(item.id.def_id).expect_fn();
-        let body_ty = fcx.check_expr(body.expr);
+        let (param_tys, ret_ty) = self.tcx.item_ty(item.id.def_id).expect_fn();
+        let body_ty = fcx.check_body(param_tys, body);
         info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
         fcx.expect_eq(item.span, ret_ty, body_ty);
         fcx
@@ -75,23 +75,15 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
+        info!("fcx query node type for {:?}", id);
         self.tables.borrow().node_type(id)
-    }
-
-    pub fn lower_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
-        TyConv::ir_ty_to_ty(self, ir_ty)
     }
 
     /// records the type for the given id in the tables
     /// returns the same type purely for convenience
     pub fn write_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
+        info!("fcx write ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
-    }
-}
-
-impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        self.tcx
     }
 }

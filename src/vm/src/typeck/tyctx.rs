@@ -3,6 +3,7 @@ use super::List;
 use crate::core::{Arena, CtxInterners};
 use crate::error::TypeResult;
 use crate::ir::DefId;
+use crate::span::Span;
 use crate::ty::{SubstRef, Ty, TyConv, TyKind};
 use crate::{ir, tir};
 use indexed_vec::Idx;
@@ -105,6 +106,10 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx> {
         *self
     }
+
+    fn infer_ty(&self, _span: Span) -> Ty<'tcx> {
+        panic!("tyctx can't lower types with inference variables")
+    }
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -120,6 +125,7 @@ impl<'tcx> TyCtx<'tcx> {
     fn collect_item(self, item: &ir::Item<'tcx>) {
         match item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
+                // unspecified return type on fn item implies unit type
                 let ret_ty =
                     sig.output.map(|ty| TyConv::ir_ty_to_ty(&self, ty)).unwrap_or(self.types.unit);
                 let inputs = sig.inputs.into_iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));

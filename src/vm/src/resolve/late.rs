@@ -24,10 +24,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         match &pat.kind {
-            PatternKind::Ident(ident, _sub) => {
-                let res = Res::Local(pat.id);
-                self.scopes[NS::Value].define(*ident, res);
-            }
+            PatternKind::Ident(ident, _) => self.scopes[NS::Value].def(*ident, Res::Local(pat.id)),
             PatternKind::Wildcard | PatternKind::Tuple(_) | PatternKind::Paren(_) => {}
         }
     }
@@ -44,11 +41,29 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         self.resolver.resolve_node(segment.id, res);
         Ok(())
     }
+
+    /// bring each parameter into scope
+    fn resolve_params(&mut self, params: &'ast [Param]) {
+        params.iter().for_each(|param| {
+            self.resolve_pattern(&param.pattern);
+            self.visit_ty(&param.ty);
+        })
+    }
 }
 
 impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_block(&mut self, block: &'ast Block) {
         self.with_val_scope(|resolver| ast::walk_block(resolver, block));
+    }
+
+    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
+        self.with_val_scope(|resolver| {
+            resolver.resolve_params(&sig.inputs);
+            if let Some(ty) = &sig.output {
+                resolver.visit_ty(ty)
+            }
+            resolver.visit_expr(expr);
+        });
     }
 
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {

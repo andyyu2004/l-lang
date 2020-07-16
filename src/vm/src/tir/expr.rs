@@ -21,6 +21,7 @@ crate enum ExprKind<'tcx> {
     /// reference to a local variable (reference not in the rust sense, but just a usage of the variable)
     VarRef(ir::Id),
     Tuple(&'tcx [tir::Expr<'tcx>]),
+    Lambda(&'tcx tir::Body<'tcx>),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -38,6 +39,9 @@ impl<'tcx> Display for ExprKind<'tcx> {
             Self::Block(block) => write!(f, "{}", block),
             Self::VarRef(id) => write!(f, "${:?}", id.local),
             Self::Tuple(xs) => write!(f, "({})", util::join2(xs.iter(), ",")),
+            Self::Lambda(b) => {
+                write!(f, "(λ({}) => {})", util::join2(b.params.iter(), ","), b.expr)
+            }
         }
     }
 }

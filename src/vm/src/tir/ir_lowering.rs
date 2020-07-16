@@ -1,6 +1,6 @@
 use crate::ir::{self, DefId};
 use crate::tir;
-use crate::ty::{InferenceVarSubstFolder, Subst};
+use crate::ty::{InferenceVarSubstFolder, Subst, Ty};
 use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
@@ -20,6 +20,11 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
     pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
         item.to_tir_alloc(self)
+    }
+
+    fn node_type(&mut self, id: ir::Id) -> Ty<'tcx> {
+        info!("irloweringctx: query typeof {:?}", id);
+        self.tables.node_type(id)
     }
 
     fn lower_tuple_subpats(&mut self, pats: &[ir::Pattern<'tcx>]) -> &'tcx [tir::FieldPat<'tcx>] {
@@ -80,7 +85,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
         };
-        let ty = ctx.tables.node_type(id);
+        let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }
     }
 }
@@ -135,14 +140,13 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
 }
 
 impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
-    type Output = &'tcx tir::Block<'tcx>;
+    type Output = tir::Block<'tcx>;
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         let stmts = tcx.alloc_tir_iter(self.stmts.iter().map(|stmt| stmt.to_tir(ctx)));
         let expr = self.expr.map(|expr| expr.to_tir_alloc(ctx));
-        let block = tir::Block { id: self.id, stmts, expr };
-        ctx.tcx.alloc_tir(block)
+        tir::Block { id: self.id, stmts, expr }
     }
 }
 
@@ -179,15 +183,15 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx))
             }
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
-            ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir(ctx)),
+            ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => match path.res {
                 ir::Res::Local(id) => tir::ExprKind::VarRef(id),
                 ir::Res::PrimTy(_) => unreachable!(),
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
-            ir::ExprKind::Lambda(_, _) => todo!(),
+            ir::ExprKind::Lambda(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
         };
-        let ty = ctx.tables.node_type(self.id);
+        let ty = ctx.node_type(self.id);
         tir::Expr { span: self.span, kind, ty }
     }
 }

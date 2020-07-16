@@ -1,1 +1,244 @@
-[00:00:00.000] (7fc505662580) INFO   body type: (); ret_ty: ()
+[00:00:00.000] (7ffad0417580) INFO   Prog {
+    items: {
+        Id {
+            def_id: 0,
+            local: 11,
+        }: Item {
+            span: Span {
+                lo: 0,
+                hi: 34,
+            },
+            id: Id {
+                def_id: 0,
+                local: 11,
+            },
+            vis: Spanned {
+                span: Span {
+                    lo: 0,
+                    hi: 0,
+                },
+                node: Private,
+            },
+            ident: Ident {
+                span: Span {
+                    lo: 3,
+                    hi: 7,
+                },
+                symbol: Symbol(
+                    0,
+                ),
+            },
+            kind: Fn(
+                FnSig {
+                    inputs: [],
+                    output: None,
+                },
+                Generics {
+                    data: 0,
+                    pd: PhantomData,
+                },
+                Body {
+                    params: [],
+                    expr: Expr {
+                        span: Span {
+                            lo: 10,
+                            hi: 33,
+                        },
+                        id: Id {
+                            def_id: 0,
+                            local: 10,
+                        },
+                        kind: Block(
+                            Block {
+                                id: Id {
+                                    def_id: 0,
+                                    local: 9,
+                                },
+                                span: Span {
+                                    lo: 10,
+                                    hi: 33,
+                                },
+                                stmts: [
+                                    Stmt {
+                                        id: Id {
+                                            def_id: 0,
+                                            local: 8,
+                                        },
+                                        span: Span {
+                                            lo: 16,
+                                            hi: 31,
+                                        },
+                                        kind: Semi(
+                                            Expr {
+                                                span: Span {
+                                                    lo: 16,
+                                                    hi: 30,
+                                                },
+                                                id: Id {
+                                                    def_id: 0,
+                                                    local: 7,
+                                                },
+                                                kind: Lambda(
+                                                    FnSig {
+                                                        inputs: [
+                                                            Ty {
+                                                                id: Id {
+                                                                    def_id: 0,
+                                                                    local: 0,
+                                                                },
+                                                                span: Span {
+                                                                    lo: 20,
+                                                                    hi: 20,
+                                                                },
+                                                                kind: Infer,
+                                                            },
+                                                        ],
+                                                        output: None,
+                                                    },
+                                                    Body {
+                                                        params: [
+                                                            Param {
+                                                                span: Span {
+                                                                    lo: 19,
+                                                                    hi: 20,
+                                                                },
+                                                                id: Id {
+                                                                    def_id: 0,
+                                                                    local: 1,
+                                                                },
+                                                                pat: Pattern {
+                                                                    id: Id {
+                                                                        def_id: 0,
+                                                                        local: 2,
+                                                                    },
+                                                                    span: Span {
+                                                                        lo: 19,
+                                                                        hi: 20,
+                                                                    },
+                                                                    kind: Binding(
+                                                                        Ident {
+                                                                            span: Span {
+                                                                                lo: 19,
+                                                                                hi: 20,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                1,
+                                                                            ),
+                                                                        },
+                                                                        None,
+                                                                    ),
+                                                                },
+                                                            },
+                                                        ],
+                                                        expr: Expr {
+                                                            span: Span {
+                                                                lo: 25,
+                                                                hi: 30,
+                                                            },
+                                                            id: Id {
+                                                                def_id: 0,
+                                                                local: 6,
+                                                            },
+                                                            kind: Bin(
+                                                                Add,
+                                                                Expr {
+                                                                    span: Span {
+                                                                        lo: 25,
+                                                                        hi: 26,
+                                                                    },
+                                                                    id: Id {
+                                                                        def_id: 0,
+                                                                        local: 3,
+                                                                    },
+                                                                    kind: Lit(
+                                                                        Num(
+                                                                            2.0,
+                                                                        ),
+                                                                    ),
+                                                                },
+                                                                Expr {
+                                                                    span: Span {
+                                                                        lo: 29,
+                                                                        hi: 30,
+                                                                    },
+                                                                    id: Id {
+                                                                        def_id: 0,
+                                                                        local: 5,
+                                                                    },
+                                                                    kind: Path(
+                                                                        Path {
+                                                                            span: Span {
+                                                                                lo: 29,
+                                                                                hi: 30,
+                                                                            },
+                                                                            res: Local(
+                                                                                Id {
+                                                                                    def_id: 0,
+                                                                                    local: 2,
+                                                                                },
+                                                                            ),
+                                                                            segments: [
+                                                                                PathSegment {
+                                                                                    ident: Ident {
+                                                                                        span: Span {
+                                                                                            lo: 29,
+                                                                                            hi: 30,
+                                                                                        },
+                                                                                        symbol: Symbol(
+                                                                                            1,
+                                                                                        ),
+                                                                                    },
+                                                                                    id: Id {
+                                                                                        def_id: 0,
+                                                                                        local: 4,
+                                                                                    },
+                                                                                    pd: PhantomData,
+                                                                                },
+                                                                            ],
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        },
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
+                                expr: None,
+                            },
+                        ),
+                    },
+                },
+            ),
+        },
+    },
+}
+[00:00:00.008] (7ffad0417580) INFO   deflocal Id { def_id: 0, local: 2 }
+[00:00:00.008] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 2 } : TyVar(TyVid { index: 0 })
+[00:00:00.008] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 3 } : number
+[00:00:00.008] (7ffad0417580) INFO   lookup ty for local Id { def_id: 0, local: 2 }
+[00:00:00.008] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 5 } : TyVar(TyVid { index: 0 })
+[00:00:00.008] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 6 } : number
+[00:00:00.008] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 7 } : (TyVar(TyVid { index: 0 })) -> TyVar(TyVid { index: 1 })
+[00:00:00.009] (7ffad0417580) INFO   fcx write ty Id { def_id: 0, local: 10 } : ()
+[00:00:00.009] (7ffad0417580) INFO   body type: (); ret_ty: ()
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 10 }
+[00:00:00.014] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 10 }: ()
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 7 }
+[00:00:00.014] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 7 }: (number) -> number
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 2 }
+[00:00:00.014] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 2 }: number
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 6 }
+[00:00:00.014] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 6 }: number
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 3 }
+[00:00:00.014] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 3 }: number
+[00:00:00.014] (7ffad0417580) INFO   fcx query node type for Id { def_id: 0, local: 5 }
+[00:00:00.015] (7ffad0417580) INFO   writeback Id { def_id: 0, local: 5 }: number
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 2 }
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 3 }
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 5 }
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 6 }
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 7 }
+[00:00:00.015] (7ffad0417580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 10 }

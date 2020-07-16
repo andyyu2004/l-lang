@@ -1,5 +1,5 @@
 use super::*;
-use crate::ast::{FnSig, Generics, Item, ItemKind, Param, P};
+use crate::ast::{Expr, ExprKind, FnSig, Generics, Item, ItemKind, Param, P};
 use crate::error::ParseResult;
 use crate::lexer::{Tok, TokenType};
 
@@ -45,6 +45,7 @@ impl Parse for FnParser {
             parser.expect(TokenType::Semi)?;
             None
         };
-        Ok(ItemKind::Fn(sig, generics, block))
+        let expr = block.map(|block| parser.mk_expr(block.span, ExprKind::Block(block)));
+        Ok(ItemKind::Fn(sig, generics, expr))
     }
 }
