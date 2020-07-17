@@ -1,5 +1,6 @@
 use crate::ast::{NodeId, Prog};
-use crate::ir::{DefId, Definitions, Res};
+use crate::ir::{DefId, Definitions, PrimTy, Res};
+use crate::lexer::{symbol, Symbol};
 use indexed_vec::IndexVec;
 use rustc_hash::FxHashMap;
 use std::marker::PhantomData;
@@ -9,6 +10,7 @@ crate struct Resolver {
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
+    pub(super) primitive_types: PrimitiveTypes,
 }
 
 #[derive(Debug)]
@@ -23,6 +25,7 @@ impl Resolver {
             res_map: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
+            primitive_types: Default::default(),
         };
         resolver.resolve_prog(prog);
         resolver
@@ -55,5 +58,20 @@ impl Resolver {
     /// writes the resolution for a given `NodeId` into the map
     pub(super) fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
         self.res_map.insert(node_id, res);
+    }
+}
+
+#[derive(Debug, Deref)]
+crate struct PrimitiveTypes {
+    types: FxHashMap<Symbol, PrimTy>,
+}
+
+impl Default for PrimitiveTypes {
+    fn default() -> Self {
+        let mut types = FxHashMap::default();
+        types.insert(symbol::BOOL, PrimTy::Bool);
+        types.insert(symbol::NUMBER, PrimTy::Num);
+        types.insert(symbol::CHAR, PrimTy::Char);
+        Self { types }
     }
 }

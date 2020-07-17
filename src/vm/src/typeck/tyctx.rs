@@ -161,7 +161,7 @@ impl<'tcx> CommonTypes<'tcx> {
     fn new(interners: &CtxInterners<'tcx>) -> CommonTypes<'tcx> {
         let mk = |ty| interners.intern_ty(ty);
         CommonTypes {
-            unit: mk(TyKind::Unit),
+            unit: mk(TyKind::Tuple(List::empty())),
             boolean: mk(TyKind::Bool),
             character: mk(TyKind::Char),
             num: mk(TyKind::Num),

@@ -82,11 +82,7 @@ impl<'ctx> Lexer<'ctx> {
                             keyword
                         } else {
                             let symbol = self.ctx.symbol_interner.intern(slice);
-                            if slice.chars().next().unwrap().is_uppercase() {
-                                TokenType::Type(symbol)
-                            } else {
-                                TokenType::Ident(symbol)
-                            }
+                            TokenType::Ident(symbol)
                         }
                     }
 
@@ -233,6 +229,5 @@ pub enum TokenType {
     Unknown,
     /// "_"
     Underscore,
-    Type(Symbol),
     Ident(Symbol),
 }

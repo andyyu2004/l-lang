@@ -135,9 +135,8 @@ impl Parse for LiteralExprParser {
                 }
                 Lit::Num(slice.parse().unwrap())
             }
-            LiteralKind::Int { base, .. } => {
-                Lit::Num(i64::from_str_radix(slice, base as u32).unwrap() as f64)
-            }
+            LiteralKind::Int { base, .. } =>
+                Lit::Num(i64::from_str_radix(slice, base as u32).unwrap() as f64),
             _ => todo!(),
         };
         Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))

@@ -20,5 +20,6 @@ crate enum TyKind<'ir> {
     Path(&'ir ir::Path<'ir>),
     Array(&'ir ir::Ty<'ir>),
     Tuple(&'ir [ir::Ty<'ir>]),
+    Fn(&'ir [ir::Ty<'ir>], Option<&'ir ir::Ty<'ir>>),
     Infer,
 }

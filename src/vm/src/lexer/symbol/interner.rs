@@ -1,12 +1,37 @@
-use super::Symbol;
+use super::{Symbol, SYMBOLS};
 use crate::arena::DroplessArena;
 use rustc_hash::FxHashMap;
+use std::fmt::{self, Debug, Formatter};
 
-#[derive(Default)]
 crate struct Interner {
     arena: DroplessArena,
     symbols: FxHashMap<&'static str, Symbol>,
     strs: Vec<&'static str>,
+}
+
+impl Debug for Interner {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Interner")
+            .field("symbols", &self.symbols)
+            .field("strs", &self.strs)
+            .finish_non_exhaustive()
+    }
+}
+
+impl Default for Interner {
+    fn default() -> Self {
+        Self::prefill(SYMBOLS)
+    }
+}
+
+impl Interner {
+    fn prefill(strs: &[&'static str]) -> Self {
+        Self {
+            arena: DroplessArena::default(),
+            strs: strs.into(),
+            symbols: strs.iter().copied().zip((0..).map(Symbol::new)).collect(),
+        }
+    }
 }
 
 impl Interner {

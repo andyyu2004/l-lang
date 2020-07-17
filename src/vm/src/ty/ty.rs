@@ -56,8 +56,6 @@ impl<'tcx> PartialEq for TyS<'tcx> {
 crate enum TyKind<'tcx> {
     /// bool
     Bool,
-    /// ()
-    Unit,
     /// char
     Char,
     /// number
@@ -74,7 +72,6 @@ impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             TyKind::Bool => write!(f, "bool"),
-            TyKind::Unit => write!(f, "()"),
             TyKind::Char => write!(f, "char"),
             TyKind::Num => write!(f, "number"),
             TyKind::Fn(params, ret) =>

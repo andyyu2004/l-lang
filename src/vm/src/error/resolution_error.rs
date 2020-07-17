@@ -1,4 +1,6 @@
+use crate::ast::Path;
 use crate::span::Span;
+use thiserror::Error;
 
 crate type ResolutionResult<T> = Result<T, ResolutionError>;
 
@@ -9,12 +11,19 @@ crate struct ResolutionError {
 }
 
 impl ResolutionError {
-    pub fn unbound_variable(span: Span) -> Self {
-        Self { span, kind: ResolutionErrorKind::NotFound }
+    pub fn unbound_variable(path: Path) -> Self {
+        Self { span: path.span, kind: ResolutionErrorKind::UnresolvedPath(path) }
+    }
+
+    pub fn unknown_type(path: Path) -> Self {
+        Self { span: path.span, kind: ResolutionErrorKind::UnresolvedType(path) }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 crate enum ResolutionErrorKind {
-    NotFound,
+    #[error("Unresolved path `{0}`")]
+    UnresolvedPath(Path),
+    #[error("Unresolved type `{0}`")]
+    UnresolvedType(Path),
 }

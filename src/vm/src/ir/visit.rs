@@ -125,6 +125,10 @@ crate fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
         ir::TyKind::Path(path) => v.visit_path(path),
         ir::TyKind::Array(ty) => v.visit_ty(ty),
         ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
+        ir::TyKind::Fn(params, ret) => {
+            params.iter().for_each(|ty| v.visit_ty(ty));
+            v.visit_ty(ty);
+        }
         ir::TyKind::Infer => {}
     }
 }

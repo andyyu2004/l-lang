@@ -15,11 +15,12 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     pub(super) fn lower_ty_inner(&mut self, ty: &Ty) -> ir::Ty<'ir> {
         let &Ty { span, id, ref kind } = ty;
         let kind = match kind {
+            TyKind::Paren(ty) => return self.lower_ty_inner(ty),
             TyKind::Array(ty) => ir::TyKind::Array(self.lower_ty(ty)),
             TyKind::Tuple(tys) => ir::TyKind::Tuple(self.lower_tys(tys)),
-            TyKind::Paren(ty) => return self.lower_ty_inner(ty),
-            TyKind::Path(p) => todo!(),
-            TyKind::Fn(_, _) => todo!(),
+            TyKind::Path(path) => ir::TyKind::Path(self.lower_path(path)),
+            TyKind::Fn(params, ret) =>
+                ir::TyKind::Fn(self.lower_tys(params), ret.as_ref().map(|ty| self.lower_ty(ty))),
             TyKind::Infer => ir::TyKind::Infer,
         };
 

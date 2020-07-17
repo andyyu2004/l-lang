@@ -73,17 +73,7 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_ty(&mut self, ty: &'ast Ty) {
-        match &ty.kind {
-            TyKind::Array(ty) => self.visit_ty(ty),
-            TyKind::Tuple(tys) => tys.iter().for_each(|ty| self.visit_ty(ty)),
-            TyKind::Paren(ty) => self.visit_ty(ty),
-            TyKind::Path(path) => self.visit_path(path),
-            TyKind::Fn(params, ret) => {
-                params.iter().for_each(|ty| self.visit_ty(ty));
-                ret.as_ref().map(|ty| self.visit_ty(ty));
-            }
-            TyKind::Infer => {}
-        }
+        walk_ty(self, ty)
     }
 
     fn visit_ident(&mut self, _ident: Ident) {
@@ -128,6 +118,20 @@ crate fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
         }
         PatternKind::Paren(pat) => visitor.visit_pattern(pat),
         PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
+    }
+}
+
+crate fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
+    match &ty.kind {
+        TyKind::Array(ty) => visitor.visit_ty(ty),
+        TyKind::Tuple(tys) => tys.iter().for_each(|ty| visitor.visit_ty(ty)),
+        TyKind::Paren(ty) => visitor.visit_ty(ty),
+        TyKind::Path(path) => visitor.visit_path(path),
+        TyKind::Fn(params, ret) => {
+            params.iter().for_each(|ty| visitor.visit_ty(ty));
+            ret.as_ref().map(|ty| visitor.visit_ty(ty));
+        }
+        TyKind::Infer => {}
     }
 }
 

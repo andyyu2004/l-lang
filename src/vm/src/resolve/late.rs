@@ -12,7 +12,13 @@ struct LateResolutionVisitor<'a, 'r, 'ast> {
 
 impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     pub fn new(resolver: &'r mut Resolver) -> Self {
-        Self { resolver, pd: &PhantomData, scopes: Default::default() }
+        Self { resolver, pd: &PhantomData, scopes: Self::mk_global_scope() }
+    }
+
+    /// creates a scope that include primitive types
+    fn mk_global_scope() -> PerNS<Scopes<Res<NodeId>>> {
+        let scopes = PerNS::default();
+        scopes
     }
 
     pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
@@ -34,10 +40,19 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
             unimplemented!()
         }
         let segment = &path.segments[0];
-
-        let res = *self.scopes[ns]
-            .lookup(&segment.ident)
-            .ok_or_else(|| ResolutionError::unbound_variable(segment.ident.span))?;
+        let res = match ns {
+            NS::Value => *self.scopes[ns]
+                .lookup(&segment.ident)
+                .ok_or_else(|| ResolutionError::unbound_variable(path.clone()))?,
+            // just lookup primitive type for now as there are no other potential types
+            NS::Type => Res::PrimTy(
+                *self
+                    .resolver
+                    .primitive_types
+                    .get(&segment.ident.symbol)
+                    .ok_or_else(|| ResolutionError::unknown_type(path.clone()))?,
+            ),
+        };
         self.resolver.resolve_node(segment.id, res);
         Ok(())
     }
@@ -78,8 +93,20 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
         ast::walk_item(self, item);
     }
 
-    fn visit_path(&mut self, path: &'ast Path) {
-        self.resolve_path(path, NS::Value).unwrap();
+    fn visit_expr(&mut self, expr: &'ast Expr) {
+        match &expr.kind {
+            ExprKind::Path(path) => self.resolve_path(path, NS::Value).unwrap(),
+            _ => {}
+        };
+        ast::walk_expr(self, expr);
+    }
+
+    fn visit_ty(&mut self, ty: &'ast Ty) {
+        match &ty.kind {
+            TyKind::Path(path) => return self.resolve_path(path, NS::Type).unwrap(),
+            _ => {}
+        };
+        ast::walk_ty(self, ty);
     }
 }
 
