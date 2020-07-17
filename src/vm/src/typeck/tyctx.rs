@@ -1,10 +1,9 @@
 use super::inference::{FnCtx, InferCtx, InferCtxBuilder};
-use super::List;
 use crate::core::{Arena, CtxInterners};
 use crate::error::TypeResult;
 use crate::ir::DefId;
 use crate::span::Span;
-use crate::ty::{SubstRef, Ty, TyConv, TyKind};
+use crate::ty::{List, SubstRef, Ty, TyConv, TyKind};
 use crate::{ir, tir};
 use indexed_vec::Idx;
 use ir::Definitions;
@@ -60,12 +59,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.intern_substs(&iter.collect_vec())
     }
 
-    pub fn intern_substs(self, substs: &[Ty<'tcx>]) -> SubstRef<'tcx> {
-        if substs.is_empty() {
-            List::empty()
-        } else {
-            List::from_arena(&self.interners.arena, substs)
-        }
+    pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstRef<'tcx> {
+        if slice.is_empty() { List::empty() } else { self.interners.intern_substs(slice) }
     }
 }
 

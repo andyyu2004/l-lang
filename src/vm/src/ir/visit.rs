@@ -100,6 +100,10 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_fn_sig(sig);
             v.visit_body(body);
         }
+        ir::ExprKind::Call(f, args) => {
+            v.visit_expr(f);
+            args.iter().for_each(|arg| v.visit_expr(arg));
+        }
         ir::ExprKind::Lit(_) => {}
     }
 }

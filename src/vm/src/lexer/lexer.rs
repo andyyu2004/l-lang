@@ -52,27 +52,30 @@ impl<'ctx> Lexer<'ctx> {
                 let slice = &src[span.lo..span.hi];
                 let kind = match t.kind {
                     TokenKind::Whitespace => continue,
-                    TokenKind::Eq => {
+                    TokenKind::Eq =>
                         if tokens[i].kind == TokenKind::Gt {
                             i += 1;
                             span_index += 1;
                             TokenType::RFArrow
                         } else {
                             TokenType::Eq
-                        }
-                    }
-                    TokenKind::Minus => {
+                        },
+                    TokenKind::Minus =>
                         if tokens[i].kind == TokenKind::Gt {
                             i += 1;
                             span_index += 1;
                             TokenType::RArrow
                         } else {
                             TokenType::Minus
-                        }
-                    }
+                        },
 
-                    TokenKind::LineComment => TokenType::Whitespace,
-                    TokenKind::BlockComment { terminated } => TokenType::Whitespace,
+                    TokenKind::LineComment => continue,
+                    TokenKind::BlockComment { terminated } => {
+                        if !terminated {
+                            panic!("unterminated block comment")
+                        }
+                        continue;
+                    }
                     TokenKind::Ident => {
                         // by convention, uppercase idents are Types
                         if let Some(&keyword) = KEYWORDS.get(slice) {
@@ -88,12 +91,10 @@ impl<'ctx> Lexer<'ctx> {
                     }
 
                     TokenKind::RawIdent => todo!(),
-                    TokenKind::Literal { kind, suffix_start } => {
-                        TokenType::Literal { kind, suffix_start }
-                    }
-                    TokenKind::Lifetime { starts_with_number } => {
-                        todo!("maybe use lifetime syntax as generic parameter (like ocaml)")
-                    }
+                    TokenKind::Literal { kind, suffix_start } =>
+                        TokenType::Literal { kind, suffix_start },
+                    TokenKind::Lifetime { starts_with_number } =>
+                        todo!("maybe use lifetime syntax as generic parameter (like ocaml)"),
                     TokenKind::Semi => TokenType::Semi,
                     TokenKind::Underscore => TokenType::Underscore,
                     TokenKind::Comma => TokenType::Comma,

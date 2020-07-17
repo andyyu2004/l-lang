@@ -55,8 +55,9 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         let &Self { span, id, ident, vis, ref kind } = self;
         let kind = match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
-                let fn_ty = ctx.tcx.item_ty(self.id.def_id);
-                tir::ItemKind::Fn(fn_ty, generics.to_tir(ctx), body.to_tir(ctx))
+                let (inputs, output) = ctx.tcx.item_ty(self.id.def_id).expect_fn();
+                let sig = ctx.tcx.alloc_tir(tir::FnSig { inputs, output });
+                tir::ItemKind::Fn(sig, generics.to_tir(ctx), body.to_tir(ctx))
             }
         };
         tir::Item { kind, span, id, ident, vis }
@@ -131,9 +132,8 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
             ir::StmtKind::Let(l) => tir::StmtKind::Let(l.to_tir_alloc(ctx)),
             // we can map both semi and expr to expressions and their distinction is no longer
             // important after typechecking is done
-            ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) => {
-                tir::StmtKind::Expr(expr.to_tir_alloc(ctx))
-            }
+            ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) =>
+                tir::StmtKind::Expr(expr.to_tir_alloc(ctx)),
         };
         tir::Stmt { id, span, kind }
     }
@@ -171,6 +171,10 @@ where
         let tcx = ctx.tcx;
         tcx.alloc_tir_iter(self.iter().map(|t| t.to_tir(ctx)))
     }
+
+    fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
+        panic!("use `to_tir` for slices")
+    }
 }
 
 impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
@@ -178,10 +182,8 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         let kind = match &self.kind {
-            &ir::ExprKind::Lit(lit) => tir::ExprKind::Lit(lit),
-            ir::ExprKind::Bin(op, l, r) => {
-                tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx))
-            }
+            ir::ExprKind::Bin(op, l, r) =>
+                tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => match path.res {
@@ -190,6 +192,9 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
             ir::ExprKind::Lambda(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
+            ir::ExprKind::Call(f, args) =>
+                tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
+            &ir::ExprKind::Lit(lit) => tir::ExprKind::Lit(lit),
         };
         let ty = ctx.node_type(self.id);
         tir::Expr { span: self.span, kind, ty }

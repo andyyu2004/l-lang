@@ -1,5 +1,5 @@
 use crate::tir;
-use crate::typeck::{TypeFoldable, TypeFolder, TypeVisitor};
+use crate::ty::{TypeFoldable, TypeFolder, TypeVisitor};
 
 /// tir Visitor
 crate trait Visitor<'tcx> {

@@ -1,6 +1,7 @@
 use super::*;
 use crate::ast::{Ident, Visibility};
 use crate::ir;
+use crate::util;
 use crate::{lexer::Symbol, span::Span, ty::Ty};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
@@ -16,13 +17,25 @@ crate struct Item<'tcx> {
 
 #[derive(Debug)]
 crate enum ItemKind<'tcx> {
-    Fn(Ty<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
+    Fn(&'tcx tir::FnSig<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
 }
 
 impl<'tcx> Display for Item<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ItemKind::Fn(sig, generics, body) => write!(f, "{}fn: {} {}", self.vis.node, sig, body),
+            ItemKind::Fn(sig, generics, body) => {
+                let (params, inputs) = (body.params, sig.inputs);
+                let params = params.iter().zip(inputs).map(|(p, t)| format!("{}: {}", p, t));
+                write!(
+                    f,
+                    "{}fn {}({}) -> {} {}",
+                    self.vis.node,
+                    self.ident,
+                    util::join2(params, ", "),
+                    sig.output,
+                    body
+                )
+            }
         }
     }
 }

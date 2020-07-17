@@ -1,5 +1,5 @@
 use crate::ir;
-use crate::{span::Span, typeck::List};
+use crate::{span::Span, ty::List};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum PrimTy {

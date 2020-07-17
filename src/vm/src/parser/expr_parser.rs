@@ -5,6 +5,8 @@ use crate::lexer::*;
 use crate::span::Span;
 
 const UNARY_OPS: [TokenType; 2] = [TokenType::Not, TokenType::Minus];
+const POSTFIX_OPS: [TokenType; 3] =
+    [TokenType::Dot, TokenType::OpenSqBracket, TokenType::OpenParen];
 const TERM_OPS: [TokenType; 2] = [TokenType::Plus, TokenType::Minus];
 const FACTOR_OPS: [TokenType; 2] = [TokenType::Star, TokenType::Slash];
 
@@ -49,8 +51,33 @@ impl Parse for UnaryExprParser {
             let expr = self.parse(parser)?;
             Ok(parser.mk_expr(t.span.merge(&expr.span), ExprKind::Unary(unary_op, expr)))
         } else {
-            PrimaryExprParser.parse(parser)
+            PostfixExprParser.parse(parser)
         }
+    }
+}
+
+/// parses field accesses, function calls, and index expressions
+/// these are all left associative
+pub(super) struct PostfixExprParser;
+
+impl Parse for PostfixExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let mut expr = PrimaryExprParser.parse(parser)?;
+        while let Some(t) = parser.accept_one_of(&POSTFIX_OPS) {
+            match t.ttype {
+                TokenType::OpenParen => {
+                    let (arg_span, args) =
+                        TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
+                    expr = parser.mk_expr(expr.span.merge(&arg_span), ExprKind::Call(expr, args));
+                }
+                TokenType::Dot => todo!(),
+                TokenType::OpenSqBracket => todo!(),
+                _ => unreachable!(),
+            }
+        }
+        Ok(expr)
     }
 }
 
@@ -148,11 +175,25 @@ mod test {
     use crate::{span::Span, Driver};
     use indexed_vec::Idx;
 
-    macro_rules! parse_expr {
-        ($src:expr) => {{
-            let driver = Driver::new($src);
-            driver.parse_expr().unwrap()
-        }};
+    macro parse_expr($src:expr) {{
+        let driver = Driver::new($src);
+        driver.parse_expr().unwrap()
+    }}
+
+    macro fmt_expr($src:expr) {{
+        let expr = parse_expr!($src);
+        format!("{}", expr)
+    }}
+
+    #[test]
+    fn parse_call_expr() {
+        let expr = parse_expr!("f(2,3,x)");
+    }
+
+    #[test]
+    fn parse_left_assoc_call_expr() {
+        let expr = fmt_expr!("1(2)(3)(4)");
+        assert_eq!(expr, "(((1 2) 3) 4)")
     }
 
     #[test]

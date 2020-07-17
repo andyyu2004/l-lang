@@ -8,6 +8,7 @@
 #![feature(extern_types)]
 #![feature(box_into_raw_non_null)]
 #![feature(concat_idents)]
+#![feature(decl_macro)]
 #![feature(btree_drain_filter)]
 #![feature(crate_visibility_modifier)]
 #![feature(core_intrinsics)]
@@ -58,9 +59,13 @@ pub fn exec(src: &str) -> LResult<()> {
     Ok(())
 }
 
+// just stupidly wraps the expr string in a function to form a program
+fn wrap_in_main(src: &str) -> String {
+    format!("fn main() {{ {} }}", src)
+}
+
 pub fn exec_expr(src: &str) -> LResult<()> {
-    // just stupidly wraps the expr string in a function to form a program
-    let src = format!("fn main() {{ {} }}", src);
+    let src = wrap_in_main(src);
     exec(&src)
 }
 

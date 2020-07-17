@@ -1,8 +1,8 @@
 //! this pass goes over the entire hir and constructs a `TypeckTable` which replaces all inference
 //! variables with their actual values
 
-use super::{inference::FnCtx, TypeFoldable, TypeckTables};
-use crate::ty::{InferenceVarSubstFolder, Ty};
+use super::{inference::FnCtx, TypeckTables};
+use crate::ty::{InferenceVarSubstFolder, Ty, TypeFoldable};
 use crate::{ir, span::Span};
 use ir::Visitor;
 
@@ -13,7 +13,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         body: &'tcx ir::Body<'tcx>,
     ) -> &'tcx TypeckTables<'tcx> {
         let mut wbctx = WritebackCtx::new(self, body);
-        dbg!(body);
         wbctx.visit_body(body);
         self.tcx.arena.alloc(wbctx.tables)
     }

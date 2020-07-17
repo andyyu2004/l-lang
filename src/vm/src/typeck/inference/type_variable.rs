@@ -1,5 +1,6 @@
 use super::InferCtxUndoLogs;
 use crate::error::{TypeError, TypeResult};
+use crate::ty::InferenceVarSubstFolder;
 use crate::ty::{self, Ty, TyKind};
 use ena::unify as ut;
 use std::marker::PhantomData;

@@ -40,12 +40,10 @@ impl Parse for ParamParser {
         let pattern = PatParser.parse(parser)?;
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
             TyParser.parse(parser)
+        } else if self.require_type_annotations {
+            Err(ParseError::require_type_annotations(pattern.span))
         } else {
-            if self.require_type_annotations {
-                Err(ParseError::require_type_annotations(pattern.span))
-            } else {
-                Ok(parser.mk_infer_ty())
-            }
+            Ok(parser.mk_infer_ty())
         }?;
         Ok(Param { span: pattern.span.merge(&ty.span), id: parser.mk_id(), pattern, ty })
     }

@@ -1,4 +1,5 @@
 use crate::ty::SubstRef;
+use crate::ty::{TypeFoldable, TypeVisitor};
 use crate::{typeck::inference::TyVid, util};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -11,12 +12,29 @@ crate struct TyS<'tcx> {
     pub kind: TyKind<'tcx>,
 }
 
+/// visitor that searches for inference variables
+struct InferenceVarVisitor;
+
+impl<'tcx> TypeVisitor<'tcx> for InferenceVarVisitor {
+    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool {
+        match ty.kind {
+            TyKind::Infer(_) => true,
+            _ => ty.inner_visit_with(self),
+        }
+    }
+}
+
 impl<'tcx> TyS<'tcx> {
     pub fn expect_fn(&self) -> (SubstRef<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Fn(params, ret) => (params, ret),
             _ => panic!("expected TyKind::Fn, found {}", self),
         }
+    }
+
+    /// returns true if type contains inference variables
+    pub fn has_infer_vars(&self) -> bool {
+        self.visit_with(&mut InferenceVarVisitor)
     }
 }
 
@@ -59,9 +77,8 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Unit => write!(f, "()"),
             TyKind::Char => write!(f, "char"),
             TyKind::Num => write!(f, "number"),
-            TyKind::Fn(params, ret) => {
-                write!(f, "({}) -> {}", util::join2(params.into_iter(), ","), ret)
-            }
+            TyKind::Fn(params, ret) =>
+                write!(f, "({}) -> {}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer) => write!(f, "{:?}", infer),
             TyKind::Array(ty) => write!(f, "[{}]", ty),
             TyKind::Tuple(tys) => write!(f, "({})", tys),

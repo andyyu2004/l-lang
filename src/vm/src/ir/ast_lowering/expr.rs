@@ -20,14 +20,15 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),
             ExprKind::Path(path) => ir::ExprKind::Path(self.lower_path(path)),
             ExprKind::Tuple(xs) => ir::ExprKind::Tuple(self.lower_exprs(xs)),
-            ExprKind::Bin(op, l, r) => {
-                ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r))
-            }
+            ExprKind::Bin(op, l, r) =>
+                ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r)),
             ExprKind::Lambda(sig, expr) => {
                 let lowered_sig = self.lower_fn_sig(sig);
                 let body = self.lower_body(sig, expr);
                 ir::ExprKind::Lambda(self.lower_fn_sig(sig), body)
             }
+            ExprKind::Call(f, args) =>
+                ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }

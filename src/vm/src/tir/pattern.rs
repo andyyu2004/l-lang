@@ -35,7 +35,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             PatternKind::Binding(_, _) => write!(f, "${:?}", self.id.local),
             PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
         }?;
-        write!(f, ": {}", self.ty)
+        write!(f, ":{}", self.ty)
     }
 }
 

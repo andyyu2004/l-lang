@@ -1,6 +1,6 @@
 use super::*;
 use crate::ir::DefId;
-use crate::ty::{InferTy, SubstRef, Ty, TyConv, TyKind};
+use crate::ty::{InferTy, InferenceVarSubstFolder, SubstRef, Ty, TyConv, TyKind, TypeFoldable};
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, error::TypeResult, ir, tir};
 use std::cell::RefCell;
@@ -48,7 +48,19 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     /// creates the substitutions for the inference variables
     pub fn inference_substs(&self) -> TypeResult<'tcx, SubstRef<'tcx>> {
         let vec = self.inner.borrow_mut().type_variables().gen_substs()?;
-        let substs = self.tcx.intern_substs(&vec);
+        let mut substs = self.tcx.intern_substs(&vec);
+        // repeatedly substitutes its inference variables value
+        // until it contains no inference variables or failure
+        // I think this process won't/can't be cyclic?
+        let mut folder = InferenceVarSubstFolder::new(self.tcx, substs);
+        loop {
+            let new_substs = substs.fold_with(&mut folder);
+            if substs == new_substs {
+                break;
+            }
+            substs = new_substs;
+        }
+        debug_assert!(substs.iter().all(|ty| !ty.has_infer_vars()));
         Ok(substs)
     }
 

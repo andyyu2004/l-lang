@@ -100,9 +100,9 @@ crate struct Path {
     pub segments: Vec<PathSegment>,
 }
 
-impl std::fmt::Display for Path {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+impl Display for Path {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", util::join(&self.segments, "::"))
     }
 }
 
@@ -111,6 +111,12 @@ crate struct PathSegment {
     pub ident: Ident,
     pub id: NodeId,
     pub args: Option<()>,
+}
+
+impl Display for PathSegment {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ident)
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

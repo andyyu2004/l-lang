@@ -34,7 +34,8 @@ impl Compiler {
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
-            tir::ExprKind::Lambda(_) => todo!(),
+            tir::ExprKind::Lambda(f) => todo!(),
+            tir::ExprKind::Call(f, args) => todo!(),
         };
     }
 

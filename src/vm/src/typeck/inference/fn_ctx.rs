@@ -46,7 +46,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     pub fn def_local(&mut self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
-        info!("deflocal {:?}", id);
+        info!("deflocal {:?} : {}", id, ty);
         self.locals.insert(id, ty);
         ty
     }

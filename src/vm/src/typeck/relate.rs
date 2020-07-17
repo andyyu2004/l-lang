@@ -1,6 +1,6 @@
-use super::{TyCtx, TypeFoldable};
 use crate::error::{TypeError, TypeResult};
 use crate::ty::*;
+use crate::typeck::TyCtx;
 use itertools::Itertools;
 
 crate trait TypeRelation<'tcx>: Sized {

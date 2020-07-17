@@ -1,7 +1,7 @@
 use crate::ir;
 use crate::tir;
-use crate::ty::Ty;
-use crate::{ast::Ident, span::Span, typeck::List};
+use crate::ty::{List, SubstRef, Ty};
+use crate::{ast::Ident, span::Span};
 use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
@@ -20,6 +20,12 @@ crate struct Generics<'tcx> {
 crate struct Body<'tcx> {
     pub params: &'tcx [tir::Param<'tcx>],
     pub expr: &'tcx tir::Expr<'tcx>,
+}
+
+#[derive(Debug)]
+crate struct FnSig<'tcx> {
+    pub inputs: SubstRef<'tcx>,
+    pub output: Ty<'tcx>,
 }
 
 impl<'tcx> Display for Body<'tcx> {

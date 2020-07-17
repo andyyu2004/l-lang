@@ -22,6 +22,7 @@ crate enum ExprKind<'tcx> {
     VarRef(ir::Id),
     Tuple(&'tcx [tir::Expr<'tcx>]),
     Lambda(&'tcx tir::Body<'tcx>),
+    Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -31,17 +32,16 @@ impl<'tcx> Display for Expr<'tcx> {
 }
 
 impl<'tcx> Display for ExprKind<'tcx> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Lit(l) => write!(f, "{}", l),
-            Self::Bin(op, l, r) => write!(f, "({} {} {})", op, l, r),
-            Self::Unary(op, expr) => write!(f, "({} {})", op, expr),
-            Self::Block(block) => write!(f, "{}", block),
-            Self::VarRef(id) => write!(f, "${:?}", id.local),
-            Self::Tuple(xs) => write!(f, "({})", util::join2(xs.iter(), ",")),
-            Self::Lambda(b) => {
-                write!(f, "(λ({}) => {})", util::join2(b.params.iter(), ","), b.expr)
-            }
+            Self::Lit(l) => write!(fmt, "{}", l),
+            Self::Bin(op, l, r) => write!(fmt, "({} {} {})", op, l, r),
+            Self::Unary(op, expr) => write!(fmt, "({} {})", op, expr),
+            Self::Block(block) => write!(fmt, "{}", block),
+            Self::VarRef(id) => write!(fmt, "${:?}", id.local),
+            Self::Tuple(xs) => write!(fmt, "({})", util::join2(xs.iter(), ",")),
+            Self::Lambda(b) => write!(fmt, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
+            Self::Call(f, args) => write!(fmt, "({} {})", f, util::join2(args.iter(), " ")),
         }
     }
 }

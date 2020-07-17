@@ -12,7 +12,9 @@ pub struct VMCtx {
     pub(crate) bp: usize,
     /// frame pointer to the index of the current frame in frames;
     pub(crate) fp: usize,
+    /// value stack
     pub(crate) stack: [Val; STACK_MAX],
+    /// call stack
     pub(crate) frames: [Frame; FRAMES_MAX],
     pub(crate) constants: Vec<Val>,
     /// map from a stack address to the upvalue that captures the value at that address

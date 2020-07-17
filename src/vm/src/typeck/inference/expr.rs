@@ -14,9 +14,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(expr, sig, body),
+            ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
         };
-        self.write_ty(expr.id, ty);
-        ty
+        self.write_ty(expr.id, ty)
+    }
+
+    fn check_call_expr(&mut self, expr: &ir::Expr, f: &ir::Expr, args: &[ir::Expr]) -> Ty<'tcx> {
+        let (expected_arg_tys, ret_ty) = self.check_expr(f).expect_fn();
+        // express argument types just as a tuple
+        let expected_arg_tys = self.tcx.mk_ty(TyKind::Tuple(expected_arg_tys));
+        let arg_tys = self.check_expr_tuple(args);
+        self.expect_eq(expr.span, expected_arg_tys, arg_tys);
+        ret_ty
     }
 
     fn check_lambda_expr(&mut self, expr: &ir::Expr, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {

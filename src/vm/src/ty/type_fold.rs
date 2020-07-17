@@ -1,5 +1,5 @@
-use super::{List, TyCtx};
-use crate::ty::{Ty, TyKind};
+use crate::ty::{List, Ty, TyKind};
+use crate::typeck::TyCtx;
 use smallvec::SmallVec;
 
 crate trait TypeFoldable<'tcx>: Sized {
@@ -59,19 +59,21 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Fn(inputs, ret) => inputs.visit_with(visitor) || ret.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Array(ty) => ty.visit_with(visitor),
-            TyKind::Infer(_) => todo!(),
-            TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => return false,
+            TyKind::Infer(_) => false,
+            TyKind::Unit | TyKind::Char | TyKind::Num | TyKind::Bool => false,
         }
     }
 }
 
 crate trait TypeFolder<'tcx>: Sized {
     fn tcx(&self) -> TyCtx<'tcx>;
-    fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> { ty.fold_with(self) }
+    fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        ty.fold_with(self)
+    }
 }
 
 crate trait TypeVisitor<'tcx>: Sized {
-    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool { ty.visit_with(self) }
+    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool;
 }
 
 impl<'tcx> TypeFoldable<'tcx> for &'tcx List<Ty<'tcx>> {
@@ -109,6 +111,7 @@ where
 // let v = self.iter().map(|p| p.fold_with(folder)).collect::<SmallVec<[_; 8]>>();
 // folder.tcx().intern_*(&v)
 // ```
+/// the same pointer is returned if the list has not changed
 fn fold_list<'tcx, F, T>(
     list: &'tcx List<T>,
     folder: &mut F,

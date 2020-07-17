@@ -1,4 +1,5 @@
 use crate::core::Arena;
+use crate::util;
 use std::alloc::Layout;
 use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
@@ -8,6 +9,8 @@ use std::mem;
 use std::ops::Deref;
 use std::ptr;
 use std::slice;
+
+// from rustc
 
 extern "C" {
     /// A dummy type used to force `List` to be unsized while not requiring references to it be wide
@@ -37,13 +40,13 @@ unsafe impl<T: Sync> Sync for List<T> {
 
 impl<T: Display> Display for List<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", crate::util::join2(self.into_iter(), ","))
+        write!(f, "{}", util::join2(self.into_iter(), ","))
     }
 }
 
 impl<T: Copy> List<T> {
     #[inline]
-    pub(super) fn from_arena<'tcx>(arena: &'tcx Arena<'tcx>, slice: &[T]) -> &'tcx List<T> {
+    crate fn from_arena<'tcx>(arena: &'tcx Arena<'tcx>, slice: &[T]) -> &'tcx List<T> {
         assert!(!mem::needs_drop::<T>());
         assert!(mem::size_of::<T>() != 0);
         assert!(!slice.is_empty());
@@ -69,11 +72,15 @@ impl<T: Copy> List<T> {
     //
     // This would be weird, as `self.into_iter` iterates over `T` directly.
     #[inline(always)]
-    pub fn iter(&self) -> <&'_ List<T> as IntoIterator>::IntoIter { self.into_iter() }
+    pub fn iter(&self) -> <&'_ List<T> as IntoIterator>::IntoIter {
+        self.into_iter()
+    }
 }
 
 impl<T: fmt::Debug> fmt::Debug for List<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { (**self).fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        (**self).fmt(f)
+    }
 }
 
 impl<T> Ord for List<T>
@@ -100,26 +107,34 @@ where
 
 impl<T: PartialEq> PartialEq for List<T> {
     #[inline]
-    fn eq(&self, other: &List<T>) -> bool { ptr::eq(self, other) }
+    fn eq(&self, other: &List<T>) -> bool {
+        ptr::eq(self, other)
+    }
 }
 impl<T: Eq> Eq for List<T> {
 }
 
 impl<T> Hash for List<T> {
     #[inline]
-    fn hash<H: Hasher>(&self, s: &mut H) { (self as *const List<T>).hash(s) }
+    fn hash<H: Hasher>(&self, s: &mut H) {
+        (self as *const List<T>).hash(s)
+    }
 }
 
 impl<T> Deref for List<T> {
     type Target = [T];
 
     #[inline(always)]
-    fn deref(&self) -> &[T] { self.as_ref() }
+    fn deref(&self) -> &[T] {
+        self.as_ref()
+    }
 }
 
 impl<T> AsRef<[T]> for List<T> {
     #[inline(always)]
-    fn as_ref(&self) -> &[T] { unsafe { slice::from_raw_parts(self.data.as_ptr(), self.len) } }
+    fn as_ref(&self) -> &[T] {
+        unsafe { slice::from_raw_parts(self.data.as_ptr(), self.len) }
+    }
 }
 
 impl<'a, T: Copy> IntoIterator for &'a List<T> {
@@ -127,7 +142,9 @@ impl<'a, T: Copy> IntoIterator for &'a List<T> {
     type Item = T;
 
     #[inline(always)]
-    fn into_iter(self) -> Self::IntoIter { self[..].iter().copied() }
+    fn into_iter(self) -> Self::IntoIter {
+        self[..].iter().copied()
+    }
 }
 
 impl<T> List<T> {

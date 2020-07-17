@@ -51,7 +51,7 @@ impl<'tcx> Driver<'tcx> {
         let span_ctx = self.span_ctx.borrow();
         let mut parser = Parser::new(&span_ctx, tokens);
         let prog = parser.parse()?;
-        return Ok(prog);
+        Ok(prog)
     }
 
     pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {
