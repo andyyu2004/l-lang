@@ -78,7 +78,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Char => write!(f, "char"),
             TyKind::Num => write!(f, "number"),
             TyKind::Fn(params, ret) =>
-                write!(f, "({}) -> {}", util::join2(params.into_iter(), ","), ret),
+                write!(f, "({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer) => write!(f, "{:?}", infer),
             TyKind::Array(ty) => write!(f, "[{}]", ty),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
