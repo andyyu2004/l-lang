@@ -1,4 +1,4 @@
-[00:00:00.000] (7fd30019c580) INFO   Prog {
+[00:00:00.000] (7f9291336580) INFO   Prog {
     items: {
         Id {
             def_id: 0,
@@ -487,22 +487,67 @@
         },
     },
 }
-[00:00:00.027] (7fd30019c580) INFO   deflocal Id { def_id: 0, local: 4 } : TyVar(TyVid { index: 0 })
-[00:00:00.027] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 4 } : TyVar(TyVid { index: 0 })
-[00:00:00.027] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 5 } : bool
-[00:00:00.027] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 6 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
-[00:00:00.027] (7fd30019c580) INFO   deflocal Id { def_id: 0, local: 1 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
-[00:00:00.027] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 1 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
-[00:00:00.028] (7fd30019c580) INFO   deflocal Id { def_id: 0, local: 12 } : TyVar(TyVid { index: 2 })
-[00:00:00.028] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 12 } : TyVar(TyVid { index: 2 })
-[00:00:00.028] (7fd30019c580) INFO   lookup ty for local Id { def_id: 0, local: 12 }
-[00:00:00.028] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 14 } : TyVar(TyVid { index: 2 })
-[00:00:00.028] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 15 } : number
-[00:00:00.028] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 16 } : (number)->TyVar(TyVid { index: 4 })
-[00:00:00.028] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 17 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
-[00:00:00.028] (7fd30019c580) INFO   deflocal Id { def_id: 0, local: 9 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
-[00:00:00.029] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 9 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
-[00:00:00.029] (7fd30019c580) INFO   lookup ty for local Id { def_id: 0, local: 9 }
-[00:00:00.029] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 20 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
-[00:00:00.029] (7fd30019c580) INFO   lookup ty for local Id { def_id: 0, local: 1 }
-[00:00:00.029] (7fd30019c580) INFO   fcx write ty Id { def_id: 0, local: 22 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
+[00:00:00.024] (7f9291336580) INFO   deflocal Id { def_id: 0, local: 4 } : TyVar(TyVid { index: 0 })
+[00:00:00.024] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 4 } : TyVar(TyVid { index: 0 })
+[00:00:00.024] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 5 } : bool
+[00:00:00.024] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 6 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
+[00:00:00.024] (7f9291336580) INFO   deflocal Id { def_id: 0, local: 1 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
+[00:00:00.024] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 1 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
+[00:00:00.025] (7f9291336580) INFO   deflocal Id { def_id: 0, local: 12 } : TyVar(TyVid { index: 2 })
+[00:00:00.025] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 12 } : TyVar(TyVid { index: 2 })
+[00:00:00.025] (7f9291336580) INFO   lookup ty for local Id { def_id: 0, local: 12 }
+[00:00:00.025] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 14 } : TyVar(TyVid { index: 2 })
+[00:00:00.025] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 15 } : number
+[00:00:00.025] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 16 } : TyVar(TyVid { index: 4 })
+[00:00:00.025] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 17 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
+[00:00:00.025] (7f9291336580) INFO   deflocal Id { def_id: 0, local: 9 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
+[00:00:00.026] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 9 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
+[00:00:00.026] (7f9291336580) INFO   lookup ty for local Id { def_id: 0, local: 9 }
+[00:00:00.026] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 20 } : (TyVar(TyVid { index: 2 }))->TyVar(TyVid { index: 3 })
+[00:00:00.026] (7f9291336580) INFO   lookup ty for local Id { def_id: 0, local: 1 }
+[00:00:00.026] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 22 } : (TyVar(TyVid { index: 0 }))->TyVar(TyVid { index: 1 })
+[00:00:00.026] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 23 } : TyVar(TyVid { index: 5 })
+[00:00:00.026] (7f9291336580) INFO   fcx write ty Id { def_id: 0, local: 26 } : ()
+[00:00:00.026] (7f9291336580) INFO   body type: (); ret_ty: ()
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 26 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 26 }: ()
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 1 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 1 }: (number)->bool
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 6 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 6 }: (number)->bool
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 4 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 4 }: number
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 5 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 5 }: bool
+[00:00:00.027] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 9 }
+[00:00:00.027] (7f9291336580) INFO   writeback Id { def_id: 0, local: 9 }: ((number)->bool)->bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 17 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 17 }: ((number)->bool)->bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 12 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 12 }: (number)->bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 16 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 16 }: bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 14 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 14 }: (number)->bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 15 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 15 }: number
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 23 }
+[00:00:00.028] (7f9291336580) INFO   writeback Id { def_id: 0, local: 23 }: bool
+[00:00:00.028] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 20 }
+[00:00:00.029] (7f9291336580) INFO   writeback Id { def_id: 0, local: 20 }: ((number)->bool)->bool
+[00:00:00.029] (7f9291336580) INFO   fcx query node type for Id { def_id: 0, local: 22 }
+[00:00:00.029] (7f9291336580) INFO   writeback Id { def_id: 0, local: 22 }: (number)->bool
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 1 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 4 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 5 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 6 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 9 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 12 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 14 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 15 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 16 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 17 }
+[00:00:00.029] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 20 }
+[00:00:00.030] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 22 }
+[00:00:00.030] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 23 }
+[00:00:00.030] (7f9291336580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 26 }

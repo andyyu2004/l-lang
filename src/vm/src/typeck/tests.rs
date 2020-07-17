@@ -52,8 +52,12 @@ fn check_lamda_with_capture() {
 
 #[test]
 fn check_higher_order_lamda() {
-    let tir = typeck!("let x = 55; fn(y) => x + y;");
+    let tir = typeck!("let f = fn(x) => false; let g = fn(p) => p(3); g(f);");
     let lines = lines!(&tir);
-    assert_eq!(lines[0], "let $1:number = 55:number;");
-    assert_eq!(lines[1], "(λ($6:number) (+ $1:number $6:number):number):(number)->number;");
+    assert_eq!(lines[0], "let $1:(number)->bool = (λ($4:number) false:bool):(number)->bool;");
+    assert_eq!(
+        lines[1],
+        "let $9:((number)->bool)->bool = (λ($12:(number)->bool) ($12:(number)->bool 3:number):bool):((number)->bool)->bool;"
+    );
+    assert_eq!(lines[2], "($9:((number)->bool)->bool $1:(number)->bool):bool;");
 }
