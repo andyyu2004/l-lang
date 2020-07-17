@@ -30,7 +30,7 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn expect_eq(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
+    pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
         // handle and report the error here
         if let Err(err) = self.at(span).equate(expected, actual) {
             println!("{}", err)

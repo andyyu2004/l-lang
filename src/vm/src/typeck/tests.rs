@@ -43,7 +43,17 @@ fn check_fn_call() {
 }
 
 #[test]
-fn with_capture() {
-    // let x = 55;
-    // fn(y) => x + y + z;
+fn check_lamda_with_capture() {
+    let tir = typeck!("let x = 55; fn(y) => x + y;");
+    let lines = lines!(&tir);
+    assert_eq!(lines[0], "let $1:number = 55:number;");
+    assert_eq!(lines[1], "(λ($6:number) (+ $1:number $6:number):number):(number)->number;");
+}
+
+#[test]
+fn check_higher_order_lamda() {
+    let tir = typeck!("let x = 55; fn(y) => x + y;");
+    let lines = lines!(&tir);
+    assert_eq!(lines[0], "let $1:number = 55:number;");
+    assert_eq!(lines[1], "(λ($6:number) (+ $1:number $6:number):number):(number)->number;");
 }

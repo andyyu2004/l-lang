@@ -23,7 +23,11 @@ crate trait TypeRelation<'tcx>: Sized {
             (Infer(_), _) | (_, Infer(_)) => panic!(),
             (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),
             (Array(t), Array(u)) => self.relate(t, u),
-            (Fn(a, b), Fn(t, u)) => todo!(),
+            (&Fn(a, b), &Fn(t, u)) => {
+                let s = self.relate(a, t)?;
+                let r = self.relate(b, u)?;
+                Ok(tcx.mk_ty(TyKind::Fn(s, r)))
+            }
             _ => Err(TypeError::Mismatch(a, b)),
         }
     }
@@ -48,5 +52,12 @@ crate trait Relate<'tcx>: TypeFoldable<'tcx> + Copy {
 impl<'tcx> Relate<'tcx> for Ty<'tcx> {
     fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self> {
         relation.relate_tys(a, b)
+    }
+}
+
+impl<'tcx> Relate<'tcx> for SubstRef<'tcx> {
+    fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self> {
+        let tys: Vec<_> = a.iter().zip(b).map(|(t, u)| relation.relate(t, u)).try_collect()?;
+        Ok(relation.tcx().mk_substs(tys.into_iter()))
     }
 }
