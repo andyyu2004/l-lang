@@ -81,11 +81,15 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
         });
     }
 
+    /// resolve the initializer first in case the same pattern is referenced in the initializer
+    /// let x = 1;
+    /// let x = x;
+    /// this will only behave correctly if the pattern is resolved after the initializer
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
+        init.as_ref().map(|expr| self.visit_expr(expr));
         self.resolve_pattern(pat);
         ast::walk_pat(self, pat);
         ty.as_ref().map(|ty| self.visit_ty(ty));
-        init.as_ref().map(|expr| self.visit_expr(expr));
     }
 
     fn visit_item(&mut self, item: &'ast Item) {

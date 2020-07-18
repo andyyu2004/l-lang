@@ -60,6 +60,11 @@ pub fn exec(src: &str) -> LResult<()> {
     Ok(())
 }
 
+pub macro tir($src:expr) {{
+    let driver = Driver::new($src);
+    driver.gen_tir().unwrap()
+}}
+
 // just stupidly wraps the expr string in a function to form a program
 fn wrap_in_main(src: &str) -> String {
     format!("fn main() {{ {} }}", src)

@@ -2,7 +2,7 @@ use crate::arena::DroplessArena;
 use crate::ast::{self, P};
 use crate::compiler::{CompilerCtx, Executable};
 use crate::core::Arena;
-use crate::error::{LError, LResult};
+use crate::error::{DiagnosticBuilder, LError, LResult};
 use crate::resolve::{Resolver, ResolverOutputs};
 use crate::typeck::GlobalCtx;
 use crate::{exec, ir, lexer, parser, span, tir};
@@ -18,6 +18,7 @@ crate struct Driver<'tcx> {
     arena: Arena<'tcx>,
     ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
+    diagnostics: DiagnosticBuilder,
 }
 
 impl<'tcx> Driver<'tcx> {
@@ -27,6 +28,7 @@ impl<'tcx> Driver<'tcx> {
             arena: Default::default(),
             ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
+            diagnostics: Default::default(),
         }
     }
 

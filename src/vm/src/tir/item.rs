@@ -26,7 +26,7 @@ impl<'tcx> Display for Item<'tcx> {
             ItemKind::Fn(sig, generics, body) => {
                 let (params, inputs) = (body.params, sig.inputs);
                 let params = params.iter().zip(inputs).map(|(p, t)| format!("{}: {}", p, t));
-                write!(
+                writeln!(
                     f,
                     "{}fn {}({}) -> {} {}",
                     self.vis.node,

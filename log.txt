@@ -1,4 +1,4 @@
-[00:00:00.000] (7fe75fdf9580) INFO   Prog {
+[00:00:00.000] (7f0e52978580) INFO   Prog {
     items: {
         Id {
             def_id: 0,
@@ -6,7 +6,7 @@
         }: Item {
             span: Span {
                 lo: 0,
-                hi: 34,
+                hi: 18,
             },
             id: Id {
                 def_id: 0,
@@ -31,47 +31,7 @@
             kind: Fn(
                 FnSig {
                     inputs: [],
-                    output: Some(
-                        Ty {
-                            id: Id {
-                                def_id: 0,
-                                local: 1,
-                            },
-                            span: Span {
-                                lo: 13,
-                                hi: 20,
-                            },
-                            kind: Path(
-                                Path {
-                                    span: Span {
-                                        lo: 13,
-                                        hi: 20,
-                                    },
-                                    res: PrimTy(
-                                        Num,
-                                    ),
-                                    segments: [
-                                        PathSegment {
-                                            ident: Ident {
-                                                span: Span {
-                                                    lo: 13,
-                                                    hi: 19,
-                                                },
-                                                symbol: Symbol(
-                                                    0,
-                                                ),
-                                            },
-                                            id: Id {
-                                                def_id: 0,
-                                                local: 0,
-                                            },
-                                            pd: PhantomData,
-                                        },
-                                    ],
-                                },
-                            ),
-                        },
-                    ),
+                    output: None,
                 },
                 Generics {
                     data: 0,
@@ -81,8 +41,8 @@
                     params: [],
                     expr: Expr {
                         span: Span {
-                            lo: 20,
-                            hi: 33,
+                            lo: 10,
+                            hi: 18,
                         },
                         id: Id {
                             def_id: 0,
@@ -95,24 +55,53 @@
                                     local: 4,
                                 },
                                 span: Span {
-                                    lo: 20,
-                                    hi: 33,
+                                    lo: 10,
+                                    hi: 18,
                                 },
                                 stmts: [],
                                 expr: Some(
                                     Expr {
                                         span: Span {
-                                            lo: 26,
-                                            hi: 31,
+                                            lo: 12,
+                                            hi: 17,
                                         },
                                         id: Id {
                                             def_id: 0,
                                             local: 2,
                                         },
-                                        kind: Lit(
-                                            Bool(
-                                                false,
-                                            ),
+                                        kind: Call(
+                                            Expr {
+                                                span: Span {
+                                                    lo: 12,
+                                                    hi: 13,
+                                                },
+                                                id: Id {
+                                                    def_id: 0,
+                                                    local: 0,
+                                                },
+                                                kind: Lit(
+                                                    Num(
+                                                        2.0,
+                                                    ),
+                                                ),
+                                            },
+                                            [
+                                                Expr {
+                                                    span: Span {
+                                                        lo: 14,
+                                                        hi: 15,
+                                                    },
+                                                    id: Id {
+                                                        def_id: 0,
+                                                        local: 1,
+                                                    },
+                                                    kind: Lit(
+                                                        Num(
+                                                            3.0,
+                                                        ),
+                                                    ),
+                                                },
+                                            ],
                                         ),
                                     },
                                 ),
@@ -124,12 +113,20 @@
         },
     },
 }
-[00:00:00.003] (7fe75fdf9580) INFO   fcx write ty Id { def_id: 0, local: 2 } : bool
-[00:00:00.003] (7fe75fdf9580) INFO   fcx write ty Id { def_id: 0, local: 5 } : bool
-[00:00:00.004] (7fe75fdf9580) INFO   body type: bool; ret_ty: number
-[00:00:00.004] (7fe75fdf9580) INFO   fcx query node type for Id { def_id: 0, local: 5 }
-[00:00:00.004] (7fe75fdf9580) INFO   writeback Id { def_id: 0, local: 5 }: bool
-[00:00:00.004] (7fe75fdf9580) INFO   fcx query node type for Id { def_id: 0, local: 2 }
-[00:00:00.004] (7fe75fdf9580) INFO   writeback Id { def_id: 0, local: 2 }: bool
-[00:00:00.004] (7fe75fdf9580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 2 }
-[00:00:00.004] (7fe75fdf9580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 5 }
+[00:00:00.008] (7f0e52978580) INFO   fcx write ty Id { def_id: 0, local: 0 } : number
+[00:00:00.009] (7f0e52978580) INFO   fcx write ty Id { def_id: 0, local: 1 } : number
+[00:00:00.009] (7f0e52978580) INFO   fcx write ty Id { def_id: 0, local: 2 } : TyVar(TyVid { index: 0 })
+[00:00:00.009] (7f0e52978580) INFO   fcx write ty Id { def_id: 0, local: 5 } : TyVar(TyVid { index: 0 })
+[00:00:00.010] (7f0e52978580) INFO   body type: TyVar(TyVid { index: 0 }); ret_ty: ()
+[00:00:00.010] (7f0e52978580) INFO   fcx query node type for Id { def_id: 0, local: 5 }
+[00:00:00.010] (7f0e52978580) INFO   writeback Id { def_id: 0, local: 5 }: ()
+[00:00:00.010] (7f0e52978580) INFO   fcx query node type for Id { def_id: 0, local: 2 }
+[00:00:00.010] (7f0e52978580) INFO   writeback Id { def_id: 0, local: 2 }: ()
+[00:00:00.011] (7f0e52978580) INFO   fcx query node type for Id { def_id: 0, local: 0 }
+[00:00:00.011] (7f0e52978580) INFO   writeback Id { def_id: 0, local: 0 }: number
+[00:00:00.011] (7f0e52978580) INFO   fcx query node type for Id { def_id: 0, local: 1 }
+[00:00:00.011] (7f0e52978580) INFO   writeback Id { def_id: 0, local: 1 }: number
+[00:00:00.011] (7f0e52978580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 0 }
+[00:00:00.012] (7f0e52978580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 1 }
+[00:00:00.012] (7f0e52978580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 2 }
+[00:00:00.012] (7f0e52978580) INFO   irloweringctx: query typeof Id { def_id: 0, local: 5 }

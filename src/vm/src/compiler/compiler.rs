@@ -34,9 +34,19 @@ impl Compiler {
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
-            tir::ExprKind::Lambda(f) => todo!(),
-            tir::ExprKind::Call(f, args) => todo!(),
+            tir::ExprKind::Lambda(f) => self.compile_lambda(f),
+            tir::ExprKind::Call(f, args) => self.compile_call(f, args),
         };
+    }
+
+    fn compile_lambda(&mut self, f: &tir::Body) {
+        todo!()
+    }
+
+    fn compile_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) {
+        self.compile_expr(f);
+        args.iter().for_each(|arg| self.compile_expr(arg));
+        self.emit_invoke(args.len() as u8);
     }
 
     fn compile_tuple(&mut self, xs: &[tir::Expr]) {

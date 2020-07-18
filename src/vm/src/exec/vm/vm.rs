@@ -193,12 +193,10 @@ where
                 Op::rastore => {}
                 Op::raload => {}
                 Op::rstorel => {}
-                Op::istorel | Op::ustorel | Op::dstorel => {
-                    self.ctx.stack[self.ctx.bp + read_byte!() as usize] = peek!(0)
-                }
-                Op::iloadl | Op::uloadl | Op::dloadl | Op::rloadl => {
-                    push!(self.ctx.stack[self.ctx.bp + read_byte!() as usize])
-                }
+                Op::istorel | Op::ustorel | Op::dstorel =>
+                    self.ctx.stack[self.ctx.bp + read_byte!() as usize] = peek!(0),
+                Op::iloadl | Op::uloadl | Op::dloadl | Op::rloadl =>
+                    push!(self.ctx.stack[self.ctx.bp + read_byte!() as usize]),
                 Op::iaload => aload!(i64),
                 Op::uaload => aload!(u64),
                 Op::daload => aload!(f64),
@@ -246,7 +244,7 @@ where
                     push!(clsr);
                 }
                 Op::clsupv => self.close_upvalue(read_byte!()),
-                Op::invoke => {
+                Op::call => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = read_byte!() as usize;
                     // index of the function pointer

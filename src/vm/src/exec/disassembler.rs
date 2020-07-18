@@ -21,7 +21,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         Ok(())
     }
 
-    fn simple_inst(&mut self) -> usize {
+    fn dis_simple_inst(&mut self) -> usize {
         self.write_op();
         1
     }
@@ -84,10 +84,14 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::ret
             | Op::unit
             | Op::mkmap
-            | Op::pop => self.simple_inst(),
-            Op::popscp | Op::iloadl | Op::uloadl | Op::dloadl | Op::mktup | Op::mklst => {
-                self.count_inst()
-            }
+            | Op::pop => self.dis_simple_inst(),
+            Op::popscp
+            | Op::iloadl
+            | Op::uloadl
+            | Op::dloadl
+            | Op::mktup
+            | Op::mklst
+            | Op::call => self.count_inst(),
             Op::rloadl => todo!(),
             Op::istorel => todo!(),
             Op::ustorel => todo!(),
@@ -111,7 +115,6 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::uastore => todo!(),
             Op::dastore => todo!(),
             Op::rastore => todo!(),
-            Op::invoke => todo!(),
             Op::clsr => todo!(),
             Op::clsupv => todo!(),
         }

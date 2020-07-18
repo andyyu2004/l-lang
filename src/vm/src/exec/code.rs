@@ -70,7 +70,7 @@ impl CodeBuilder {
     }
 
     pub fn emit_invoke(&mut self, argc: u8) -> &mut Self {
-        self.emit_op(Op::invoke).emit_byte(argc)
+        self.emit_op(Op::call).emit_byte(argc)
     }
 
     pub fn emit_ldc(&mut self, idx: u8) -> &mut Self {

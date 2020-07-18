@@ -38,10 +38,18 @@ crate struct Block {
     pub stmts: Vec<P<Stmt>>,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Generics {
     pub span: Span,
     pub id: NodeId,
+    pub params: Vec<GenericParam>,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+crate struct GenericParam {
+    pub span: Span,
+    pub id: NodeId,
+    pub ident: Ident,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]

@@ -1,5 +1,5 @@
 use super::InferCtx;
-use crate::error::TypeResult;
+use crate::error::{DiagnosticBuilder, TypeResult};
 use crate::ir::{self, DefId};
 use crate::span::Span;
 use crate::tir;
@@ -30,13 +30,6 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
-        // handle and report the error here
-        if let Err(err) = self.at(span).equate(expected, actual) {
-            println!("{}", err)
-        }
-    }
-
     pub fn lower_tys(&self, ir_tys: &[ir::Ty]) -> &'tcx [Ty<'tcx>] {
         self.tcx.mk_substs(ir_tys.iter().map(|ty| TyConv::ir_ty_to_ty(self, ty)))
     }

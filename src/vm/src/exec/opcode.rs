@@ -82,9 +82,9 @@ pub enum Op {
     dastore = 0x98,
     rastore = 0x99,
 
-    /// invoke <argc>
+    /// call <argc>
     /// <f> <arg_0>...<arg_argc> -> <f> <arg_0> ... <arg_argc>
-    invoke  = 0xA0,
+    call    = 0xA0,
     /// pushes a closure onto the stack
     /// clsr (<in_enclosing> <index>)+
     /// <f_idx> -> <closure>

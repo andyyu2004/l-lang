@@ -1,6 +1,8 @@
 use super::*;
+use crate::util;
 use crate::{lexer::Symbol, span::Span};
 use indexed_vec::Idx;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
 crate struct Item {
@@ -16,23 +18,18 @@ crate enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
 }
 
-/// painfully wraps an expression in a function that contains a single expression statement
-impl From<Expr> for Item {
-    fn from(expr: Expr) -> Self {
-        let span = Span { lo: 0, hi: 0 };
-        let id = NodeId::new(0);
-        let fn_sig = FnSig { inputs: vec![], output: None };
-        let generics = Generics { span, id };
-        let stmt = Stmt { span, id, kind: StmtKind::Semi(box expr) };
-        let block = box Block { span, id, stmts: vec![box stmt] };
-        let expr = box Expr { span, id, kind: ExprKind::Block(block) };
-        let kind = ItemKind::Fn(fn_sig, generics, Some(expr));
-        Self {
-            span,
-            id,
-            vis: Visibility { node: VisibilityKind::Private, span },
-            ident: Ident { span, symbol: Symbol(0) },
-            kind,
+impl Display for Item {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match &self.kind {
+            ItemKind::Fn(sig, generics, body) => writeln!(
+                f,
+                "{} fn {}({}) -> {:?} {}",
+                self.vis.node,
+                self.ident,
+                util::join(&sig.inputs, ", "),
+                sig.output,
+                body.as_ref().unwrap()
+            ),
         }
     }
 }

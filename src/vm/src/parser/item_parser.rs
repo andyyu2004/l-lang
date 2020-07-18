@@ -37,7 +37,7 @@ impl Parse for FnParser {
 
     /// assumes that { <vis> fn <ident> } has already been parsed
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let generics = Generics { id: parser.mk_id(), span: parser.empty_span() };
+        let generics = GenericsParser.parse(parser)?;
         let sig = FnSigParser { require_type_annotations: true }.parse(parser)?;
         let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
             Some(BlockParser { open_brace }.parse(parser)?)
@@ -47,5 +47,27 @@ impl Parse for FnParser {
         };
         let expr = block.map(|block| parser.mk_expr(block.span, ExprKind::Block(block)));
         Ok(ItemKind::Fn(sig, generics, expr))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{span::Span, Driver};
+    use indexed_vec::Idx;
+
+    macro parse($src:expr) {{
+        let driver = Driver::new($src);
+        driver.parse().unwrap()
+    }}
+
+    macro fmt($src:expr) {{
+        let prog = parse!($src);
+        format!("{}", prog)
+    }}
+
+    #[test]
+    fn parse_generics() {
+        let _prog = parse!("fn test<T, U>() -> bool { false }");
     }
 }

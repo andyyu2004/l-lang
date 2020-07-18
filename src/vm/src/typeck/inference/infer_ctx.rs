@@ -1,8 +1,10 @@
 use super::*;
+use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
 use crate::ir::DefId;
+use crate::span::Span;
 use crate::ty::{InferTy, InferenceVarSubstFolder, SubstRef, Ty, TyConv, TyKind, TypeFoldable};
 use crate::typeck::{TyCtx, TypeckTables};
-use crate::{ast, error::TypeResult, ir, tir};
+use crate::{ast, ir, tir};
 use std::cell::RefCell;
 
 crate struct InferCtxBuilder<'tcx> {
@@ -43,6 +45,28 @@ crate struct InferCtx<'a, 'tcx> {
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
         Self { tcx, tables, inner: Default::default() }
+    }
+
+    pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
+        if let Some(err) = self.unify_diag(span, expected, actual) {
+            err.emit()
+        }
+    }
+
+    fn unify_diag(
+        &self,
+        span: Span,
+        expected: Ty<'tcx>,
+        actual: Ty<'tcx>,
+    ) -> Option<DiagnosticBuilder> {
+        match self.at(span).equate(expected, actual) {
+            Ok(_) => None,
+            Err(err) => Some(self.report_type_error(span, err)),
+        }
+    }
+
+    fn report_type_error(&self, span: Span, err: TypeError<'tcx>) -> DiagnosticBuilder {
+        DiagnosticBuilder::from_err(span, err)
     }
 
     /// creates the substitutions for the inference variables

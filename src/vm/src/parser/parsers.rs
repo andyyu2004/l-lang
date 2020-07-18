@@ -236,7 +236,7 @@ impl Parse for BlockParser {
 }
 
 /// fn (<pat>:<ty>) -> ret => <body>
-/// xs.map(fn (x) => y);
+/// xs.map(fn(x) => y);
 crate struct LambdaParser {
     pub fn_kw: Tok,
 }
@@ -250,5 +250,38 @@ impl Parse for LambdaParser {
         let body = ExprParser.parse(parser)?;
         let span = self.fn_kw.span.merge(&body.span);
         Ok(parser.mk_expr(span, ExprKind::Lambda(sig, body)))
+    }
+}
+
+crate struct GenericsParser;
+
+impl Parse for GenericsParser {
+    type Output = Generics;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let mut span = parser.empty_span();
+        let params = if parser.accept(TokenType::Lt).is_some() {
+            let params =
+                PunctuatedParser { inner: GenericParamParser, separator: TokenType::Comma }
+                    .parse(parser)?;
+            let gt = parser.expect(TokenType::Gt)?;
+            span = span.merge(&gt.span);
+            params
+        } else {
+            vec![]
+        };
+        Ok(Generics { params, id: parser.mk_id(), span })
+    }
+}
+
+crate struct GenericParamParser;
+
+impl Parse for GenericParamParser {
+    type Output = GenericParam;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let ident = parser.expect_ident()?;
+        // eventually parse bounds here
+        Ok(GenericParam { span: ident.span, id: parser.mk_id(), ident })
     }
 }
