@@ -76,15 +76,13 @@ impl<'ctx> Lexer<'ctx> {
                         }
                         continue;
                     }
-                    TokenKind::Ident => {
-                        // by convention, uppercase idents are Types
+                    TokenKind::Ident =>
                         if let Some(&keyword) = KEYWORDS.get(slice) {
                             keyword
                         } else {
                             let symbol = self.ctx.symbol_interner.intern(slice);
                             TokenType::Ident(symbol)
-                        }
-                    }
+                        },
 
                     TokenKind::RawIdent => todo!(),
                     TokenKind::Literal { kind, suffix_start } =>

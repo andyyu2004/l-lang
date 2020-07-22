@@ -1,7 +1,7 @@
 use super::Code;
 use crate::gc::Trace;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub(crate) code: Code,
     pub(crate) upvalc: u8,

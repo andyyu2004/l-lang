@@ -1,24 +1,23 @@
+use super::{CompilerCtx, ConstantPool};
 use crate::ast;
 use crate::exec::{CodeBuilder, Function, Op};
-use crate::ir::{self, LocalId};
+use crate::ir::{self, DefId, LocalId};
 use crate::tir;
 use crate::ty::TyKind;
 use crate::typeck::TyCtx;
+use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::ops::{Deref, DerefMut};
 
-#[derive(Default)]
-pub(super) struct Compiler {
+pub(super) struct Compiler<'tcx> {
     code: CodeBuilder,
-    /// mapping of local_var_id -> stack slot
-    locals: FxHashMap<LocalId, u8>,
-    /// use a u8 as locals can only be indexed using a single byte
-    localc: u8,
+    locals: Vec<LocalId>,
+    ctx: &'tcx CompilerCtx<'tcx>,
 }
 
-impl Compiler {
-    pub fn new() -> Self {
-        Self { code: Default::default(), locals: Default::default(), localc: 0 }
+impl<'tcx> Compiler<'tcx> {
+    pub fn new(ctx: &'tcx CompilerCtx<'tcx>) -> Self {
+        Self { ctx, code: Default::default(), locals: Default::default() }
     }
 
     pub fn finish(&mut self) -> Function {
@@ -33,6 +32,7 @@ impl Compiler {
             tir::ExprKind::Unary(op, expr) => self.compile_expr_unary(op, expr),
             tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
+            tir::ExprKind::ItemRef(def_id) => self.compile_item_ref(def_id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
             tir::ExprKind::Lambda(f) => self.compile_lambda(f),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
@@ -54,24 +54,36 @@ impl Compiler {
         self.emit_tuple(xs.len() as u8);
     }
 
+    fn compile_item_ref(&mut self, id: DefId) {
+        let const_id = self.ctx.def_id_to_const_id.borrow()[&id];
+        self.emit_ldc(const_id.index() as u8);
+    }
+
+    /// returns the `local_idx` for a variable with given `local_id`
+    fn find_local_slot(&mut self, local_id: LocalId) -> u8 {
+        self.locals.iter().rposition(|&id| id == local_id).unwrap() as u8
+    }
+
     fn compile_var_ref(&mut self, id: ir::Id) {
-        let local_idx = *self.locals.get(&id.local).unwrap();
+        let local_idx = self.find_local_slot(id.local);
         self.emit_loadl(local_idx);
     }
 
     fn with_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
-        let m = self.localc;
+        let m = self.locals.len();
         let ret = f(self);
-        let n = self.localc;
+        let n = self.locals.len();
+        assert!(n >= m);
         // `n - m` locals were declared in the scope of the new block
         // they need to be popped off at the end of the scope
         // we also need to take care to retain the value of the block (as blocks are exprs)
         // this is done with the novel `popscp` (pop_scope) instruction
         let p = n - m;
-        self.localc -= p;
+        // leave only the first `m` locals as the rest are now out of scope
+        self.locals.truncate(m);
         // redundant if p == 0
         if p > 0 {
-            self.emit_popscp(p);
+            self.emit_popscp(p as u8);
         }
         ret
     }
@@ -107,10 +119,9 @@ impl Compiler {
             // if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => return self.pop(),
             tir::PatternKind::Binding(ident, _) => {
-                // this relies on the observation that the nth local variable resides
-                // in slot n of the current frame
-                self.locals.insert(l.pat.id.local, self.localc);
-                self.localc += 1;
+                // this relies on the observation that the `n`th local variable resides
+                // in slot `n` of the current frame
+                self.locals.push(l.pat.id.local);
             }
             tir::PatternKind::Field(fields) => match l.pat.ty.kind {
                 TyKind::Tuple(_) => todo!(),
@@ -158,7 +169,7 @@ impl Compiler {
     }
 }
 
-impl Deref for Compiler {
+impl<'tcx> Deref for Compiler<'tcx> {
     type Target = CodeBuilder;
 
     fn deref(&self) -> &Self::Target {
@@ -166,7 +177,7 @@ impl Deref for Compiler {
     }
 }
 
-impl DerefMut for Compiler {
+impl<'tcx> DerefMut for Compiler<'tcx> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.code
     }

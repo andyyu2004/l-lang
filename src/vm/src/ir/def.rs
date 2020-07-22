@@ -6,7 +6,13 @@ use std::cell::Cell;
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
+    Def(DefId, DefKind),
     Local(Id),
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+crate enum DefKind {
+    Fn,
 }
 
 impl<Id> Res<Id> {
@@ -14,6 +20,7 @@ impl<Id> Res<Id> {
         match self {
             Res::PrimTy(ty) => Res::PrimTy(ty),
             Res::Local(id) => Res::Local(f(id)),
+            Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind),
         }
     }
 }

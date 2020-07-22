@@ -12,13 +12,7 @@ struct LateResolutionVisitor<'a, 'r, 'ast> {
 
 impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     pub fn new(resolver: &'r mut Resolver) -> Self {
-        Self { resolver, pd: &PhantomData, scopes: Self::mk_global_scope() }
-    }
-
-    /// creates a scope that include primitive types
-    fn mk_global_scope() -> PerNS<Scopes<Res<NodeId>>> {
-        let scopes = PerNS::default();
-        scopes
+        Self { resolver, pd: &PhantomData, scopes: Default::default() }
     }
 
     pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
@@ -35,14 +29,22 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         }
     }
 
+    /// search for a local variable in the scopes otherwise look for a resolution to an item
+    fn resolve_value(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+        match self.scopes[NS::Value].lookup(&ident) {
+            Some(&res) => Some(res),
+            None => self.resolver.resolve_item(ident),
+        }
+    }
+
     fn resolve_path(&mut self, path: &'ast Path, ns: NS) -> ResolutionResult<()> {
         if path.segments.len() > 1 {
             unimplemented!()
         }
         let segment = &path.segments[0];
         let res = match ns {
-            NS::Value => *self.scopes[ns]
-                .lookup(&segment.ident)
+            NS::Value => self
+                .resolve_value(segment.ident)
                 .ok_or_else(|| ResolutionError::unbound_variable(path.clone()))?,
             // just lookup primitive type for now as there are no other potential types
             NS::Type => Res::PrimTy(
@@ -90,11 +92,6 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
         self.resolve_pattern(pat);
         ast::walk_pat(self, pat);
         ty.as_ref().map(|ty| self.visit_ty(ty));
-    }
-
-    fn visit_item(&mut self, item: &'ast Item) {
-        self.resolver.create_def(item.id);
-        ast::walk_item(self, item);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {

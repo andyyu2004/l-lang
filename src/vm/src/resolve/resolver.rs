@@ -1,5 +1,5 @@
-use crate::ast::{NodeId, Prog};
-use crate::ir::{DefId, Definitions, PrimTy, Res};
+use crate::ast::{Ident, NodeId, Prog};
+use crate::ir::{DefId, DefKind, Definitions, PrimTy, Res};
 use crate::lexer::{symbol, Symbol};
 use indexed_vec::IndexVec;
 use rustc_hash::FxHashMap;
@@ -9,6 +9,7 @@ crate struct Resolver {
     defs: Definitions,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
+    items: FxHashMap<Ident, Res<NodeId>>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
     pub(super) primitive_types: PrimitiveTypes,
 }
@@ -22,6 +23,7 @@ impl Resolver {
     /// construct a resolver and run resolution
     pub fn resolve(prog: &Prog) -> Self {
         let mut resolver = Self {
+            items: Default::default(),
             res_map: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
@@ -36,14 +38,20 @@ impl Resolver {
         ResolverOutputs { defs }
     }
 
-    pub fn create_def(&mut self, node_id: NodeId) -> DefId {
+    pub fn def_item(&mut self, name: Ident, node_id: NodeId, def_kind: DefKind) -> DefId {
         let def_id = self.defs.alloc_def_id();
+        self.items.insert(name, Res::Def(def_id, def_kind));
         self.node_id_to_def_id.insert(node_id, def_id);
         def_id
     }
 
+    pub fn resolve_item(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+        self.items.get(&ident).cloned()
+    }
+
     /// top level function to run the resolver on the given prog
     pub fn resolve_prog(&mut self, prog: &Prog) {
+        self.resolve_items(prog);
         self.late_resolve_prog(prog);
     }
 

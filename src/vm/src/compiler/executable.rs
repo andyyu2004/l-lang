@@ -1,4 +1,4 @@
-use super::ConstantPool;
+use super::{Constant, ConstantPool};
 use crate::exec::{CodeBuilder, Function, Op};
 
 /// this struct defines the executable format that the vm will run, and the compiler compiles to
@@ -12,7 +12,8 @@ pub struct Executable {
 impl Executable {
     // takes a function and constant pool
     // wraps the given function in code that will call it
-    pub fn new(mut constants: ConstantPool, main: Function) -> Self {
+    pub fn new(constants: impl IntoIterator<Item = Constant>, main: Function) -> Self {
+        let mut constants = constants.into_iter().collect::<ConstantPool>();
         let main_index = constants.len();
         constants.push(main.into());
         let start_code = CodeBuilder::default()

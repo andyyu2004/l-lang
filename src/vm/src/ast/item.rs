@@ -1,6 +1,6 @@
 use super::*;
 use crate::util;
-use crate::{lexer::Symbol, span::Span};
+use crate::{ir::DefKind, lexer::Symbol, span::Span};
 use indexed_vec::Idx;
 use std::fmt::{self, Display, Formatter};
 
@@ -16,6 +16,14 @@ crate struct Item {
 #[derive(Debug, PartialEq, Clone)]
 crate enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
+}
+
+impl ItemKind {
+    pub fn def_kind(&self) -> DefKind {
+        match self {
+            ItemKind::Fn(..) => DefKind::Fn,
+        }
+    }
 }
 
 impl Display for Item {

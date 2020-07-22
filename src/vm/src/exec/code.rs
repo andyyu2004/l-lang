@@ -1,14 +1,20 @@
 use super::{Disassembler, Op};
 use crate::{exec::Type, util::As8Bytes};
 use std::convert::TryFrom;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
-#[derive(Debug, Deref, DerefMut)]
+#[derive(Deref, DerefMut, Clone, PartialEq, Eq)]
 pub struct Code(Vec<u8>);
 
 impl Display for Code {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Disassembler::new(&self.0, f).fmt()
+    }
+}
+
+impl Debug for Code {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 

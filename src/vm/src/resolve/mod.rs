@@ -1,3 +1,4 @@
+mod item;
 mod late;
 mod resolver;
 mod scope;

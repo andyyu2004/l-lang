@@ -1,5 +1,6 @@
 use super::FnCtx;
 use crate::error::TypeResult;
+use crate::ir::{DefId, DefKind};
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
@@ -60,8 +61,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {
         match path.res {
-            ir::Res::PrimTy(_) => unreachable!(),
             ir::Res::Local(id) => self.local_ty(id),
+            ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(def_id, def_kind),
+            ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
+        }
+    }
+
+    fn check_expr_path_def(&mut self, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
+        match def_kind {
+            DefKind::Fn => self.tcx.item_ty(def_id),
         }
     }
 

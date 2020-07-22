@@ -188,6 +188,9 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => match path.res {
                 ir::Res::Local(id) => tir::ExprKind::VarRef(id),
+                ir::Res::Def(def_id, def_kind) => match def_kind {
+                    ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
+                },
                 ir::Res::PrimTy(_) => unreachable!(),
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),

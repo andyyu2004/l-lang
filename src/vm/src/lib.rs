@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
 #![feature(box_syntax, box_patterns)]
+#![feature(refcell_take)]
 #![feature(debug_non_exhaustive)]
 #![feature(associated_type_defaults)]
 #![feature(iterator_fold_self)]

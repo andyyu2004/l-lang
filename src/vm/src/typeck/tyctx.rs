@@ -41,8 +41,9 @@ impl<'tcx> TyCtx<'tcx> {
         }
     }
 
+    /// finds the type of an item that was obtained during the collection phase
     pub fn item_ty(&self, def_id: DefId) -> Ty<'tcx> {
-        self.item_tys.borrow().get(&def_id).expect("No type entry for item")
+        self.item_tys.borrow().get(&def_id).expect("no type entry for item")
     }
 
     pub fn mk_tup<I>(self, iter: I) -> Ty<'tcx>
