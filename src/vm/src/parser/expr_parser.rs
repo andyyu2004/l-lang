@@ -112,6 +112,8 @@ impl Parse for PrimaryExprParser {
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
         } else if let Some(fn_kw) = parser.accept(TokenType::Fn) {
             LambdaParser { fn_kw }.parse(parser)
+        } else if let Some(if_kw) = parser.accept(TokenType::If) {
+            IfParser { if_kw }.parse(parser)
         } else {
             Err(ParseError::unimpl())
         }
@@ -183,6 +185,12 @@ mod test {
         let expr = parse_expr!($src);
         format!("{}", expr)
     }}
+
+    #[test]
+    fn parse_nested_if() {
+        let expr = parse_expr!("if false { 5 } else if true { 6 } else { 7 }");
+        dbg!(expr);
+    }
 
     #[test]
     fn parse_call_expr() {

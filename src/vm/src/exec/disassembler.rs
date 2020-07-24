@@ -57,6 +57,15 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         2
     }
 
+    fn jmp_inst(&mut self) -> usize {
+        self.write_op();
+        let x = self.code[1] as u16;
+        let y = self.code[2] as u16;
+        let offset = x << 8 | y;
+        write!(self.f, "{}", offset).unwrap();
+        3
+    }
+
     /// prints out one instruction at a time and returns the length of the instruction
     fn fmt_inst(&mut self) -> usize {
         let f = &mut self.f;
@@ -64,13 +73,16 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::iconst => self.const_inst(),
             Op::uconst => self.const_inst(),
             Op::dconst => self.const_inst(),
+            Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => self.jmp_inst(),
             Op::nop
             | Op::iadd
+            | Op::jmp
             | Op::uadd
             | Op::dadd
             | Op::isub
             | Op::usub
             | Op::dsub
+            | Op::dup
             | Op::imul
             | Op::umul
             | Op::dmul

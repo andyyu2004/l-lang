@@ -253,6 +253,46 @@ impl Parse for LambdaParser {
     }
 }
 
+crate struct IfParser {
+    pub if_kw: Tok,
+}
+
+impl Parse for IfParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let cond = ExprParser.parse(parser)?;
+        let open_brace = parser.expect(TokenType::OpenBrace)?;
+        let thn = BlockParser { open_brace }.parse(parser)?;
+        let els = if let Some(else_kw) = parser.accept(TokenType::Else) {
+            Some(ElseParser { else_kw }.parse(parser)?)
+        } else {
+            None
+        };
+        let span = self.if_kw.span.merge(&parser.empty_span());
+        Ok(parser.mk_expr(span, ExprKind::If(cond, thn, els)))
+    }
+}
+
+crate struct ElseParser {
+    pub else_kw: Tok,
+}
+
+impl Parse for ElseParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        if let Some(if_kw) = parser.accept(TokenType::If) {
+            IfParser { if_kw }.parse(parser)
+        } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+            let (span, block) = BlockParser { open_brace }.spanned(true).parse(parser)?;
+            Ok(parser.mk_expr(span, ExprKind::Block(block)))
+        } else {
+            return Err(ParseError::unimpl());
+        }
+    }
+}
+
 crate struct GenericsParser;
 
 impl Parse for GenericsParser {

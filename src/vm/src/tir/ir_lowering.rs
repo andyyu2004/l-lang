@@ -1,7 +1,9 @@
 use crate::ir::{self, DefId};
 use crate::tir;
-use crate::ty::{InferenceVarSubstFolder, Subst, Ty};
-use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
+use crate::ty::{Const, InferenceVarSubstFolder, Subst, Ty};
+use crate::{
+    ast::Lit, typeck::{inference::InferCtx, TyCtx, TypeckTables}
+};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
@@ -29,10 +31,10 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
 
     fn lower_tuple_subpats(&mut self, pats: &[ir::Pattern<'tcx>]) -> &'tcx [tir::FieldPat<'tcx>] {
         let tcx = self.tcx;
-        let pats = pats
-            .iter()
-            .enumerate()
-            .map(|(i, pat)| tir::FieldPat { field: tir::Field::new(i), pat: pat.to_tir(self) });
+        let pats = pats.iter().enumerate().map(|(i, pat)| tir::FieldPat {
+            field: tir::Field::new(i),
+            pat: pat.to_tir_alloc(self),
+        });
         tcx.alloc_tir_iter(pats)
     }
 }
@@ -85,6 +87,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
                 tir::PatternKind::Binding(*ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
+            ir::PatternKind::Lit(lit) => tir::PatternKind::Lit(lit.to_tir_alloc(ctx)),
         };
         let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }
@@ -197,9 +200,37 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Lambda(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
-            &ir::ExprKind::Lit(lit) => tir::ExprKind::Lit(lit),
+            &ir::ExprKind::Lit(lit) => tir::ExprKind::Lit(lit.to_tir_alloc(ctx)),
+            ir::ExprKind::Match(expr, arms, _) =>
+                tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
         };
         let ty = ctx.node_type(self.id);
         tir::Expr { span: self.span, kind, ty }
+    }
+}
+
+impl<'tcx> Tir<'tcx> for Lit {
+    type Output = Const<'tcx>;
+
+    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+        match *self {
+            Lit::Num(n) => Const::new(f64::to_bits(n)),
+            Lit::Bool(b) => Const::new(b as u64),
+        }
+    }
+}
+
+impl<'tcx> Tir<'tcx> for ir::Arm<'tcx> {
+    type Output = tir::Arm<'tcx>;
+
+    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+        let &ir::Arm { id, span, ref pat, ref body, ref guard } = self;
+        tir::Arm {
+            id,
+            span,
+            pat: pat.to_tir_alloc(ctx),
+            body: body.to_tir_alloc(ctx),
+            guard: guard.map(|expr| expr.to_tir_alloc(ctx)),
+        }
     }
 }

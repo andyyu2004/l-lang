@@ -87,10 +87,6 @@ crate fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) 
 crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
         ExprKind::Lit(_) => {}
-        ExprKind::Bin(_, l, r) => {
-            visitor.visit_expr(l);
-            visitor.visit_expr(r);
-        }
         ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
         ExprKind::Paren(expr) => visitor.visit_expr(expr),
         ExprKind::Block(block) => visitor.visit_block(block),
@@ -100,6 +96,15 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Call(f, args) => {
             visitor.visit_expr(f);
             args.iter().for_each(|expr| visitor.visit_expr(expr));
+        }
+        ExprKind::If(c, l, r) => {
+            visitor.visit_expr(c);
+            visitor.visit_block(l);
+            r.as_ref().map(|expr| visitor.visit_expr(expr));
+        }
+        ExprKind::Bin(_, l, r) => {
+            visitor.visit_expr(l);
+            visitor.visit_expr(r);
         }
     }
 }

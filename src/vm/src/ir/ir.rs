@@ -1,7 +1,7 @@
 use crate::ast::Ident;
 use crate::ir;
 use crate::{lexer::Symbol, span::Span};
-use ir::{Expr, Id, Res};
+use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
@@ -19,7 +19,22 @@ crate struct Generics<'ir> {
 crate struct Body<'ir> {
     pub params: &'ir [ir::Param<'ir>],
     // the body is not necessarily a block (e.g. closures)
-    pub expr: &'ir Expr<'ir>,
+    pub expr: &'ir ir::Expr<'ir>,
+}
+
+#[derive(Debug)]
+crate enum MatchSource {
+    Match,
+    If,
+}
+
+#[derive(Debug)]
+crate struct Arm<'ir> {
+    pub id: ir::Id,
+    pub span: Span,
+    pub pat: &'ir ir::Pattern<'ir>,
+    pub guard: Option<&'ir ir::Expr<'ir>>,
+    pub body: &'ir ir::Expr<'ir>,
 }
 
 #[derive(Debug)]

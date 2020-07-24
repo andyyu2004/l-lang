@@ -53,6 +53,10 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Tuple(self.mk_substs(iter)))
     }
 
+    pub fn mk_ty_err(self) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Error)
+    }
+
     pub fn mk_substs<I>(self, iter: I) -> SubstRef<'tcx>
     where
         I: Iterator<Item = Ty<'tcx>>,

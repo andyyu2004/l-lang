@@ -36,7 +36,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Array(ty) => TyKind::Array(ty.fold_with(folder)),
             TyKind::Fn(inputs, ret) => TyKind::Fn(inputs.fold_with(folder), ret.fold_with(folder)),
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
-            TyKind::Infer(_) | TyKind::Char | TyKind::Num | TyKind::Bool => {
+            TyKind::Infer(_) | TyKind::Char | TyKind::Num | TyKind::Bool | TyKind::Error => {
                 return self;
             }
         };
@@ -60,7 +60,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => false,
-            TyKind::Char | TyKind::Num | TyKind::Bool => false,
+            TyKind::Error | TyKind::Char | TyKind::Num | TyKind::Bool => false,
         }
     }
 }

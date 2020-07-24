@@ -1,6 +1,6 @@
 use crate::ir::DefId;
 use crate::span::Span;
-use crate::ty::Ty;
+use crate::ty::{Const, Ty};
 use crate::{ast, ir, tir, util};
 use fmt::Display;
 use std::fmt::{self, Formatter};
@@ -14,7 +14,7 @@ crate struct Expr<'tcx> {
 
 #[derive(Debug)]
 crate enum ExprKind<'tcx> {
-    Lit(ast::Lit),
+    Lit(&'tcx Const<'tcx>),
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
     Block(&'tcx tir::Block<'tcx>),
@@ -25,6 +25,7 @@ crate enum ExprKind<'tcx> {
     Tuple(&'tcx [tir::Expr<'tcx>]),
     Lambda(&'tcx tir::Body<'tcx>),
     Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
+    Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
 }
 
 impl<'tcx> Display for Expr<'tcx> {
@@ -36,7 +37,7 @@ impl<'tcx> Display for Expr<'tcx> {
 impl<'tcx> Display for ExprKind<'tcx> {
     fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Lit(l) => write!(fmt, "{}", l),
+            Self::Lit(c) => write!(fmt, "{}", c),
             Self::Bin(op, l, r) => write!(fmt, "({} {} {})", op, l, r),
             Self::Unary(op, expr) => write!(fmt, "({} {})", op, expr),
             Self::Block(block) => write!(fmt, "{}", block),
@@ -45,6 +46,7 @@ impl<'tcx> Display for ExprKind<'tcx> {
             Self::Tuple(xs) => write!(fmt, "({})", util::join2(xs.iter(), ",")),
             Self::Lambda(b) => write!(fmt, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join2(args.iter(), " ")),
+            Self::Match(expr, arms) => todo!(),
         }
     }
 }

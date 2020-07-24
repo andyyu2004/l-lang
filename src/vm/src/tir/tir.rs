@@ -17,6 +17,15 @@ crate struct Generics<'tcx> {
 }
 
 #[derive(Debug)]
+crate struct Arm<'tcx> {
+    pub id: ir::Id,
+    pub span: Span,
+    pub pat: &'tcx tir::Pattern<'tcx>,
+    pub guard: Option<&'tcx tir::Expr<'tcx>>,
+    pub body: &'tcx tir::Expr<'tcx>,
+}
+
+#[derive(Debug)]
 crate struct Body<'tcx> {
     pub params: &'tcx [tir::Param<'tcx>],
     pub expr: &'tcx tir::Expr<'tcx>,

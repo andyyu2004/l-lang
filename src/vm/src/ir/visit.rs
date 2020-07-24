@@ -55,6 +55,10 @@ crate trait Visitor<'ir>: Sized {
     fn visit_fn_sig(&mut self, sig: &'ir ir::FnSig<'ir>) {
         walk_fn_sig(self, sig)
     }
+
+    fn visit_arm(&mut self, arm: &'ir ir::Arm<'ir>) {
+        walk_arm(self, arm)
+    }
 }
 
 crate fn walk_prog<'ir, V: Visitor<'ir>>(v: &mut V, prog: &'ir ir::Prog<'ir>) {
@@ -105,7 +109,17 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             args.iter().for_each(|arg| v.visit_expr(arg));
         }
         ir::ExprKind::Lit(_) => {}
+        ir::ExprKind::Match(expr, arms, _) => {
+            v.visit_expr(expr);
+            arms.iter().for_each(|arm| v.visit_arm(arm));
+        }
     }
+}
+
+crate fn walk_arm<'ir, V: Visitor<'ir>>(v: &mut V, arm: &'ir ir::Arm<'ir>) {
+    v.visit_pat(arm.pat);
+    arm.guard.map(|expr| v.visit_expr(expr));
+    v.visit_expr(arm.body);
 }
 
 crate fn walk_stmt<'ir, V: Visitor<'ir>>(v: &mut V, stmt: &'ir ir::Stmt<'ir>) {
@@ -150,10 +164,11 @@ crate fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, seg: &'ir ir::PathSe
 crate fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
     match &pat.kind {
         ir::PatternKind::Wildcard => {}
-        &ir::PatternKind::Binding(ident, ref subpat) => {
-            v.visit_ident(ident);
+        ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
+        ir::PatternKind::Lit(expr) => v.visit_expr(expr),
+        ir::PatternKind::Binding(ident, subpat) => {
+            v.visit_ident(*ident);
             subpat.map(|p| v.visit_pat(p));
         }
-        ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
     }
 }

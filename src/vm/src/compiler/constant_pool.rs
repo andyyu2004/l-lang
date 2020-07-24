@@ -9,6 +9,7 @@ pub type ConstantPool = IndexVec<ConstId, Constant>;
 impl_from_inner!(Function, Constant, Function);
 impl_from_inner!(String, Constant, String);
 
+/// compiled constant
 #[derive(Debug, Clone)]
 pub enum Constant {
     Function(Function),

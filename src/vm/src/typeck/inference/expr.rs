@@ -4,6 +4,7 @@ use crate::ir::{DefId, DefKind};
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
+use itertools::Itertools;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
@@ -16,8 +17,45 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
+            ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_match_expr(
+        &mut self,
+        expr: &ir::Expr,
+        arms: &[ir::Arm],
+        src: &ir::MatchSource,
+    ) -> Ty<'tcx> {
+        let expr_ty = self.check_expr(expr);
+        match src {
+            ir::MatchSource::If => self.unify(expr.span, self.tcx.types.boolean, expr_ty),
+            ir::MatchSource::Match => {}
+        };
+
+        // check that each arm pattern is the same type as the scrutinee
+        for arm in arms {
+            self.check_pat(arm.pat, expr_ty);
+        }
+
+        // special case when match has no arms
+        if arms.is_empty() {
+            return self.tcx.types.unit;
+        }
+
+        // otherwise, consider the last arm's body to be the expected type
+        let n = arms.len() - 1;
+        let expected_ty = self.check_expr(arms[n].body);
+        arms[..n].iter().for_each(|arm| {
+            let arm_ty = self.check_expr(arm.body);
+            arm.guard.map(|expr| {
+                let guard_ty = self.check_expr(expr);
+                self.unify(expr.span, self.tcx.types.boolean, guard_ty);
+            });
+            self.unify(arm.span, expected_ty, arm_ty);
+        });
+        expected_ty
     }
 
     fn check_call_expr(&mut self, expr: &ir::Expr, f: &ir::Expr, args: &[ir::Expr]) -> Ty<'tcx> {

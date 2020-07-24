@@ -4,7 +4,7 @@ use num_enum::TryFromPrimitive;
 /// 3 numeric types
 /// i = integer = i64; u = unsigned = u64; d = double = f64
 #[allow(non_camel_case_types)]
-#[derive(Debug, TryFromPrimitive)]
+#[derive(Debug, Clone, Copy, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Op {
     ///     ->
@@ -35,9 +35,18 @@ pub enum Op {
     rret    = 0x13,
     ret     = 0x14,
     unit    = 0x15,
-    // reserve some space for all the other operators
+
+    /// unconditional jmp
+    jmp     = 0x20,
+    /// jump if false
+    jmpf    = 0x21,
+    /// jmp if true
+    jmpt    = 0x22,
+    jmpeq   = 0x23,
+    jmpneq  = 0x24,
     /// discard top of stack
     pop     = 0x60,
+    dup     = 0x61,
     /// load from local variable
     /// loadl <stack_index>
     ///     -> <val>

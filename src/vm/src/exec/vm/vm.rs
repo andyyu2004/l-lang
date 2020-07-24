@@ -139,6 +139,35 @@ where
             };
         }
 
+        macro_rules! read16 {
+            () => {{
+                let x = read_byte!() as u16;
+                let y = read_byte!() as u16;
+                x << 8 | y
+            }};
+        }
+
+        /// offsets a usize by an isize
+        macro_rules! offset {
+            ($u:expr, $i:expr) => {{
+                if $i < 0 {
+                    $u -= $i as usize;
+                } else {
+                    $u += $i as usize;
+                }
+            }};
+        }
+
+        /// jmps if the given predicate `p` is true
+        macro_rules! jmp {
+            ($p:expr) => {{
+                let offset = read16!() as isize;
+                if $p {
+                    offset!(frame_mut!().ip, offset)
+                }
+            }};
+        }
+
         Ok(loop {
             let opcode = frame_mut!().read_opcode()?;
             // println!(
@@ -150,6 +179,7 @@ where
             // );
             match opcode {
                 Op::nop => panic!("no-op"),
+                Op::dup => push!(peek!(0)),
                 Op::iconst => push!(read_const!(i64)),
                 Op::uconst => push!(read_const!(u64)),
                 Op::dconst => push!(f64::from_bits(frame_mut!().read_u64())),
@@ -290,6 +320,11 @@ where
                 }
                 Op::mklst => {}
                 Op::mkmap => {}
+                Op::jmp => jmp!(true),
+                Op::jmpt => jmp!(pop!().as_u64() != 0),
+                Op::jmpf => jmp!(pop!().as_u64() == 0),
+                Op::jmpeq => jmp!(pop!() == pop!()),
+                Op::jmpneq => jmp!(pop!() != pop!()),
             }
         })
     }

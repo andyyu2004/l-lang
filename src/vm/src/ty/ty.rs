@@ -3,7 +3,7 @@ use crate::ty::{TypeFoldable, TypeVisitor};
 use crate::{typeck::inference::TyVid, util};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::ptr;
+use std::{marker::PhantomData, ptr};
 
 crate type Ty<'tcx> = &'tcx TyS<'tcx>;
 
@@ -60,6 +60,7 @@ crate enum TyKind<'tcx> {
     Char,
     /// number
     Num,
+    Error,
     /// [<ty>]
     Array(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
@@ -79,6 +80,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Infer(infer) => write!(f, "{:?}", infer),
             TyKind::Array(ty) => write!(f, "[{}]", ty),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
+            TyKind::Error => write!(f, "err"),
         }
     }
 }
@@ -93,5 +95,24 @@ crate enum InferTy {
 impl<'tcx> Display for TyS<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.kind)
+    }
+}
+
+/// typed constant value
+#[derive(Debug)]
+crate struct Const<'tcx> {
+    pub val: u64,
+    marker: PhantomData<&'tcx ()>,
+}
+
+impl<'tcx> Const<'tcx> {
+    pub fn new(val: u64) -> Self {
+        Self { val, marker: PhantomData }
+    }
+}
+
+impl<'tcx> Display for Const<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", f64::from_bits(self.val))
     }
 }

@@ -15,6 +15,8 @@ const KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
         "enum" => TokenType::Enum,
         "struct" => TokenType::Struct,
         "let" => TokenType::Let,
+        "if" => TokenType::If,
+        "else" => TokenType::Else,
     }
 });
 
@@ -138,12 +140,14 @@ pub enum TokenType {
     /// =>
     RFArrow,
     Pub,
+    Else,
     Let,
     Struct,
     Enum,
     Fn,
     False,
     True,
+    If,
     // Multi-char tokens:
     /// "// comment"
     LineComment,

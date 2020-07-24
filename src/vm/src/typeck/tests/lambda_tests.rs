@@ -35,7 +35,8 @@ fn check_lamda_with_capture() {
 fn check_higher_order_lamda() {
     let tir = typeck!("let f = fn(x) => false; let g = fn(p) => p(3); g(f);");
     let lines = lines!(&tir);
-    assert_eq!(lines[0], "let $1:(number)->bool = (λ($4:number) false:bool):(number)->bool;");
+    // note `false` is represented as `0`
+    assert_eq!(lines[0], "let $1:(number)->bool = (λ($4:number) 0:bool):(number)->bool;");
     assert_eq!(
         lines[1],
         "let $9:((number)->bool)->bool = (λ($12:(number)->bool) ($12:(number)->bool 3:number):bool):((number)->bool)->bool;"

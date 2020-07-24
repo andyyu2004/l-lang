@@ -1,7 +1,9 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
 use crate::ir;
+use crate::span::Span;
 use itertools::Itertools;
+use std::array::IntoIter;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_exprs(&mut self, exprs: &[Box<Expr>]) -> &'ir [ir::Expr<'ir>] {
@@ -29,9 +31,38 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             }
             ExprKind::Call(f, args) =>
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
+            ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
+    }
+
+    /// desugars into a match with a `true` branch and a wildcard branch
+    /// an empty else branch desugars into an empty block
+    /// this also works for typechecking as an if with no else will force the then branch to be of
+    /// type unit as expected
+    fn lower_expr_if(
+        &mut self,
+        span: Span,
+        c: &Expr,
+        l: &Block,
+        r: Option<&Expr>,
+    ) -> ir::ExprKind<'ir> {
+        let scrutinee = self.lower_expr(c);
+        // `then` branch
+        let then_pat = self.mk_pat_bool(span, false);
+        let then_block = self.lower_block(l);
+        let then_expr = self.mk_expr(then_block.span, ir::ExprKind::Block(then_block));
+        let then_arm = self.mk_arm(then_pat, then_expr);
+        // `else` branch
+        let else_pat = self.mk_pat(span, ir::PatternKind::Wildcard);
+        let else_expr = match r {
+            Some(expr) => self.lower_expr(expr),
+            None => self.mk_empty_block_expr(span),
+        };
+        let else_arm = self.mk_arm(else_pat, else_expr);
+        let arms = IntoIter::new([then_arm, else_arm]);
+        ir::ExprKind::Match(scrutinee, self.arena.alloc_from_iter(arms), ir::MatchSource::If)
     }
 
     pub(super) fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {

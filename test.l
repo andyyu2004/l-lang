@@ -1,5 +1,6 @@
 fn main() -> number {
-    f()
+    let x = f();
+    if false { 5 } else { 4 }
 }
 
 fn f() -> number {

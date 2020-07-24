@@ -28,4 +28,5 @@ crate enum ExprKind<'ir> {
     Tuple(&'ir [ir::Expr<'ir>]),
     Lambda(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
+    Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
 }

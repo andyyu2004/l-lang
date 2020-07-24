@@ -27,8 +27,34 @@ pub struct CodeBuilder {
 // we only take a &mut self as we use this in the compiler
 // where we don't have convenient access to a owned builder
 impl CodeBuilder {
+    pub fn len(&self) -> usize {
+        self.code.len()
+    }
+
     fn emit_byte(&mut self, byte: u8) -> &mut Self {
         self.code.push(byte);
+        self
+    }
+
+    fn split_bytes(&mut self, bytes: u16) -> [u8; 2] {
+        [(bytes >> 8 & 0xff) as u8, (bytes & 0xff) as u8]
+    }
+
+    pub fn emit16(&mut self, bytes: u16) -> &mut Self {
+        let [a, b] = self.split_bytes(bytes);
+        self.emit_byte(a);
+        self.emit_byte(b)
+    }
+
+    pub fn emit_jmp(&mut self, jmp_op: Op, offset: u16) -> &mut Self {
+        self.emit_op(jmp_op).emit16(offset)
+    }
+
+    /// given the offset of the first (0th) byte of the jmp instruction, patches the offset
+    pub fn patch_jmp(&mut self, jmp_start: usize, offset: u16) -> &mut Self {
+        let [a, b] = self.split_bytes(offset);
+        self.code[jmp_start + 1] = a;
+        self.code[jmp_start + 2] = b;
         self
     }
 

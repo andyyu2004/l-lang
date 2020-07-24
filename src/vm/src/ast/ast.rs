@@ -38,6 +38,12 @@ crate struct Block {
     pub stmts: Vec<P<Stmt>>,
 }
 
+impl Display for Block {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Generics {
     pub span: Span,

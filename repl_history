@@ -62,3 +62,29 @@ false + 2
 (2,3)
 2
 2 + 2
+if false { 5 } else if true { 6 } else { 7};
+if false { 5 } else if true { 6 } else { 7}
+if false { 5 } else if true { 6 } else { 7 }
+0
+1
+2
+3
+4
+5
+432424
+123
+3
+4444
+444
+5435345
+213123
+4444
+1112
+333123
+44444
+123
+44
+22
+444
+2 
+123
