@@ -131,13 +131,13 @@ where
     }
 
     fn fmt_match(&mut self, expr: &tir::Expr, arms: &[tir::Arm]) -> fmt::Result {
-        indentln!(self, "match {{")?;
+        indentln!(self, "match {} {{", expr)?;
         self.with_indent(INDENT, |this| {
             for arm in arms.iter() {
                 indent_each_ln!(this, "{},", arm)?;
             }
             Ok(())
         })?;
-        indent!(self, "\n}}")
+        indent!(self, "}}")
     }
 }

@@ -4,12 +4,13 @@ use std::fmt::{self, Display, Formatter};
 
 pub struct Disassembler<'a, 'f> {
     code: &'a [u8],
+    i: usize,
     f: &'a mut Formatter<'f>,
 }
 
 impl<'a, 'f> Disassembler<'a, 'f> {
     pub fn new(code: &'a [u8], f: &'a mut Formatter<'f>) -> Self {
-        Self { code, f }
+        Self { code, f, i: 0 }
     }
 
     pub fn fmt(&mut self) -> fmt::Result {
@@ -17,6 +18,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             let len = self.fmt_inst();
             writeln!(self.f, "")?;
             self.code = &self.code[len..];
+            self.i += len;
         }
         Ok(())
     }
@@ -28,7 +30,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
 
     /// writes the current opcode into the formatter
     fn write_op(&mut self) {
-        write!(self.f, "{:?} ", self.op()).unwrap()
+        write!(self.f, "{:#04x} {:?} ", self.i, self.op()).unwrap()
     }
 
     /// returns current opcode
@@ -40,9 +42,9 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         self.write_op();
         let bits = self.code[1..9].try_into().unwrap();
         match self.op() {
-            Op::iconst => write!(self.f, "{}", i64::from_le_bytes(bits)),
-            Op::uconst => write!(self.f, "{}", u64::from_le_bytes(bits)),
-            Op::dconst => write!(self.f, "{}", f64::from_bits(u64::from_le_bytes(bits))),
+            Op::iconst => write!(self.f, "{:#04x}", i64::from_le_bytes(bits)),
+            Op::uconst => write!(self.f, "{:#04x}", u64::from_le_bytes(bits)),
+            Op::dconst => write!(self.f, "{:?}", f64::from_bits(u64::from_le_bytes(bits))),
             _ => unreachable!(),
         }
         .unwrap();
@@ -53,7 +55,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
     /// <inst> <count>
     fn count_inst(&mut self) -> usize {
         self.write_op();
-        write!(self.f, "{}", self.code[1]).unwrap();
+        write!(self.f, "{:#4x?}", self.code[1]).unwrap();
         2
     }
 
@@ -61,8 +63,8 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         self.write_op();
         let x = self.code[1] as u16;
         let y = self.code[2] as u16;
-        let offset = x << 8 | y;
-        write!(self.f, "{}", offset).unwrap();
+        let offset = (x << 8 | y) as usize;
+        write!(self.f, "{:#06x} (to {:#0x})", offset, self.i + offset + 3).unwrap();
         3
     }
 
@@ -73,10 +75,9 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::iconst => self.const_inst(),
             Op::uconst => self.const_inst(),
             Op::dconst => self.const_inst(),
-            Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => self.jmp_inst(),
+            Op::jmp | Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => self.jmp_inst(),
             Op::nop
             | Op::iadd
-            | Op::jmp
             | Op::uadd
             | Op::dadd
             | Op::isub
@@ -98,6 +99,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::mkmap
             | Op::pop => self.dis_simple_inst(),
             Op::popscp
+            | Op::ldc
             | Op::iloadl
             | Op::uloadl
             | Op::dloadl
@@ -117,7 +119,6 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::ustoreu => todo!(),
             Op::dstoreu => todo!(),
             Op::rstoreu => todo!(),
-            Op::ldc => todo!(),
             Op::newarr => todo!(),
             Op::iaload => todo!(),
             Op::uaload => todo!(),

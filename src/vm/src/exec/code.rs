@@ -27,7 +27,7 @@ pub struct CodeBuilder {
 // we only take a &mut self as we use this in the compiler
 // where we don't have convenient access to a owned builder
 impl CodeBuilder {
-    pub fn len(&self) -> usize {
+    pub fn code_len(&self) -> usize {
         self.code.len()
     }
 
@@ -40,19 +40,22 @@ impl CodeBuilder {
         [(bytes >> 8 & 0xff) as u8, (bytes & 0xff) as u8]
     }
 
+    // just for testing convenience, not used by the compiler
+    pub fn emit_known_jmp(&mut self, jmp_op: Op, offset: u16) -> &mut Self {
+        self.emit_op(jmp_op).emit16(offset)
+    }
+
     pub fn emit16(&mut self, bytes: u16) -> &mut Self {
         let [a, b] = self.split_bytes(bytes);
         self.emit_byte(a);
         self.emit_byte(b)
     }
 
-    pub fn emit_jmp(&mut self, jmp_op: Op, offset: u16) -> &mut Self {
-        self.emit_op(jmp_op).emit16(offset)
-    }
-
-    /// given the offset of the first (0th) byte of the jmp instruction, patches the offset
+    /// given the offset and the first (0th) byte of the jmp instruction, patches the offset
+    /// this function will subtract 3 off the offset for you to ignore the opcode and the
+    /// two offset bytes of the jmp instruction
     pub fn patch_jmp(&mut self, jmp_start: usize, offset: u16) -> &mut Self {
-        let [a, b] = self.split_bytes(offset);
+        let [a, b] = self.split_bytes(offset - 3);
         self.code[jmp_start + 1] = a;
         self.code[jmp_start + 2] = b;
         self

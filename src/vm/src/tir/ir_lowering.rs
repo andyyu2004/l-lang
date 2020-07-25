@@ -1,9 +1,8 @@
+use crate::ast::Lit;
 use crate::ir::{self, DefId};
 use crate::tir;
-use crate::ty::{Const, InferenceVarSubstFolder, Subst, Ty};
-use crate::{
-    ast::Lit, typeck::{inference::InferCtx, TyCtx, TypeckTables}
-};
+use crate::ty::{Const, ConstKind, InferenceVarSubstFolder, Subst, Ty};
+use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
@@ -214,8 +213,8 @@ impl<'tcx> Tir<'tcx> for Lit {
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         match *self {
-            Lit::Num(n) => Const::new(f64::to_bits(n)),
-            Lit::Bool(b) => Const::new(b as u64),
+            Lit::Num(n) => Const::new(ConstKind::Floating(n)),
+            Lit::Bool(b) => Const::new(ConstKind::Integral(b as u64)),
         }
     }
 }

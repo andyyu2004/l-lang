@@ -27,8 +27,7 @@ impl<'tcx> Compilers<'tcx> {
             Some(id) => {
                 let constant_pool: ConstantPool =
                     self.ctx.constants.take().into_iter().map(|c| c.unwrap()).collect();
-                let main_fn = constant_pool[id].clone().as_fn();
-                Executable::new(constant_pool, main_fn)
+                Executable::with_main_index(constant_pool, id.index())
             }
             None => panic!("no main fn"),
         }

@@ -50,7 +50,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     ) -> ir::ExprKind<'ir> {
         let scrutinee = self.lower_expr(c);
         // `then` branch
-        let then_pat = self.mk_pat_bool(span, false);
+        let then_pat = self.mk_pat_bool(span, true);
         let then_block = self.lower_block(l);
         let then_expr = self.mk_expr(then_block.span, ir::ExprKind::Block(then_block));
         let then_arm = self.mk_arm(then_pat, then_expr);

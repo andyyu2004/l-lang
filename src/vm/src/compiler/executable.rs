@@ -1,5 +1,6 @@
 use super::{Constant, ConstantPool};
-use crate::exec::{CodeBuilder, Function, Op};
+use crate::exec::{Code, CodeBuilder, Function, Op};
+use std::fmt::{self, Display, Formatter};
 
 /// this struct defines the executable format that the vm will run, and the compiler compiles to
 #[derive(Debug)]
@@ -10,21 +11,44 @@ pub struct Executable {
 }
 
 impl Executable {
-    // takes a function and constant pool
-    // wraps the given function in code that will call it
-    pub fn new(constants: impl IntoIterator<Item = Constant>, main: Function) -> Self {
-        let mut constants = constants.into_iter().collect::<ConstantPool>();
-        let main_index = constants.len();
-        constants.push(main.into());
-        let start_code = CodeBuilder::default()
+    fn mk_start_code(main_index: u8) -> Code {
+        CodeBuilder::default()
             // load the given function from index `main_index`
-            .emit_ldc(main_index as u8)
+            .emit_ldc(main_index)
             // invoke it
             .emit_invoke(0)
             .emit_op(Op::ret)
-            .build();
+            .build()
+    }
 
+    // takes a constant pool and the index of the main function in the pool
+    pub fn with_main_index(
+        constants: impl IntoIterator<Item = Constant>,
+        main_index: usize,
+    ) -> Self {
+        let constants = constants.into_iter().collect::<ConstantPool>();
+        let start_code = Self::mk_start_code(main_index as u8);
         Self { constants, start: Function::new(start_code) }
+    }
+
+    // takes a main function and constant pool
+    // wraps the given main function in code that will call it
+    pub fn with_main(constants: impl IntoIterator<Item = Constant>, main: Function) -> Self {
+        let mut constants = constants.into_iter().collect::<ConstantPool>();
+        let main_index = constants.len();
+        constants.push(main.into());
+        let start_code = Self::mk_start_code(main_index as u8);
+        Self { constants, start: Function::new(start_code) }
+    }
+}
+
+impl Display for Executable {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for (i, c) in self.constants.iter().enumerate() {
+            writeln!(f, "#{}", i)?;
+            writeln!(f, "{}", c)?;
+        }
+        Ok(())
     }
 }
 
@@ -35,6 +59,6 @@ impl From<Function> for Executable {
     ///     return f()
     /// }
     fn from(f: Function) -> Self {
-        Self::new(vec![], f)
+        Self::with_main(vec![], f)
     }
 }

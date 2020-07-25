@@ -32,8 +32,10 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec =
-            Executable::new(vec![Function::with_upvalc(inner, 1).into()], Function::new(main));
+        let exec = Executable::with_main(
+            vec![Function::with_upvalc(inner, 1).into()],
+            Function::new(main),
+        );
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-3));
@@ -65,8 +67,10 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec =
-            Executable::new(vec![Function::with_upvalc(inner, 1).into()], Function::new(main));
+        let exec = Executable::with_main(
+            vec![Function::with_upvalc(inner, 1).into()],
+            Function::new(main),
+        );
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-4));
@@ -99,7 +103,7 @@ mod test {
             .build();
         let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
 
-        let exec = Executable::new(
+        let exec = Executable::with_main(
             vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
@@ -145,7 +149,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::new(
+        let exec = Executable::with_main(
             vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
@@ -197,7 +201,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::new(
+        let exec = Executable::with_main(
             vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );
@@ -246,7 +250,7 @@ mod test {
         let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
         let inner_mut = CodeBuilder::default().emit_istoreu_const(0, -50).emit_op(Op::iret).build();
 
-        let exec = Executable::new(
+        let exec = Executable::with_main(
             vec![
                 Function::new(outer).into(),
                 Function::with_upvalc(inner, 1).into(),
@@ -307,7 +311,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::new(
+        let exec = Executable::with_main(
             vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
             Function::new(main),
         );

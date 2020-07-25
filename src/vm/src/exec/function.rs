@@ -1,5 +1,6 @@
 use super::Code;
 use crate::gc::Trace;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -14,6 +15,12 @@ impl Function {
 
     pub fn with_upvalc(code: Code, upvalc: u8) -> Self {
         Self { code, upvalc }
+    }
+}
+
+impl Display for Function {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.code)
     }
 }
 

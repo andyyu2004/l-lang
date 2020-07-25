@@ -80,6 +80,7 @@ impl<'tcx> Driver<'tcx> {
         let gcx = self.global_ctx.get().unwrap();
         let ccx = gcx.enter_tcx(|tcx| self.arena.alloc(CompilerCtx::new(tcx)));
         let executable = Compilers::new(ccx).compile(&tir);
+        println!("{}", executable);
         Ok(executable)
     }
 

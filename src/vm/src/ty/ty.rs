@@ -99,20 +99,29 @@ impl<'tcx> Display for TyS<'tcx> {
 }
 
 /// typed constant value
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 crate struct Const<'tcx> {
-    pub val: u64,
+    pub kind: ConstKind,
     marker: PhantomData<&'tcx ()>,
 }
 
+#[derive(Debug, Clone, Copy)]
+crate enum ConstKind {
+    Floating(f64),
+    Integral(u64),
+}
+
 impl<'tcx> Const<'tcx> {
-    pub fn new(val: u64) -> Self {
-        Self { val, marker: PhantomData }
+    pub fn new(kind: ConstKind) -> Self {
+        Self { kind, marker: PhantomData }
     }
 }
 
 impl<'tcx> Display for Const<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", f64::from_bits(self.val))
+        match self.kind {
+            ConstKind::Floating(d) => write!(f, "{}", d),
+            ConstKind::Integral(i) => write!(f, "{}", i),
+        }
     }
 }
