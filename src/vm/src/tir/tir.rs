@@ -25,6 +25,12 @@ crate struct Arm<'tcx> {
     pub body: &'tcx tir::Expr<'tcx>,
 }
 
+impl<'tcx> Display for Arm<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{} => {}", self.pat, self.body)
+    }
+}
+
 #[derive(Debug)]
 crate struct Body<'tcx> {
     pub params: &'tcx [tir::Param<'tcx>],

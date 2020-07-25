@@ -10,9 +10,6 @@ crate struct Prog<'tcx> {
 
 impl<'tcx> Display for tir::Prog<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for item in self.items.values() {
-            writeln!(f, "{}", item)?;
-        }
-        Ok(())
+        tir::Formatter::new(f).fmt(self)
     }
 }

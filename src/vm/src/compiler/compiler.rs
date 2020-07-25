@@ -145,7 +145,7 @@ impl<'tcx> Compiler<'tcx> {
 
     fn compile_pat(&mut self, pat: &tir::Pattern) {
         match pat.kind {
-            tir::PatternKind::Lit(c) => self.compile_expr_lit(c, pat.ty),
+            tir::PatternKind::Lit(expr) => self.compile_expr(expr),
             // if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => return self.pop(),
             tir::PatternKind::Binding(ident, _) => {

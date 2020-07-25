@@ -87,7 +87,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
                 tir::PatternKind::Binding(*ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
-            ir::PatternKind::Lit(lit) => tir::PatternKind::Lit(lit.to_tir_alloc(ctx)),
+            ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(expr.to_tir_alloc(ctx)),
         };
         let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }

@@ -48,5 +48,5 @@ crate enum PatternKind<'tcx> {
     Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
     /// generalization of tuple patterns
     Field(&'tcx [tir::FieldPat<'tcx>]),
-    Lit(&'tcx Const<'tcx>),
+    Lit(&'tcx tir::Expr<'tcx>),
 }

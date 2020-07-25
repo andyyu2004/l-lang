@@ -1,5 +1,6 @@
 //! typed ir
 mod expr;
+mod formatter;
 mod ir_lowering;
 mod item;
 mod pattern;
@@ -9,6 +10,7 @@ mod tir;
 mod visitor;
 
 crate use expr::{Expr, ExprKind};
+crate use formatter::Formatter;
 crate use ir_lowering::IrLoweringCtx;
 crate use item::{Item, ItemKind};
 crate use pattern::{Field, FieldPat, Pattern, PatternKind};

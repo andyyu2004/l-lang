@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
 #![feature(box_syntax, box_patterns)]
+#![recursion_limit = "256"]
 #![feature(refcell_take)]
 #![feature(type_ascription)]
 #![feature(debug_non_exhaustive)]

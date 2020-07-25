@@ -30,23 +30,6 @@ crate enum ExprKind<'tcx> {
 
 impl<'tcx> Display for Expr<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.kind, self.ty)
-    }
-}
-
-impl<'tcx> Display for ExprKind<'tcx> {
-    fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Lit(c) => write!(fmt, "{}", c),
-            Self::Bin(op, l, r) => write!(fmt, "({} {} {})", op, l, r),
-            Self::Unary(op, expr) => write!(fmt, "({} {})", op, expr),
-            Self::Block(block) => write!(fmt, "{}", block),
-            Self::VarRef(id) => write!(fmt, "${:?}", id.local),
-            Self::ItemRef(def_id) => write!(fmt, "#{:?}", def_id),
-            Self::Tuple(xs) => write!(fmt, "({})", util::join2(xs.iter(), ",")),
-            Self::Lambda(b) => write!(fmt, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
-            Self::Call(f, args) => write!(fmt, "({} {})", f, util::join2(args.iter(), " ")),
-            Self::Match(expr, arms) => todo!(),
-        }
+        tir::Formatter::new(f).fmt_expr(self)
     }
 }
