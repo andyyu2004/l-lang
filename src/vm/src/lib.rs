@@ -2,6 +2,7 @@
 #![feature(box_syntax, box_patterns)]
 #![recursion_limit = "256"]
 #![feature(refcell_take)]
+#![feature(split_inclusive)]
 #![feature(type_ascription)]
 #![feature(debug_non_exhaustive)]
 #![feature(associated_type_defaults)]

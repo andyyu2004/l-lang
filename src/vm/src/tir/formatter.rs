@@ -1,6 +1,10 @@
 use crate::{tir, util};
+use itertools::Itertools;
 use std::fmt;
 use std::fmt::Write;
+
+/// amount to indent
+const INDENT: usize = 4;
 
 /// pretty prints `tir`
 crate struct Formatter<'a, W> {
@@ -23,6 +27,25 @@ macro_rules! indent {
             write!($s.writer, "{}", $s.indent)?;
         }
         write!($s.writer, $($x),*)
+    }};
+}
+
+macro_rules! indent_each {
+    ($s:expr, $($x:expr),*) => {{
+        // we need to indent every line that is written, not just the first
+        let s = format!($($x),*);
+        let lines = s.split_inclusive("\n").collect_vec();
+        for line in &lines {
+            indent!($s, "{}", line)?;
+        }
+        Ok(())
+    }};
+}
+
+macro_rules! indent_each_ln {
+    ($s:expr, $($x:expr),*) => {{
+        indent_each!($s, $($x),*)?;
+        write!($s.writer, "\n")
     }};
 }
 
@@ -51,7 +74,7 @@ where
                 let params = params.iter().zip(inputs).map(|(p, t)| format!("{}: {}", p, t));
                 indentln!(
                     self,
-                    "{}fn {}({}) -> {} {}",
+                    "{}fn {}({}) -> {} {}\n",
                     item.vis.node,
                     item.ident,
                     util::join2(params, ", "),
@@ -74,24 +97,30 @@ where
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
             tir::ExprKind::Lambda(b) =>
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
-            tir::ExprKind::Call(f, args) =>
-                indent!(self, "({} {})", f, util::join2(args.iter(), " ")),
+            tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
         }?;
         write!(self.writer, ":{}", expr.ty)
     }
 
+    fn fmt_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> fmt::Result {
+        match args.len() {
+            0 => indent!(self, "({})", f),
+            _ => indent!(self, "({} {})", f, util::join2(args.iter(), " ")),
+        }
+    }
+
     fn fmt_block(&mut self, block: &tir::Block) -> fmt::Result {
         indentln!(self, "{{")?;
-        self.with_indent(4, |this| {
+        self.with_indent(INDENT, |this| {
             for stmt in block.stmts {
-                indentln!(this, "{};", stmt)?;
+                indent_each_ln!(this, "{};", stmt)?;
             }
             if let Some(expr) = block.expr {
-                indentln!(this, "{}", expr)?;
+                indent_each!(this, "{}", expr)?;
             }
             Ok(())
         })?;
-        indentln!(self, "\n}}")
+        indent!(self, "\n}}")
     }
 
     fn with_indent<R>(&mut self, indent: usize, f: impl FnOnce(&mut Self) -> R) -> R {
@@ -103,9 +132,12 @@ where
 
     fn fmt_match(&mut self, expr: &tir::Expr, arms: &[tir::Arm]) -> fmt::Result {
         indentln!(self, "match {{")?;
-        for arm in arms.iter() {
-            indentln!(self, "\t\t{}", arm)?;
-        }
-        indentln!(self, "}}")
+        self.with_indent(INDENT, |this| {
+            for arm in arms.iter() {
+                indent_each_ln!(this, "{},", arm)?;
+            }
+            Ok(())
+        })?;
+        indent!(self, "\n}}")
     }
 }
