@@ -35,7 +35,11 @@ impl<'tcx> Display for Pattern<'tcx> {
             // in particular ExprKind::VarRef does not have access to the symbol only the `ir::Id`
             PatternKind::Binding(ident, _) => write!(f, "${:?}", self.id.local),
             PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
-            PatternKind::Lit(c) => write!(f, "{}", c),
+            PatternKind::Lit(expr) => {
+                // don't double print the type as expr will already do so
+                assert_eq!(expr.ty, self.ty);
+                return write!(f, "{}", expr);
+            }
             PatternKind::Wildcard => write!(f, "_"),
         }?;
         write!(f, ":{}", self.ty)
