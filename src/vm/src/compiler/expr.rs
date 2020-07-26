@@ -1,4 +1,4 @@
-use super::Compiler;
+use super::{Compiler, FrameCtx};
 use crate::ast;
 use crate::exec::Op;
 use crate::ir::{self, DefId};
@@ -34,8 +34,34 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     fn compile_var_ref(&mut self, id: ir::Id) {
-        let local_idx = self.find_local_slot(id.local);
-        self.emit_loadl(local_idx);
+        if let Some(local_idx) = self.resolve_local(id) {
+            self.emit_loadl(local_idx);
+        } else {
+            let upvar_idx = self.resolve_upvar(id, 0);
+            self.emit_loadu(upvar_idx);
+        }
+    }
+
+    /// gets the `scope`th from top `FrameCtx`
+    fn frame_mut(&mut self, scope: usize) -> &mut FrameCtx<'tcx> {
+        let n = self.frames.len();
+        &mut self.frames[n - scope - 1]
+    }
+
+    fn resolve_upvar(&mut self, id: ir::Id, scope: usize) -> u8 {
+        let n = self.frames.len();
+        if scope == n {
+            panic!("unresolved upvar")
+        }
+        // start by searching the enclosing `FrameCtx` hence the `1+`
+        match Self::resolve_frame_local(self.frame_mut(1 + scope), id) {
+            Some(upvar_idx) => self.frame_mut(scope).mk_upvar(true, upvar_idx),
+            None => {
+                // if not resolved, recursively search outer `FrameCtx`
+                let upvar_idx = self.resolve_upvar(id, 1 + scope);
+                self.frame_mut(scope).mk_upvar(false, upvar_idx)
+            }
+        }
     }
 
     fn compile_item_ref(&mut self, id: DefId) {
@@ -43,8 +69,14 @@ impl<'tcx> Compiler<'tcx> {
         self.emit_ldc(const_id.index() as u8);
     }
 
-    fn compile_lambda(&mut self, f: &tir::Body) {
-        todo!()
+    fn compile_lambda(&mut self, body: &tir::Body) {
+        let (lambda_idx, upvars) = self.with_frame(|compiler| {
+            compiler.compile_body(body);
+            let lambda = compiler.finish();
+            let upvars = std::mem::take(&mut compiler.upvars);
+            (compiler.gctx.mk_const(lambda).index() as u8, upvars)
+        });
+        self.emit_closure(lambda_idx, upvars);
     }
 
     fn compile_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) {

@@ -9,10 +9,7 @@ pub struct Closure {
 
 impl Closure {
     pub fn new(f: Gc<Function>) -> Self {
-        Self {
-            f,
-            upvars: Vec::with_capacity(f.upvalc as usize),
-        }
+        Self { f, upvars: Default::default() }
     }
 }
 

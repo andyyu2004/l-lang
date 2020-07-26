@@ -81,7 +81,7 @@ where
                     self,
                     "{}fn #{:?}({}) -> {} {}\n",
                     item.vis.node,
-                    item.id.def_id,
+                    item.id.def,
                     util::join2(params, ", "),
                     sig.output,
                     body

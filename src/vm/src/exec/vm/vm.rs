@@ -168,10 +168,15 @@ where
             }};
         }
 
+        /// returns index of the top of stack
+        macro_rules! top {
+            () => {{ self.ctx.bp + frame!().sp }};
+        }
+
         Ok(loop {
             let opcode = frame_mut!().read_opcode()?;
             // println!(
-            //     "op:{:?} bp:{} sp:{} {:?}",
+            //     "op:{:?} bp:{} sp:{} {:#?}",
             //     opcode,
             //     self.ctx.bp,
             //     frame!().sp,
@@ -237,10 +242,7 @@ where
                     let ty = frame_mut!().read_type()?;
                     push!(self.alloc(Array::new(len, ty)))
                 }
-                Op::uloadu => {}
-                Op::dloadu => {}
-                Op::rloadu => {}
-                Op::iloadu => {
+                Op::uloadu | Op::dloadu | Op::rloadu | Op::iloadu => {
                     let i = read_byte!() as usize;
                     let upvar = &*frame!().clsr.upvars[i];
                     let val = **upvar;
@@ -254,10 +256,11 @@ where
                 Op::ldc => push!(load_const!()),
                 Op::clsr => {
                     let f = load_const!().as_fn();
-                    // we may be allocating unrooted upvalues in this section so we must disable gc
-                    let clsr = self.without_gc(|this| {
-                        let mut clsr = this.alloc(Closure::new(f));
-                        for i in 0..clsr.f.upvalc as usize {
+                    // we may be allocating unrooted upvars in this section so we must disable gc
+                    let clsr = self.without_gc(|vm| {
+                        let mut clsr = vm.alloc(Closure::new(f));
+                        let upvarc = read_byte!();
+                        for i in 0..upvarc as usize {
                             let in_enclosing = read_byte!();
                             let index = read_byte!() as usize;
                             let upvalue = if in_enclosing == 0 {
@@ -266,7 +269,7 @@ where
                                 frame!().clsr.upvars[index]
                             } else {
                                 // if the upvalue closes over a variable in the immediately enclosing function, capture it
-                                this.capture_upval(index)
+                                vm.capture_upval(index)
                             };
                             assert_eq!(clsr.upvars.len(), i);
                             clsr.upvars.push(upvalue);
@@ -275,18 +278,16 @@ where
                     });
                     push!(clsr);
                 }
-                Op::clsupv => self.close_upvalue(read_byte!()),
+                // just close over every open upvar for now
+                Op::clsupv => self.close_upvars(0),
                 Op::call => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = read_byte!() as usize;
                     // index of the function pointer
-                    let f_idx = self.ctx.bp + frame!().sp - argc - 1;
+                    let f_idx = top!() - argc - 1;
                     let f = self.ctx.stack[f_idx];
                     let clsr = match f {
-                        Val::Fn(f) => {
-                            assert!(f.upvalc == 0);
-                            self.alloc(Closure::new(f))
-                        }
+                        Val::Fn(f) => self.alloc(Closure::new(f)),
                         Val::Data(d) => {
                             push!(self.alloc(Instance::new(d)));
                             continue;
@@ -308,12 +309,13 @@ where
                     let n = read_byte!() as usize;
                     let val = pop!();
                     frame_mut!().sp -= n;
+                    // close over all the upvars that may have just been popped off
+                    self.close_upvars(top!());
                     push!(val);
                 }
                 Op::mktup => {
                     let n = read_byte!() as usize;
-                    let top = self.ctx.bp + frame!().sp;
-                    let elements = Vec::from(&self.ctx.stack[(top - n)..top]);
+                    let elements = Vec::from(&self.ctx.stack[top!() - n..top!()]);
                     let tup = self.alloc(Tuple::new(elements));
                     // make sure to not decrease the stack pointer before allocating (coz gc)
                     frame_mut!().sp -= n;
@@ -337,36 +339,42 @@ where
         t
     }
 
-    /// moves the upvalues that points at the value at `index` or above onto the heap
-    fn close_upvalue(&mut self, index: u8) {
-        let val_ref = &mut self.ctx.stack[self.ctx.bp + index as usize];
-        let val_ptr = NonNull::new(val_ref).unwrap();
+    /// moves the open upvalues that points at the value at `index` or above onto the heap
+    fn close_upvars(&mut self, index: usize) {
+        self.without_gc(|vm| {
+            let val_ref = &mut vm.ctx.stack[index];
+            let val_ptr = NonNull::new(val_ref).unwrap();
 
-        // this vector contains all the open upvalues that are above the given stack index
-        let to_close: Vec<Gc<Upvar>> = self
-            .ctx
-            .open_upvalues
-            .drain_filter(|ptr, _| *ptr >= val_ptr)
-            .map(|(_, upval_ptr)| upval_ptr)
-            .collect();
+            // this vector contains all the open upvalues that are above the given stack index
+            let to_close: Vec<Gc<Upvar>> = vm
+                .ctx
+                .open_upvars
+                .drain_filter(|&ptr, _| ptr >= val_ptr)
+                .map(|(_, upvar_ptr)| upvar_ptr)
+                .collect();
 
-        // allocate the value pointed to by the upvalue and mutate the open upvalue to a closed upvalue
-        for mut upval_ptr in to_close {
-            *upval_ptr = Upvar::Closed(self.alloc(**upval_ptr));
-        }
+            debug_assert!(to_close.iter().all(|upvar| upvar.is_open()));
+
+            // allocate the value pointed to by the upvalue,
+            // then mutate the open upvalue to a closed upvalue
+            for mut upvar_ptr in to_close {
+                let val: Val = **upvar_ptr;
+                *upvar_ptr = Upvar::Closed(vm.alloc(val));
+            }
+        });
     }
 
     /// captures the value at `index` in an upvalue
     fn capture_upval(&mut self, index: usize) -> Gc<Upvar> {
         let val_ptr = NonNull::new(&mut self.ctx.stack[self.ctx.bp + index]).unwrap();
         // if the upvalue already exists, reuse it, otherwise, allocate a new one
-        match self.ctx.open_upvalues.get(&val_ptr) {
-            Some(&upvalue) => upvalue,
+        match self.ctx.open_upvars.get(&val_ptr) {
+            Some(&upvar) => upvar,
             None => {
-                let upval = Upvar::Open(val_ptr);
-                let upval_gc_ptr = self.alloc(upval);
-                self.ctx.open_upvalues.insert(val_ptr, upval_gc_ptr);
-                upval_gc_ptr
+                let upvar = Upvar::Open(val_ptr);
+                let upvar_ptr = self.alloc(upvar);
+                self.ctx.open_upvars.insert(val_ptr, upvar_ptr);
+                upvar_ptr
             }
         }
     }

@@ -12,8 +12,18 @@ pub enum Upvar {
     Closed(Gc<Val>),
 }
 
+impl Upvar {
+    pub fn is_open(&self) -> bool {
+        match self {
+            Upvar::Open(_) => true,
+            _ => false,
+        }
+    }
+}
+
 impl Deref for Upvar {
     type Target = Val;
+
     fn deref(&self) -> &Self::Target {
         match self {
             Self::Open(ptr) => unsafe { ptr.as_ref() },

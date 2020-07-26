@@ -1,3 +1,4 @@
+mod closures;
 mod conditionals;
 mod local_variables;
 

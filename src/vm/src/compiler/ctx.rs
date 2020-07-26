@@ -2,6 +2,7 @@ use super::ConstId;
 use super::{Compiler, Constant, ConstantPool, Executable};
 use crate::ast;
 use crate::exec::{CodeBuilder, Function};
+use crate::ir;
 use crate::ir::{DefId, LocalId};
 use crate::lexer::symbol;
 use crate::tir;
@@ -13,9 +14,22 @@ use std::ops::{Deref, DerefMut};
 
 // ctx specific to a frame
 crate struct FrameCtx<'tcx> {
+    pub(super) upvars: Vec<(bool, u8)>,
     pub(super) code: CodeBuilder,
-    pub(super) locals: Vec<LocalId>,
+    pub(super) locals: Vec<ir::Id>,
     pub(super) gctx: &'tcx GlobalCompilerCtx<'tcx>,
+}
+
+impl<'tcx> FrameCtx<'tcx> {
+    pub(super) fn mk_upvar(&mut self, in_enclosing: bool, upvar_idx: u8) -> u8 {
+        let upvar = (in_enclosing, upvar_idx);
+        if let Some(i) = self.upvars.iter().position(|&existing| existing == upvar) {
+            return i as u8;
+        }
+        let idx = self.upvars.len() as u8;
+        self.upvars.push(upvar);
+        idx
+    }
 }
 
 impl<'tcx> Deref for FrameCtx<'tcx> {
@@ -34,7 +48,12 @@ impl<'tcx> DerefMut for FrameCtx<'tcx> {
 
 impl<'tcx> FrameCtx<'tcx> {
     pub fn new(gctx: &'tcx GlobalCompilerCtx<'tcx>) -> Self {
-        Self { gctx, code: Default::default(), locals: Default::default() }
+        Self {
+            gctx,
+            code: Default::default(),
+            locals: Default::default(),
+            upvars: Default::default(),
+        }
     }
 }
 

@@ -70,19 +70,19 @@ impl CodeBuilder {
         self.emit_op(Op::mktup).emit_byte(n)
     }
 
-    pub fn emit_closure(&mut self, f_idx: u8, upvalues: Vec<(bool, u8)>) -> &mut Self {
-        self.emit_op(Op::clsr).emit_byte(f_idx);
-        for (in_enclosing, index) in upvalues {
-            self.emit_upval(in_enclosing, index);
+    pub fn emit_closure(&mut self, f_idx: u8, upvars: Vec<(bool, u8)>) -> &mut Self {
+        self.emit_op(Op::clsr).emit_byte(f_idx).emit_byte(upvars.len() as u8);
+        for (in_enclosing, index) in upvars {
+            self.emit_upvar(in_enclosing, index);
         }
         self
     }
 
-    pub fn emit_close_upvalue(&mut self, index: u8) -> &mut Self {
-        self.emit_op(Op::clsupv).emit_byte(index)
+    pub fn emit_close_upvars(&mut self) -> &mut Self {
+        self.emit_op(Op::clsupv)
     }
 
-    fn emit_upval(&mut self, in_enclosing: bool, index: u8) -> &mut Self {
+    fn emit_upvar(&mut self, in_enclosing: bool, index: u8) -> &mut Self {
         self.emit_byte(in_enclosing as u8).emit_byte(index)
     }
 
@@ -121,7 +121,7 @@ impl CodeBuilder {
     }
 
     pub fn emit_loadl(&mut self, index: u8) -> &mut Self {
-        self.emit_op(Op::iloadl).emit_byte(index)
+        self.emit_op(Op::dloadl).emit_byte(index)
     }
 
     pub fn emit_istorel(&mut self, index: u8, value: i64) -> &mut Self {
@@ -133,10 +133,10 @@ impl CodeBuilder {
     }
 
     pub fn emit_loadu(&mut self, index: u8) -> &mut Self {
-        self.emit_op(Op::iloadu).emit_byte(index)
+        self.emit_op(Op::dloadu).emit_byte(index)
     }
 
-    /// store a constant into an upvalue
+    /// store a constant into an upvar
     pub fn emit_istoreu_const(&mut self, index: u8, value: i64) -> &mut Self {
         self.emit_iconst(value).emit_storeu(index)
     }

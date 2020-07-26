@@ -98,7 +98,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
         let mut fcx = FnCtx::new(&self);
-        let (param_tys, ret_ty) = self.tcx.item_ty(item.id.def_id).expect_fn();
+        let (param_tys, ret_ty) = self.tcx.item_ty(item.id.def).expect_fn();
         let body_ty = fcx.check_body(param_tys, body);
         info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
         fcx.unify(item.span, ret_ty, body_ty);

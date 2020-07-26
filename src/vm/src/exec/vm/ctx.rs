@@ -19,7 +19,7 @@ pub struct VMCtx {
     pub(crate) constants: Vec<Val>,
     /// map from a stack address to the upvalue that captures the value at that address
     /// there will only be one upvalue as it can be reused
-    pub(crate) open_upvalues: BTreeMap<NonNull<Val>, Gc<Upvar>>,
+    pub(crate) open_upvars: BTreeMap<NonNull<Val>, Gc<Upvar>>,
 }
 
 impl Trace for VMCtx {
@@ -28,7 +28,7 @@ impl Trace for VMCtx {
         self.stack[..self.bp + sp].iter().for_each(|val| val.mark(map));
         self.frames[..self.fp].iter().for_each(|frame| frame.mark(map));
         self.constants.iter().for_each(|val| val.mark(map));
-        self.open_upvalues.values().for_each(|ptr| Gc::mark(ptr, map));
+        self.open_upvars.values().for_each(|ptr| Gc::mark(ptr, map));
     }
 }
 impl VMCtx {
@@ -39,6 +39,6 @@ impl VMCtx {
         frames[0] = Frame::new(f, 0);
         let stack = [Val::default(); STACK_MAX];
 
-        Self { stack, frames, constants, open_upvalues: Default::default(), fp: 1, bp: 0 }
+        Self { stack, frames, constants, open_upvars: Default::default(), fp: 1, bp: 0 }
     }
 }

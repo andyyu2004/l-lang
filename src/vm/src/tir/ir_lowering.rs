@@ -56,7 +56,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         let &Self { span, id, ident, vis, ref kind } = self;
         let kind = match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
-                let (inputs, output) = ctx.tcx.item_ty(self.id.def_id).expect_fn();
+                let (inputs, output) = ctx.tcx.item_ty(self.id.def).expect_fn();
                 let sig = ctx.tcx.alloc_tir(tir::FnSig { inputs, output });
                 tir::ItemKind::Fn(sig, generics.to_tir(ctx), body.to_tir(ctx))
             }

@@ -3,6 +3,29 @@ mod test {
     use crate::error::VMResult;
     use crate::{compiler::Executable, exec::*};
 
+    #[test]
+    fn multilayer_closures() {
+        let src = r#"
+        fn main() -> number {
+            let middle = f();
+            let inner = middle();
+            inner()
+        }
+
+        fn f() -> fn() -> fn() -> number {
+            let x = 5;
+            let middle = fn() => {
+                let inner = fn() => x;
+                inner
+            };
+            middle
+        }
+        "#;
+
+        let ret = crate::exec(src).unwrap();
+        assert_eq!(ret, Val::Double(5.0));
+    }
+
     /// fn main() -> i64 {
     ///     let x = 2;
     ///     let inner = fn(y: i64) => x - y;
@@ -32,10 +55,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::with_main(
-            vec![Function::with_upvalc(inner, 1).into()],
-            Function::new(main),
-        );
+        let exec = Executable::with_main(vec![Function::new(inner).into()], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-3));
@@ -67,10 +87,7 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::with_main(
-            vec![Function::with_upvalc(inner, 1).into()],
-            Function::new(main),
-        );
+        let exec = Executable::with_main(vec![Function::new(inner).into()], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-4));
@@ -104,7 +121,7 @@ mod test {
         let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
 
         let exec = Executable::with_main(
-            vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
+            vec![Function::new(outer).into(), Function::new(inner).into()],
             Function::new(main),
         );
 
@@ -150,7 +167,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::with_upvalc(outer, 1).into(), Function::with_upvalc(inner, 1).into()],
+            vec![Function::new(outer).into(), Function::new(inner).into()],
             Function::new(main),
         );
 
@@ -191,7 +208,7 @@ mod test {
             .emit_iconst(-20)
             .emit_closure(1, vec![(true, 0)])
             .emit_loadl(1)
-            .emit_close_upvalue(0)
+            .emit_close_upvars()
             .emit_op(Op::rret)
             .build();
         let inner = CodeBuilder::default()
@@ -202,7 +219,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
+            vec![Function::new(outer).into(), Function::new(inner).into()],
             Function::new(main),
         );
 
@@ -253,8 +270,8 @@ mod test {
         let exec = Executable::with_main(
             vec![
                 Function::new(outer).into(),
-                Function::with_upvalc(inner, 1).into(),
-                Function::with_upvalc(inner_mut, 1).into(),
+                Function::new(inner).into(),
+                Function::new(inner_mut).into(),
             ],
             Function::new(main),
         );
@@ -299,7 +316,7 @@ mod test {
             .emit_iconst(0)
             .emit_closure(1, vec![(true, 0)])
             .emit_loadl(1)
-            .emit_close_upvalue(0)
+            .emit_close_upvars()
             .emit_op(Op::rret)
             .build();
 
@@ -312,7 +329,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::with_upvalc(inner, 1).into()],
+            vec![Function::new(outer).into(), Function::new(inner).into()],
             Function::new(main),
         );
 

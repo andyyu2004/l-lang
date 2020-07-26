@@ -19,9 +19,7 @@ impl<'tcx> Compiler<'tcx> {
                 self.emit_op(Op::dup);
             }
             tir::PatternKind::Binding(ident, _) => {
-                // this relies on the observation that the `n`th local variable resides
-                // in slot `n` of the current frame
-                self.locals.push(pat.id.local);
+                self.mk_local(pat.id);
                 self.emit_op(Op::dup);
             }
             tir::PatternKind::Field(fields) => todo!(),
@@ -33,11 +31,7 @@ impl<'tcx> Compiler<'tcx> {
         match pat.kind {
             // if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => self.pop(),
-            tir::PatternKind::Binding(ident, _) => {
-                // this relies on the observation that the `n`th local variable resides
-                // in slot `n` of the current frame
-                self.locals.push(pat.id.local);
-            }
+            tir::PatternKind::Binding(ident, _) => self.mk_local(pat.id),
             tir::PatternKind::Field(fields) => match pat.ty.kind {
                 TyKind::Tuple(tys) => {
                     // need to unpack the tuple

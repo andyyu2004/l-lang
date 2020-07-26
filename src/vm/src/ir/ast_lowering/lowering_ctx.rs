@@ -107,10 +107,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub(super) fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {
         self.lower_node_id_generic(node_id, |this| {
-            let &mut (def_id, ref mut counter) = this.item_stack.last_mut().unwrap();
+            let &mut (def, ref mut counter) = this.item_stack.last_mut().unwrap();
             let local_id = *counter;
             *counter += 1;
-            Id { def_id, local: LocalId::new(local_id) }
+            Id { def, local: LocalId::new(local_id) }
         })
     }
 

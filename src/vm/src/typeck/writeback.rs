@@ -28,7 +28,7 @@ struct WritebackCtx<'a, 'tcx> {
 impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
     fn new(fcx: &'a FnCtx<'a, 'tcx>, body: &'tcx ir::Body<'tcx>) -> Self {
         // the `DefId` of the body is the same as the `DefId` of the expr of the body
-        let def_id = body.expr.id.def_id;
+        let def_id = body.expr.id.def;
         let substs = fcx.inference_substs().expect("unresolved inference variables");
         let subst_folder = InferenceVarSubstFolder::new(fcx.tcx, substs);
         Self { fcx, tables: TypeckTables::new(def_id), body, subst_folder }

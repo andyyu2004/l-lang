@@ -131,7 +131,7 @@ impl<'tcx> TyCtx<'tcx> {
                 let inputs = sig.inputs.iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
                 let input_tys = self.mk_substs(inputs);
                 let fn_ty = self.mk_ty(TyKind::Fn(input_tys, ret_ty));
-                self.item_tys.borrow_mut().insert(item.id.def_id, fn_ty);
+                self.item_tys.borrow_mut().insert(item.id.def, fn_ty);
             }
         }
     }
@@ -144,7 +144,7 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// ir::Item -> tir::Item
     fn type_item(self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
-        self.infer_ctx(item.id.def_id).enter(|infcx| match item.kind {
+        self.infer_ctx(item.id.def).enter(|infcx| match item.kind {
             ir::ItemKind::Fn(sig, generics, body) => {
                 let fcx = infcx.check_fn(item, sig, generics, body);
                 let tables = fcx.resolve_inference_variables(body);

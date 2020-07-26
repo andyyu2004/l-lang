@@ -63,14 +63,14 @@ pub enum Op {
     ustorel = 0x75,
     dstorel = 0x76,
     rstorel = 0x77,
-    /// load from upvalue
+    /// load from upvar
     /// loadu <index> (index into upvalue array)
     ///     -> <val>
     iloadu  = 0x78,
     uloadu  = 0x79,
     dloadu  = 0x7A,
     rloadu  = 0x7B,
-    /// store into upvalue
+    /// store into upvar
     istoreu = 0x7C,
     ustoreu = 0x7D,
     dstoreu = 0x7E,
@@ -97,8 +97,8 @@ pub enum Op {
     /// <f> <arg_0>...<arg_argc> -> <f> <arg_0> ... <arg_argc>
     call    = 0xA0,
     /// pushes a closure onto the stack
-    /// clsr (<in_enclosing> <index>)+
-    /// <f_idx> -> <closure>
+    /// clsr <const_idx> (<in_enclosing> <index>)+
+    /// -> <closure>
     clsr    = 0xA1,
     /// close upvalue and move it onto the heap
     /// clsupv <index>

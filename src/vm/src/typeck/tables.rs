@@ -38,7 +38,7 @@ crate struct TableDefIdValidator<'a, T> {
 
 impl<'a, T> TableDefIdValidator<'a, T> {
     fn validate_id(&self, id: ir::Id) {
-        assert_eq!(self.def_id, id.def_id);
+        assert_eq!(self.def_id, id.def);
     }
 
     pub fn get(&self, id: ir::Id) -> Option<&T> {
@@ -53,7 +53,7 @@ crate struct TableDefIdValidatorMut<'a, T> {
 }
 
 fn validate_id(def_id: DefId, id: ir::Id) {
-    assert_eq!(def_id, id.def_id);
+    assert_eq!(def_id, id.def);
 }
 
 impl<'a, T> TableDefIdValidatorMut<'a, T> {

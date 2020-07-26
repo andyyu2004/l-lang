@@ -12,8 +12,8 @@ use rustc_hash::FxHashMap;
 use std::ops::{Deref, DerefMut};
 
 crate struct Compiler<'tcx> {
-    frames: Vec<FrameCtx<'tcx>>,
-    gctx: &'tcx GlobalCompilerCtx<'tcx>,
+    pub(super) frames: Vec<FrameCtx<'tcx>>,
+    pub(super) gctx: &'tcx GlobalCompilerCtx<'tcx>,
 }
 
 impl<'tcx> Compiler<'tcx> {
@@ -22,7 +22,7 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     pub fn compile(mut self, tir: &tir::Prog<'tcx>) -> Executable {
-        tir.items.values().for_each(|item| self.gctx.assign_const_id(item.id.def_id));
+        tir.items.values().for_each(|item| self.gctx.assign_const_id(item.id.def));
         tir.items.values().for_each(|item| self.compile_item(item));
         match *self.gctx.main_fn.borrow() {
             Some(id) => {
@@ -38,9 +38,9 @@ impl<'tcx> Compiler<'tcx> {
         match &item.kind {
             tir::ItemKind::Fn(_, _, body) => {
                 let f = self.compile_fn(body);
-                self.gctx.set_const(item.id.def_id, f);
+                self.gctx.set_const(item.id.def, f);
                 if item.ident.symbol == symbol::MAIN {
-                    let const_id = self.gctx.def_id_to_const_id.borrow()[&item.id.def_id];
+                    let const_id = self.gctx.def_id_to_const_id.borrow()[&item.id.def];
                     *self.gctx.main_fn.borrow_mut() = Some(const_id)
                 }
             }
@@ -48,11 +48,16 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     /// pushes new `FrameCtx`
-    fn with_frame<R>(&mut self, f: impl FnOnce(&mut Compiler) -> R) -> R {
+    pub(super) fn with_frame<R>(&mut self, f: impl FnOnce(&mut Compiler) -> R) -> R {
         self.frames.push(FrameCtx::new(self.gctx));
         let res = f(self);
         self.frames.pop();
         res
+    }
+
+    pub(super) fn mk_local(&mut self, id: ir::Id) {
+        debug_assert!(self.locals.iter().all(|x| x.def == id.def));
+        self.locals.push(id);
     }
 
     fn compile_fn(&mut self, body: &tir::Body<'tcx>) -> Function {
@@ -64,7 +69,7 @@ impl<'tcx> Compiler<'tcx> {
 
     pub fn finish(&mut self) -> Function {
         self.emit_op(Op::ret);
-        Function::new(self.code.build())
+        Function::new(self.build())
     }
 
     pub fn compile_body(&mut self, body: &tir::Body) {
@@ -90,10 +95,18 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     /// returns the `local_idx` for a variable with given `local_id`
-    pub(super) fn find_local_slot(&mut self, local_id: LocalId) -> u8 {
-        self.locals.iter().rposition(|&id| id == local_id).unwrap() as u8
+    pub(super) fn resolve_local(&mut self, id: ir::Id) -> Option<u8> {
+        Self::resolve_frame_local(self, id)
     }
 
+    /// this relies on the observation that the `n`th local variable resides in
+    /// slot `n` of the current frame
+    pub(super) fn resolve_frame_local(frame: &FrameCtx, id: ir::Id) -> Option<u8> {
+        frame.locals.iter().rposition(|&x| x == id).map(|i| i as u8)
+    }
+
+    /// creates a new lexical scope
+    /// on exit, all variables declared in that scope will be popped
     pub(super) fn with_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         let m = self.locals.len();
         let ret = f(self);
