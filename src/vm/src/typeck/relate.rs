@@ -34,14 +34,10 @@ crate trait TypeRelation<'tcx>: Sized {
 
     fn relate_tuples(
         &mut self,
-        a: SubstRef<'tcx>,
-        b: SubstRef<'tcx>,
+        s: SubstRef<'tcx>,
+        t: SubstRef<'tcx>,
     ) -> TypeResult<'tcx, Ty<'tcx>> {
-        if a.len() != b.len() {
-            return Err(TypeError::TupleSizeMismatch(a.len(), b.len()));
-        }
-        let relations: Vec<_> = a.iter().zip(b).map(|(t, u)| self.relate(t, u)).try_collect()?;
-        Ok(self.tcx().mk_tup(relations.into_iter()))
+        Ok(self.tcx().mk_ty(TyKind::Tuple(self.relate(s, t)?)))
     }
 }
 
@@ -57,6 +53,9 @@ impl<'tcx> Relate<'tcx> for Ty<'tcx> {
 
 impl<'tcx> Relate<'tcx> for SubstRef<'tcx> {
     fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self> {
+        if a.len() != b.len() {
+            return Err(TypeError::TupleSizeMismatch(a.len(), b.len()));
+        }
         let tys: Vec<_> = a.iter().zip(b).map(|(t, u)| relation.relate(t, u)).try_collect()?;
         Ok(relation.tcx().mk_substs(tys.into_iter()))
     }

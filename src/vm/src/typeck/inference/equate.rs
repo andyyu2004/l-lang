@@ -19,6 +19,8 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
 
         let a = type_vars.instantiate_if_known(a);
         let b = type_vars.instantiate_if_known(b);
+        dbg!(a);
+        dbg!(b);
 
         match (&a.kind, &b.kind) {
             _ if a == b => {}
