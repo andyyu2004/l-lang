@@ -100,9 +100,6 @@ pub enum Op {
     /// clsr <const_idx> (<in_enclosing> <index>)+
     /// -> <closure>
     clsr    = 0xA1,
-    /// close upvalue and move it onto the heap
-    /// clsupv <index>
-    clsupv  = 0xA2,
     /// popscope <n>
     /// pop <n> local variables from stack while retaining value of the block
     /// example:

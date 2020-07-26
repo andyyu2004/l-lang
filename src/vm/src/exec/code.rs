@@ -78,10 +78,6 @@ impl CodeBuilder {
         self
     }
 
-    pub fn emit_close_upvars(&mut self) -> &mut Self {
-        self.emit_op(Op::clsupv)
-    }
-
     fn emit_upvar(&mut self, in_enclosing: bool, index: u8) -> &mut Self {
         self.emit_byte(in_enclosing as u8).emit_byte(index)
     }

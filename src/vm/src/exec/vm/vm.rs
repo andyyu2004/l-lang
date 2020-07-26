@@ -278,8 +278,6 @@ where
                     });
                     push!(clsr);
                 }
-                // just close over every open upvar for now
-                Op::clsupv => self.close_upvars(0),
                 Op::call => {
                     // ... <f> <arg0> ... <argn> <stack_top>
                     let argc = read_byte!() as usize;

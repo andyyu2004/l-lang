@@ -156,7 +156,6 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::dastore => todo!(),
             Op::rastore => todo!(),
             Op::clsr => self.fmt_clsr(),
-            Op::clsupv => todo!(),
         }
     }
 }

@@ -208,7 +208,7 @@ mod test {
             .emit_iconst(-20)
             .emit_closure(1, vec![(true, 0)])
             .emit_loadl(1)
-            .emit_close_upvars()
+            .emit_popscp(2)
             .emit_op(Op::rret)
             .build();
         let inner = CodeBuilder::default()
@@ -316,7 +316,7 @@ mod test {
             .emit_iconst(0)
             .emit_closure(1, vec![(true, 0)])
             .emit_loadl(1)
-            .emit_close_upvars()
+            .emit_popscp(2)
             .emit_op(Op::rret)
             .build();
 
