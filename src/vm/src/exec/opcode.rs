@@ -28,14 +28,8 @@ pub enum Op {
     idiv    = 0x0D,
     udiv    = 0x0E,
     ddiv    = 0x0F,
-    /// <val> -> []
-    iret    = 0x10,
-    uret    = 0x11,
-    dret    = 0x12,
-    rret    = 0x13,
-    ret     = 0x14,
-    unit    = 0x15,
-
+    dcmplt  = 0x10,
+    dcmpgt  = 0x11,
     /// unconditional jmp
     jmp     = 0x20,
     /// jump if false
@@ -44,6 +38,14 @@ pub enum Op {
     jmpt    = 0x22,
     jmpeq   = 0x23,
     jmpneq  = 0x24,
+    /// <val> -> []
+    iret    = 0x30,
+    uret    = 0x31,
+    dret    = 0x32,
+    rret    = 0x33,
+    ret     = 0x34,
+    unit    = 0x35,
+
     /// discard top of stack
     pop     = 0x60,
     dup     = 0x61,

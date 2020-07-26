@@ -69,7 +69,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_lambda_expr(&mut self, expr: &ir::Expr, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
         let param_tys = self.tcx.mk_substs(sig.inputs.iter().map(|ty| self.lower_ty(ty)));
-        let ret_ty = sig.output.map(|ty| self.lower_ty(ty)).unwrap_or(self.new_infer_var());
+        let ret_ty = sig.output.map(|ty| self.lower_ty(ty)).unwrap_or_else(|| self.new_infer_var());
         let body_ty = self.check_body(param_tys, body);
         self.unify(expr.span, ret_ty, body_ty);
         self.tcx.mk_ty(TyKind::Fn(param_tys, ret_ty))
@@ -123,7 +123,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {
-            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => {
+            ast::BinOp::Mul
+            | ast::BinOp::Div
+            | ast::BinOp::Add
+            | ast::BinOp::Sub
+            | ast::BinOp::Lt
+            | ast::BinOp::Gt => {
+                // only allow these operations on numbers forn ow
+                self.unify(l.span, self.tcx.types.num, tl);
                 self.unify(r.span, tl, tr);
                 tl
             }

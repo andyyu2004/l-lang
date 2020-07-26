@@ -14,7 +14,7 @@ pub enum Val {
     Clsr(Gc<Closure>),
     Str(Gc<String>),
     Tuple(Gc<obj::Tuple>),
-    UInt(u64),
+    Uint(u64),
     Int(i64),
     Double(f64),
     Unit,
@@ -36,7 +36,7 @@ impl Display for Val {
             Val::Clsr(x) => write!(f, "{:?}", x),
             Val::Str(x) => write!(f, "{:?}", x),
             Val::Tuple(x) => write!(f, "{}", x),
-            Val::UInt(u) => write!(f, "{}", u),
+            Val::Uint(u) => write!(f, "{}", u),
             Val::Int(i) => write!(f, "{}", i),
             Val::Double(d) => write!(f, "{}", d),
             Val::Unit => write!(f, "()"),
@@ -45,7 +45,7 @@ impl Display for Val {
 }
 
 impl_into!(Val, Int, i64);
-impl_into!(Val, UInt, u64);
+impl_into!(Val, Uint, u64);
 impl_into!(Val, Double, f64);
 impl_into!(Val, Array, Gc<Array>);
 impl_into!(Val, Fn, Gc<Function>);
@@ -56,9 +56,15 @@ impl_from_inner!(Gc<Instance>, Val, Instance);
 impl_from_inner!(Gc<Closure>, Val, Clsr);
 impl_from_inner!(Gc<Array>, Val, Array);
 impl_from_inner!(Gc<Tuple>, Val, Tuple);
-impl_from_inner!(u64, Val, UInt);
+impl_from_inner!(u64, Val, Uint);
 impl_from_inner!(i64, Val, Int);
 impl_from_inner!(f64, Val, Double);
+
+impl From<bool> for Val {
+    fn from(b: bool) -> Self {
+        Self::Uint(b as u64)
+    }
+}
 
 impl Val {
     pub fn as_u64(&self) -> u64 {
@@ -92,7 +98,7 @@ impl Trace for Val {
             Self::Array(xs) => Gc::mark(xs, map),
             Self::Str(s) => Gc::mark(s, map),
             Self::Tuple(t) => Gc::mark(t, map),
-            Self::Double(_) | Self::Int(_) | Self::UInt(_) | Self::Unit => {}
+            Self::Double(_) | Self::Int(_) | Self::Uint(_) | Self::Unit => {}
         }
     }
 }

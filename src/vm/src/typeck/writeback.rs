@@ -54,7 +54,6 @@ impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
 impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
     fn write_node_ty(&mut self, span: Span, id: ir::Id) {
         let unresolved_ty = self.fcx.node_ty(id);
-        info!("writeback unsub {:?}: {}", id, unresolved_ty);
         let ty = self.resolve_ty(unresolved_ty, span);
         info!("writeback {:?}: {}", id, ty);
         self.write_ty(id, ty)

@@ -7,8 +7,11 @@ use crate::span::Span;
 const UNARY_OPS: [TokenType; 2] = [TokenType::Not, TokenType::Minus];
 const POSTFIX_OPS: [TokenType; 3] =
     [TokenType::Dot, TokenType::OpenSqBracket, TokenType::OpenParen];
+const CMP_OPS: [TokenType; 2] = [TokenType::Lt, TokenType::Gt];
 const TERM_OPS: [TokenType; 2] = [TokenType::Plus, TokenType::Minus];
 const FACTOR_OPS: [TokenType; 2] = [TokenType::Star, TokenType::Slash];
+
+// expr parsers are written in increasing order of precedence
 
 pub(super) struct ExprParser;
 
@@ -16,7 +19,17 @@ impl Parse for ExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        TermExprParser.parse(parser)
+        CmpExprParser.parse(parser)
+    }
+}
+
+pub(super) struct CmpExprParser;
+
+impl Parse for CmpExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        LBinaryExprParser { ops: &CMP_OPS, inner: TermExprParser }.parse(parser)
     }
 }
 

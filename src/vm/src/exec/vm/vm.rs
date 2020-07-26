@@ -195,6 +195,8 @@ where
                 Op::idiv => iarith!(/),
                 Op::udiv => uarith!(/),
                 Op::ddiv => farith!(/),
+                Op::dcmplt => farith!(<),
+                Op::dcmpgt => farith!(>),
                 Op::pop => frame_mut!().sp -= 1,
                 Op::ret | Op::uret | Op::dret | Op::iret | Op::rret => {
                     let ret = pop!();
@@ -282,7 +284,6 @@ where
                     let f = self.ctx.stack[f_idx];
                     let clsr = match f {
                         Val::Fn(f) => {
-                            // if f is just a function not a closure, it shouldn't have any upvalues
                             assert!(f.upvalc == 0);
                             self.alloc(Closure::new(f))
                         }

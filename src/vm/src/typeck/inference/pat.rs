@@ -27,7 +27,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // create inference variables for each element
         let n = pats.len();
         let tys = self.tcx.mk_substs((0..n).map(|_| self.new_infer_var()));
-        pats.iter().zip(tys).map(|(pat, ty)| self.check_pat(pat, ty)).count();
+        for (pat, ty) in pats.iter().zip(tys) {
+            self.check_pat(pat, ty);
+        }
         let pat_ty = self.tcx.mk_ty(TyKind::Tuple(tys));
         pat_ty
     }

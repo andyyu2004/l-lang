@@ -57,12 +57,11 @@ use driver::Driver;
 use error::LResult;
 use log::LevelFilter;
 
-pub fn exec(src: &str) -> LResult<()> {
+pub fn exec(src: &str) -> LResult<exec::Val> {
     simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
     let driver = Driver::new(src);
     let res = driver.exec()?;
-    println!("{}", res);
-    Ok(())
+    Ok(res)
 }
 
 pub macro tir($src:expr) {{
@@ -75,7 +74,7 @@ fn wrap_in_main(src: &str) -> String {
     format!("fn main() {{ {} }}", src)
 }
 
-pub fn exec_expr(src: &str) -> LResult<()> {
+pub fn exec_expr(src: &str) -> LResult<exec::Val> {
     let src = wrap_in_main(src);
     exec(&src)
 }

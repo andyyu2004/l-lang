@@ -166,7 +166,7 @@ impl<'ctx> Parser<'ctx> {
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
-        ttypes.into_iter().fold(None, |acc, &t| acc.or(self.accept(t)))
+        ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
     }
 
     pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<Tok> {

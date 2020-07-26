@@ -154,6 +154,8 @@ crate enum BinOp {
     Div,
     Add,
     Sub,
+    Lt,
+    Gt,
 }
 
 impl Display for BinOp {
@@ -163,6 +165,8 @@ impl Display for BinOp {
             Self::Div => write!(f, "/"),
             Self::Add => write!(f, "+"),
             Self::Sub => write!(f, "-"),
+            BinOp::Lt => write!(f, "<"),
+            BinOp::Gt => write!(f, ">"),
         }
     }
 }
@@ -174,6 +178,8 @@ impl From<Tok> for BinOp {
             TokenType::Minus => Self::Sub,
             TokenType::Star => Self::Mul,
             TokenType::Slash => Self::Div,
+            TokenType::Gt => Self::Gt,
+            TokenType::Lt => Self::Lt,
             k => panic!("Invalid binary operator `{:?}`", k),
         }
     }

@@ -4,7 +4,7 @@ use std::alloc::{self, Layout};
 use std::ptr::NonNull;
 
 /// the garbage collector
-/// not to be confused with the Gc ptr
+/// not to be confused with the `Gc` ptr type
 #[derive(Default)]
 pub struct GC {
     allocated_bytes: usize,
@@ -56,6 +56,8 @@ impl GarbageCollector for GC {
 
             // otherwise free the pointer
             to_release.insert(ptr);
+            // I don't think dealloc_t drops the stuff inside the GcPtr (such as vectors etc)
+            unsafe { std::ptr::drop_in_place(ptr.as_ptr()) }
             self.allocated_bytes -= std::mem::size_of_val(unsafe { &*ptr.as_ptr() });
             Self::dealloc_t(ptr)
         }

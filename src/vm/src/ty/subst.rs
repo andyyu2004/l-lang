@@ -30,8 +30,8 @@ impl<'tcx> InferenceVarSubstFolder<'tcx> {
 
 impl<'tcx> TypeFolder<'tcx> for InferenceVarSubstFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
-        match &ty.kind {
-            &TyKind::Infer(InferTy::TyVar(tyvid)) => self.substs[tyvid.index as usize],
+        match ty.kind {
+            TyKind::Infer(InferTy::TyVar(tyvid)) => self.substs[tyvid.index as usize],
             _ => ty.inner_fold_with(self),
         }
     }

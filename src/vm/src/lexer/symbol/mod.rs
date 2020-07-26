@@ -4,7 +4,7 @@ crate use interner::Interner;
 
 // there is probably a better way than manually counting the symbol indices :)
 // without proc macro?
-pub const SYMBOLS: &'static [&'static str] = &["number", "bool", "char", "main"];
+pub const SYMBOLS: &[&str] = &["number", "bool", "char", "main"];
 pub const NUMBER: Symbol = Symbol(0);
 pub const BOOL: Symbol = Symbol(1);
 pub const CHAR: Symbol = Symbol(2);

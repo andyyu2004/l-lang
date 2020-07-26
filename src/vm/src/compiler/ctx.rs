@@ -56,7 +56,7 @@ impl<'tcx> Compilers<'tcx> {
 
     fn compile_fn(&mut self, body: &tir::Body<'tcx>) -> Function {
         self.with_compiler(|compiler| {
-            compiler.compile_expr(body.expr);
+            compiler.compile_body(body);
             compiler.finish()
         })
     }
@@ -64,6 +64,7 @@ impl<'tcx> Compilers<'tcx> {
 
 crate struct CompilerCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
+    // mapping of a functions `DefId` to its index in the `ConstantPool`
     pub def_id_to_const_id: RefCell<FxHashMap<DefId, ConstId>>,
     pub main_fn: RefCell<Option<ConstId>>,
     pub constants: RefCell<IndexVec<ConstId, Option<Constant>>>,

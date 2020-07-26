@@ -288,7 +288,7 @@ impl Parse for ElseParser {
             let (span, block) = BlockParser { open_brace }.spanned(true).parse(parser)?;
             Ok(parser.mk_expr(span, ExprKind::Block(block)))
         } else {
-            return Err(ParseError::unimpl());
+            Err(ParseError::unimpl())
         }
     }
 }

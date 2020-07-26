@@ -1,13 +1,14 @@
 use super::{lexing, LiteralKind, Symbol};
 use crate::span::{self, Span};
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use lexing::TokenKind;
 use maplit::hashmap;
 use once_cell::unsync::Lazy;
 use std::collections::HashMap;
 
-const KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
-    hashmap! {
+lazy_static! {
+    static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
         "false" => TokenType::False,
         "true" => TokenType::True,
         "fn" => TokenType::Fn,
@@ -17,8 +18,8 @@ const KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
         "let" => TokenType::Let,
         "if" => TokenType::If,
         "else" => TokenType::Else,
-    }
-});
+    };
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 crate struct Tok {

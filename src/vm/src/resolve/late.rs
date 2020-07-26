@@ -73,25 +73,18 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
         self.with_val_scope(|resolver| ast::walk_block(resolver, block));
     }
 
-    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
-        self.with_val_scope(|resolver| {
-            resolver.resolve_params(&sig.inputs);
-            if let Some(ty) = &sig.output {
-                resolver.visit_ty(ty)
-            }
-            resolver.visit_expr(expr);
-        });
+    /// create a scope for fn parameters
+    fn visit_fn(&mut self, sig: &'ast FnSig, body: Option<&'ast Expr>) {
+        self.with_val_scope(|resolver| ast::walk_fn(resolver, sig, body));
     }
 
-    /// resolve the initializer first in case the same pattern is referenced in the initializer
-    /// let x = 1;
-    /// let x = x;
-    /// this will only behave correctly if the pattern is resolved after the initializer
-    fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
-        init.as_ref().map(|expr| self.visit_expr(expr));
-        self.resolve_pattern(pat);
-        ast::walk_pat(self, pat);
-        ty.as_ref().map(|ty| self.visit_ty(ty));
+    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
+        self.with_val_scope(|resolver| ast::walk_lambda(resolver, sig, expr));
+    }
+
+    fn visit_pattern(&mut self, pattern: &'ast Pattern) {
+        self.resolve_pattern(pattern);
+        ast::walk_pat(self, pattern);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {

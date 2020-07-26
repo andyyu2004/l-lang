@@ -25,7 +25,7 @@ crate struct Scope<T> {
 
 impl<T> Scopes<T> {
     pub fn def(&mut self, ident: Ident, value: T) {
-        self.scopes.last_mut().unwrap().def(ident, value);
+        self.scopes.last_mut().expect("ran out of scopes").def(ident, value);
     }
 
     pub fn lookup(&self, ident: &Ident) -> Option<&T> {

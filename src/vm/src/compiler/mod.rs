@@ -2,6 +2,9 @@ mod compiler;
 mod constant_pool;
 mod ctx;
 mod executable;
+mod expr;
+mod pat;
+mod stmt;
 #[cfg(test)]
 mod tests;
 

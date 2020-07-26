@@ -18,18 +18,21 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_fn(&mut self, sig: &'ast FnSig, body: Option<&'ast Expr>) {
-        self.visit_fn_sig(sig);
-        body.as_ref().map(|body| self.visit_expr(body));
+        walk_fn(self, sig, body);
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
         walk_block(self, block);
     }
 
+    /// visit the initializer first in case the same pattern is referenced in the initializer
+    /// let x = 1;
+    /// let x = x;
+    /// this will only behave correctly if the pattern is resolved after the initializer
     fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
+        init.as_ref().map(|expr| self.visit_expr(expr));
         self.visit_pattern(pat);
         ty.as_ref().map(|ty| self.visit_ty(ty));
-        init.as_ref().map(|expr| self.visit_expr(expr));
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
@@ -80,6 +83,15 @@ crate trait Visitor<'ast>: Sized {
     }
 }
 
+crate fn walk_fn<'ast>(
+    visitor: &mut impl Visitor<'ast>,
+    sig: &'ast FnSig,
+    body: Option<&'ast Expr>,
+) {
+    visitor.visit_fn_sig(sig);
+    body.as_ref().map(|body| visitor.visit_expr(body));
+}
+
 crate fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
     block.stmts.iter().for_each(|stmt| visitor.visit_stmt(stmt))
 }
@@ -111,7 +123,7 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
 
 crate fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {
     visitor.visit_fn_sig(sig);
-    visitor.visit_expr(expr)
+    visitor.visit_expr(expr);
 }
 
 crate fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {

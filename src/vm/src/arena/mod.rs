@@ -563,10 +563,8 @@ impl DropArena {
         // Record the destructors after doing the allocation as that may panic
         // and would cause `object`'s destuctor to run twice if it was recorded before
         for i in 0..len {
-            destructors.push(DropType {
-                drop_fn: drop_for_type::<T>,
-                obj: start_ptr.offset(i as isize) as *mut u8,
-            });
+            destructors
+                .push(DropType { drop_fn: drop_for_type::<T>, obj: start_ptr.add(i) as *mut u8 });
         }
 
         slice::from_raw_parts_mut(start_ptr, len)

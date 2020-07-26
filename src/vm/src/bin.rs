@@ -12,7 +12,7 @@ fn main() {
 
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
-        return libvm::exec(&src).unwrap();
+        return println!("{}", libvm::exec(&src).unwrap());
     }
 
     if rl.load_history(HISTORY_PATH).is_err() {}

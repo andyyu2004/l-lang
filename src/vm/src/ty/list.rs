@@ -40,7 +40,7 @@ unsafe impl<T: Sync> Sync for List<T> {
 
 impl<T: Display> Display for List<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.into_iter(), ","))
+        write!(f, "{}", util::join2(self.iter(), ","))
     }
 }
 

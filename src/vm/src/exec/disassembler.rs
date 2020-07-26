@@ -16,7 +16,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
     pub fn fmt(&mut self) -> fmt::Result {
         while !self.code.is_empty() {
             let len = self.fmt_inst();
-            writeln!(self.f, "")?;
+            writeln!(self.f)?;
             self.code = &self.code[len..];
             self.i += len;
         }
@@ -64,7 +64,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
         let x = self.code[1] as u16;
         let y = self.code[2] as u16;
         let offset = (x << 8 | y) as usize;
-        write!(self.f, "{:#06x} (to {:#0x})", offset, self.i + offset + 3).unwrap();
+        write!(self.f, "{:#06x} (-> {:#0x})", offset, self.i + offset + 3).unwrap();
         3
     }
 
@@ -78,6 +78,8 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::jmp | Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => self.jmp_inst(),
             Op::nop
             | Op::iadd
+            | Op::dcmplt
+            | Op::dcmpgt
             | Op::uadd
             | Op::dadd
             | Op::isub

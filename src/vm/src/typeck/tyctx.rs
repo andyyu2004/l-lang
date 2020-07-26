@@ -128,7 +128,7 @@ impl<'tcx> TyCtx<'tcx> {
                 // unspecified return type on fn item implies unit type
                 let ret_ty =
                     sig.output.map(|ty| TyConv::ir_ty_to_ty(&self, ty)).unwrap_or(self.types.unit);
-                let inputs = sig.inputs.into_iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
+                let inputs = sig.inputs.iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
                 let input_tys = self.mk_substs(inputs);
                 let fn_ty = self.mk_ty(TyKind::Fn(input_tys, ret_ty));
                 self.item_tys.borrow_mut().insert(item.id.def_id, fn_ty);
