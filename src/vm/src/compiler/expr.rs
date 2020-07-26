@@ -39,7 +39,7 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     fn compile_item_ref(&mut self, id: DefId) {
-        let const_id = self.ctx.def_id_to_const_id.borrow()[&id];
+        let const_id = self.gctx.def_id_to_const_id.borrow()[&id];
         self.emit_ldc(const_id.index() as u8);
     }
 

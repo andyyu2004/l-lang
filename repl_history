@@ -88,3 +88,6 @@ if false { 5 } else if true { 6 } else { 7 }
 444
 2 
 123
+2 < 2
+2 < 34
+2 < 1

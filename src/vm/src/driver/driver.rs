@@ -1,6 +1,6 @@
 use crate::arena::DroplessArena;
 use crate::ast::{self, P};
-use crate::compiler::{CompilerCtx, Compilers, Executable};
+use crate::compiler::{Compiler, Executable, GlobalCompilerCtx};
 use crate::core::Arena;
 use crate::error::{DiagnosticBuilder, LError, LResult};
 use crate::resolve::{Resolver, ResolverOutputs};
@@ -78,8 +78,8 @@ impl<'tcx> Driver<'tcx> {
         let tir = self.gen_tir()?;
         println!("{}", tir);
         let gcx = self.global_ctx.get().unwrap();
-        let ccx = gcx.enter_tcx(|tcx| self.arena.alloc(CompilerCtx::new(tcx)));
-        let executable = Compilers::new(ccx).compile(&tir);
+        let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
+        let executable = Compiler::new(cctx).compile(&tir);
         println!("{}", executable);
         Ok(executable)
     }

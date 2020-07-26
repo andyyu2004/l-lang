@@ -1,28 +1,69 @@
-use super::{CompilerCtx, ConstantPool};
+use super::ctx::{FrameCtx, GlobalCompilerCtx};
+use super::{ConstantPool, Executable};
 use crate::ast;
 use crate::exec::{CodeBuilder, Function, Op};
 use crate::ir::{self, DefId, LocalId};
 use crate::tir;
 use crate::ty::{Const, ConstKind, Ty, TyKind};
-use crate::typeck::TyCtx;
+use crate::{lexer::symbol, typeck::TyCtx};
 use ast::Lit;
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::ops::{Deref, DerefMut};
 
-pub(super) struct Compiler<'tcx> {
-    code: CodeBuilder,
-    pub(super) locals: Vec<LocalId>,
-    pub(super) ctx: &'tcx CompilerCtx<'tcx>,
+crate struct Compiler<'tcx> {
+    frames: Vec<FrameCtx<'tcx>>,
+    gctx: &'tcx GlobalCompilerCtx<'tcx>,
 }
 
 impl<'tcx> Compiler<'tcx> {
-    pub fn new(ctx: &'tcx CompilerCtx<'tcx>) -> Self {
-        Self { ctx, code: Default::default(), locals: Default::default() }
+    pub fn new(gctx: &'tcx GlobalCompilerCtx<'tcx>) -> Self {
+        Self { frames: Default::default(), gctx }
+    }
+
+    pub fn compile(mut self, tir: &tir::Prog<'tcx>) -> Executable {
+        tir.items.values().for_each(|item| self.gctx.assign_const_id(item.id.def_id));
+        tir.items.values().for_each(|item| self.compile_item(item));
+        match *self.gctx.main_fn.borrow() {
+            Some(id) => {
+                let constant_pool: ConstantPool =
+                    self.gctx.constants.take().into_iter().map(|c| c.unwrap()).collect();
+                Executable::with_main_index(constant_pool, id.index())
+            }
+            None => panic!("no main fn"),
+        }
+    }
+
+    fn compile_item(&mut self, item: &tir::Item<'tcx>) {
+        match &item.kind {
+            tir::ItemKind::Fn(_, _, body) => {
+                let f = self.compile_fn(body);
+                self.gctx.set_const(item.id.def_id, f);
+                if item.ident.symbol == symbol::MAIN {
+                    let const_id = self.gctx.def_id_to_const_id.borrow()[&item.id.def_id];
+                    *self.gctx.main_fn.borrow_mut() = Some(const_id)
+                }
+            }
+        }
+    }
+
+    /// pushes new `FrameCtx`
+    fn with_frame<R>(&mut self, f: impl FnOnce(&mut Compiler) -> R) -> R {
+        self.frames.push(FrameCtx::new(self.gctx));
+        let res = f(self);
+        self.frames.pop();
+        res
+    }
+
+    fn compile_fn(&mut self, body: &tir::Body<'tcx>) -> Function {
+        self.with_frame(|compiler| {
+            compiler.compile_body(body);
+            compiler.finish()
+        })
     }
 
     pub fn finish(&mut self) -> Function {
-        self.code.emit_op(Op::ret);
+        self.emit_op(Op::ret);
         Function::new(self.code.build())
     }
 
@@ -83,16 +124,17 @@ impl<'tcx> Compiler<'tcx> {
     }
 }
 
+/// dereferences into its topmost frame
 impl<'tcx> Deref for Compiler<'tcx> {
-    type Target = CodeBuilder;
+    type Target = FrameCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.code
+        self.frames.last().unwrap()
     }
 }
 
 impl<'tcx> DerefMut for Compiler<'tcx> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.code
+        self.frames.last_mut().unwrap()
     }
 }
