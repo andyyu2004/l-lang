@@ -56,9 +56,8 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         let &Self { span, id, ident, vis, ref kind } = self;
         let kind = match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
-                let (inputs, output) = ctx.tcx.item_ty(self.id.def).expect_fn();
-                let sig = ctx.tcx.alloc_tir(tir::FnSig { inputs, output });
-                tir::ItemKind::Fn(sig, generics.to_tir(ctx), body.to_tir(ctx))
+                let ty = ctx.tcx.item_ty(self.id.def);
+                tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
             }
         };
         tir::Item { kind, span, id, ident, vis }
@@ -192,6 +191,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 ir::Res::Local(id) => tir::ExprKind::VarRef(id),
                 ir::Res::Def(def_id, def_kind) => match def_kind {
                     ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
+                    ir::DefKind::TyParam => panic!(),
                 },
                 ir::Res::PrimTy(_) => unreachable!(),
             },

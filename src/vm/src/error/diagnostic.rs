@@ -1,5 +1,31 @@
+use super::DiagnosticBuilder;
 use crate::span::Span;
+use std::cell::Cell;
 use std::error::Error;
+
+#[derive(Default)]
+pub struct Diagnostics {
+    err_count: Cell<usize>,
+}
+
+impl Diagnostics {
+    fn inc_err_count(&self) {
+        self.err_count.set(1 + self.err_count.get());
+    }
+
+    pub fn err_count(&self) -> usize {
+        self.err_count.get()
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.err_count.get() > 0
+    }
+
+    pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder {
+        self.inc_err_count();
+        DiagnosticBuilder::from_err(span, err)
+    }
+}
 
 /// a single diagnostic error message
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]

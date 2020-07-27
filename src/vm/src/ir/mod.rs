@@ -9,10 +9,32 @@ mod stmt;
 mod ty;
 mod visit;
 
+crate use ast_lowering::AstLoweringCtx;
+crate use def::*;
+crate use expr::{Expr, ExprKind};
+crate use ir::*;
+crate use item::{Item, ItemKind};
+crate use pattern::{Pattern, PatternKind};
+crate use prog::Prog;
+use std::fmt::{self, Display, Formatter};
+crate use stmt::{Stmt, StmtKind};
+crate use ty::*;
+crate use visit::*;
+
 newtype_index!(DefId);
 newtype_index!(LocalId);
 
-use std::fmt::{self, Display, Formatter};
+impl Display for LocalId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Display for DefId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 crate struct Id {
@@ -27,14 +49,3 @@ impl Display for Id {
         write!(f, "{:?}.{:?}", self.def, self.local)
     }
 }
-
-crate use ast_lowering::AstLoweringCtx;
-crate use def::*;
-crate use expr::{Expr, ExprKind};
-crate use ir::*;
-crate use item::{Item, ItemKind};
-crate use pattern::{Pattern, PatternKind};
-crate use prog::Prog;
-crate use stmt::{Stmt, StmtKind};
-crate use ty::*;
-crate use visit::*;

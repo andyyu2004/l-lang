@@ -1,3 +1,4 @@
+use super::Session;
 use crate::arena::DroplessArena;
 use crate::ast::{self, P};
 use crate::compiler::{Compiler, Executable, GlobalCompilerCtx};
@@ -18,7 +19,7 @@ crate struct Driver<'tcx> {
     arena: Arena<'tcx>,
     ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
-    diagnostics: DiagnosticBuilder,
+    session: Session,
 }
 
 impl<'tcx> Driver<'tcx> {
@@ -28,7 +29,7 @@ impl<'tcx> Driver<'tcx> {
             arena: Default::default(),
             ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
-            diagnostics: Default::default(),
+            session: Default::default(),
         }
     }
 
@@ -69,9 +70,9 @@ impl<'tcx> Driver<'tcx> {
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
-        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs));
-        let tir = gcx.enter_tcx(|tcx| tcx.run_typeck(&ir));
-        Ok(tir)
+        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
+        let tir = gcx.enter_tcx(|tcx| tcx.check_prog(&ir));
+        if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(tir) }
     }
 
     pub fn compile(&'tcx self) -> LResult<Executable> {

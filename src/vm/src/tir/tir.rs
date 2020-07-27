@@ -37,12 +37,6 @@ crate struct Body<'tcx> {
     pub expr: &'tcx tir::Expr<'tcx>,
 }
 
-#[derive(Debug)]
-crate struct FnSig<'tcx> {
-    pub inputs: SubstRef<'tcx>,
-    pub output: Ty<'tcx>,
-}
-
 impl<'tcx> Display for Body<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.expr)

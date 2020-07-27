@@ -12,6 +12,11 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_generics(&mut self, generics: &'ast Generics) {
+        walk_generics(self, generics)
+    }
+
+    fn visit_ty_param(&mut self, ty_param: &'ast TyParam) {
+        self.visit_ident(ty_param.ident)
     }
 
     fn visit_vis(&mut self, vis: &'ast Visibility) {
@@ -119,6 +124,10 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(r);
         }
     }
+}
+
+crate fn walk_generics<'ast>(visitor: &mut impl Visitor<'ast>, generics: &'ast Generics) {
+    generics.params.iter().for_each(|p| visitor.visit_ty_param(p));
 }
 
 crate fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {

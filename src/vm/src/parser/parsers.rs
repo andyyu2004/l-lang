@@ -301,27 +301,27 @@ impl Parse for GenericsParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut span = parser.empty_span();
         let params = if parser.accept(TokenType::Lt).is_some() {
-            let params =
-                PunctuatedParser { inner: GenericParamParser, separator: TokenType::Comma }
-                    .parse(parser)?;
+            let params = PunctuatedParser { inner: TyParamParser, separator: TokenType::Comma }
+                .parse(parser)?;
             let gt = parser.expect(TokenType::Gt)?;
             span = span.merge(&gt.span);
             params
         } else {
             vec![]
         };
-        Ok(Generics { params, id: parser.mk_id(), span })
+        Ok(Generics { params, span })
     }
 }
 
-crate struct GenericParamParser;
+crate struct TyParamParser;
 
-impl Parse for GenericParamParser {
-    type Output = GenericParam;
+impl Parse for TyParamParser {
+    type Output = TyParam;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let ident = parser.expect_ident()?;
+        let default = parser.accept(TokenType::Eq).map(|_| TyParser.parse(parser)).transpose()?;
         // eventually parse bounds here
-        Ok(GenericParam { span: ident.span, id: parser.mk_id(), ident })
+        Ok(TyParam { span: ident.span, id: parser.mk_id(), ident, default })
     }
 }

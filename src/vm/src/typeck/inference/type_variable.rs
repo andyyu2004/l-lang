@@ -3,12 +3,19 @@ use crate::error::{TypeError, TypeResult};
 use crate::ty::InferenceVarSubstFolder;
 use crate::ty::{self, Ty, TyKind};
 use ena::unify as ut;
+use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
 /// type variable id
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 crate struct TyVid {
     pub index: u32,
+}
+
+impl Display for TyVid {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.index)
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -50,10 +57,12 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     /// generates an indexed substitution based on the contents of the UnificationTable
     pub fn gen_substs(&mut self) -> TypeResult<'tcx, Vec<Ty<'tcx>>> {
         (0..self.storage.tyvid_count)
-            .map(|index| self.probe(TyVid { index }))
-            .map(|val| match val {
-                TyVarValue::Known(ty) => Ok(ty),
-                TyVarValue::Unknown => Err(TypeError::InferenceFailure),
+            .map(|index| {
+                let val = self.probe(TyVid { index });
+                match val {
+                    TyVarValue::Known(ty) => Ok(ty),
+                    TyVarValue::Unknown => Err(TypeError::InferenceFailure),
+                }
             })
             .collect()
     }

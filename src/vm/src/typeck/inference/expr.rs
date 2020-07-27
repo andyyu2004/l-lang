@@ -107,7 +107,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_expr_path_def(&mut self, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
         match def_kind {
-            DefKind::Fn => self.tcx.item_ty(def_id),
+            // instantiate ty params
+            DefKind::Fn => self.instantiate(self.tcx.item_ty(def_id)),
             DefKind::TyParam => panic!(),
         }
     }

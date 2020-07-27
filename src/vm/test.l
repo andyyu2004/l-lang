@@ -1,13 +1,11 @@
-
-fn main() -> number {
-    let x = 5;
-    let f = fn(y) => x + y;
-    let g = fn(y) => x + y;
-    apply(f, 8)
+fn main() {
+    f(5, false);
+    /* f(false, false); */
 }
 
-fn apply(f: fn(number) -> number, x: number) -> number {
-    f(x)
+
+fn f<T>(t: T, u: T) -> T {
+    t
 }
 
 

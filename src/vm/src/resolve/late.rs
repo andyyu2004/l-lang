@@ -1,7 +1,7 @@
 use super::{Resolver, Scope, Scopes};
 use crate::ast::{self, *};
 use crate::error::{ResolutionError, ResolutionResult};
-use crate::ir::{PerNS, Res, NS};
+use crate::ir::{DefKind, PerNS, Res, NS};
 use std::marker::PhantomData;
 
 struct LateResolutionVisitor<'a, 'r, 'ast> {
@@ -22,6 +22,23 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         ret
     }
 
+    pub fn with_ty_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.scopes[NS::Type].push(Scope::default());
+        let ret = f(self);
+        self.scopes[NS::Type].pop();
+        ret
+    }
+
+    fn with_generics<R>(&mut self, generics: &Generics, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.with_ty_scope(|this| {
+            for param in &generics.params {
+                let res = Res::Def(this.resolver.def_id(param.id), DefKind::TyParam);
+                this.scopes[NS::Type].def(param.ident, res)
+            }
+            f(this)
+        })
+    }
+
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         match &pat.kind {
             PatternKind::Ident(ident, _) => self.scopes[NS::Value].def(*ident, Res::Local(pat.id)),
@@ -37,6 +54,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         }
     }
 
+    fn resolve_item(&mut self, item: &'ast Item) {
+        match &item.kind {
+            ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
+        }
+    }
+
     fn resolve_path(&mut self, path: &'ast Path, ns: NS) -> ResolutionResult<()> {
         if path.segments.len() > 1 {
             unimplemented!()
@@ -47,16 +70,21 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
                 .resolve_value(segment.ident)
                 .ok_or_else(|| ResolutionError::unbound_variable(path.clone()))?,
             // just lookup primitive type for now as there are no other potential types
-            NS::Type => Res::PrimTy(
-                *self
-                    .resolver
-                    .primitive_types
-                    .get(&segment.ident.symbol)
-                    .ok_or_else(|| ResolutionError::unknown_type(path.clone()))?,
-            ),
+            NS::Type => self.resolve_ty_path(path)?,
         };
         self.resolver.resolve_node(segment.id, res);
         Ok(())
+    }
+
+    fn resolve_ty_path(&mut self, path: &'ast Path) -> ResolutionResult<Res<NodeId>> {
+        let segment = &path.segments[0];
+        if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
+            Ok(res)
+        } else if let Some(&ty) = self.resolver.primitive_types.get(&segment.ident.symbol) {
+            Ok(Res::PrimTy(ty))
+        } else {
+            Err(ResolutionError::unknown_type(path.clone()))
+        }
     }
 
     /// bring each parameter into scope
@@ -70,16 +98,20 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
 impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_block(&mut self, block: &'ast Block) {
-        self.with_val_scope(|resolver| ast::walk_block(resolver, block));
+        self.with_val_scope(|this| ast::walk_block(this, block));
     }
 
     /// create a scope for fn parameters
     fn visit_fn(&mut self, sig: &'ast FnSig, body: Option<&'ast Expr>) {
-        self.with_val_scope(|resolver| ast::walk_fn(resolver, sig, body));
+        self.with_val_scope(|this| ast::walk_fn(this, sig, body));
     }
 
     fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
-        self.with_val_scope(|resolver| ast::walk_lambda(resolver, sig, expr));
+        self.with_val_scope(|this| ast::walk_lambda(this, sig, expr));
+    }
+
+    fn visit_item(&mut self, item: &'ast Item) {
+        self.resolve_item(item)
     }
 
     fn visit_pattern(&mut self, pattern: &'ast Pattern) {

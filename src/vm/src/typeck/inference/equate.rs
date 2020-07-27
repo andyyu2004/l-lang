@@ -3,6 +3,7 @@ use crate::error::{TypeError, TypeResult};
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeRelation};
 
+#[derive(Deref)]
 crate struct Equate<'a, 'tcx> {
     pub at: &'a At<'a, 'tcx>,
 }
@@ -19,14 +20,13 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
 
         let a = type_vars.instantiate_if_known(a);
         let b = type_vars.instantiate_if_known(b);
-        dbg!(a);
-        dbg!(b);
 
         match (&a.kind, &b.kind) {
             _ if a == b => {}
             (&Infer(TyVar(a_id)), &Infer(TyVar(b_id))) => type_vars.equate(a_id, b_id),
             (&Infer(TyVar(vid)), _) => type_vars.instantiate(vid, b),
             (_, &Infer(TyVar(vid))) => type_vars.instantiate(vid, a),
+            (Error, _) | (_, Error) => return Ok(self.infcx.report_ty_err()),
             _ => {
                 drop(inner);
                 self.relate_inner(a, b)?;

@@ -18,7 +18,7 @@ crate struct Item<'tcx> {
 
 #[derive(Debug)]
 crate enum ItemKind<'tcx> {
-    Fn(&'tcx tir::FnSig<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
+    Fn(Ty<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
 }
 
 impl<'tcx> Display for Item<'tcx> {

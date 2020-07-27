@@ -1,6 +1,6 @@
 use crate::arena::{DropArena, DroplessArena, TypedArena};
 use crate::ir::Definitions;
-use crate::ty::{List, SubstRef, Ty, TyKind, TyS};
+use crate::ty::{List, SubstRef, Ty, TyFlag, TyKind, TyS};
 use std::{alloc::Layout, marker::PhantomData};
 
 /// collective arena which contains all main arenas
@@ -24,12 +24,20 @@ impl<'tcx> Arena<'tcx> {
         }
     }
 
+    pub fn alloc_iter<I, T>(&self, t: I) -> &[T]
+    where
+        I: IntoIterator<Item = T>,
+    {
+        self.dropless.alloc_from_iter(t)
+    }
+
     pub fn alloc_raw(&self, layout: Layout) -> *mut u8 {
         self.dropless.alloc_raw(layout)
     }
 
     pub fn alloc_ty(&'tcx self, kind: TyKind<'tcx>) -> Ty<'tcx> {
-        let ty_structure = TyS { kind };
+        let flags = kind.ty_flags();
+        let ty_structure = TyS { kind, flags };
         self.tys.alloc(ty_structure)
     }
 

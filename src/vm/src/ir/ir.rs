@@ -5,20 +5,23 @@ use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-crate struct BodyId(ir::Id);
-
 #[derive(Debug)]
 crate struct Generics<'ir> {
-    /// just to make it not a ZST
-    pub data: usize,
-    pub pd: PhantomData<&'ir ()>,
+    pub span: Span,
+    pub params: &'ir [ir::TyParam<'ir>],
+}
+
+#[derive(Debug)]
+crate struct TyParam<'ir> {
+    pub span: Span,
+    pub id: ir::Id,
+    pub ident: Ident,
+    pub default: Option<&'ir ir::Ty<'ir>>,
 }
 
 #[derive(Debug)]
 crate struct Body<'ir> {
     pub params: &'ir [ir::Param<'ir>],
-    // the body is not necessarily a block (e.g. closures)
     pub expr: &'ir ir::Expr<'ir>,
 }
 

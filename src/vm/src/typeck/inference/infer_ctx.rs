@@ -2,10 +2,10 @@ use super::*;
 use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
 use crate::ir::DefId;
 use crate::span::Span;
-use crate::ty::{InferTy, InferenceVarSubstFolder, SubstRef, Ty, TyConv, TyKind, TypeFoldable};
+use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 crate struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
@@ -40,18 +40,16 @@ crate struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
     tables: &'a RefCell<TypeckTables<'tcx>>,
+    has_error: Cell<bool>,
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
-        Self { tcx, tables, inner: Default::default() }
+        Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
     }
 
     pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
-        self.unify_diag(span, expected, actual).unwrap_or_else(|err| {
-            err.emit();
-            self.tcx.mk_ty_err()
-        });
+        self.unify_diag(span, expected, actual).unwrap_or_else(|err| self.emit_ty_err(err));
     }
 
     fn unify_diag(
@@ -62,12 +60,18 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     ) -> Result<Ty<'tcx>, DiagnosticBuilder> {
         match self.at(span).equate(expected, actual) {
             Ok(ty) => Ok(ty),
-            Err(err) => Err(self.report_type_error(span, err)),
+            Err(err) => Err(self.tcx.session.build_error(span, err)),
         }
     }
 
-    fn report_type_error(&self, span: Span, err: TypeError<'tcx>) -> DiagnosticBuilder {
-        DiagnosticBuilder::from_err(span, err)
+    pub fn emit_ty_err(&self, err: DiagnosticBuilder) -> Ty<'tcx> {
+        err.emit();
+        self.report_ty_err()
+    }
+
+    pub fn report_ty_err(&self) -> Ty<'tcx> {
+        self.has_error.set(true);
+        self.tcx.mk_ty_err()
     }
 
     /// creates the substitutions for the inference variables
@@ -98,11 +102,25 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
         let mut fcx = FnCtx::new(&self);
-        let (param_tys, ret_ty) = self.tcx.item_ty(item.id.def).expect_fn();
+        let fn_ty = self.tcx.item_ty(item.id.def);
+        // don't instantiate everything and typeck the body using the param tys
+        // don't know if this is actually a good idea
+        let (_forall, ty) = fn_ty.expect_scheme();
+        let (param_tys, ret_ty) = ty.expect_fn();
         let body_ty = fcx.check_body(param_tys, body);
         info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
         fcx.unify(item.span, ret_ty, body_ty);
         fcx
+    }
+
+    pub fn instantiate(&self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        match &ty.kind {
+            TyKind::Scheme(forall, ty) => {
+                let mut folder = GenericsFolder::new(self, forall);
+                ty.fold_with(&mut folder)
+            }
+            _ => ty,
+        }
     }
 
     /// create new type inference variable

@@ -13,6 +13,7 @@ crate enum Res<Id = ir::Id> {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum DefKind {
     Fn,
+    TyParam,
 }
 
 impl<Id> Res<Id> {

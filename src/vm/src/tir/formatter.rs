@@ -69,21 +69,15 @@ where
 
     pub fn fmt_item(&mut self, item: &tir::Item) -> fmt::Result {
         match item.kind {
-            tir::ItemKind::Fn(sig, generics, body) => {
-                let (params, inputs) = (body.params, sig.inputs);
-                let params = params.iter().zip(inputs).map(|(p, t)| {
-                    // we don't need to print the given ty as the pattern already has a ty
-                    // however, we do check that they are in fact the same type
-                    assert_eq!(p.pat.ty, t);
-                    format!("{}", p)
-                });
+            tir::ItemKind::Fn(ty, generics, body) => {
+                let params = body.params.iter().map(|p| format!("{}", p.pat));
+                indentln!(self, "#{:?} :: {}", item.id.def, ty)?;
                 indentln!(
                     self,
-                    "{}fn #{:?}({}) -> {} {}\n",
+                    "{}fn #{:?}({}) {}\n",
                     item.vis.node,
                     item.id.def,
                     util::join2(params, ", "),
-                    sig.output,
                     body
                 )
             }

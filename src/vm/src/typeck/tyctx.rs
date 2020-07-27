@@ -3,14 +3,15 @@ use crate::core::{Arena, CtxInterners};
 use crate::error::TypeResult;
 use crate::ir::DefId;
 use crate::span::Span;
-use crate::ty::{List, SubstRef, Ty, TyConv, TyKind};
-use crate::{ir, tir};
+use crate::ty::{self, List, SubstRef, Ty, TyConv, TyKind};
+use crate::{driver::Session, ir, tir};
 use indexed_vec::Idx;
 use ir::Definitions;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use tir::IrLoweringCtx;
+use ty::Forall;
 
 #[derive(Copy, Clone, Deref)]
 crate struct TyCtx<'tcx> {
@@ -18,22 +19,37 @@ crate struct TyCtx<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn alloc_tir<T>(&self, tir: T) -> &'tcx T {
+    pub fn alloc<T>(self, t: T) -> &'tcx T {
+        self.interners.arena.alloc(t)
+    }
+
+    pub fn alloc_iter<I, T>(self, iter: I) -> &'tcx [T]
+    where
+        I: IntoIterator<Item = T>,
+    {
+        self.interners.arena.alloc_iter(iter)
+    }
+
+    pub fn alloc_tir<T>(self, tir: T) -> &'tcx T {
         self.interners.arena.alloc_tir(tir)
     }
 
-    pub fn alloc_tir_iter<I, T>(&self, iter: I) -> &'tcx [T]
+    pub fn alloc_tir_iter<I, T>(self, iter: I) -> &'tcx [T]
     where
         I: IntoIterator<Item = T>,
     {
         self.interners.arena.alloc_tir_iter(iter)
     }
 
-    pub fn mk_ty(&self, ty: TyKind<'tcx>) -> Ty<'tcx> {
+    pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
     }
 
-    pub fn mk_prim_ty(&self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
+    pub fn mk_ty_param(self, id: DefId) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Param(ty::ParamTy { def_id: id }))
+    }
+
+    pub fn mk_prim_ty(self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
         match prim_ty {
             ir::PrimTy::Char => self.types.character,
             ir::PrimTy::Bool => self.types.boolean,
@@ -42,7 +58,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     /// finds the type of an item that was obtained during the collection phase
-    pub fn item_ty(&self, def_id: DefId) -> Ty<'tcx> {
+    pub fn item_ty(self, def_id: DefId) -> Ty<'tcx> {
         self.item_tys.borrow().get(&def_id).expect("no type entry for item")
     }
 
@@ -72,6 +88,7 @@ impl<'tcx> TyCtx<'tcx> {
 crate struct GlobalCtx<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
+    pub session: &'tcx Session,
     interners: CtxInterners<'tcx>,
     defs: &'tcx Definitions,
     /// where the results of type collection are stored
@@ -79,13 +96,14 @@ crate struct GlobalCtx<'tcx> {
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
-    pub fn new(arena: &'tcx Arena<'tcx>, defs: &'tcx Definitions) -> Self {
+    pub fn new(arena: &'tcx Arena<'tcx>, defs: &'tcx Definitions, session: &'tcx Session) -> Self {
         let interners = CtxInterners::new(arena);
         Self {
             types: CommonTypes::new(&interners),
             arena,
             interners,
             defs,
+            session,
             item_tys: Default::default(),
         }
     }
@@ -113,7 +131,8 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn run_typeck(self, ir: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
+    /// top level entrace to typechecking
+    pub fn check_prog(self, ir: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         self.collect(ir);
         self.type_prog(ir)
     }
@@ -131,9 +150,17 @@ impl<'tcx> TyCtx<'tcx> {
                 let inputs = sig.inputs.iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
                 let input_tys = self.mk_substs(inputs);
                 let fn_ty = self.mk_ty(TyKind::Fn(input_tys, ret_ty));
-                self.item_tys.borrow_mut().insert(item.id.def, fn_ty);
+                let generalized = self.generalize(generics, fn_ty);
+                self.item_tys.borrow_mut().insert(item.id.def, generalized);
             }
         }
+    }
+
+    /// constructs a TypeScheme from a type and its generics
+    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
+        let binders = self.alloc_iter(generics.params.iter().map(|p| p.id.def));
+        let forall = Forall { binders };
+        self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
     /// ir -> tir (`type` the ir prog to form tir)

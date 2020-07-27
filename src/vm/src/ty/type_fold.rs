@@ -36,7 +36,13 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Array(ty) => TyKind::Array(ty.fold_with(folder)),
             TyKind::Fn(inputs, ret) => TyKind::Fn(inputs.fold_with(folder), ret.fold_with(folder)),
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
-            TyKind::Infer(_) | TyKind::Char | TyKind::Num | TyKind::Bool | TyKind::Error => {
+            TyKind::Scheme(forall, ty) => TyKind::Scheme(forall, ty.fold_with(folder)),
+            TyKind::Param(_)
+            | TyKind::Infer(_)
+            | TyKind::Char
+            | TyKind::Num
+            | TyKind::Bool
+            | TyKind::Error => {
                 return self;
             }
         };
@@ -59,8 +65,9 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Fn(inputs, ret) => inputs.visit_with(visitor) || ret.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Array(ty) => ty.visit_with(visitor),
+            TyKind::Scheme(_, ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => false,
-            TyKind::Error | TyKind::Char | TyKind::Num | TyKind::Bool => false,
+            TyKind::Param(_) | TyKind::Error | TyKind::Char | TyKind::Num | TyKind::Bool => false,
         }
     }
 }
@@ -94,7 +101,7 @@ where
     where
         F: TypeFolder<'tcx>,
     {
-        folder.tcx().alloc_tir_iter(self.iter().map(|t| t.fold_with(folder)))
+        folder.tcx().alloc_iter(self.iter().map(|t| t.fold_with(folder)))
     }
 
     fn inner_visit_with<V>(&self, visitor: &mut V) -> bool

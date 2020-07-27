@@ -12,7 +12,14 @@ fn main() {
 
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
-        return println!("{}", libvm::exec(&src).unwrap());
+        // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
+        return println!(
+            "{}",
+            libvm::exec(&src).unwrap_or_else(|err| {
+                println!("{:?}", err);
+                std::process::exit(1)
+            })
+        );
     }
 
     if rl.load_history(HISTORY_PATH).is_err() {}

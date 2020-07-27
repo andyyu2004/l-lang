@@ -47,15 +47,15 @@ impl Display for Block {
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 crate struct Generics {
     pub span: Span,
-    pub id: NodeId,
-    pub params: Vec<GenericParam>,
+    pub params: Vec<TyParam>,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
-crate struct GenericParam {
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+crate struct TyParam {
     pub span: Span,
     pub id: NodeId,
     pub ident: Ident,
+    pub default: Option<P<Ty>>,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]

@@ -1,9 +1,10 @@
-mod item;
+mod def_visitor;
 mod late;
 mod resolver;
 mod scope;
 
 use crate::span::Span;
+use def_visitor::DefVisitor;
 crate use resolver::{Resolver, ResolverOutputs};
 crate use scope::{Scope, Scopes};
 

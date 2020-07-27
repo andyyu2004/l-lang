@@ -39,8 +39,14 @@ impl Resolver {
     }
 
     pub fn def_item(&mut self, name: Ident, node_id: NodeId, def_kind: DefKind) -> DefId {
-        let def_id = self.defs.alloc_def_id();
+        let def_id = self.def(name, node_id);
         self.items.insert(name, Res::Def(def_id, def_kind));
+        def_id
+    }
+
+    /// allocates a `DefId` for some given `NodeId`
+    pub fn def(&mut self, name: Ident, node_id: NodeId) -> DefId {
+        let def_id = self.defs.alloc_def_id();
         self.node_id_to_def_id.insert(node_id, def_id);
         def_id
     }
@@ -55,6 +61,7 @@ impl Resolver {
         self.late_resolve_prog(prog);
     }
 
+    /// node_id -> def_id
     pub fn def_id(&self, node_id: NodeId) -> DefId {
         self.node_id_to_def_id[&node_id]
     }
