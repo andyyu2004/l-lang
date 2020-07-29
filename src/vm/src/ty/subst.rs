@@ -2,6 +2,7 @@ use crate::ir::{self, DefId};
 use crate::span::Span;
 use crate::ty::{Forall, InferTy, List, Ty, TyKind, TypeFoldable, TypeFolder};
 use crate::typeck::{inference::InferCtx, TyCtx};
+use indexed_vec::Idx;
 use rustc_hash::FxHashMap;
 
 crate trait Subst<'tcx>: Sized {
@@ -26,32 +27,30 @@ where
 crate type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
 
 /// instantiates universal type variables with fresh inference variables
-crate struct GenericsFolder<'tcx> {
+crate struct InstantiationFolder<'tcx> {
     tcx: TyCtx<'tcx>,
-    // map from `ir::Id` to its instantiated ty
-    map: FxHashMap<DefId, Ty<'tcx>>,
+    substs: SubstRef<'tcx>,
 }
 
-impl<'tcx> GenericsFolder<'tcx> {
+impl<'tcx> InstantiationFolder<'tcx> {
     pub fn new(infcx: &InferCtx<'_, 'tcx>, forall: &Forall<'tcx>) -> Self {
-        let mut map = FxHashMap::default();
         let tcx = infcx.tcx;
-        for &binder in forall.binders {
-            assert!(!map.contains_key(&binder));
-            map.insert(binder, infcx.new_infer_var());
-        }
-        Self { tcx, map }
+        // check that the index of the binders aren't weird
+        let n = forall.binders.len();
+        assert!(forall.binders.iter().map(|idx| idx.index()).eq(0..n));
+        let substs = tcx.mk_substs((0..n).map(|_| infcx.new_infer_var()));
+        Self { tcx, substs }
     }
 }
 
-impl<'tcx> TypeFolder<'tcx> for GenericsFolder<'tcx> {
+impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx> {
         self.tcx
     }
 
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match ty.kind {
-            TyKind::Param(param_ty) => self.map[&param_ty.def_id],
+            TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
             _ => ty.inner_fold_with(self),
         }
     }

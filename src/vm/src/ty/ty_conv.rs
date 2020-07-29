@@ -19,7 +19,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
             ir::TyKind::Path(path) => match path.res {
                 ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
                 ir::Res::Def(def_id, def_kind) => match def_kind {
-                    ir::DefKind::TyParam => tcx.mk_ty_param(def_id),
+                    ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
                     ir::DefKind::Fn => panic!(),
                 },
                 ir::Res::Local(_) => panic!("unexpected resolution"),

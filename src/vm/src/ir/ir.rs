@@ -5,6 +5,14 @@ use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
+newtype_index!(ParamIdx);
+
+impl Display for ParamIdx {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug)]
 crate struct Generics<'ir> {
     pub span: Span,
@@ -16,6 +24,7 @@ crate struct TyParam<'ir> {
     pub span: Span,
     pub id: ir::Id,
     pub ident: Ident,
+    pub index: ParamIdx,
     pub default: Option<&'ir ir::Ty<'ir>>,
 }
 

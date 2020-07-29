@@ -34,6 +34,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             ir::TyParam {
                 span,
                 id: lctx.lower_node_id(id),
+                index: lctx.resolver.idx_of_ty_param(id),
                 ident,
                 default: default.as_ref().map(|ty| lctx.lower_ty(ty)),
             }

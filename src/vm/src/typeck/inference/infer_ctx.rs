@@ -116,7 +116,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn instantiate(&self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             TyKind::Scheme(forall, ty) => {
-                let mut folder = GenericsFolder::new(self, forall);
+                let mut folder = InstantiationFolder::new(self, forall);
                 ty.fold_with(&mut folder)
             }
             _ => ty,

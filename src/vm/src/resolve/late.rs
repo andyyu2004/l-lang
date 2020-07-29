@@ -1,7 +1,8 @@
 use super::{Resolver, Scope, Scopes};
 use crate::ast::{self, *};
 use crate::error::{ResolutionError, ResolutionResult};
-use crate::ir::{DefKind, PerNS, Res, NS};
+use crate::ir::{DefKind, ParamIdx, PerNS, Res, NS};
+use indexed_vec::Idx;
 use std::marker::PhantomData;
 
 struct LateResolutionVisitor<'a, 'r, 'ast> {
@@ -32,7 +33,8 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     fn with_generics<R>(&mut self, generics: &Generics, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
             for param in &generics.params {
-                let res = Res::Def(this.resolver.def_id(param.id), DefKind::TyParam);
+                let index = this.scopes[NS::Type].new_ty_param();
+                let res = this.resolver.def_ty_param(param.id, ParamIdx::new(index));
                 this.scopes[NS::Type].def(param.ident, res)
             }
             f(this)

@@ -1,6 +1,5 @@
 fn main() {
-    f(5, false);
-    /* f(false, false); */
+    f(false, 5);
 }
 
 

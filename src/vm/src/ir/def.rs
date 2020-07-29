@@ -1,4 +1,4 @@
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, ParamIdx};
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
@@ -13,7 +13,12 @@ crate enum Res<Id = ir::Id> {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum DefKind {
     Fn,
-    TyParam,
+    /// contains the index of the `TyParam` in its scope
+    /// impl<T, U> Foo<T, U> {
+    ///     fn bar<V> () { .. }
+    /// }
+    /// (T, U, V) would have indices (0,1,2) respectively
+    TyParam(ParamIdx),
 }
 
 impl<Id> Res<Id> {

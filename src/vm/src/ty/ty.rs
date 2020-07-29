@@ -1,4 +1,4 @@
-use crate::ir::DefId;
+use crate::ir::{DefId, ParamIdx};
 use crate::ty::{SubstRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
 use crate::util;
@@ -145,23 +145,24 @@ impl<'tcx> Display for TyKind<'tcx> {
 /// the current representation of type parameters are their DefId
 #[derive(Debug, Eq, Copy, Hash, PartialEq, Clone)]
 crate struct Forall<'tcx> {
-    pub binders: &'tcx [DefId],
+    pub binders: &'tcx [ParamIdx],
 }
 
 impl<'tcx> Display for Forall<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.binders.iter(), ","))
+        write!(f, "τ{}", util::join2(self.binders.iter(), ","))
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 crate struct ParamTy {
     pub def_id: DefId,
+    pub idx: ParamIdx,
 }
 
 impl Display for ParamTy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "τ{}", self.def_id)
+        write!(f, "τ{}", self.idx)
     }
 }
 

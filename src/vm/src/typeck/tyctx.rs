@@ -1,17 +1,15 @@
 use super::inference::{FnCtx, InferCtx, InferCtxBuilder};
 use crate::core::{Arena, CtxInterners};
+use crate::driver::Session;
 use crate::error::TypeResult;
-use crate::ir::DefId;
+use crate::ir::{self, DefId, Definitions, ParamIdx};
 use crate::span::Span;
-use crate::ty::{self, List, SubstRef, Ty, TyConv, TyKind};
-use crate::{driver::Session, ir, tir};
+use crate::tir::{self, IrLoweringCtx};
+use crate::ty::{self, Forall, List, SubstRef, Ty, TyConv, TyKind};
 use indexed_vec::Idx;
-use ir::Definitions;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
-use tir::IrLoweringCtx;
-use ty::Forall;
 
 #[derive(Copy, Clone, Deref)]
 crate struct TyCtx<'tcx> {
@@ -45,8 +43,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.intern_ty(ty)
     }
 
-    pub fn mk_ty_param(self, id: DefId) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Param(ty::ParamTy { def_id: id }))
+    pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Param(ty::ParamTy { def_id, idx }))
     }
 
     pub fn mk_prim_ty(self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
@@ -158,7 +156,7 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// constructs a TypeScheme from a type and its generics
     fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
-        let binders = self.alloc_iter(generics.params.iter().map(|p| p.id.def));
+        let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let forall = Forall { binders };
         self.mk_ty(TyKind::Scheme(forall, ty))
     }

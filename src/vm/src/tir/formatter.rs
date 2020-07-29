@@ -74,9 +74,10 @@ where
                 indentln!(self, "#{:?} :: {}", item.id.def, ty)?;
                 indentln!(
                     self,
-                    "{}fn #{:?}({}) {}\n",
+                    "{}fn #{:?}<>({}) {}\n",
                     item.vis.node,
                     item.id.def,
+                    // generics,
                     util::join2(params, ", "),
                     body
                 )

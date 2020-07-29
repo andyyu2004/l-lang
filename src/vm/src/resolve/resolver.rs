@@ -1,5 +1,5 @@
 use crate::ast::{Ident, NodeId, Prog};
-use crate::ir::{DefId, DefKind, Definitions, PrimTy, Res};
+use crate::ir::{DefId, DefKind, Definitions, ParamIdx, PrimTy, Res};
 use crate::lexer::{symbol, Symbol};
 use indexed_vec::IndexVec;
 use rustc_hash::FxHashMap;
@@ -11,6 +11,7 @@ crate struct Resolver {
     res_map: FxHashMap<NodeId, Res<NodeId>>,
     items: FxHashMap<Ident, Res<NodeId>>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
+    ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,
     pub(super) primitive_types: PrimitiveTypes,
 }
 
@@ -28,6 +29,7 @@ impl Resolver {
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
             primitive_types: Default::default(),
+            ty_param_id_to_idx: Default::default(),
         };
         resolver.resolve_prog(prog);
         resolver
@@ -49,6 +51,15 @@ impl Resolver {
         let def_id = self.defs.alloc_def_id();
         self.node_id_to_def_id.insert(node_id, def_id);
         def_id
+    }
+
+    pub fn def_ty_param(&mut self, id: NodeId, idx: ParamIdx) -> Res<NodeId> {
+        self.ty_param_id_to_idx.insert(id, idx);
+        Res::Def(self.def_id(id), DefKind::TyParam(idx))
+    }
+
+    pub fn idx_of_ty_param(&mut self, id: NodeId) -> ParamIdx {
+        *self.ty_param_id_to_idx.get(&id).unwrap()
     }
 
     pub fn resolve_item(&mut self, ident: Ident) -> Option<Res<NodeId>> {

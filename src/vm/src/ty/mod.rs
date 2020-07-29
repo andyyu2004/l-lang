@@ -5,7 +5,7 @@ mod ty_conv;
 mod type_fold;
 
 crate use list::List;
-crate use subst::{GenericsFolder, InferenceVarSubstFolder, Subst, SubstRef};
+crate use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, SubstRef};
 crate use ty::InferTy::*;
 crate use ty::TyKind::*;
 crate use ty::*;
