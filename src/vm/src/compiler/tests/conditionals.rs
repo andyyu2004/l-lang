@@ -10,7 +10,7 @@ use indexed_vec::Idx;
 /// }
 #[test]
 fn compile_simple_if_stmt() {
-    let executable = compile_expr!("if false { 5 } else { 4 }");
+    let executable = compile_expr!("if false { 5 } else { 4 };");
     let main = executable.constants[ConstId::new(0)].clone().as_fn();
     let code = CodeBuilder::default()
         // eval scrutinee expr `false`
@@ -30,6 +30,8 @@ fn compile_simple_if_stmt() {
         .emit_known_jmp(Op::jmpneq, 0x0c)
         .emit_dconst(4.0)
         .emit_known_jmp(Op::jmp, 0)
+        .emit_op(Op::pop)
+        .emit_op(Op::unit)
         .emit_op(Op::ret)
         .build();
     assert_eq!(code, main.code);

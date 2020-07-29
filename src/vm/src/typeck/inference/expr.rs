@@ -125,16 +125,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {
-            ast::BinOp::Mul
-            | ast::BinOp::Div
-            | ast::BinOp::Add
-            | ast::BinOp::Sub
-            | ast::BinOp::Lt
-            | ast::BinOp::Gt => {
-                // only allow these operations on numbers forn ow
+            // only allow these operations on numbers for now
+            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => {
                 self.unify(l.span, self.tcx.types.num, tl);
                 self.unify(r.span, tl, tr);
                 tl
+            }
+            ast::BinOp::Lt | ast::BinOp::Gt => {
+                self.unify(l.span, self.tcx.types.num, tl);
+                self.unify(r.span, tl, tr);
+                self.tcx.types.boolean
             }
         }
     }
