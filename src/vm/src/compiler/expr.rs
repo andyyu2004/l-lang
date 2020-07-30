@@ -1,4 +1,4 @@
-use super::{Compiler, FrameCtx};
+use super::{Compiler, Constant, FrameCtx};
 use crate::ast;
 use crate::exec::Op;
 use crate::ir::{self, DefId};
@@ -74,7 +74,7 @@ impl<'tcx> Compiler<'tcx> {
             compiler.compile_body(body);
             let lambda = compiler.finish();
             let upvars = std::mem::take(&mut compiler.upvars);
-            (compiler.gctx.mk_const(lambda).index() as u8, upvars)
+            (compiler.gctx.mk_const(Constant::Lambda(lambda)).index() as u8, upvars)
         });
         self.emit_closure(lambda_idx, upvars);
     }

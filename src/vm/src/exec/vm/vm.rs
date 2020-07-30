@@ -28,11 +28,16 @@ where
         let clsr = heap.gc.alloc(Closure::new(f));
 
         // allocate all the constants once upfront
+        // the odd mapping of `Const::Fn -> Val::Closure` and `Const::Lambda -> Val::Fn`
+        // is because `Fn` cannot capture upvars so we allocate it as a closure upfront for efficiency
+        // `Lambda` may capture upvars so we only allocate it is a `Fn` so the `VM` allocates a new
+        // closure for it each time it is used
         let constants = constants
             .into_iter()
             .map(|c| match c {
                 Constant::Function(f) => Val::Clsr(heap.mk_clsr(f)),
                 Constant::String(s) => Val::Str(heap.gc.alloc(s)),
+                Constant::Lambda(f) => Val::Fn(heap.gc.alloc(f)),
             })
             .collect();
 
@@ -255,13 +260,15 @@ where
                 }
                 Op::ldc => push!(load_const!()),
                 Op::mkclsr => {
-                    let mut clsr = match load_const!() {
-                        Val::Clsr(clsr) => clsr,
-                        Val::Fn(f) => self.alloc(Closure::new(f)),
+                    // let f = load_const!().as_fn();
+                    let f = match load_const!() {
+                        Val::Fn(f) => f,
+                        Val::Clsr(s) => panic!("found closure when making closure"),
                         _ => panic!(),
                     };
                     // we may be allocating unrooted upvars in this section so we must disable gc
-                    self.without_gc(|vm| {
+                    let clsr = self.without_gc(|vm| {
+                        let mut clsr = vm.alloc(Closure::new(f));
                         let upvarc = read_byte!();
                         for i in 0..upvarc as usize {
                             let in_enclosing = read_byte!();
@@ -277,6 +284,7 @@ where
                             assert_eq!(clsr.upvars.len(), i);
                             clsr.upvars.push(upvalue);
                         }
+                        clsr
                     });
                     push!(clsr)
                 }
@@ -287,12 +295,12 @@ where
                     let f_idx = top!() - argc - 1;
                     let f = self.ctx.stack[f_idx];
                     let clsr = match f {
-                        Val::Fn(f) => panic!("fn should be wrapped in closure before invocation"),
                         Val::Data(d) => {
                             push!(self.alloc(Instance::new(d)));
                             continue;
                         }
                         Val::Clsr(clsr) => clsr,
+                        Val::Fn(_) => panic!("fn should be wrapped in closure before invocation"),
                         x => panic!("expected invokable, found `{:?}`", x),
                     };
                     frame_mut!().sp -= 1 + argc;

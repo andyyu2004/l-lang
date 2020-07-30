@@ -1,5 +1,5 @@
 use super::ctx::{FrameCtx, GlobalCompilerCtx};
-use super::{ConstantPool, Executable};
+use super::{Constant, ConstantPool, Executable};
 use crate::ast;
 use crate::exec::{CodeBuilder, Function, Op};
 use crate::ir::{self, DefId, LocalId};
@@ -38,7 +38,7 @@ impl<'tcx> Compiler<'tcx> {
         match &item.kind {
             tir::ItemKind::Fn(_, _, body) => {
                 let f = self.compile_fn(body);
-                self.gctx.set_const(item.id.def, f);
+                self.gctx.set_const(item.id.def, Constant::Function(f));
                 if item.ident.symbol == symbol::MAIN {
                     let const_id = self.gctx.def_id_to_const_id.borrow()[&item.id.def];
                     *self.gctx.main_fn.borrow_mut() = Some(const_id)
