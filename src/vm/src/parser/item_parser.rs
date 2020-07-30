@@ -28,6 +28,18 @@ impl Parse for ItemParser {
     }
 }
 
+crate struct EnumParser {
+    enum_kw: Tok,
+}
+
+impl Parse for EnumParser {
+    type Output = ItemKind;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        todo!()
+    }
+}
+
 crate struct FnParser {
     fn_kw: Tok,
 }

@@ -31,7 +31,7 @@ where
         let constants = constants
             .into_iter()
             .map(|c| match c {
-                Constant::Function(f) => Val::Fn(heap.gc.alloc(f)),
+                Constant::Function(f) => Val::Clsr(heap.mk_clsr(f)),
                 Constant::String(s) => Val::Str(heap.gc.alloc(s)),
             })
             .collect();
@@ -254,29 +254,31 @@ where
                     **frame_mut!().clsr.upvars[i] = val;
                 }
                 Op::ldc => push!(load_const!()),
-                Op::clsr => {
-                    let f = load_const!().as_fn();
+                Op::mkclsr => {
+                    let mut clsr = match load_const!() {
+                        Val::Clsr(clsr) => clsr,
+                        Val::Fn(f) => self.alloc(Closure::new(f)),
+                        _ => panic!(),
+                    };
                     // we may be allocating unrooted upvars in this section so we must disable gc
-                    let clsr = self.without_gc(|vm| {
-                        let mut clsr = vm.alloc(Closure::new(f));
+                    self.without_gc(|vm| {
                         let upvarc = read_byte!();
                         for i in 0..upvarc as usize {
                             let in_enclosing = read_byte!();
                             let index = read_byte!() as usize;
                             let upvalue = if in_enclosing == 0 {
-                                // if the upvalue is not in the directly enclosing scope, get the
-                                // upvalue from the enclosing closure
+                                // if the upvar is not in the directly enclosing scope, get the
+                                // upvar from the enclosing closure
                                 frame!().clsr.upvars[index]
                             } else {
-                                // if the upvalue closes over a variable in the immediately enclosing function, capture it
+                                // if the upvar closes over a variable in the immediately enclosing function, capture it directly
                                 vm.capture_upval(index)
                             };
                             assert_eq!(clsr.upvars.len(), i);
                             clsr.upvars.push(upvalue);
                         }
-                        clsr
                     });
-                    push!(clsr);
+                    push!(clsr)
                 }
                 Op::call => {
                     // ... <f> <arg0> ... <argn> <stack_top>
@@ -285,12 +287,11 @@ where
                     let f_idx = top!() - argc - 1;
                     let f = self.ctx.stack[f_idx];
                     let clsr = match f {
-                        Val::Fn(f) => self.alloc(Closure::new(f)),
+                        Val::Fn(f) => panic!("fn should be wrapped in closure before invocation"),
                         Val::Data(d) => {
                             push!(self.alloc(Instance::new(d)));
                             continue;
                         }
-
                         Val::Clsr(clsr) => clsr,
                         x => panic!("expected invokable, found `{:?}`", x),
                     };

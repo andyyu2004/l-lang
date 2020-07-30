@@ -16,12 +16,17 @@ crate struct Item {
 #[derive(Debug, PartialEq, Clone)]
 crate enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
+    Enum(Generics, Vec<Variant>),
 }
+
+#[derive(Debug, PartialEq, Clone)]
+crate struct Variant {}
 
 impl ItemKind {
     pub fn def_kind(&self) -> DefKind {
         match self {
             ItemKind::Fn(..) => DefKind::Fn,
+            ItemKind::Enum(..) => DefKind::Enum,
         }
     }
 }
@@ -38,6 +43,7 @@ impl Display for Item {
                 sig.output,
                 body.as_ref().unwrap()
             ),
+            ItemKind::Enum(generics, variants) => todo!(),
         }
     }
 }

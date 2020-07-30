@@ -21,6 +21,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                 ir::Res::Def(def_id, def_kind) => match def_kind {
                     ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
                     ir::DefKind::Fn => panic!(),
+                    ir::DefKind::Enum => todo!(),
                 },
                 ir::Res::Local(_) => panic!("unexpected resolution"),
             },

@@ -13,6 +13,7 @@ crate enum Res<Id = ir::Id> {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 crate enum DefKind {
     Fn,
+    Enum,
     /// contains the index of the `TyParam` in its scope
     /// impl<T, U> Foo<T, U> {
     ///     fn bar<V> () { .. }

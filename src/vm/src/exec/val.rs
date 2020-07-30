@@ -8,9 +8,9 @@ use std::fmt::{self, Display, Formatter};
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Val {
     Array(Gc<Array>),
-    Fn(Gc<Function>),
     Data(Gc<Data>),
     Instance(Gc<Instance>),
+    Fn(Gc<Function>),
     Clsr(Gc<Closure>),
     Str(Gc<String>),
     Tuple(Gc<obj::Tuple>),

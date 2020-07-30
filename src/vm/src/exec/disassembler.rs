@@ -155,7 +155,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::uastore => todo!(),
             Op::dastore => todo!(),
             Op::rastore => todo!(),
-            Op::clsr => self.fmt_clsr(),
+            Op::mkclsr => self.fmt_clsr(),
         }
     }
 }
