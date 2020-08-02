@@ -71,7 +71,7 @@ impl CodeBuilder {
     }
 
     pub fn emit_closure(&mut self, f_idx: u8, upvars: Vec<(bool, u8)>) -> &mut Self {
-        self.emit_op(Op::clsr).emit_byte(f_idx).emit_byte(upvars.len() as u8);
+        self.emit_op(Op::mkclsr).emit_byte(f_idx).emit_byte(upvars.len() as u8);
         for (in_enclosing, index) in upvars {
             self.emit_upvar(in_enclosing, index);
         }

@@ -109,6 +109,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match def_kind {
             // instantiate ty params
             DefKind::Fn => self.instantiate(self.tcx.item_ty(def_id)),
+            DefKind::Enum => todo!(),
             DefKind::TyParam(_) => panic!(),
         }
     }

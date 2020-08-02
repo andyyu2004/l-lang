@@ -99,7 +99,7 @@ pub enum Op {
     /// pushes a closure onto the stack
     /// clsr <const_idx> (<in_enclosing> <index>)+
     /// -> <closure>
-    clsr    = 0xA1,
+    mkclsr  = 0xA1,
     /// popscope <n>
     /// pop <n> local variables from stack while retaining value of the block
     /// example:

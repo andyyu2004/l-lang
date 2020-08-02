@@ -16,6 +16,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let generics = lctx.lower_generics(generics);
                     ir::ItemKind::Fn(lowered_sig, generics, body)
                 }
+                ItemKind::Enum(_, _) => todo!(),
             };
             lctx.arena.alloc(ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind })
         })

@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod test {
+    use crate::compiler::{Constant, Executable};
     use crate::error::VMResult;
-    use crate::{compiler::Executable, exec::*};
+    use crate::exec::*;
 
     #[test]
     fn multilayer_closures() {
@@ -55,7 +56,10 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::with_main(vec![Function::new(inner).into()], Function::new(main));
+        let exec = Executable::with_main(
+            vec![Constant::Lambda(Function::new(inner))],
+            Function::new(main),
+        );
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-3));
@@ -87,7 +91,10 @@ mod test {
             .emit_op(Op::iret)
             .build();
 
-        let exec = Executable::with_main(vec![Function::new(inner).into()], Function::new(main));
+        let exec = Executable::with_main(
+            vec![Constant::Lambda(Function::new(inner))],
+            Function::new(main),
+        );
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-4));
@@ -121,7 +128,7 @@ mod test {
         let inner = CodeBuilder::default().emit_loadu(0).emit_op(Op::iret).build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::new(inner).into()],
+            vec![Constant::Lambda(Function::new(outer)), Constant::Lambda(Function::new(inner))],
             Function::new(main),
         );
 
@@ -167,7 +174,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::new(inner).into()],
+            vec![Constant::Lambda(Function::new(outer)), Constant::Lambda(Function::new(inner))],
             Function::new(main),
         );
 
@@ -191,7 +198,7 @@ mod test {
     /// assert(main(), -21);
     ///
     #[test]
-    fn closed_upvalues() -> VMResult<()> {
+    fn closed_upvars() -> VMResult<()> {
         let main = CodeBuilder::default()
             .emit_ldc(0)
             .emit_loadl(0)
@@ -219,7 +226,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::new(inner).into()],
+            vec![Constant::Function(Function::new(outer)), Constant::Lambda(Function::new(inner))],
             Function::new(main),
         );
 
@@ -269,9 +276,9 @@ mod test {
 
         let exec = Executable::with_main(
             vec![
-                Function::new(outer).into(),
-                Function::new(inner).into(),
-                Function::new(inner_mut).into(),
+                Constant::Function(Function::new(outer)),
+                Constant::Lambda(Function::new(inner)),
+                Constant::Lambda(Function::new(inner_mut)),
             ],
             Function::new(main),
         );
@@ -329,7 +336,7 @@ mod test {
             .build();
 
         let exec = Executable::with_main(
-            vec![Function::new(outer).into(), Function::new(inner).into()],
+            vec![Constant::Function(Function::new(outer)), Constant::Lambda(Function::new(inner))],
             Function::new(main),
         );
 

@@ -49,6 +49,7 @@ impl_into!(Val, Uint, u64);
 impl_into!(Val, Double, f64);
 impl_into!(Val, Array, Gc<Array>);
 impl_into!(Val, Fn, Gc<Function>);
+impl_into!(Val, Clsr, Gc<Closure>);
 
 impl_from_inner!(Gc<Function>, Val, Fn);
 impl_from_inner!(Gc<Data>, Val, Data);
@@ -84,6 +85,10 @@ impl Val {
     }
 
     pub fn as_fn(&self) -> Gc<Function> {
+        (*self).into()
+    }
+
+    pub fn as_clsr(&self) -> Gc<Closure> {
         (*self).into()
     }
 }

@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod test {
+    use crate::compiler::{Constant, Executable};
     use crate::error::VMResult;
-    use crate::{compiler::Executable, exec::*};
+    use crate::exec::*;
 
     /// fn f(x: i64, y: i64) -> i64 {
     ///     x - y
@@ -31,7 +32,8 @@ mod test {
             .emit_op(Op::ret)
             .build();
 
-        let exec = Executable::with_main(vec![Function::new(f).into()], Function::new(main));
+        let exec =
+            Executable::with_main(vec![Constant::Function(Function::new(f))], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(-1));
@@ -74,7 +76,8 @@ mod test {
             .emit_op(Op::ret)
             .build();
 
-        let exec = Executable::with_main(vec![Function::new(f).into()], Function::new(main));
+        let exec =
+            Executable::with_main(vec![Constant::Function(Function::new(f))], Function::new(main));
         let mut vm = VM::with_default_gc(exec);
         let ret = vm.run()?;
         assert_eq!(ret, Val::Int(1));

@@ -36,7 +36,7 @@ impl Executable {
     pub fn with_main(constants: impl IntoIterator<Item = Constant>, main: Function) -> Self {
         let mut constants = constants.into_iter().collect::<ConstantPool>();
         let main_index = constants.len();
-        constants.push(main.into());
+        constants.push(Constant::Function(main));
         let start_code = Self::mk_start_code(main_index as u8);
         Self { constants, start: Function::new(start_code) }
     }

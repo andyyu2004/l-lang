@@ -191,7 +191,8 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 ir::Res::Local(id) => tir::ExprKind::VarRef(id),
                 ir::Res::Def(def_id, def_kind) => match def_kind {
                     ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
-                    ir::DefKind::TyParam(_) => panic!(),
+                    ir::DefKind::TyParam(_) => todo!(),
+                    ir::DefKind::Enum => todo!(),
                 },
                 ir::Res::PrimTy(_) => unreachable!(),
             },
