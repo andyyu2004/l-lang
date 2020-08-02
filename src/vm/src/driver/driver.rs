@@ -9,9 +9,9 @@ use crate::resolve::{Resolver, ResolverOutputs};
 use crate::typeck::GlobalCtx;
 use crate::{exec, ir, lexer, parser, span, tir};
 use exec::VM;
-use inkwell::context::Context as LLVMCtx;
+use inkwell::{context::Context as LLVMCtx, values::FunctionValue, OptimizationLevel};
 use ir::AstLoweringCtx;
-use lexer::{Lexer, Tok};
+use lexer::{symbol, Lexer, Tok};
 use once_cell::unsync::OnceCell;
 use parser::Parser;
 use std::cell::RefCell;
@@ -77,21 +77,32 @@ impl<'tcx> Driver<'tcx> {
         if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(tir) }
     }
 
+    pub fn llvm_compile(&'tcx self) -> LResult<FunctionValue<'tcx>> {
+        let tir = self.gen_tir()?;
+        println!("{}", tir);
+        let gcx = self.global_ctx.get().unwrap();
+        let llvm_ctx = LLVMCtx::create();
+        let mut ctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
+        let main_fn = ctx.compile_tir(&tir);
+        let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        let val = unsafe { jit.run_function(main_fn, &[]) };
+        dbg!(val.as_float(&ctx.ctx.f64_type()));
+        Ok(main_fn)
+    }
+
+    pub fn llvm_exec(&'tcx self) {
+        let llvm = self.llvm_compile();
+    }
+
     pub fn compile(&'tcx self) -> LResult<Executable> {
         let tir = self.gen_tir()?;
         println!("{}", tir);
         let gcx = self.global_ctx.get().unwrap();
 
-        let llvm = gcx
-            .enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(LLVMCtx::create())))
-            .compile(&tir);
-        dbg!(llvm);
-        todo!();
-
-        // let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
-        // let executable = Compiler::new(cctx).compile(&tir);
-        // println!("{}", executable);
-        // Ok(executable)
+        let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
+        let executable = Compiler::new(cctx).compile(&tir);
+        println!("{}", executable);
+        Ok(executable)
     }
 
     pub fn exec(&'tcx self) -> LResult<exec::Val> {

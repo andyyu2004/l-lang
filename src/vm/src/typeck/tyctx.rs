@@ -185,16 +185,20 @@ crate struct CommonTypes<'tcx> {
     pub boolean: Ty<'tcx>,
     pub character: Ty<'tcx>,
     pub num: Ty<'tcx>,
+    /// type of `main` must be `fn() -> number`
+    pub main: Ty<'tcx>,
 }
 
 impl<'tcx> CommonTypes<'tcx> {
     fn new(interners: &CtxInterners<'tcx>) -> CommonTypes<'tcx> {
         let mk = |ty| interners.intern_ty(ty);
+        let num = mk(TyKind::Num);
         CommonTypes {
             unit: mk(TyKind::Tuple(List::empty())),
             boolean: mk(TyKind::Bool),
             character: mk(TyKind::Char),
-            num: mk(TyKind::Num),
+            main: mk(TyKind::Fn(List::empty(), num)),
+            num,
         }
     }
 }

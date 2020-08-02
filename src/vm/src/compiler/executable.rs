@@ -1,5 +1,7 @@
 use super::{Constant, ConstantPool};
 use crate::exec::{Code, CodeBuilder, Function, Op};
+use crate::ir::DefId;
+use indexed_vec::Idx;
 use std::fmt::{self, Display, Formatter};
 
 /// this struct defines the executable format that the vm will run, and the compiler compiles to
@@ -35,9 +37,8 @@ impl Executable {
     // wraps the given main function in code that will call it
     pub fn with_main(constants: impl IntoIterator<Item = Constant>, main: Function) -> Self {
         let mut constants = constants.into_iter().collect::<ConstantPool>();
-        let main_index = constants.len();
-        constants.push(Constant::Function(main));
-        let start_code = Self::mk_start_code(main_index as u8);
+        let main_index = constants.push(Constant::Function(main));
+        let start_code = Self::mk_start_code(main_index.index() as u8);
         Self { constants, start: Function::new(start_code) }
     }
 }

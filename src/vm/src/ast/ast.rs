@@ -27,7 +27,7 @@ impl PartialEq for Ident {
 /// so simply display it as $i where `i` is the symbol index
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "${}", self.symbol.0)
+        write!(f, "{}", self.symbol.0)
     }
 }
 

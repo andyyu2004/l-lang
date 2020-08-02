@@ -14,6 +14,6 @@ mod tests {
 
     #[test]
     fn resolve_redeclaration() {
-        let _res = exec_expr("let x = 5; let x = x; x;").unwrap();
+        let _res = exec_expr("let x = 5; let x = x; x").unwrap();
     }
 }

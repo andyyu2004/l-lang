@@ -1,12 +1,12 @@
 use crate::ast;
+use crate::lexer::symbol;
 use crate::tir;
 use crate::ty::{Const, ConstKind, Ty, TyKind};
 use crate::typeck::TyCtx;
 use inkwell::types::{BasicType, BasicTypeEnum, FloatType};
 use inkwell::values::{BasicValue, BasicValueEnum, FloatValue, FunctionValue, IntValue};
-use inkwell::{
-    builder::Builder, context::Context, module::Module, passes::PassManager, FloatPredicate
-};
+use inkwell::FloatPredicate;
+use inkwell::{builder::Builder, context::Context, module::Module, passes::PassManager};
 use itertools::Itertools;
 
 crate struct CodegenCtx<'tcx> {
@@ -21,14 +21,28 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, ctx: &'tcx Context) -> Self {
         let module = ctx.create_module("main");
         let fpm = PassManager::create(&module);
+        fpm.add_instruction_combining_pass();
+        fpm.add_reassociate_pass();
+        fpm.add_gvn_pass();
+        fpm.add_cfg_simplification_pass();
+        fpm.add_basic_alias_analysis_pass();
+        fpm.add_promote_memory_to_register_pass();
+        fpm.add_instruction_combining_pass();
+        fpm.add_reassociate_pass();
+        fpm.initialize();
         Self { tcx, ctx, module, fpm, builder: ctx.create_builder() }
     }
 
-    pub fn compile(&mut self, prog: &tir::Prog) {
+    /// returns the main function
+    pub fn compile_tir(&mut self, prog: &tir::Prog) -> FunctionValue<'tcx> {
+        let mut main = None;
         for item in prog.items.values() {
-            self.compile_item(item);
+            let f = self.compile_item(item);
+            if item.ident.symbol == symbol::MAIN {
+                main = Some(f)
+            }
         }
-        todo!()
+        main.unwrap()
     }
 
     fn compile_item(&mut self, item: &tir::Item) -> FunctionValue<'tcx> {
@@ -44,11 +58,13 @@ impl<'tcx> CodegenCtx<'tcx> {
         generics: &tir::Generics,
         body: &tir::Body,
     ) -> FunctionValue<'tcx> {
-        let (arg_tys, ret_ty) = ty.expect_fn();
+        let (_forall, fn_ty) = ty.expect_scheme();
+        let (arg_tys, ret_ty) = fn_ty.expect_fn();
         let llvm_arg_tys = arg_tys.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec();
         let llvm_fn_ty = self.llvm_ty(ret_ty).fn_type(&llvm_arg_tys, false);
         let fn_val = self.module.add_function(&item.ident.to_string(), llvm_fn_ty, None);
         let basic_block = self.ctx.append_basic_block(fn_val, "block");
+        self.builder.position_at_end(basic_block);
         // TODO params
         let body = self.compile_expr(body.expr);
         self.builder.build_return(Some(&body));
@@ -66,9 +82,9 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Array(_) => todo!(),
             TyKind::Fn(_, _) => todo!(),
             TyKind::Tuple(_) => todo!(),
-            TyKind::Infer(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
+            TyKind::Infer(_) => unreachable!(),
         }
     }
 
@@ -77,7 +93,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Const(c) => self.compile_const(c),
             tir::ExprKind::Bin(op, l, r) => self.compile_bin(op, l, r),
             tir::ExprKind::Unary(_, _) => todo!(),
-            tir::ExprKind::Block(_) => todo!(),
+            tir::ExprKind::Block(block) => self.compile_block(block),
             tir::ExprKind::VarRef(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
@@ -85,6 +101,14 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Call(_, _) => todo!(),
             tir::ExprKind::Match(_, _) => todo!(),
         }
+    }
+
+    fn compile_stmt(&mut self, stmt: &tir::Stmt) {
+    }
+
+    fn compile_block(&mut self, block: &tir::Block) -> BasicValueEnum<'tcx> {
+        // TODO stmts
+        self.compile_expr(block.expr.unwrap())
     }
 
     fn compile_bin(

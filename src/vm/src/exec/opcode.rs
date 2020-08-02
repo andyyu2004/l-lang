@@ -110,3 +110,67 @@ pub enum Op {
     mklst   = 0xC1,
     mkmap   = 0xC2,
 }
+
+impl Op {
+    pub fn size(self) -> usize {
+        match self {
+            Op::iconst | Op::uconst | Op::dconst => 9,
+            Op::jmp | Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => 3,
+            Op::nop
+            | Op::iadd
+            | Op::dcmplt
+            | Op::dcmpgt
+            | Op::uadd
+            | Op::dadd
+            | Op::isub
+            | Op::usub
+            | Op::dsub
+            | Op::dup
+            | Op::imul
+            | Op::umul
+            | Op::dmul
+            | Op::idiv
+            | Op::udiv
+            | Op::ddiv
+            | Op::iret
+            | Op::uret
+            | Op::dret
+            | Op::rret
+            | Op::ret
+            | Op::unit
+            | Op::mkmap
+            | Op::pop => 1,
+            Op::popscp
+            | Op::ldc
+            | Op::iloadl
+            | Op::uloadl
+            | Op::iloadu
+            | Op::rloadl
+            | Op::dloadl
+            | Op::mktup
+            | Op::mklst
+            | Op::uloadu
+            | Op::dloadu
+            | Op::rloadu
+            | Op::call => 2,
+            Op::istorel => todo!(),
+            Op::ustorel => todo!(),
+            Op::dstorel => todo!(),
+            Op::rstorel => todo!(),
+            Op::istoreu => todo!(),
+            Op::ustoreu => todo!(),
+            Op::dstoreu => todo!(),
+            Op::rstoreu => todo!(),
+            Op::newarr => todo!(),
+            Op::iaload => todo!(),
+            Op::uaload => todo!(),
+            Op::daload => todo!(),
+            Op::raload => todo!(),
+            Op::iastore => todo!(),
+            Op::uastore => todo!(),
+            Op::dastore => todo!(),
+            Op::rastore => todo!(),
+            Op::mkclsr => panic!(),
+        }
+    }
+}

@@ -1,7 +1,7 @@
 use super::ctx::{FrameCtx, GlobalCompilerCtx};
 use super::{Constant, ConstantPool, Executable};
 use crate::ast;
-use crate::exec::{CodeBuilder, Function, Op};
+use crate::exec::{Code, CodeBuilder, Function, Op};
 use crate::ir::{self, DefId, LocalId};
 use crate::tir;
 use crate::ty::{Const, ConstKind, Ty, TyKind};
@@ -36,8 +36,9 @@ impl<'tcx> Compiler<'tcx> {
 
     fn compile_item(&mut self, item: &tir::Item<'tcx>) {
         match &item.kind {
-            tir::ItemKind::Fn(_, _, body) => {
-                let f = self.compile_fn(body);
+            tir::ItemKind::Fn(ty, generics, body) => {
+                let code = self.compile_fn_body(body);
+                let f = Function::new(code);
                 self.gctx.set_const(item.id.def, Constant::Function(f));
                 if item.ident.symbol == symbol::MAIN {
                     let const_id = self.gctx.def_id_to_const_id.borrow()[&item.id.def];
@@ -60,16 +61,16 @@ impl<'tcx> Compiler<'tcx> {
         self.locals.push(id);
     }
 
-    fn compile_fn(&mut self, body: &tir::Body<'tcx>) -> Function {
+    fn compile_fn_body(&mut self, body: &tir::Body<'tcx>) -> Code {
         self.with_frame(|compiler| {
             compiler.compile_body(body);
             compiler.finish()
         })
     }
 
-    pub fn finish(&mut self) -> Function {
+    pub fn finish(&mut self) -> Code {
         self.emit_op(Op::ret);
-        Function::new(self.build())
+        self.build()
     }
 
     pub fn compile_body(&mut self, body: &tir::Body) {

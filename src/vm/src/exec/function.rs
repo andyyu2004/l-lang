@@ -1,10 +1,11 @@
 use super::Code;
 use crate::gc::Trace;
+use crate::ir::DefId;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct Function {
-    pub(crate) code: Code,
+    pub code: Code,
 }
 
 impl Function {

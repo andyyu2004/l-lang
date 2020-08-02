@@ -49,7 +49,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::dconst => write!(self.f, "{:?}", f64::from_bits(u64::from_le_bytes(bits)))?,
             _ => unreachable!(),
         };
-        Ok(9)
+        Ok(self.op_size())
     }
 
     /// pretty printing instructions of the form
@@ -57,7 +57,11 @@ impl<'a, 'f> Disassembler<'a, 'f> {
     fn count_inst(&mut self) -> FmtResult<usize> {
         self.write_op()?;
         write!(self.f, "{:#4x?}", self.code[1])?;
-        Ok(2)
+        Ok(self.op_size())
+    }
+
+    fn op_size(&mut self) -> usize {
+        self.op().size()
     }
 
     fn jmp_inst(&mut self) -> FmtResult<usize> {
@@ -97,9 +101,7 @@ impl<'a, 'f> Disassembler<'a, 'f> {
     fn fmt_inst(&mut self) -> FmtResult<usize> {
         let f = &mut self.f;
         match self.op() {
-            Op::iconst => self.const_inst(),
-            Op::uconst => self.const_inst(),
-            Op::dconst => self.const_inst(),
+            Op::iconst | Op::uconst | Op::dconst => self.const_inst(),
             Op::jmp | Op::jmpt | Op::jmpf | Op::jmpeq | Op::jmpneq => self.jmp_inst(),
             Op::nop
             | Op::iadd

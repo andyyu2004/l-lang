@@ -1,6 +1,6 @@
 use super::{Compiler, Constant, FrameCtx};
 use crate::ast;
-use crate::exec::Op;
+use crate::exec::{Function, Op};
 use crate::ir::{self, DefId};
 use crate::tir;
 use crate::ty::{Const, ConstKind, Ty, TyKind};
@@ -72,7 +72,8 @@ impl<'tcx> Compiler<'tcx> {
     fn compile_lambda(&mut self, body: &tir::Body) {
         let (lambda_idx, upvars) = self.with_frame(|compiler| {
             compiler.compile_body(body);
-            let lambda = compiler.finish();
+            let code = compiler.finish();
+            let lambda = Function::new(code);
             let upvars = std::mem::take(&mut compiler.upvars);
             (compiler.gctx.mk_const(Constant::Lambda(lambda)).index() as u8, upvars)
         });

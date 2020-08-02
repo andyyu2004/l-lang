@@ -12,7 +12,7 @@ mod test;
 mod ty;
 mod upvar;
 mod val;
-mod vm;
+pub mod vm;
 
 pub use self::vm::VM;
 pub use array::Array;

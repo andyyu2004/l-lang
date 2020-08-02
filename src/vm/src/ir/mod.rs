@@ -12,6 +12,7 @@ mod visit;
 crate use ast_lowering::AstLoweringCtx;
 crate use def::*;
 crate use expr::{Expr, ExprKind};
+use indexed_vec::Idx;
 crate use ir::*;
 crate use item::{Item, ItemKind};
 crate use pattern::{Pattern, PatternKind};

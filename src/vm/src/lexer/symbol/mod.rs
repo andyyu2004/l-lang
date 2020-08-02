@@ -1,6 +1,7 @@
 mod interner;
 
 crate use interner::Interner;
+use std::fmt::{self, Display, Formatter};
 
 // there is probably a better way than manually counting the symbol indices :)
 // without proc macro?
@@ -16,5 +17,11 @@ pub struct Symbol(pub usize);
 impl Symbol {
     pub const fn new(n: usize) -> Self {
         Self(n)
+    }
+}
+
+impl Display for Symbol {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "${}", self.0)
     }
 }

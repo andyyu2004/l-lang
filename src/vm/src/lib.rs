@@ -58,11 +58,21 @@ use driver::Driver;
 use error::LResult;
 use log::LevelFilter;
 
-pub fn exec(src: &str) -> LResult<exec::Val> {
+fn mk_driver(src: &str) -> Driver {
     simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
-    let driver = Driver::new(src);
+    Driver::new(src)
+}
+
+pub fn exec(src: &str) -> LResult<exec::Val> {
+    let driver = mk_driver(src);
     let res = driver.exec()?;
     Ok(res)
+}
+
+pub fn llvm_exec(src: &str) -> LResult<()> {
+    let driver = mk_driver(src);
+    let res = driver.llvm_exec();
+    Ok(())
 }
 
 pub macro tir($src:expr) {{
@@ -70,9 +80,14 @@ pub macro tir($src:expr) {{
     driver.gen_tir().unwrap()
 }}
 
-// just stupidly wraps the expr string in a function to form a program
+// just stupidly wraps the expr string in an int function to form a program
 fn wrap_in_main(src: &str) -> String {
-    format!("fn main() {{ {} }}", src)
+    format!("fn main() -> number {{ {} }}", src)
+}
+
+pub fn llvm_exec_expr(src: &str) -> LResult<()> {
+    let src = wrap_in_main(src);
+    llvm_exec(&src)
 }
 
 pub fn exec_expr(src: &str) -> LResult<exec::Val> {

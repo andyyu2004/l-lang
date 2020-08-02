@@ -3,7 +3,7 @@ use crate::gc::{GCStateMap, Gc, Trace};
 use std::{collections::BTreeMap, mem, ptr::NonNull};
 
 const FRAMES_MAX: usize = 64;
-const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
+pub const STACK_MAX: usize = FRAMES_MAX * (std::u8::MAX as usize + 1);
 
 /// contains the fields that need to be gced
 pub struct VMCtx {
