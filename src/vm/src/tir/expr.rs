@@ -14,7 +14,7 @@ crate struct Expr<'tcx> {
 
 #[derive(Debug)]
 crate enum ExprKind<'tcx> {
-    Lit(&'tcx Const<'tcx>),
+    Const(&'tcx Const<'tcx>),
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
     Block(&'tcx tir::Block<'tcx>),

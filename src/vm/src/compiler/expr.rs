@@ -9,7 +9,7 @@ use indexed_vec::Idx;
 impl<'tcx> Compiler<'tcx> {
     pub(super) fn compile_expr(&mut self, expr: &tir::Expr) {
         match expr.kind {
-            tir::ExprKind::Lit(c) => self.compile_expr_lit(c, expr.ty),
+            tir::ExprKind::Const(c) => self.compile_expr_lit(c, expr.ty),
             tir::ExprKind::Bin(op, l, r) => self.compile_expr_binary(op, l, r),
             tir::ExprKind::Unary(op, expr) => self.compile_expr_unary(op, expr),
             tir::ExprKind::Block(block) => self.compile_block(block),

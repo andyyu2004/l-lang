@@ -87,7 +87,7 @@ where
 
     pub fn fmt_expr(&mut self, expr: &tir::Expr) -> fmt::Result {
         match expr.kind {
-            tir::ExprKind::Lit(c) => indent!(self, "{}", c),
+            tir::ExprKind::Const(c) => indent!(self, "{}", c),
             tir::ExprKind::Bin(op, l, r) => indent!(self, "({} {} {})", op, l, r),
             tir::ExprKind::Unary(op, expr) => indent!(self, "({} {})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),

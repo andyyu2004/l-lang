@@ -45,6 +45,7 @@ mod exec;
 mod gc;
 mod ir;
 mod lexer;
+mod llvm;
 mod parser;
 mod resolve;
 mod span;

@@ -1,10 +1,7 @@
-fn main() {
-    f(false, 5);
+fn main() -> number {
+    2 + 2
 }
 
 
-fn f<T>(t: T, u: T) -> T {
-    t
-}
 
 

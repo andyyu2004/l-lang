@@ -4,10 +4,12 @@ use crate::ast::{self, P};
 use crate::compiler::{Compiler, Executable, GlobalCompilerCtx};
 use crate::core::Arena;
 use crate::error::{DiagnosticBuilder, LError, LResult};
+use crate::llvm::CodegenCtx;
 use crate::resolve::{Resolver, ResolverOutputs};
 use crate::typeck::GlobalCtx;
 use crate::{exec, ir, lexer, parser, span, tir};
 use exec::VM;
+use inkwell::context::Context as LLVMCtx;
 use ir::AstLoweringCtx;
 use lexer::{Lexer, Tok};
 use once_cell::unsync::OnceCell;
@@ -79,10 +81,17 @@ impl<'tcx> Driver<'tcx> {
         let tir = self.gen_tir()?;
         println!("{}", tir);
         let gcx = self.global_ctx.get().unwrap();
-        let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
-        let executable = Compiler::new(cctx).compile(&tir);
-        println!("{}", executable);
-        Ok(executable)
+
+        let llvm = gcx
+            .enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(LLVMCtx::create())))
+            .compile(&tir);
+        dbg!(llvm);
+        todo!();
+
+        // let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
+        // let executable = Compiler::new(cctx).compile(&tir);
+        // println!("{}", executable);
+        // Ok(executable)
     }
 
     pub fn exec(&'tcx self) -> LResult<exec::Val> {
