@@ -153,61 +153,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    // fn compile_match(
-    //     &mut self,
-    //     expr: &tir::Expr,
-    //     scrut: &tir::Expr,
-    //     arms: &[tir::Arm],
-    // ) -> BasicValueEnum<'tcx> {
-    //     let original_block = self.curr_fn().get_last_basic_block().unwrap();
-    //     let scrut_val = self.compile_expr(scrut).into_int_value();
-    //     let match_end_block = self.ctx.append_basic_block(self.curr_fn(), "match_end_block");
-    //     self.builder.position_at_end(match_end_block);
-    //     self.builder.build_unreachable();
-    //     let mut cmp_blocks = Vec::with_capacity(arms.len());
-    //     let mut arm_blocks = Vec::with_capacity(arms.len());
-    //     arms.into_iter().enumerate().for_each(|(i, arm)| {
-    //         cmp_blocks
-    //             .push(self.ctx.append_basic_block(self.curr_fn(), &format!("cmp_block_{}", i)));
-    //         arm_blocks
-    //             .push(self.ctx.append_basic_block(self.curr_fn(), &format!("arm_block_{}", i)));
-    //     });
-
-    //     let cases = arms
-    //         .into_iter()
-    //         .enumerate()
-    //         .map(|(i, arm)| {
-    //             self.builder.position_at_end(cmp_blocks[i]);
-    //             let arm_cmp_val = self.compile_arm_pat(arm.pat, scrut_val);
-    //             let cmp = self.builder.build_int_compare(
-    //                 IntPredicate::EQ,
-    //                 scrut_val,
-    //                 arm_cmp_val,
-    //                 "arm_cmp",
-    //             );
-    //             self.builder.build_conditional_branch(
-    //                 cmp,
-    //                 arm_blocks[i],
-    //                 *cmp_blocks.get(i + 1).unwrap_or(&match_end_block),
-    //             );
-
-    //             self.builder.position_at_end(arm_blocks[i]);
-    //             // this expr doesn't do anything, it needs to be "returned" somehow
-    //             self.compile_expr(arm.body);
-    //             self.builder.build_unconditional_branch(match_end_block);
-    //             (arm_cmp_val, cmp_blocks[i])
-    //         })
-    //         .collect_vec();
-    //     self.builder.position_at_end(original_block);
-    //     // weird return value, check the comments on `build_switch`
-    //     let value = self.builder.build_switch(scrut_val, match_end_block, &cases);
-    //     let int_val: FloatValue = unsafe { std::mem::transmute(value) };
-    //     dbg!(int_val);
-    //     // TODO its probably better to use the if else stuff below with phi
-    //     // build select also looks promising
-    //     int_val.into()
-    // }
-
     fn with_builder<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         todo!()
     }
@@ -259,49 +204,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         phi.add_incoming(incoming.as_slice());
         phi.as_basic_value()
     }
-
-    // fn compile_match(
-    //     &mut self,
-    //     expr: &tir::Expr,
-    //     scrut: &tir::Expr,
-    //     arms: &[tir::Arm],
-    // ) -> BasicValueEnum<'tcx> {
-    //     let val = self.compile_expr(scrut).into_int_value();
-    //     let mut cmp_blocks = Vec::with_capacity(arms.len());
-    //     // let mut body_blocks = Vec::with_capacity(arms.len());
-    //     let mut arm_vals = vec![self.vals.zero.into(); arms.len()];
-
-    //     let match_default_block = self.ctx.append_basic_block(self.curr_fn(), "match_default");
-    //     self.builder.position_at_end(match_default_block);
-    //     self.builder.build_unreachable();
-    //     self.builder.build_unconditional_branch(cmp_blocks[0]);
-
-    //     arms.into_iter().enumerate().for_each(|(i, arm)| {
-    //         cmp_blocks.push(self.ctx.append_basic_block(self.curr_fn(), &format!("arm_cmp_{}", i)))
-    //     });
-    //     let match_end_block = self.ctx.append_basic_block(self.curr_fn(), "match_end");
-    //     for (i, arm) in arms.into_iter().enumerate() {
-    //         self.builder.position_at_end(cmp_blocks[i]);
-    //         let arm_cmp_val = self.compile_arm_pat(arm.pat, val);
-    //         let cmp = self.builder.build_int_compare(IntPredicate::EQ, val, arm_cmp_val, "arm_cmp");
-    //         arm_vals[i] = self.compile_expr(arm.body);
-    //         self.builder.get_insert_block()
-    //         self.builder.build_conditional_branch(
-    //             cmp,
-    //             body_blocks[i],
-    //             *cmp_blocks.get(i + 1).unwrap_or(&match_end_block),
-    //         );
-    //         self.builder.build_unconditional_branch(match_end_block);
-    //     }
-    //     self.builder.position_at_end(match_end_block);
-    //     let phi = self.builder.build_phi(self.llvm_ty(expr.ty), "match_phi");
-    //     debug_assert_eq!(cmp_blocks.len(), arm_vals.len());
-    //     let incoming =
-    //         arm_vals.iter().map(|val| val as &dyn BasicValue).zip(cmp_blocks).collect_vec();
-    //     phi.add_incoming(incoming.as_slice());
-    //     self.builder.position_at_end(match_end_block);
-    //     phi.as_basic_value()
-    // }
 
     fn compile_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> BasicValueEnum<'tcx> {
         let f = self.compile_expr(f).into_pointer_value();
