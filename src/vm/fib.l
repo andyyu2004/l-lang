@@ -1,5 +1,5 @@
 fn main() -> number {
-    fib(35)
+    fib(40)
 }
 
 fn fib(n: number) -> number {

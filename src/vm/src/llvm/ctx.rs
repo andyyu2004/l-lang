@@ -21,7 +21,7 @@ crate struct CodegenCtx<'tcx> {
     pub fpm: PassManager<FunctionValue<'tcx>>,
     pub module: Module<'tcx>,
     pub vals: CommonValues<'tcx>,
-    fns: Vec<FunctionValue<'tcx>>,
+    curr_fn: Option<FunctionValue<'tcx>>,
     vars: FxHashMap<ir::Id, PointerValue<'tcx>>,
 }
 
@@ -50,7 +50,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             fpm,
             builder: ctx.create_builder(),
             vals,
-            fns: Default::default(),
+            curr_fn: None,
             vars: Default::default(),
         }
     }
@@ -58,13 +58,32 @@ impl<'tcx> CodegenCtx<'tcx> {
     /// returns the main function
     pub fn compile(&mut self, prog: &tir::Prog) -> FunctionValue<'tcx> {
         let mut main = None;
+        prog.items.values().for_each(|item| self.def_item(item));
         for item in prog.items.values() {
             let f = self.compile_item(item);
             if item.ident.symbol == symbol::MAIN {
-                main = Some(f)
+                main = Some(f);
             }
         }
+        self.module.verify().unwrap();
         main.unwrap()
+    }
+
+    fn def_item(&mut self, item: &tir::Item) {
+        match item.kind {
+            tir::ItemKind::Fn(ty, _, body) => {
+                // types
+                let (_forall, fn_ty) = ty.expect_scheme();
+                let (arg_tys, ret_ty) = fn_ty.expect_fn();
+                let llvm_arg_tys = arg_tys.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec();
+                let llvm_fn_ty = self.llvm_ty(ret_ty).fn_type(&llvm_arg_tys, false);
+                let fn_val = self.module.add_function(&item.id.def.to_string(), llvm_fn_ty, None);
+                // define parameters
+                for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
+                    arg.set_name(&param.pat.id.to_string());
+                }
+            }
+        }
     }
 
     fn compile_item(&mut self, item: &tir::Item) -> FunctionValue<'tcx> {
@@ -80,32 +99,33 @@ impl<'tcx> CodegenCtx<'tcx> {
         generics: &tir::Generics,
         body: &tir::Body,
     ) -> FunctionValue<'tcx> {
-        // types
-        let (_forall, fn_ty) = ty.expect_scheme();
-        let (arg_tys, ret_ty) = fn_ty.expect_fn();
-        let llvm_arg_tys = arg_tys.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec();
-        let llvm_fn_ty = self.llvm_ty(ret_ty).fn_type(&llvm_arg_tys, false);
-        let fn_val = self.module.add_function(&item.id.def.to_string(), llvm_fn_ty, None);
-        self.fns.push(fn_val);
-        // params
+        let fn_val = self.module.get_function(&item.id.def.to_string()).unwrap();
+        self.curr_fn = Some(fn_val);
         let basic_block = self.ctx.append_basic_block(fn_val, "fn_block");
-        body.params.into_iter().for_each(|p| self.compile_let_pat(p.pat));
+        // params
+        for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
+            let ptr = self.compile_let_pat(param.pat);
+            self.builder.build_store(ptr, arg);
+        }
+
+        self.position_end();
         // body
         let body = self.compile_expr(body.expr);
         // self.builder.position_at_end(basic_block);
         self.builder.build_return(Some(&body));
         self.module.print_to_stderr();
         assert!(fn_val.verify(true));
-        self.fpm.run_on(&fn_val);
+        // self.fpm.run_on(&fn_val);
         fn_val
     }
 
-    fn compile_let_pat(&mut self, pat: &tir::Pattern) {
+    fn compile_let_pat(&mut self, pat: &tir::Pattern) -> PointerValue<'tcx> {
         match pat.kind {
-            tir::PatternKind::Wildcard => {}
+            tir::PatternKind::Wildcard => self.alloca(pat.ty, pat.id),
             tir::PatternKind::Binding(ident, _) => {
                 let ptr = self.alloca(pat.ty, pat.id);
-                self.def(pat.id, ptr);
+                self.def_var(pat.id, ptr);
+                ptr
             }
             tir::PatternKind::Field(_) => todo!(),
             tir::PatternKind::Lit(_) => unreachable!("refutable"),
@@ -208,7 +228,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn compile_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> BasicValueEnum<'tcx> {
         let f = self.compile_expr(f).into_pointer_value();
         let args = args.into_iter().map(|arg| self.compile_expr(arg)).collect_vec();
-        self.builder.build_call(f, &args, "invoke").try_as_basic_value().left().unwrap()
+        self.builder.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap()
     }
 
     fn compile_item_ref(&mut self, id: DefId) -> BasicValueEnum<'tcx> {
@@ -223,7 +243,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.builder.build_load(ptr, "load")
     }
 
-    fn def(&mut self, id: ir::Id, ptr: PointerValue<'tcx>) {
+    fn def_var(&mut self, id: ir::Id, ptr: PointerValue<'tcx>) {
         self.vars.insert(id, ptr);
     }
 
@@ -232,7 +252,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::StmtKind::Let(l) => {
                 let v = l.init.map(|expr| self.compile_expr(expr)).unwrap_or(self.vals.zero.into());
                 let ptr = self.alloca(l.pat.ty, l.pat.id);
-                self.def(l.pat.id, ptr);
+                self.def_var(l.pat.id, ptr);
                 self.position_end();
                 self.builder.build_store(ptr, v);
             }
@@ -243,7 +263,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn curr_fn(&self) -> FunctionValue<'tcx> {
-        *self.fns.last().unwrap()
+        self.curr_fn.unwrap()
     }
 
     fn position_end(&mut self) {

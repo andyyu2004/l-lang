@@ -1,6 +1,12 @@
 fn main() -> number {
-    f(20)
+    fac(8)
 }
+
+fn fac(n: number) -> number {
+    if n < 69 { 1 } else { 0 }
+}
+
+
 
 
 
