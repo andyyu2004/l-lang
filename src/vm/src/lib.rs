@@ -71,7 +71,7 @@ pub fn exec(src: &str) -> LResult<exec::Val> {
 
 pub fn llvm_exec(src: &str) -> LResult<()> {
     let driver = mk_driver(src);
-    let res = driver.llvm_exec();
+    let res = driver.llvm_exec()?;
     Ok(())
 }
 

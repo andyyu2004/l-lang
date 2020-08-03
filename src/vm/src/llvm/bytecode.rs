@@ -1,4 +1,7 @@
 //! compile bytecode into LLVM
+//! this bytecode is not suitable for lowering into LLVM IR as too much type information has been
+//! lost at this point
+//! it is non-trivial to add a 'tcx lifetime into this stuff due to the GC
 
 use super::CodegenCtx;
 use crate::compiler::{ConstId, Constant, Executable};

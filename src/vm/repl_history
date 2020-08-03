@@ -13,3 +13,6 @@ cargo r
 2 + 2
 2 + 55
 2 /4
+let x =5
+let x = 5;
+let x = 5

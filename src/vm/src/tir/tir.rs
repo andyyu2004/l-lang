@@ -87,7 +87,6 @@ impl<'tcx> Display for Block<'tcx> {
 
 #[derive(Debug)]
 crate struct Let<'tcx> {
-    // note that the type annotation is redundant now that we have a typed `Pattern`
     pub id: Id,
     pub pat: &'tcx tir::Pattern<'tcx>,
     pub init: Option<&'tcx tir::Expr<'tcx>>,

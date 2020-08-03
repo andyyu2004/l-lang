@@ -1,3 +1,5 @@
+//! bytecode compiler
+
 mod compiler;
 mod constant_pool;
 mod ctx;

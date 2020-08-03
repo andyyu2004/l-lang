@@ -23,7 +23,7 @@ impl Parse for StmtParser {
     }
 }
 
-/// let <pat>:<ty> = ( <expr> )? ;
+/// let <pat>:<ty> = ( <expr> )?;
 crate struct LetParser {
     let_kw: Tok,
 }

@@ -1,6 +1,8 @@
 fn main() -> number {
-    2 + 2
+    f(20)
 }
+
+
 
 
 
