@@ -7,10 +7,10 @@ use crate::ty::{Const, ConstKind, SubstRef, Ty, TyKind};
 use crate::typeck::TyCtx;
 use inkwell::types::{BasicType, BasicTypeEnum, FloatType, FunctionType};
 use inkwell::values::*;
-use inkwell::FloatPredicate;
 use inkwell::{
-    basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager, AddressSpace, IntPredicate
+    basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager
 };
+use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::fmt::Display;

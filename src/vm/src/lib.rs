@@ -69,10 +69,10 @@ pub fn exec(src: &str) -> LResult<exec::Val> {
     Ok(res)
 }
 
-pub fn llvm_exec(src: &str) -> LResult<()> {
+pub fn llvm_exec(src: &str) -> LResult<f64> {
     let driver = mk_driver(src);
     let res = driver.llvm_exec()?;
-    Ok(())
+    Ok(res)
 }
 
 pub macro tir($src:expr) {{
@@ -85,7 +85,7 @@ fn wrap_in_main(src: &str) -> String {
     format!("fn main() -> number {{ {} }}", src)
 }
 
-pub fn llvm_exec_expr(src: &str) -> LResult<()> {
+pub fn llvm_exec_expr(src: &str) -> LResult<f64> {
     let src = wrap_in_main(src);
     llvm_exec(&src)
 }

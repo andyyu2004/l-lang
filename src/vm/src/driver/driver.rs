@@ -77,23 +77,22 @@ impl<'tcx> Driver<'tcx> {
         if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(tir) }
     }
 
-    pub fn llvm_compile(&'tcx self) -> LResult<FunctionValue<'tcx>> {
+    pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
         let tir = self.gen_tir()?;
         println!("{}", tir);
         let gcx = self.global_ctx.get().unwrap();
         let llvm_ctx = LLVMCtx::create();
         let mut ctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
         let main_fn = ctx.compile(&tir);
+        Ok((ctx, main_fn))
+    }
+
+    pub fn llvm_exec(&'tcx self) -> LResult<f64> {
+        let (ctx, main_fn) = self.llvm_compile()?;
         // execution
         let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::Aggressive).unwrap();
         let val = unsafe { jit.run_function(main_fn, &[]) };
-        dbg!(val.as_float(&ctx.ctx.f64_type()));
-        Ok(main_fn)
-    }
-
-    pub fn llvm_exec(&'tcx self) -> LResult<()> {
-        let llvm = self.llvm_compile()?;
-        Ok(())
+        Ok(val.as_float(&ctx.ctx.f64_type()))
     }
 
     pub fn compile(&'tcx self) -> LResult<Executable> {

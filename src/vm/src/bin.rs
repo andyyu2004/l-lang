@@ -24,7 +24,7 @@ fn main() {
         } else {
             // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
             println!(
-                "{:?}",
+                "result? {}",
                 libvm::llvm_exec(&src).unwrap_or_else(|err| {
                     println!("{:?}", err);
                     std::process::exit(1)
@@ -43,8 +43,9 @@ fn main() {
                     continue;
                 }
                 rl.add_history_entry(line.as_str());
-                if let Err(err) = libvm::llvm_exec_expr(&line) {
-                    println!("{:?}", err);
+                match libvm::llvm_exec_expr(&line) {
+                    Ok(res) => println!("{}", res),
+                    Err(err) => println!("{:?}", err),
                 }
             }
             Err(ReadlineError::Interrupted) => break,
