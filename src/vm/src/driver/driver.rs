@@ -84,7 +84,8 @@ impl<'tcx> Driver<'tcx> {
         let llvm_ctx = LLVMCtx::create();
         let mut ctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
         let main_fn = ctx.compile(&tir);
-        let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        // execution
+        let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::Aggressive).unwrap();
         let val = unsafe { jit.run_function(main_fn, &[]) };
         dbg!(val.as_float(&ctx.ctx.f64_type()));
         Ok(main_fn)

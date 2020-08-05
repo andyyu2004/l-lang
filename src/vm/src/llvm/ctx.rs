@@ -102,21 +102,23 @@ impl<'tcx> CodegenCtx<'tcx> {
         let fn_val = self.module.get_function(&item.id.def.to_string()).unwrap();
         self.curr_fn = Some(fn_val);
         let basic_block = self.ctx.append_basic_block(fn_val, "fn_block");
+        self.compile_body(fn_val, body);
+        self.module.print_to_stderr();
+        assert!(fn_val.verify(true));
+        // self.fpm.run_on(&fn_val);
+        fn_val
+    }
+
+    fn compile_body(&mut self, fn_val: FunctionValue<'tcx>, body: &tir::Body) {
         // params
         for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
             let ptr = self.compile_let_pat(param.pat);
             self.builder.build_store(ptr, arg);
         }
-
-        self.position_end();
         // body
+        self.position_end();
         let body = self.compile_expr(body.expr);
-        // self.builder.position_at_end(basic_block);
         self.builder.build_return(Some(&body));
-        self.module.print_to_stderr();
-        assert!(fn_val.verify(true));
-        // self.fpm.run_on(&fn_val);
-        fn_val
     }
 
     fn compile_let_pat(&mut self, pat: &tir::Pattern) -> PointerValue<'tcx> {
@@ -134,7 +136,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
         match ty.kind {
-            TyKind::Bool => todo!(),
+            TyKind::Bool => self.ctx.bool_type().into(),
             TyKind::Char => todo!(),
             TyKind::Num => self.ctx.f64_type().into(),
             TyKind::Array(_) => todo!(),
@@ -308,20 +310,19 @@ impl<'tcx> CodegenCtx<'tcx> {
         l: FloatValue<'tcx>,
         r: FloatValue<'tcx>,
     ) -> IntValue<'tcx> {
-        let cmp = match op {
+        match op {
             ast::BinOp::Lt =>
                 self.builder.build_float_compare(FloatPredicate::OLT, l, r, "fcmp_lt"),
             ast::BinOp::Gt =>
                 self.builder.build_float_compare(FloatPredicate::OGT, l, r, "fcmp_gt"),
             ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
-        };
-        self.builder.build_int_z_extend(cmp, self.ctx.i64_type(), "i1->i64")
+        }
     }
 
     fn compile_const(&mut self, c: &Const) -> BasicValueEnum<'tcx> {
         match c.kind {
             ConstKind::Floating(f) => self.ctx.f64_type().const_float(f).into(),
-            ConstKind::Integral(i) => self.ctx.i64_type().const_int(i, false).into(),
+            ConstKind::Bool(b) => self.ctx.bool_type().const_int(b, true).into(),
         }
     }
 }

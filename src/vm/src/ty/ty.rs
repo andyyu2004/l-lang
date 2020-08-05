@@ -197,7 +197,7 @@ crate struct Const<'tcx> {
 #[derive(Debug, Clone, Copy)]
 crate enum ConstKind {
     Floating(f64),
-    Integral(u64),
+    Bool(u64),
 }
 
 impl<'tcx> Const<'tcx> {
@@ -210,7 +210,7 @@ impl<'tcx> Display for Const<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
             ConstKind::Floating(d) => write!(f, "{}", d),
-            ConstKind::Integral(i) => write!(f, "{}", i),
+            ConstKind::Bool(i) => write!(f, "{}", i),
         }
     }
 }

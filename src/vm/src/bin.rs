@@ -9,17 +9,28 @@ fn main() {
     let mut rl = Editor::<()>::new();
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
+    let interpret = matches.is_present("interpret");
 
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
-        // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
-        return println!(
-            "{:?}",
-            libvm::llvm_exec(&src).unwrap_or_else(|err| {
-                println!("{:?}", err);
-                std::process::exit(1)
-            })
-        );
+        return if interpret {
+            println!(
+                "{:?}",
+                libvm::exec(&src).unwrap_or_else(|err| {
+                    println!("{:?}", err);
+                    std::process::exit(1)
+                })
+            );
+        } else {
+            // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
+            println!(
+                "{:?}",
+                libvm::llvm_exec(&src).unwrap_or_else(|err| {
+                    println!("{:?}", err);
+                    std::process::exit(1)
+                })
+            );
+        };
     }
 
     if rl.load_history(HISTORY_PATH).is_err() {}

@@ -5,4 +5,8 @@ args:
       about: Input file
       required: false
       index: 1
+  - interpret:
+      required: false
+      short: i
+      long: interpret
 
