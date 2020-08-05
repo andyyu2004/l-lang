@@ -182,7 +182,8 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
-        let kind = match &self.kind {
+        let &Self { span, id, ref kind } = self;
+        let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
                 tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
@@ -205,7 +206,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
         };
         let ty = ctx.node_type(self.id);
-        tir::Expr { span: self.span, kind, ty }
+        tir::Expr { span, id, kind, ty }
     }
 }
 

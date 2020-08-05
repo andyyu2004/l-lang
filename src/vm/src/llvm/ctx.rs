@@ -1,14 +1,15 @@
+use super::util::LLVMAsPtrVal;
 use crate::ast;
 use crate::ir::{self, DefId};
 use crate::lexer::symbol;
 use crate::tir;
-use crate::ty::{Const, ConstKind, Ty, TyKind};
+use crate::ty::{Const, ConstKind, SubstRef, Ty, TyKind};
 use crate::typeck::TyCtx;
-use inkwell::types::{BasicType, BasicTypeEnum, FloatType};
+use inkwell::types::{BasicType, BasicTypeEnum, FloatType, FunctionType};
 use inkwell::values::*;
 use inkwell::FloatPredicate;
 use inkwell::{
-    basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager, IntPredicate
+    basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager, AddressSpace, IntPredicate
 };
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -92,6 +93,14 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
+    fn with_fn<R>(&mut self, new_fn: FunctionValue<'tcx>, f: impl FnOnce(&mut Self) -> R) -> R {
+        let prev = self.curr_fn.take();
+        self.curr_fn = Some(new_fn);
+        let ret = f(self);
+        self.curr_fn = prev;
+        ret
+    }
+
     fn compile_fn(
         &mut self,
         item: &tir::Item,
@@ -100,16 +109,18 @@ impl<'tcx> CodegenCtx<'tcx> {
         body: &tir::Body,
     ) -> FunctionValue<'tcx> {
         let fn_val = self.module.get_function(&item.id.def.to_string()).unwrap();
-        self.curr_fn = Some(fn_val);
-        let basic_block = self.ctx.append_basic_block(fn_val, "fn_block");
-        self.compile_body(fn_val, body);
-        self.module.print_to_stderr();
-        assert!(fn_val.verify(true));
-        // self.fpm.run_on(&fn_val);
+        self.with_fn(fn_val, |this| {
+            this.compile_body(body);
+            this.module.print_to_stderr();
+            assert!(fn_val.verify(true));
+            // self.fpm.run_on(&fn_val);
+        });
         fn_val
     }
 
-    fn compile_body(&mut self, fn_val: FunctionValue<'tcx>, body: &tir::Body) {
+    fn compile_body(&mut self, body: &tir::Body) {
+        let fn_val = self.curr_fn.unwrap();
+        let basic_block = self.ctx.append_basic_block(fn_val, "body");
         // params
         for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
             let ptr = self.compile_let_pat(param.pat);
@@ -134,13 +145,19 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
+    fn llvm_fn_ty(&self, params: SubstRef, ret: Ty) -> FunctionType<'tcx> {
+        self.llvm_ty(ret)
+            .fn_type(&params.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+    }
+
     fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
         match ty.kind {
             TyKind::Bool => self.ctx.bool_type().into(),
             TyKind::Char => todo!(),
             TyKind::Num => self.ctx.f64_type().into(),
-            TyKind::Array(_) => todo!(),
-            TyKind::Fn(_, _) => todo!(),
+            TyKind::Array(ty) => todo!(),
+            TyKind::Fn(params, ret) =>
+                self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
             TyKind::Tuple(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
@@ -157,10 +174,21 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::ItemRef(def_id) => self.compile_item_ref(def_id),
             tir::ExprKind::Tuple(_) => todo!(),
-            tir::ExprKind::Lambda(_) => todo!(),
+            tir::ExprKind::Lambda(body) => self.compile_lambda(expr, body).into(),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
         }
+    }
+
+    fn compile_lambda(&mut self, expr: &tir::Expr, body: &tir::Body) -> PointerValue<'tcx> {
+        let (param_tys, ret_ty) = expr.ty.expect_fn();
+        let fn_val = self.module.add_function(
+            &expr.id.to_string(),
+            self.llvm_fn_ty(param_tys, ret_ty),
+            None,
+        );
+        self.with_fn(fn_val, |this| this.compile_body(body));
+        fn_val.as_llvm_ptr()
     }
 
     fn compile_arm_pat(&mut self, pat: &tir::Pattern, cmp_val: IntValue<'tcx>) -> IntValue<'tcx> {

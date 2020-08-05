@@ -7,6 +7,7 @@ use std::fmt::{self, Formatter};
 
 #[derive(Debug)]
 crate struct Expr<'tcx> {
+    pub id: ir::Id,
     pub ty: Ty<'tcx>,
     pub span: Span,
     pub kind: tir::ExprKind<'tcx>,
