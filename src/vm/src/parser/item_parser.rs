@@ -24,7 +24,7 @@ impl Parse for ItemParser {
             false,
         )?;
 
-        Ok(parser.mk_item(vis.span.merge(&kind_span), vis, ident, kind))
+        Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
     }
 }
 

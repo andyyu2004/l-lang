@@ -122,7 +122,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let fn_val = self.curr_fn.unwrap();
         let basic_block = self.ctx.append_basic_block(fn_val, "body");
         // params
-        for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
+        for (param, arg) in body.params.iter().zip(fn_val.get_param_iter()) {
             let ptr = self.compile_let_pat(param.pat);
             self.builder.build_store(ptr, arg);
         }
@@ -178,14 +178,13 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Lambda(body) => self.compile_lambda(expr, body).into(),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
-            tir::ExprKind::Ret(ret_expr) => self.compile_ret(ret_expr),
         }
     }
 
-    fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) -> BasicValueEnum<'tcx> {
-        // let ret_val = ret_expr.map(|expr| &self.compile_expr(expr) as &dyn BasicValue);
-        // self.builder.build_return(ret_val);
-        todo!()
+    fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) {
+        // uhh ... must be a better to get a trait object from within the option
+        let ret_val = ret_expr.map(|expr| box self.compile_expr(expr) as Box<dyn BasicValue>);
+        self.builder.build_return(ret_val.as_deref());
     }
 
     fn compile_lambda(&mut self, expr: &tir::Expr, body: &tir::Body) -> PointerValue<'tcx> {
@@ -232,14 +231,14 @@ impl<'tcx> CodegenCtx<'tcx> {
         let mut cmp_blocks = Vec::with_capacity(arms.len());
         let mut body_blocks = Vec::with_capacity(1 + arms.len());
         let mut arm_vals = Vec::with_capacity(arms.len());
-        arms.into_iter().enumerate().for_each(|(i, arm)| {
+        arms.iter().enumerate().for_each(|(i, arm)| {
             cmp_blocks.push(self.ctx.append_basic_block(self.curr_fn(), &format!("arm_cmp_{}", i)));
             body_blocks.push(self.ctx.append_basic_block(self.curr_fn(), &format!("arm_{}", i)));
         });
         self.builder.build_unconditional_branch(cmp_blocks[0]);
         let default_block = self.build_unreachable();
         let match_end_block = self.ctx.append_basic_block(self.curr_fn(), "match_end");
-        arms.into_iter().enumerate().for_each(|(i, arm)| {
+        arms.iter().enumerate().for_each(|(i, arm)| {
             // build arm cmp
             self.builder.position_at_end(cmp_blocks[i]);
             let cond_val = self.compile_arm_pat(arm.pat, cmp_val);
@@ -265,7 +264,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     fn compile_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> BasicValueEnum<'tcx> {
         let f = self.compile_expr(f).into_pointer_value();
-        let args = args.into_iter().map(|arg| self.compile_expr(arg)).collect_vec();
+        let args = args.iter().map(|arg| self.compile_expr(arg)).collect_vec();
         self.builder.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap()
     }
 
@@ -288,12 +287,16 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn compile_stmt(&mut self, stmt: &tir::Stmt) {
         match stmt.kind {
             tir::StmtKind::Let(l) => {
-                let v = l.init.map(|expr| self.compile_expr(expr)).unwrap_or(self.vals.zero.into());
+                let v = l
+                    .init
+                    .map(|expr| self.compile_expr(expr))
+                    .unwrap_or_else(|| self.vals.zero.into());
                 let ptr = self.alloca(l.pat.ty, l.pat.id);
                 self.def_var(l.pat.id, ptr);
                 self.position_end();
                 self.builder.build_store(ptr, v);
             }
+            tir::StmtKind::Ret(ret_expr) => self.compile_ret(ret_expr),
             tir::StmtKind::Expr(expr) => {
                 self.compile_expr(expr);
             }
@@ -319,7 +322,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn compile_block(&mut self, block: &tir::Block) -> BasicValueEnum<'tcx> {
-        block.stmts.into_iter().for_each(|stmt| self.compile_stmt(stmt));
+        block.stmts.iter().for_each(|stmt| self.compile_stmt(stmt));
         self.compile_expr(block.expr.unwrap())
     }
 

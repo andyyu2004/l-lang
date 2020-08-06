@@ -54,13 +54,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         pat: &'ir ir::Pattern<'ir>,
         expr: &'ir ir::Expr<'ir>,
     ) -> ir::Arm<'ir> {
-        ir::Arm {
-            id: self.new_id(),
-            span: pat.span.merge(&expr.span),
-            pat,
-            guard: None,
-            body: expr,
-        }
+        ir::Arm { id: self.new_id(), span: pat.span.merge(expr.span), pat, guard: None, body: expr }
     }
 }
 

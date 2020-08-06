@@ -17,7 +17,7 @@ crate struct FnCtx<'a, 'tcx> {
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(inherited: &'a Inherited<'a, 'tcx>) -> Self {
-        Self { inherited, expected_ret_ty: inherited.tcx.types.unit }
+        Self { inherited, expected_ret_ty: inherited.new_infer_var() }
     }
 }
 

@@ -45,11 +45,7 @@ crate trait Visitor<'ast>: Sized {
     }
 
     fn visit_stmt(&mut self, stmt: &'ast Stmt) {
-        match &stmt.kind {
-            StmtKind::Let(l) => self.visit_let(l),
-            StmtKind::Expr(expr) => self.visit_expr(expr),
-            StmtKind::Semi(expr) => self.visit_expr(expr),
-        }
+        walk_stmt(self, stmt);
     }
 
     fn visit_fn_sig(&mut self, sig: &'ast FnSig) {
@@ -101,6 +97,15 @@ crate fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) 
     block.stmts.iter().for_each(|stmt| visitor.visit_stmt(stmt))
 }
 
+crate fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
+    match &stmt.kind {
+        StmtKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
+        StmtKind::Let(l) => visitor.visit_let(l),
+        StmtKind::Expr(expr) => visitor.visit_expr(expr),
+        StmtKind::Semi(expr) => visitor.visit_expr(expr),
+    }
+}
+
 crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
         ExprKind::Lit(_) => {}
@@ -109,7 +114,6 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
-        ExprKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
         ExprKind::Call(f, args) => {
             visitor.visit_expr(f);

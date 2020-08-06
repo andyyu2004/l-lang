@@ -12,7 +12,7 @@ crate struct Stmt<'tcx> {
 
 impl<'tcx> Display for Stmt<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.kind)
+        tir::Formatter::new(f).fmt_stmt(self)
     }
 }
 
@@ -20,13 +20,5 @@ impl<'tcx> Display for Stmt<'tcx> {
 crate enum StmtKind<'tcx> {
     Let(&'tcx tir::Let<'tcx>),
     Expr(&'tcx tir::Expr<'tcx>),
-}
-
-impl<'tcx> Display for StmtKind<'tcx> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            StmtKind::Let(l) => write!(f, "{}", l),
-            StmtKind::Expr(expr) => write!(f, "{}", expr),
-        }
-    }
+    Ret(Option<&'tcx tir::Expr<'tcx>>),
 }

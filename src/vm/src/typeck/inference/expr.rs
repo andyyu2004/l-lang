@@ -18,16 +18,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
-            ir::ExprKind::Ret(ret_expr) => self.check_expr_ret(expr, ret_expr.as_deref()),
         };
         self.write_ty(expr.id, ty)
-    }
-
-    /// return expressions have the type of the expression that follows the return
-    fn check_expr_ret(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
-        let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
-        self.unify(expr.span, self.expected_ret_ty, ty);
-        self.tcx.types.never
     }
 
     fn check_match_expr(
@@ -87,8 +79,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         for (param, ty) in body.params.iter().zip(param_tys) {
             self.check_pat(param.pat, ty);
         }
-        self.expected_ret_ty = ret_ty;
         let body_ty = self.check_expr(body.expr);
+        self.unify(body.expr.span, self.expected_ret_ty, ret_ty);
         self.unify(body.expr.span, ret_ty, body_ty);
         body_ty
     }

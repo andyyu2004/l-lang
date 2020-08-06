@@ -25,7 +25,7 @@ impl Parse for TyParser {
         } else if let Some(lsq) = parser.accept(TokenType::OpenSqBracket) {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;
-            Ok(parser.mk_ty(lsq.span.merge(&rsq.span), TyKind::Array(ty)))
+            Ok(parser.mk_ty(lsq.span.merge(rsq.span), TyKind::Array(ty)))
         } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
             let path = PathParser.parse(parser)?;
             Ok(parser.mk_ty(path.span, TyKind::Path(path)))

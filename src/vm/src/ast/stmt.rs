@@ -12,10 +12,12 @@ crate struct Stmt {
 crate enum StmtKind {
     /// let binding
     Let(P<Let>),
-    /// no trailing semicoon
+    /// no trailing semicolon
     Expr(P<Expr>),
-    /// expression statement (with trailing semicolon)
+    /// expression stmt (with trailing semicolon)
     Semi(P<Expr>),
+    /// return stmt
+    Ret(Option<P<Expr>>),
 }
 
 /// let <pat>:<ty> = <init>;

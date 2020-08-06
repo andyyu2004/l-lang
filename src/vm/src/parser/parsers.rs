@@ -11,12 +11,13 @@ crate struct RetParser {
 }
 
 impl Parse for RetParser {
-    type Output = P<Expr>;
+    type Output = P<Stmt>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let expr = parser.try_parse(&mut ExprParser);
-        let span = self.ret_kw.span.merge(&parser.empty_span());
-        Ok(parser.mk_expr(span, ExprKind::Ret(expr)))
+        let semi = parser.expect(TokenType::Semi)?;
+        let span = self.ret_kw.span.merge(semi.span);
+        Ok(parser.mk_stmt(span, StmtKind::Ret(expr)))
     }
 }
 
@@ -64,7 +65,7 @@ impl Parse for ParamParser {
         } else {
             Ok(parser.mk_infer_ty())
         }?;
-        Ok(Param { span: pattern.span.merge(&ty.span), id: parser.mk_id(), pattern, ty })
+        Ok(Param { span: pattern.span.merge(ty.span), id: parser.mk_id(), pattern, ty })
     }
 }
 
@@ -241,7 +242,7 @@ impl Parse for BlockParser {
             }
             stmts.push(StmtParser.parse(parser)?);
         };
-        let span = self.open_brace.span.merge(&close_brace.span);
+        let span = self.open_brace.span.merge(close_brace.span);
         // check there are no missing semicolons in expression statements
         if stmts.len() > 1 {
             for stmt in &stmts[..stmts.len() - 1] {
@@ -267,7 +268,7 @@ impl Parse for LambdaParser {
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
         parser.expect(TokenType::RFArrow)?;
         let body = ExprParser.parse(parser)?;
-        let span = self.fn_kw.span.merge(&body.span);
+        let span = self.fn_kw.span.merge(body.span);
         Ok(parser.mk_expr(span, ExprKind::Lambda(sig, body)))
     }
 }
@@ -288,7 +289,7 @@ impl Parse for IfParser {
         } else {
             None
         };
-        let span = self.if_kw.span.merge(&parser.empty_span());
+        let span = self.if_kw.span.merge(parser.empty_span());
         Ok(parser.mk_expr(span, ExprKind::If(cond, thn, els)))
     }
 }
@@ -323,7 +324,7 @@ impl Parse for GenericsParser {
             let params = PunctuatedParser { inner: TyParamParser, separator: TokenType::Comma }
                 .parse(parser)?;
             let gt = parser.expect(TokenType::Gt)?;
-            span = span.merge(&gt.span);
+            span = span.merge(gt.span);
             params
         } else {
             vec![]

@@ -1,4 +1,3 @@
-mod bytecode;
 mod ctx;
 #[cfg(test)]
 mod tests;

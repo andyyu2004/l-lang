@@ -18,7 +18,7 @@ impl Span {
         Self { lo, hi }
     }
 
-    pub fn merge(&self, with: &Span) -> Self {
+    pub fn merge(self, with: Span) -> Self {
         Self { lo: self.lo, hi: with.hi }
     }
 }

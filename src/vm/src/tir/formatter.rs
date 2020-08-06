@@ -85,6 +85,17 @@ where
         }
     }
 
+    pub fn fmt_stmt(&mut self, stmt: &tir::Stmt) -> fmt::Result {
+        match stmt.kind {
+            tir::StmtKind::Let(l) => indent!(self, "{}", l),
+            tir::StmtKind::Expr(expr) => indent!(self, "{}", expr),
+            tir::StmtKind::Ret(expr) => match expr {
+                Some(expr) => indent!(self, "return {}", expr),
+                None => indent!(self, "return"),
+            },
+        }
+    }
+
     pub fn fmt_expr(&mut self, expr: &tir::Expr) -> fmt::Result {
         match expr.kind {
             tir::ExprKind::Const(c) => indent!(self, "{}", c),
@@ -98,10 +109,6 @@ where
             tir::ExprKind::Lambda(b) =>
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
-            tir::ExprKind::Ret(expr) => match expr {
-                Some(expr) => indent!(self, "return {}", expr),
-                None => indent!(self, "return"),
-            },
         }?;
         write!(self.writer, ":{}", expr.ty)
     }

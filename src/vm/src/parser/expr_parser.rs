@@ -62,7 +62,7 @@ impl Parse for UnaryExprParser {
         if let Some(t) = parser.accept_one_of(&UNARY_OPS) {
             let unary_op = UnaryOp::from(t);
             let expr = self.parse(parser)?;
-            Ok(parser.mk_expr(t.span.merge(&expr.span), ExprKind::Unary(unary_op, expr)))
+            Ok(parser.mk_expr(t.span.merge(expr.span), ExprKind::Unary(unary_op, expr)))
         } else {
             PostfixExprParser.parse(parser)
         }
@@ -83,7 +83,7 @@ impl Parse for PostfixExprParser {
                 TokenType::OpenParen => {
                     let (arg_span, args) =
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
-                    expr = parser.mk_expr(expr.span.merge(&arg_span), ExprKind::Call(expr, args));
+                    expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
                 TokenType::Dot => todo!(),
                 TokenType::OpenSqBracket => todo!(),
@@ -127,8 +127,6 @@ impl Parse for PrimaryExprParser {
             LambdaParser { fn_kw }.parse(parser)
         } else if let Some(if_kw) = parser.accept(TokenType::If) {
             IfParser { if_kw }.parse(parser)
-        } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
-            RetParser { ret_kw }.parse(parser)
         } else {
             Err(ParseError::unimpl())
         }
@@ -178,7 +176,7 @@ where
         while let Some(t) = parser.accept_one_of(self.ops) {
             let binop = BinOp::from(t);
             let right = self.inner.parse(parser)?;
-            let span = expr.span.merge(&right.span);
+            let span = expr.span.merge(right.span);
             expr = parser.mk_expr(span, ExprKind::Bin(binop, expr, right));
         }
         Ok(expr)
