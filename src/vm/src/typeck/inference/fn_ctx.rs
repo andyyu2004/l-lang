@@ -12,12 +12,12 @@ use std::{cell::RefCell, ops::Deref};
 
 crate struct FnCtx<'a, 'tcx> {
     inherited: &'a Inherited<'a, 'tcx>,
-    ret: Option<Ty<'tcx>>,
+    pub(super) expected_ret_ty: Ty<'tcx>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(inherited: &'a Inherited<'a, 'tcx>) -> Self {
-        Self { inherited, ret: None }
+        Self { inherited, expected_ret_ty: inherited.tcx.types.unit }
     }
 }
 
@@ -98,21 +98,13 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         let (_forall, ty) = fn_ty.expect_scheme();
         debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
         let (param_tys, ret_ty) = ty.expect_fn();
-        self.check_fn(item.span, sig, body).0
+        self.check_fn(sig, body).0
     }
 
-    pub fn check_fn(
-        &'a self,
-        fn_span: Span,
-        sig: &ir::FnSig,
-        body: &ir::Body,
-    ) -> (FnCtx<'a, 'tcx>, Ty<'tcx>) {
-        let mut fcx = FnCtx::new(self);
+    pub fn check_fn(&'a self, sig: &ir::FnSig, body: &ir::Body) -> (FnCtx<'a, 'tcx>, Ty<'tcx>) {
         let fn_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
-        let (param_tys, ret_ty) = fn_ty.expect_fn();
-        let body_ty = fcx.check_body(param_tys, body);
-        info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
-        self.unify(fn_span, ret_ty, body_ty);
+        let mut fcx = FnCtx::new(self);
+        let body_ty = fcx.check_body(fn_ty, body);
         (fcx, fn_ty)
     }
 

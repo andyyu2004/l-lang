@@ -57,7 +57,7 @@ crate enum TyKind<'tcx> {
     /// number
     Num,
     Error,
-    // Never,
+    Never,
     /// [<ty>]
     Array(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
@@ -117,10 +117,10 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
             TyKind::Scheme(_, ty) => ty.ty_flags(),
-            TyKind::Bool | TyKind::Char | TyKind::Num => TyFlags::empty(),
             TyKind::Infer(_) => TyFlags::HAS_INFER,
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
+            TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num => TyFlags::empty(),
         }
     }
 }
@@ -139,6 +139,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
             TyKind::Error => write!(f, "err"),
+            TyKind::Never => write!(f, "!"),
         }
     }
 }

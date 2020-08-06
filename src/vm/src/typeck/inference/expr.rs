@@ -15,18 +15,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
-            ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(expr, sig, body),
+            ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
-            ir::ExprKind::Ret(expr) => self.check_expr_ret(*expr),
+            ir::ExprKind::Ret(ret_expr) => self.check_expr_ret(expr, ret_expr.as_deref()),
         };
         self.write_ty(expr.id, ty)
     }
 
-    fn check_expr_ret(&mut self, expr: Option<&ir::Expr>) -> Ty<'tcx> {
-        let ty = expr.map(|expr| self.check_expr(expr));
-        self.tcx.types.unit;
-        todo!();
+    /// return expressions have the type of the expression that follows the return
+    fn check_expr_ret(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
+        let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
+        self.unify(expr.span, self.expected_ret_ty, ty);
+        self.tcx.types.never
     }
 
     fn check_match_expr(
@@ -74,18 +75,22 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ret_ty
     }
 
-    fn check_lambda_expr(&mut self, expr: &ir::Expr, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
-        self.check_fn(expr.span, sig, body).1
+    fn check_lambda_expr(&mut self, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
+        self.check_fn(sig, body).1
     }
 
-    /// inputs are the input types from the type signature (or inference variables)
+    /// inputs are the types from the type signature (or inference variables)
     /// adds the parameters to locals and typechecks the expr of the body
-    pub fn check_body(&mut self, param_tys: SubstRef<'tcx>, body: &ir::Body) -> Ty<'tcx> {
+    pub fn check_body(&mut self, fn_ty: Ty<'tcx>, body: &ir::Body) -> Ty<'tcx> {
+        let (param_tys, ret_ty) = fn_ty.expect_fn();
         debug_assert_eq!(param_tys.len(), body.params.len());
         for (param, ty) in body.params.iter().zip(param_tys) {
             self.check_pat(param.pat, ty);
         }
-        self.check_expr(body.expr)
+        self.expected_ret_ty = ret_ty;
+        let body_ty = self.check_expr(body.expr);
+        self.unify(body.expr.span, ret_ty, body_ty);
+        body_ty
     }
 
     fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstRef<'tcx> {

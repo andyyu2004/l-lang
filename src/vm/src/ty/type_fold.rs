@@ -40,6 +40,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Param(_)
             | TyKind::Infer(_)
             | TyKind::Char
+            | TyKind::Never
             | TyKind::Num
             | TyKind::Bool
             | TyKind::Error => {
@@ -67,7 +68,12 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Scheme(_, ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => false,
-            TyKind::Param(_) | TyKind::Error | TyKind::Char | TyKind::Num | TyKind::Bool => false,
+            TyKind::Param(_)
+            | TyKind::Never
+            | TyKind::Error
+            | TyKind::Char
+            | TyKind::Num
+            | TyKind::Bool => false,
         }
     }
 }

@@ -10,10 +10,19 @@ use indexed_vec::Idx;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
+use std::ops::Deref;
 
-#[derive(Copy, Clone, Deref)]
+#[derive(Copy, Clone)]
 crate struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
+}
+
+impl<'tcx> Deref for TyCtx<'tcx> {
+    type Target = GlobalCtx<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.gcx
+    }
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -180,6 +189,7 @@ crate struct CommonTypes<'tcx> {
     pub boolean: Ty<'tcx>,
     pub character: Ty<'tcx>,
     pub num: Ty<'tcx>,
+    pub never: Ty<'tcx>,
     /// type of `main` must be `fn() -> number`
     pub main: Ty<'tcx>,
 }
@@ -189,10 +199,11 @@ impl<'tcx> CommonTypes<'tcx> {
         let mk = |ty| interners.intern_ty(ty);
         let num = mk(TyKind::Num);
         CommonTypes {
-            unit: mk(TyKind::Tuple(List::empty())),
             boolean: mk(TyKind::Bool),
             character: mk(TyKind::Char),
+            never: mk(TyKind::Never),
             main: mk(TyKind::Fn(List::empty(), num)),
+            unit: mk(TyKind::Tuple(List::empty())),
             num,
         }
     }

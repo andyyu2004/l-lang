@@ -21,6 +21,7 @@
 #![feature(raw_vec_internals)]
 #![feature(array_value_iter)]
 #![feature(const_fn)]
+#![feature(never_type)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]

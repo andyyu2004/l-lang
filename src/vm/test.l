@@ -1,8 +1,7 @@
 fn main() -> number {
-    {
-        let x = 5;
-        return fn() => x;
-    }
+    return 5;
+    return 4;
+    0
 }
 
 fn is_odd(n: number) -> bool {

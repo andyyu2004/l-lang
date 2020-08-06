@@ -161,6 +161,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Tuple(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
+            TyKind::Never => todo!(),
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
         }
     }
@@ -177,8 +178,14 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Lambda(body) => self.compile_lambda(expr, body).into(),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
-            tir::ExprKind::Ret(_) => todo!(),
+            tir::ExprKind::Ret(ret_expr) => self.compile_ret(ret_expr),
         }
+    }
+
+    fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) -> BasicValueEnum<'tcx> {
+        // let ret_val = ret_expr.map(|expr| &self.compile_expr(expr) as &dyn BasicValue);
+        // self.builder.build_return(ret_val);
+        todo!()
     }
 
     fn compile_lambda(&mut self, expr: &tir::Expr, body: &tir::Body) -> PointerValue<'tcx> {
