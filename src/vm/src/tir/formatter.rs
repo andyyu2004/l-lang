@@ -98,6 +98,10 @@ where
             tir::ExprKind::Lambda(b) =>
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
+            tir::ExprKind::Ret(expr) => match expr {
+                Some(expr) => indent!(self, "return {}", expr),
+                None => indent!(self, "return"),
+            },
         }?;
         write!(self.writer, ":{}", expr.ty)
     }

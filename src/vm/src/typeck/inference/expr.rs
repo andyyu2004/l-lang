@@ -18,8 +18,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
+            ir::ExprKind::Ret(expr) => self.check_expr_ret(*expr),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_expr_ret(&mut self, expr: Option<&ir::Expr>) -> Ty<'tcx> {
+        let ty = expr.map(|expr| self.check_expr(expr));
+        self.tcx.types.unit;
+        todo!();
     }
 
     fn check_match_expr(
@@ -68,11 +75,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn check_lambda_expr(&mut self, expr: &ir::Expr, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
-        let param_tys = self.tcx.mk_substs(sig.inputs.iter().map(|ty| self.lower_ty(ty)));
-        let ret_ty = sig.output.map(|ty| self.lower_ty(ty)).unwrap_or_else(|| self.new_infer_var());
-        let body_ty = self.check_body(param_tys, body);
-        self.unify(expr.span, ret_ty, body_ty);
-        self.tcx.mk_ty(TyKind::Fn(param_tys, ret_ty))
+        self.check_fn(expr.span, sig, body).1
     }
 
     /// inputs are the input types from the type signature (or inference variables)

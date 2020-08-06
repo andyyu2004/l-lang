@@ -1,4 +1,4 @@
-use super::InferCtx;
+use super::{InferCtx, InferCtxBuilder};
 use crate::error::{DiagnosticBuilder, TypeResult};
 use crate::ir::{self, DefId};
 use crate::span::Span;
@@ -11,17 +11,45 @@ use rustc_hash::FxHashMap;
 use std::{cell::RefCell, ops::Deref};
 
 crate struct FnCtx<'a, 'tcx> {
-    infcx: &'a InferCtx<'a, 'tcx>,
-    locals: FxHashMap<ir::Id, Ty<'tcx>>,
+    inherited: &'a Inherited<'a, 'tcx>,
+    ret: Option<Ty<'tcx>>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
-        Self { infcx, locals: Default::default() }
+    pub fn new(inherited: &'a Inherited<'a, 'tcx>) -> Self {
+        Self { inherited, ret: None }
     }
 }
 
 impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
+    type Target = Inherited<'a, 'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inherited
+    }
+}
+
+impl<'a, 'tcx> FnCtx<'a, 'tcx> {
+    pub fn lower_tys(&self, ir_tys: &[ir::Ty]) -> &'tcx [Ty<'tcx>] {
+        self.tcx.mk_substs(ir_tys.iter().map(|ty| TyConv::ir_ty_to_ty(self.infcx, ty)))
+    }
+
+    pub fn lower_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
+        TyConv::ir_ty_to_ty(self.infcx, ir_ty)
+    }
+}
+
+impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
+    fn tcx(&self) -> TyCtx<'tcx> {
+        self.tcx
+    }
+
+    fn infer_ty(&self, span: Span) -> Ty<'tcx> {
+        self.new_infer_var()
+    }
+}
+
+impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
@@ -29,33 +57,73 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn lower_tys(&self, ir_tys: &[ir::Ty]) -> &'tcx [Ty<'tcx>] {
-        self.tcx.mk_substs(ir_tys.iter().map(|ty| TyConv::ir_ty_to_ty(self, ty)))
+/// stuff that is shared between functions
+/// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
+/// well as the outermost fn item
+crate struct Inherited<'a, 'tcx> {
+    infcx: &'a InferCtx<'a, 'tcx>,
+    locals: RefCell<FxHashMap<ir::Id, Ty<'tcx>>>,
+}
+
+crate struct InheritedBuilder<'tcx> {
+    infcx: InferCtxBuilder<'tcx>,
+}
+
+impl<'tcx> InheritedBuilder<'tcx> {
+    pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(Inherited<'a, 'tcx>) -> R) -> R {
+        self.infcx.enter(|infcx| f(Inherited::new(&infcx)))
+    }
+}
+
+impl<'a, 'tcx> Inherited<'a, 'tcx> {
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
+        Self { infcx, locals: Default::default() }
     }
 
-    pub fn lower_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
-        TyConv::ir_ty_to_ty(self, ir_ty)
+    pub fn build(tcx: TyCtx<'tcx>, def_id: DefId) -> InheritedBuilder<'tcx> {
+        InheritedBuilder { infcx: tcx.infer_ctx(def_id) }
     }
 
-    pub fn def_local(&mut self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
+    /// top level entry point for typechecking a function item
+    pub fn check_fn_item(
+        &'a self,
+        item: &ir::Item,
+        sig: &ir::FnSig,
+        generics: &ir::Generics,
+        body: &ir::Body,
+    ) -> FnCtx<'a, 'tcx> {
+        let fn_ty = self.tcx.item_ty(item.id.def);
+        // don't instantiate anything and typeck the body using the param tys
+        // don't know if this is a good idea
+        let (_forall, ty) = fn_ty.expect_scheme();
+        debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
+        let (param_tys, ret_ty) = ty.expect_fn();
+        self.check_fn(item.span, sig, body).0
+    }
+
+    pub fn check_fn(
+        &'a self,
+        fn_span: Span,
+        sig: &ir::FnSig,
+        body: &ir::Body,
+    ) -> (FnCtx<'a, 'tcx>, Ty<'tcx>) {
+        let mut fcx = FnCtx::new(self);
+        let fn_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
+        let (param_tys, ret_ty) = fn_ty.expect_fn();
+        let body_ty = fcx.check_body(param_tys, body);
+        info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
+        self.unify(fn_span, ret_ty, body_ty);
+        (fcx, fn_ty)
+    }
+
+    pub fn def_local(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
         info!("deflocal {:?} : {}", id, ty);
-        self.locals.insert(id, ty);
+        self.locals.borrow_mut().insert(id, ty);
         ty
     }
 
     pub fn local_ty(&self, id: ir::Id) -> Ty<'tcx> {
         info!("lookup ty for local {:?}", id);
-        self.locals.get(&id).cloned().expect("no entry for local variable")
-    }
-}
-
-impl<'a, 'tcx> TyConv<'tcx> for FnCtx<'a, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        self.tcx
-    }
-
-    fn infer_ty(&self, span: Span) -> Ty<'tcx> {
-        self.infcx.new_infer_var()
+        self.locals.borrow().get(&id).cloned().expect("no entry for local variable")
     }
 }

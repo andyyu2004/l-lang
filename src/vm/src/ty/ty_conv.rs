@@ -33,4 +33,13 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
             )),
         }
     }
+
+    pub fn fn_sig_to_ty(&self, sig: &ir::FnSig) -> Ty<'tcx> {
+        let tcx = self.tcx();
+        // None return type on fn sig implies unit type
+        let ret_ty = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);
+        let inputs = sig.inputs.iter().map(|ty| self.ir_ty_to_ty(ty));
+        let input_tys = tcx.mk_substs(inputs);
+        tcx.mk_ty(TyKind::Fn(input_tys, ret_ty))
+    }
 }

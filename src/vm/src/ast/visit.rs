@@ -109,6 +109,7 @@ crate fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
+        ExprKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
         ExprKind::Call(f, args) => {
             visitor.visit_expr(f);

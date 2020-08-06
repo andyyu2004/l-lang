@@ -34,6 +34,7 @@ crate enum ExprKind {
     Lambda(FnSig, P<Expr>),
     Call(P<Expr>, Vec<P<Expr>>),
     If(P<Expr>, P<Block>, Option<P<Expr>>),
+    Ret(Option<P<Expr>>),
 }
 
 impl Display for ExprKind {
@@ -48,6 +49,10 @@ impl Display for ExprKind {
             Self::Tuple(xs) => write!(fmt, "({})", util::join(xs, ",")),
             Self::Lambda(sig, body) => write!(fmt, "fn ({}) => {}", sig, body),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
+            Self::Ret(expr) => match expr {
+                Some(expr) => write!(fmt, "return {}", expr),
+                None => write!(fmt, "return"),
+            },
             Self::If(c, l, r) => match r {
                 Some(r) => write!(fmt, "if {} {} {}", c, l, r),
                 None => write!(fmt, "if {} {}", c, l),

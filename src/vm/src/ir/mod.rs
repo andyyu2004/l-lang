@@ -3,6 +3,7 @@ mod def;
 mod expr;
 mod ir;
 mod item;
+mod passes;
 mod pattern;
 mod prog;
 mod stmt;

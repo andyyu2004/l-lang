@@ -34,6 +34,12 @@ crate struct Body<'ir> {
     pub expr: &'ir ir::Expr<'ir>,
 }
 
+impl<'ir> Body<'ir> {
+    pub fn id(&self) -> ir::Id {
+        self.expr.id
+    }
+}
+
 #[derive(Debug)]
 crate enum MatchSource {
     Match,

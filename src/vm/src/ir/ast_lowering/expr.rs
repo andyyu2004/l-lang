@@ -32,6 +32,8 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Call(f, args) =>
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
             ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
+            ExprKind::Ret(expr) =>
+                ir::ExprKind::Ret(expr.as_deref().map(|expr| self.lower_expr(expr))),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }

@@ -93,26 +93,6 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         Ok(substs)
     }
 
-    /// top level entry point for typechecking a function item
-    pub fn check_fn(
-        &'a self,
-        item: &ir::Item,
-        sig: &ir::FnSig,
-        generics: &ir::Generics,
-        body: &ir::Body,
-    ) -> FnCtx<'a, 'tcx> {
-        let mut fcx = FnCtx::new(&self);
-        let fn_ty = self.tcx.item_ty(item.id.def);
-        // don't instantiate everything and typeck the body using the param tys
-        // don't know if this is actually a good idea
-        let (_forall, ty) = fn_ty.expect_scheme();
-        let (param_tys, ret_ty) = ty.expect_fn();
-        let body_ty = fcx.check_body(param_tys, body);
-        info!("body type: {}; ret_ty: {}", body_ty, ret_ty);
-        fcx.unify(item.span, ret_ty, body_ty);
-        fcx
-    }
-
     pub fn instantiate(&self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             TyKind::Scheme(forall, ty) => {

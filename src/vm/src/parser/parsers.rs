@@ -6,6 +6,20 @@ use crate::error::{ParseError, ParseResult};
 use crate::lexer::{Tok, TokenType};
 use crate::span::Span;
 
+crate struct RetParser {
+    pub ret_kw: Tok,
+}
+
+impl Parse for RetParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let expr = parser.try_parse(&mut ExprParser);
+        let span = self.ret_kw.span.merge(&parser.empty_span());
+        Ok(parser.mk_expr(span, ExprKind::Ret(expr)))
+    }
+}
+
 crate struct FnSigParser {
     pub require_type_annotations: bool,
 }
@@ -22,8 +36,13 @@ impl Parse for FnSigParser {
         };
         let inputs = param_parser.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
-        let output =
+        let mut output =
             parser.accept(TokenType::RArrow).map(|_arrow| TyParser.parse(parser)).transpose()?;
+
+        if output.is_none() && !require_type_annotations {
+            output = Some(parser.mk_infer_ty())
+        }
+
         Ok(FnSig { inputs, output })
     }
 }

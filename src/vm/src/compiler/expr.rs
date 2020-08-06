@@ -19,7 +19,16 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::Lambda(f) => self.compile_lambda(f),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(expr, arms) => self.compile_match(expr, arms),
+            tir::ExprKind::Ret(expr) => self.compile_ret(expr),
         };
+    }
+
+    fn compile_ret(&mut self, expr: Option<&tir::Expr>) {
+        match expr {
+            Some(expr) => self.compile_expr(expr),
+            None => self.unit(),
+        }
+        self.emit_op(Op::ret);
     }
 
     fn compile_block(&mut self, block: &tir::Block) {

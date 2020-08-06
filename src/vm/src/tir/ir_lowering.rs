@@ -201,9 +201,10 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Lambda(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
-            &ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
+            ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
             ir::ExprKind::Match(expr, arms, _) =>
                 tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
+            ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| expr.to_tir_alloc(ctx))),
         };
         let ty = ctx.node_type(self.id);
         tir::Expr { span, id, kind, ty }

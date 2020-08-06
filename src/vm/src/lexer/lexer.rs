@@ -18,6 +18,7 @@ lazy_static! {
         "let" => TokenType::Let,
         "if" => TokenType::If,
         "else" => TokenType::Else,
+        "return" => TokenType::Return,
     };
 }
 
@@ -138,6 +139,7 @@ impl<'ctx> Lexer<'ctx> {
 pub enum TokenType {
     /// ->
     RArrow,
+    Return,
     /// =>
     RFArrow,
     Pub,

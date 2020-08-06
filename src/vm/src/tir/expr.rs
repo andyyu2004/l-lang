@@ -27,6 +27,7 @@ crate enum ExprKind<'tcx> {
     Lambda(&'tcx tir::Body<'tcx>),
     Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
     Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
+    Ret(Option<&'tcx tir::Expr<'tcx>>),
 }
 
 impl<'tcx> Display for Expr<'tcx> {

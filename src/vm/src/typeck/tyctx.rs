@@ -1,4 +1,4 @@
-use super::inference::{FnCtx, InferCtx, InferCtxBuilder};
+use super::inference::{FnCtx, InferCtx, InferCtxBuilder, Inherited};
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::TypeResult;
@@ -142,12 +142,7 @@ impl<'tcx> TyCtx<'tcx> {
     fn collect_item(self, item: &ir::Item<'tcx>) {
         match item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
-                // unspecified return type on fn item implies unit type
-                let ret_ty =
-                    sig.output.map(|ty| TyConv::ir_ty_to_ty(&self, ty)).unwrap_or(self.types.unit);
-                let inputs = sig.inputs.iter().map(|ty| TyConv::ir_ty_to_ty(&self, ty));
-                let input_tys = self.mk_substs(inputs);
-                let fn_ty = self.mk_ty(TyKind::Fn(input_tys, ret_ty));
+                let fn_ty = TyConv::fn_sig_to_ty(&self, sig);
                 let generalized = self.generalize(generics, fn_ty);
                 self.item_tys.borrow_mut().insert(item.id.def, generalized);
             }
@@ -169,11 +164,11 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// ir::Item -> tir::Item
     fn type_item(self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
-        self.infer_ctx(item.id.def).enter(|infcx| match item.kind {
+        Inherited::build(self, item.id.def).enter(|inherited| match item.kind {
             ir::ItemKind::Fn(sig, generics, body) => {
-                let fcx = infcx.check_fn(item, sig, generics, body);
+                let fcx = inherited.check_fn_item(item, sig, generics, body);
                 let tables = fcx.resolve_inference_variables(body);
-                let mut lctx = IrLoweringCtx::new(&infcx, tables);
+                let mut lctx = IrLoweringCtx::new(&inherited, tables);
                 lctx.lower_item(item)
             }
         })

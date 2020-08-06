@@ -57,6 +57,7 @@ crate enum TyKind<'tcx> {
     /// number
     Num,
     Error,
+    // Never,
     /// [<ty>]
     Array(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>

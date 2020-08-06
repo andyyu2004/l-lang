@@ -21,6 +21,10 @@ crate trait Visitor<'ir>: Sized {
     fn visit_vis(&mut self, vis: Visibility) {
     }
 
+    fn visit_lambda(&mut self, sig: &'ir ir::FnSig<'ir>, body: &'ir ir::Body) {
+        walk_lambda(self, sig, body)
+    }
+
     fn visit_ident(&mut self, ident: Ident) {
     }
 
@@ -90,6 +94,15 @@ crate fn walk_param<'ir, V: Visitor<'ir>>(v: &mut V, param: &'ir ir::Param<'ir>)
     v.visit_pat(param.pat)
 }
 
+crate fn walk_lambda<'ir, V: Visitor<'ir>>(
+    v: &mut V,
+    sig: &'ir ir::FnSig<'ir>,
+    body: &'ir ir::Body<'ir>,
+) {
+    v.visit_fn_sig(sig);
+    v.visit_body(body);
+}
+
 crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
     match &expr.kind {
         ir::ExprKind::Bin(_, l, r) => {
@@ -100,10 +113,7 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
         ir::ExprKind::Block(block) => v.visit_block(block),
         ir::ExprKind::Path(path) => v.visit_path(path),
         ir::ExprKind::Tuple(xs) => xs.iter().for_each(|x| v.visit_expr(x)),
-        ir::ExprKind::Lambda(sig, body) => {
-            v.visit_fn_sig(sig);
-            v.visit_body(body);
-        }
+        ir::ExprKind::Lambda(sig, body) => v.visit_lambda(sig, body),
         ir::ExprKind::Call(f, args) => {
             v.visit_expr(f);
             args.iter().for_each(|arg| v.visit_expr(arg));
@@ -113,6 +123,7 @@ crate fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(expr);
             arms.iter().for_each(|arm| v.visit_arm(arm));
         }
+        ir::ExprKind::Ret(expr) => expr.iter().for_each(|expr| v.visit_expr(expr)),
     }
 }
 

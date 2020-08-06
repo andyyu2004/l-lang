@@ -177,6 +177,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Lambda(body) => self.compile_lambda(expr, body).into(),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
+            tir::ExprKind::Ret(_) => todo!(),
         }
     }
 

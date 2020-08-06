@@ -11,7 +11,7 @@ mod unify;
 
 pub(super) use at::At;
 pub(super) use equate::Equate;
-pub(super) use fn_ctx::FnCtx;
+pub(super) use fn_ctx::{FnCtx, Inherited, InheritedBuilder};
 crate use infer_ctx::{InferCtx, InferCtxBuilder};
 crate use type_variable::*;
 pub(super) use undo_logs::InferCtxUndoLogs;

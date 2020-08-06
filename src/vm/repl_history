@@ -16,3 +16,6 @@ cargo r
 let x =5
 let x = 5;
 let x = 5
+fn () => 2
+fn () => 2;
+fn () => 2
