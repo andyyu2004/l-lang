@@ -121,15 +121,16 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn compile_body(&mut self, body: &tir::Body) {
         let fn_val = self.curr_fn.unwrap();
         let basic_block = self.ctx.append_basic_block(fn_val, "body");
-        // params
-        for (param, arg) in body.params.iter().zip(fn_val.get_param_iter()) {
-            let ptr = self.compile_let_pat(param.pat);
-            self.builder.build_store(ptr, arg);
-        }
-        // body
-        self.position_end();
-        let body = self.compile_expr(body.expr);
-        self.builder.build_return(Some(&body));
+        self.with_block(basic_block, |this| {
+            // params
+            for (param, arg) in body.params.iter().zip(fn_val.get_param_iter()) {
+                let ptr = this.compile_let_pat(param.pat);
+                this.builder.build_store(ptr, arg);
+            }
+            // body
+            let body = this.compile_expr(body.expr);
+            this.builder.build_return(Some(&body));
+        });
     }
 
     fn compile_let_pat(&mut self, pat: &tir::Pattern) -> PointerValue<'tcx> {
@@ -181,12 +182,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) {
-        // uhh ... must be a better to get a trait object from within the option
-        let ret_val = ret_expr.map(|expr| box self.compile_expr(expr) as Box<dyn BasicValue>);
-        self.builder.build_return(ret_val.as_deref());
-    }
-
     fn compile_lambda(&mut self, expr: &tir::Expr, body: &tir::Body) -> PointerValue<'tcx> {
         let (param_tys, ret_ty) = expr.ty.expect_fn();
         let fn_val = self.module.add_function(
@@ -210,14 +205,26 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
+    /// restores the builder to the end of the block after executing f
     fn with_builder<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
-        todo!()
+        let prev_block = self.builder.get_insert_block().unwrap();
+        let ret = f(self);
+        self.builder.position_at_end(prev_block);
+        ret
     }
 
-    fn build_unreachable(&self) -> BasicBlock<'tcx> {
+    /// writes to the given block, and restores the builder to the end of the previous block
+    fn with_block<R>(&mut self, block: BasicBlock<'tcx>, f: impl FnOnce(&mut Self) -> R) -> R {
+        let prev_block = self.builder.get_insert_block();
+        self.builder.position_at_end(block);
+        let ret = f(self);
+        self.builder.position_at_end(prev_block.unwrap_or(block));
+        ret
+    }
+
+    fn build_unreachable_block(&mut self) -> BasicBlock<'tcx> {
         let bb = self.ctx.append_basic_block(self.curr_fn(), "unreachable_block");
-        self.builder.position_at_end(bb);
-        self.builder.build_unreachable();
+        self.with_block(bb, |this| this.builder.build_unreachable());
         bb
     }
 
@@ -236,23 +243,30 @@ impl<'tcx> CodegenCtx<'tcx> {
             body_blocks.push(self.ctx.append_basic_block(self.curr_fn(), &format!("arm_{}", i)));
         });
         self.builder.build_unconditional_branch(cmp_blocks[0]);
-        let default_block = self.build_unreachable();
+        let default_block = self.build_unreachable_block();
         let match_end_block = self.ctx.append_basic_block(self.curr_fn(), "match_end");
         arms.iter().enumerate().for_each(|(i, arm)| {
             // build arm cmp
-            self.builder.position_at_end(cmp_blocks[i]);
-            let cond_val = self.compile_arm_pat(arm.pat, cmp_val);
-            let cond =
-                self.builder.build_int_compare(IntPredicate::EQ, cmp_val, cond_val, "arm_cmp_val");
-            self.builder.build_conditional_branch(
-                cond,
-                body_blocks[i],
-                *cmp_blocks.get(i + 1).unwrap_or(&default_block),
-            );
+            self.with_block(cmp_blocks[i], |this| {
+                let cond_val = this.compile_arm_pat(arm.pat, cmp_val);
+                let cond = this.builder.build_int_compare(
+                    IntPredicate::EQ,
+                    cmp_val,
+                    cond_val,
+                    "arm_cmp_val",
+                );
+                this.builder.build_conditional_branch(
+                    cond,
+                    body_blocks[i],
+                    *cmp_blocks.get(i + 1).unwrap_or(&default_block),
+                );
+            });
+
             // build arm body
-            self.builder.position_at_end(body_blocks[i]);
-            arm_vals.push(self.compile_expr(arm.body));
-            self.builder.build_unconditional_branch(match_end_block);
+            self.with_block(body_blocks[i], |this| {
+                arm_vals.push(this.compile_expr(arm.body));
+                this.builder.build_unconditional_branch(match_end_block);
+            });
         });
         // build merge block
         self.builder.position_at_end(match_end_block);
@@ -269,10 +283,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn compile_item_ref(&mut self, id: DefId) -> BasicValueEnum<'tcx> {
-        let f = self.module.get_function(&id.to_string()).unwrap();
-        // :) why is it so hard to get a pointer to a function
-        let ptr: PointerValue<'tcx> = unsafe { std::mem::transmute(f) };
-        ptr.into()
+        self.module.get_function(&id.to_string()).unwrap().as_llvm_ptr().into()
     }
 
     fn compile_var_ref(&mut self, id: ir::Id) -> BasicValueEnum<'tcx> {
@@ -293,7 +304,6 @@ impl<'tcx> CodegenCtx<'tcx> {
                     .unwrap_or_else(|| self.vals.zero.into());
                 let ptr = self.alloca(l.pat.ty, l.pat.id);
                 self.def_var(l.pat.id, ptr);
-                self.position_end();
                 self.builder.build_store(ptr, v);
             }
             tir::StmtKind::Ret(ret_expr) => self.compile_ret(ret_expr),
@@ -303,27 +313,37 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
     }
 
+    fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) {
+        let ret_block = self.ctx.append_basic_block(self.curr_fn(), "ret");
+        self.builder.build_unconditional_branch(ret_block);
+        self.builder.position_at_end(ret_block);
+        // uhh ... must be a better to get a trait object from within the option
+        let ret_val = ret_expr.map(|expr| box self.compile_expr(expr) as Box<dyn BasicValue>);
+        self.builder.build_return(ret_val.as_deref());
+    }
+
     fn curr_fn(&self) -> FunctionValue<'tcx> {
         self.curr_fn.unwrap()
     }
 
-    fn position_end(&mut self) {
-        let bb = *self.curr_fn().get_basic_blocks().last().unwrap();
-        self.builder.position_at_end(bb);
+    fn alloca(&mut self, ty: Ty, t: impl Display) -> PointerValue<'tcx> {
+        self.with_builder(|this| {
+            let basic_block = this.curr_fn().get_first_basic_block().unwrap();
+            match &basic_block.get_first_instruction() {
+                Some(inst) => this.builder.position_before(inst),
+                None => this.builder.position_at_end(basic_block),
+            };
+            this.builder.build_alloca(this.llvm_ty(ty), &t.to_string())
+        })
     }
 
-    fn alloca(&self, ty: Ty, t: impl Display) -> PointerValue<'tcx> {
-        let basic_block = self.curr_fn().get_first_basic_block().unwrap();
-        match &basic_block.get_first_instruction() {
-            Some(inst) => self.builder.position_before(inst),
-            None => self.builder.position_at_end(basic_block),
-        };
-        self.builder.build_alloca(self.llvm_ty(ty), &t.to_string())
+    fn mk_unit(&mut self) -> BasicValueEnum<'tcx> {
+        self.ctx.const_struct(&[], true).into()
     }
 
     fn compile_block(&mut self, block: &tir::Block) -> BasicValueEnum<'tcx> {
         block.stmts.iter().for_each(|stmt| self.compile_stmt(stmt));
-        self.compile_expr(block.expr.unwrap())
+        block.expr.map(|expr| self.compile_expr(expr)).unwrap_or_else(|| self.mk_unit())
     }
 
     fn compile_bin(

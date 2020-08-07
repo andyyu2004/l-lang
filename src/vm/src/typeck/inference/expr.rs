@@ -118,7 +118,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
         match &block.expr {
             Some(expr) => self.check_expr(expr),
-            None => self.tcx.types.unit,
+            None => {
+                // explicitly handle the case when the final stmt is a return stmt
+                match block.stmts.last().map(|stmt| &stmt.kind) {
+                    Some(ir::StmtKind::Ret(_)) => self.tcx.types.never,
+                    _ => self.tcx.types.unit,
+                }
+            }
         }
     }
 
