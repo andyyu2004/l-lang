@@ -12,7 +12,7 @@ use inkwell::{
 };
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::fmt::Display;
 
 crate struct CodegenCtx<'tcx> {
@@ -24,6 +24,7 @@ crate struct CodegenCtx<'tcx> {
     pub vals: CommonValues<'tcx>,
     curr_fn: Option<FunctionValue<'tcx>>,
     vars: FxHashMap<ir::Id, PointerValue<'tcx>>,
+    dead_blocks: FxHashSet<BasicBlock<'tcx>>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -52,6 +53,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             builder: ctx.create_builder(),
             vals,
             curr_fn: None,
+            dead_blocks: Default::default(),
             vars: Default::default(),
         }
     }
@@ -101,6 +103,12 @@ impl<'tcx> CodegenCtx<'tcx> {
         ret
     }
 
+    fn remove_dead_blocks(&mut self) {
+        std::mem::take(&mut self.dead_blocks)
+            .into_iter()
+            .for_each(|b| b.remove_from_function().unwrap());
+    }
+
     fn compile_fn(
         &mut self,
         item: &tir::Item,
@@ -111,6 +119,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let fn_val = self.module.get_function(&item.id.def.to_string()).unwrap();
         self.with_fn(fn_val, |this| {
             this.compile_body(body);
+            this.remove_dead_blocks();
             this.module.print_to_stderr();
             assert!(fn_val.verify(true));
             // self.fpm.run_on(&fn_val);
@@ -162,7 +171,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Tuple(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
-            TyKind::Never => todo!(),
+            TyKind::Never => self.mk_unit_ty(),
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
         }
     }
@@ -313,13 +322,19 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
     }
 
+    fn build_dead_block(&mut self) -> BasicBlock<'tcx> {
+        let dead = self.ctx.append_basic_block(self.curr_fn(), "dead");
+        self.builder.position_at_end(dead);
+        self.dead_blocks.insert(dead);
+        dead
+    }
+
     fn compile_ret(&mut self, ret_expr: Option<&tir::Expr>) {
-        let ret_block = self.ctx.append_basic_block(self.curr_fn(), "ret");
-        self.builder.build_unconditional_branch(ret_block);
-        self.builder.position_at_end(ret_block);
         // uhh ... must be a better to get a trait object from within the option
         let ret_val = ret_expr.map(|expr| box self.compile_expr(expr) as Box<dyn BasicValue>);
         self.builder.build_return(ret_val.as_deref());
+        // create a dead block to write unreachable instructions in
+        self.build_dead_block();
     }
 
     fn curr_fn(&self) -> FunctionValue<'tcx> {
@@ -337,8 +352,12 @@ impl<'tcx> CodegenCtx<'tcx> {
         })
     }
 
-    fn mk_unit(&mut self) -> BasicValueEnum<'tcx> {
+    fn mk_unit(&self) -> BasicValueEnum<'tcx> {
         self.ctx.const_struct(&[], true).into()
+    }
+
+    fn mk_unit_ty(&self) -> BasicTypeEnum<'tcx> {
+        self.mk_unit().get_type()
     }
 
     fn compile_block(&mut self, block: &tir::Block) -> BasicValueEnum<'tcx> {
