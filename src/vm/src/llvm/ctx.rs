@@ -69,6 +69,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             }
         }
         self.module.verify().unwrap();
+        self.module.print_to_file("ir.ll").unwrap();
         main.unwrap()
     }
 
@@ -122,7 +123,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             this.remove_dead_blocks();
             this.module.print_to_stderr();
             assert!(fn_val.verify(true));
-            // self.fpm.run_on(&fn_val);
+            this.fpm.run_on(&fn_val);
         });
         fn_val
     }
