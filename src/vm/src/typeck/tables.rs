@@ -3,7 +3,7 @@ use crate::ty::Ty;
 use rustc_hash::FxHashMap;
 
 #[derive(Debug)]
-crate struct TypeckTables<'tcx> {
+pub struct TypeckTables<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
     pub def_id: DefId,
     pub node_types: FxHashMap<LocalId, Ty<'tcx>>,
@@ -31,7 +31,7 @@ impl<'tcx> TypeckTables<'tcx> {
     }
 }
 
-crate struct TableDefIdValidator<'a, T> {
+pub struct TableDefIdValidator<'a, T> {
     def_id: DefId,
     table: &'a FxHashMap<LocalId, T>,
 }
@@ -47,7 +47,7 @@ impl<'a, T> TableDefIdValidator<'a, T> {
     }
 }
 
-crate struct TableDefIdValidatorMut<'a, T> {
+pub struct TableDefIdValidatorMut<'a, T> {
     def_id: DefId,
     table: &'a mut FxHashMap<LocalId, T>,
 }

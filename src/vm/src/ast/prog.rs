@@ -3,7 +3,7 @@ use std::fmt::{self, Display, Formatter};
 
 /// top level ast representation that stores entire contents of the program being compiled
 #[derive(Debug)]
-crate struct Prog {
+pub struct Prog {
     pub items: Vec<P<Item>>,
 }
 

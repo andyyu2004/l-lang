@@ -7,7 +7,7 @@ use std::fmt::Write;
 const INDENT: usize = 4;
 
 /// pretty prints `tir`
-crate struct Formatter<'a, W> {
+pub struct Formatter<'a, W> {
     /// number of indents
     current_indent: usize,
     /// character to indent with

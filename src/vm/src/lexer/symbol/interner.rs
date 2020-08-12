@@ -3,7 +3,7 @@ use crate::arena::DroplessArena;
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug, Formatter};
 
-crate struct Interner {
+pub struct Interner {
     arena: DroplessArena,
     symbols: FxHashMap<&'static str, Symbol>,
     strs: Vec<&'static str>,

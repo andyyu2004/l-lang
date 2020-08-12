@@ -2,7 +2,7 @@ use crate::ast::Ident;
 use rustc_hash::FxHashMap;
 
 #[derive(Debug, Deref, DerefMut)]
-crate struct Scopes<T> {
+pub struct Scopes<T> {
     scopes: Vec<Scope<T>>,
 }
 
@@ -49,7 +49,7 @@ impl<T> Default for Scope<T> {
 }
 
 #[derive(Debug)]
-crate struct Scope<T> {
+pub struct Scope<T> {
     bindings: FxHashMap<Ident, T>,
     paramc: usize,
 }

@@ -26,7 +26,7 @@ impl Scopes {
 }
 
 #[derive(Debug)]
-crate struct UpvarId {
+pub struct UpvarId {
     /// `Id` of the variable that this `Upvar` captures
     id: ir::Id,
     /// `Id` of the body of the lambda that closes over the `Upvar`
@@ -34,7 +34,7 @@ crate struct UpvarId {
 }
 
 #[derive(Default, Debug)]
-crate struct EscapeVisitor<'ir> {
+pub struct EscapeVisitor<'ir> {
     _marker: PhantomData<&'ir ()>,
     /// these scopes don't represent lexical scopes as in the resolver.
     /// instead, they represent function scopes, as functions are the only places where

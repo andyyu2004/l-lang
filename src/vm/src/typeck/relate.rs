@@ -3,7 +3,7 @@ use crate::ty::*;
 use crate::typeck::TyCtx;
 use itertools::Itertools;
 
-crate trait TypeRelation<'tcx>: Sized {
+pub trait TypeRelation<'tcx>: Sized {
     fn tcx(&self) -> TyCtx<'tcx>;
     fn relate<T>(&mut self, a: T, b: T) -> TypeResult<'tcx, T>
     where
@@ -44,7 +44,7 @@ crate trait TypeRelation<'tcx>: Sized {
     }
 }
 
-crate trait Relate<'tcx>: TypeFoldable<'tcx> + Copy {
+pub trait Relate<'tcx>: TypeFoldable<'tcx> + Copy {
     fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self>;
 }
 

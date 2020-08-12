@@ -13,7 +13,7 @@ use std::cell::{Cell, RefCell};
 use std::ops::{Deref, DerefMut};
 
 // ctx specific to a frame
-crate struct FrameCtx<'tcx> {
+pub struct FrameCtx<'tcx> {
     pub(super) upvars: Vec<(bool, u8)>,
     pub(super) code: CodeBuilder,
     pub(super) locals: Vec<ir::Id>,
@@ -57,7 +57,7 @@ impl<'tcx> FrameCtx<'tcx> {
     }
 }
 
-crate struct GlobalCompilerCtx<'tcx> {
+pub struct GlobalCompilerCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
     // mapping of a functions `DefId` to its index in the `ConstantPool`
     pub def_id_to_const_id: RefCell<FxHashMap<DefId, ConstId>>,

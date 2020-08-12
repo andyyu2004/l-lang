@@ -5,8 +5,8 @@ mod scope;
 
 use crate::span::Span;
 use def_visitor::DefVisitor;
-crate use resolver::{Resolver, ResolverOutputs};
-crate use scope::{Scope, Scopes};
+pub use resolver::{Resolver, ResolverOutputs};
+pub use scope::{Scope, Scopes};
 
 #[cfg(test)]
 mod tests {

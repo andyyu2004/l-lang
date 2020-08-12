@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
-crate struct Prog<'tcx> {
+pub struct Prog<'tcx> {
     pub items: BTreeMap<ir::Id, &'tcx tir::Item<'tcx>>,
 }
 

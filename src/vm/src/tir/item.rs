@@ -8,7 +8,7 @@ use std::fmt::{self, Display};
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-crate struct Item<'tcx> {
+pub struct Item<'tcx> {
     pub span: Span,
     pub id: ir::Id,
     pub vis: Visibility,
@@ -17,7 +17,7 @@ crate struct Item<'tcx> {
 }
 
 #[derive(Debug)]
-crate enum ItemKind<'tcx> {
+pub enum ItemKind<'tcx> {
     Fn(Ty<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
 }
 

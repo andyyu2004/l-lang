@@ -3,9 +3,9 @@
 mod cursor;
 mod lexer;
 mod lexing;
-crate mod symbol;
+pub mod symbol;
 
-crate use lexer::{Lexer, Tok, TokenType};
-crate use lexing::{Base, LiteralKind};
+pub use lexer::{Lexer, Tok, TokenType};
+pub use lexing::{Base, LiteralKind};
 use lexing::{Token, TokenKind};
-crate use symbol::Symbol;
+pub use symbol::Symbol;

@@ -11,7 +11,7 @@ use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::ops::{Deref, DerefMut};
 
-crate struct Compiler<'tcx> {
+pub struct Compiler<'tcx> {
     pub(super) frames: Vec<FrameCtx<'tcx>>,
     pub(super) gctx: &'tcx GlobalCompilerCtx<'tcx>,
 }

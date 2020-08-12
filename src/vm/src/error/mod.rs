@@ -7,13 +7,13 @@ mod type_error;
 mod vm_error;
 
 use crate::impl_from_inner;
-crate use diagnostic::{Diagnostic, Diagnostics};
-crate use diagnostic_builder::DiagnosticBuilder;
-crate use emitter::{Emitter, TextEmitter};
-crate use parse_error::{ParseError, ParseResult};
-crate use resolution_error::{ResolutionError, ResolutionResult};
-crate use type_error::{TypeError, TypeResult};
-crate use vm_error::{VMError, VMResult};
+pub use diagnostic::{Diagnostic, Diagnostics};
+pub use diagnostic_builder::DiagnosticBuilder;
+pub use emitter::{Emitter, TextEmitter};
+pub use parse_error::{ParseError, ParseResult};
+pub use resolution_error::{ResolutionError, ResolutionResult};
+pub use type_error::{TypeError, TypeResult};
+pub use vm_error::{VMError, VMResult};
 
 pub type LResult<T> = Result<T, LError>;
 

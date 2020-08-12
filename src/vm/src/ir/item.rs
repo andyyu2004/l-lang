@@ -1,11 +1,10 @@
-use super::*;
 use crate::ast::{Ident, Visibility};
 use crate::ir;
 use crate::{lexer::Symbol, span::Span};
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-crate struct Item<'ir> {
+pub struct Item<'ir> {
     pub span: Span,
     pub id: ir::Id,
     pub vis: Visibility,
@@ -14,6 +13,7 @@ crate struct Item<'ir> {
 }
 
 #[derive(Debug)]
-crate enum ItemKind<'ir> {
-    Fn(&'ir FnSig<'ir>, &'ir Generics<'ir>, &'ir Body<'ir>),
+pub enum ItemKind<'ir> {
+    Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),
+    Struct(&'ir ir::Generics<'ir>, &'ir ir::VariantKind<'ir>),
 }

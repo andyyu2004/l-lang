@@ -7,17 +7,17 @@ use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-crate struct BodyId(ir::Id);
+pub struct BodyId(ir::Id);
 
 #[derive(Debug)]
-crate struct Generics<'tcx> {
+pub struct Generics<'tcx> {
     /// just to make it not a ZST
     pub data: usize,
     pub pd: PhantomData<&'tcx ()>,
 }
 
 #[derive(Debug)]
-crate struct Arm<'tcx> {
+pub struct Arm<'tcx> {
     pub id: ir::Id,
     pub span: Span,
     pub pat: &'tcx tir::Pattern<'tcx>,
@@ -32,7 +32,7 @@ impl<'tcx> Display for Arm<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct Body<'tcx> {
+pub struct Body<'tcx> {
     pub params: &'tcx [tir::Param<'tcx>],
     pub expr: &'tcx tir::Expr<'tcx>,
 }
@@ -44,14 +44,14 @@ impl<'tcx> Display for Body<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct Path<'tcx> {
+pub struct Path<'tcx> {
     pub span: Span,
     pub res: Res,
     pub segments: &'tcx [PathSegment<'tcx>],
 }
 
 #[derive(Debug)]
-crate struct Param<'tcx> {
+pub struct Param<'tcx> {
     pub id: ir::Id,
     pub span: Span,
     pub pat: &'tcx tir::Pattern<'tcx>,
@@ -64,13 +64,13 @@ impl<'tcx> Display for Param<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct PathSegment<'tcx> {
+pub struct PathSegment<'tcx> {
     pub ident: Ident,
     pd: PhantomData<&'tcx ()>,
 }
 
 #[derive(Debug)]
-crate struct Block<'tcx> {
+pub struct Block<'tcx> {
     pub id: Id,
     pub stmts: &'tcx [tir::Stmt<'tcx>],
     pub expr: Option<&'tcx tir::Expr<'tcx>>,
@@ -86,7 +86,7 @@ impl<'tcx> Display for Block<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct Let<'tcx> {
+pub struct Let<'tcx> {
     pub id: Id,
     pub pat: &'tcx tir::Pattern<'tcx>,
     pub init: Option<&'tcx tir::Expr<'tcx>>,

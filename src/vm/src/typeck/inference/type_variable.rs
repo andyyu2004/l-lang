@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 /// type variable id
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-crate struct TyVid {
+pub struct TyVid {
     pub index: u32,
 }
 
@@ -19,13 +19,13 @@ impl Display for TyVid {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-crate enum TyVarValue<'tcx> {
+pub enum TyVarValue<'tcx> {
     Known(Ty<'tcx>),
     Unknown,
 }
 
 #[derive(Default, Debug)]
-crate struct TypeVariableStorage<'tcx> {
+pub struct TypeVariableStorage<'tcx> {
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
     /// the number of type variables that have been generated
     tyvid_count: u32,
@@ -44,7 +44,7 @@ pub(crate) type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
     ut::InPlace<T, &'a mut ut::UnificationStorage<T>, &'a mut InferCtxUndoLogs<'tcx>>,
 >;
 
-crate struct TypeVariableTable<'a, 'tcx> {
+pub struct TypeVariableTable<'a, 'tcx> {
     storage: &'a mut TypeVariableStorage<'tcx>,
     undo_log: &'a mut InferCtxUndoLogs<'tcx>,
 }
@@ -132,7 +132,7 @@ impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
 /// for the `eq_relations`; they carry a `TypeVariableValue` along
 /// with them.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-crate struct TyVidEqKey<'tcx> {
+pub struct TyVidEqKey<'tcx> {
     pub vid: TyVid,
 
     // in the table, we map each ty-vid to one of these:

@@ -4,10 +4,10 @@ mod ty;
 mod ty_conv;
 mod type_fold;
 
-crate use list::List;
-crate use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, SubstRef};
-crate use ty::InferTy::*;
-crate use ty::TyKind::*;
-crate use ty::*;
-crate use ty_conv::TyConv;
-crate use type_fold::{TypeFoldable, TypeFolder, TypeVisitor};
+pub use list::List;
+pub use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, SubstRef};
+pub use ty::InferTy::*;
+pub use ty::TyKind::*;
+pub use ty::*;
+pub use ty_conv::TyConv;
+pub use type_fold::{TypeFoldable, TypeFolder, TypeVisitor};

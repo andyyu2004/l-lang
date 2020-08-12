@@ -2,14 +2,14 @@ use super::{Expr, Item, NodeId, Pattern, Ty, P};
 use crate::span::Span;
 
 #[derive(Debug, PartialEq, Clone)]
-crate struct Stmt {
+pub struct Stmt {
     pub span: Span,
     pub id: NodeId,
     pub kind: StmtKind,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-crate enum StmtKind {
+pub enum StmtKind {
     /// let binding
     Let(P<Let>),
     /// no trailing semicolon
@@ -22,7 +22,7 @@ crate enum StmtKind {
 
 /// let <pat>:<ty> = <init>;
 #[derive(Debug, PartialEq, Clone)]
-crate struct Let {
+pub struct Let {
     pub id: NodeId,
     pub span: Span,
     pub pat: P<Pattern>,

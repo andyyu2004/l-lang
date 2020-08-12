@@ -2,7 +2,7 @@ use crate::ty::{List, Ty, TyKind};
 use crate::typeck::TyCtx;
 use smallvec::SmallVec;
 
-crate trait TypeFoldable<'tcx>: Sized {
+pub trait TypeFoldable<'tcx>: Sized {
     /// recursively fold inner `Ty<'tcx>`s
     fn inner_fold_with<F>(&self, folder: &mut F) -> Self
     where
@@ -78,14 +78,14 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     }
 }
 
-crate trait TypeFolder<'tcx>: Sized {
+pub trait TypeFolder<'tcx>: Sized {
     fn tcx(&self) -> TyCtx<'tcx>;
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         ty.fold_with(self)
     }
 }
 
-crate trait TypeVisitor<'tcx>: Sized {
+pub trait TypeVisitor<'tcx>: Sized {
     fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool;
 }
 

@@ -5,7 +5,7 @@ use std::{alloc::Layout, marker::PhantomData};
 
 /// collective arena which contains all main arenas
 #[derive(Default)]
-crate struct Arena<'tcx> {
+pub struct Arena<'tcx> {
     dropless: DroplessArena,
     drop: DropArena,
     tys: TypedArena<TyS<'tcx>>,

@@ -7,10 +7,10 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::{marker::PhantomData, ptr};
 
-crate type Ty<'tcx> = &'tcx TyS<'tcx>;
+pub type Ty<'tcx> = &'tcx TyS<'tcx>;
 
 #[derive(Debug, Eq)]
-crate struct TyS<'tcx> {
+pub struct TyS<'tcx> {
     pub flags: TyFlags,
     pub kind: TyKind<'tcx>,
 }
@@ -49,7 +49,7 @@ impl<'tcx> PartialEq for TyS<'tcx> {
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
-crate enum TyKind<'tcx> {
+pub enum TyKind<'tcx> {
     /// bool
     Bool,
     /// char
@@ -76,7 +76,7 @@ bitflags! {
     }
 }
 
-crate trait TyFlag {
+pub trait TyFlag {
     fn ty_flags(&self) -> TyFlags;
 }
 
@@ -146,7 +146,7 @@ impl<'tcx> Display for TyKind<'tcx> {
 
 /// the current representation of type parameters are their DefId
 #[derive(Debug, Eq, Copy, Hash, PartialEq, Clone)]
-crate struct Forall<'tcx> {
+pub struct Forall<'tcx> {
     pub binders: &'tcx [ParamIdx],
 }
 
@@ -157,7 +157,7 @@ impl<'tcx> Display for Forall<'tcx> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-crate struct ParamTy {
+pub struct ParamTy {
     pub def_id: DefId,
     pub idx: ParamIdx,
 }
@@ -169,7 +169,7 @@ impl Display for ParamTy {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-crate enum InferTy {
+pub enum InferTy {
     TyVar(TyVid),
     // IntVar(IntVid),
     // FloatVar(FloatVid),
@@ -191,13 +191,13 @@ impl<'tcx> Display for TyS<'tcx> {
 
 /// typed constant value
 #[derive(Debug, Clone, Copy)]
-crate struct Const<'tcx> {
+pub struct Const<'tcx> {
     pub kind: ConstKind,
     marker: PhantomData<&'tcx ()>,
 }
 
 #[derive(Debug, Clone, Copy)]
-crate enum ConstKind {
+pub enum ConstKind {
     Floating(f64),
     Bool(u64),
 }

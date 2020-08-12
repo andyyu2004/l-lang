@@ -59,8 +59,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     fn resolve_item(&mut self, item: &'ast Item) {
         match &item.kind {
             ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
-            ItemKind::Enum(_, _) => todo!(),
+            ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
         }
+    }
+
+    fn resolve_adt(&mut self, generics: &'ast Generics, item: &'ast Item) {
+        self.with_generics(generics, |this| ast::walk_item(this, item))
     }
 
     fn resolve_path(&mut self, path: &'ast Path, ns: NS) -> ResolutionResult<()> {
@@ -140,7 +144,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 }
 
 impl Resolver {
-    crate fn late_resolve_prog(&mut self, prog: &Prog) {
+    pub fn late_resolve_prog(&mut self, prog: &Prog) {
         let mut visitor = LateResolutionVisitor::new(self);
         visitor.visit_prog(prog);
     }

@@ -1,4 +1,8 @@
 
+struct S {
+    x: number,
+}
+
 fn main() -> number { return fib(10); }
 
 fn fib(n: number) -> number {

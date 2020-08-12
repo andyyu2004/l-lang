@@ -7,7 +7,7 @@ use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::{cell::Cell, collections::BTreeMap};
 
-crate struct AstLoweringCtx<'a, 'ir> {
+pub struct AstLoweringCtx<'a, 'ir> {
     pub(super) arena: &'ir Arena,
     pub(super) resolver: &'a mut Resolver,
     pub(super) node_id_to_id: FxHashMap<NodeId, ir::Id>,

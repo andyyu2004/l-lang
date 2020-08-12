@@ -8,7 +8,7 @@ use std::fmt::{self, Display, Formatter};
 newtype_index!(Field);
 
 #[derive(Debug)]
-crate struct FieldPat<'tcx> {
+pub struct FieldPat<'tcx> {
     pub field: Field,
     pub pat: &'tcx Pattern<'tcx>,
 }
@@ -20,7 +20,7 @@ impl<'tcx> Display for FieldPat<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct Pattern<'tcx> {
+pub struct Pattern<'tcx> {
     pub id: ir::Id,
     pub span: Span,
     pub ty: Ty<'tcx>,
@@ -47,7 +47,7 @@ impl<'tcx> Display for Pattern<'tcx> {
 }
 
 #[derive(Debug)]
-crate enum PatternKind<'tcx> {
+pub enum PatternKind<'tcx> {
     Wildcard,
     Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
     /// generalization of tuple patterns

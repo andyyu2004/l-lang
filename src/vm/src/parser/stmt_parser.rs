@@ -4,7 +4,7 @@ use crate::{
     error::ParseResult, lexer::{Tok, TokenType}
 };
 
-crate struct StmtParser;
+pub struct StmtParser;
 
 impl Parse for StmtParser {
     type Output = P<Stmt>;
@@ -26,7 +26,7 @@ impl Parse for StmtParser {
 }
 
 /// let <pat>:<ty> = ( <expr> )?;
-crate struct LetParser {
+pub struct LetParser {
     let_kw: Tok,
 }
 

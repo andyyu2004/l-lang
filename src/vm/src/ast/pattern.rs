@@ -3,14 +3,14 @@ use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct Pattern {
+pub struct Pattern {
     pub span: Span,
     pub id: NodeId,
     pub kind: PatternKind,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate enum PatternKind {
+pub enum PatternKind {
     /// _
     Wildcard,
     /// ident ( @ <subpattern> )?

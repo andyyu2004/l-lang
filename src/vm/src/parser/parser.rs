@@ -6,7 +6,7 @@ use crate::span::{self, Span};
 use indexed_vec::Idx;
 use std::cell::Cell;
 
-crate struct Parser<'ctx> {
+pub struct Parser<'ctx> {
     tokens: Vec<Tok>,
     idx: usize,
     pub(super) ctx: &'ctx span::Ctx,

@@ -5,7 +5,7 @@ use crate::typeck::{inference::InferCtx, TyCtx};
 use indexed_vec::Idx;
 use rustc_hash::FxHashMap;
 
-crate trait Subst<'tcx>: Sized {
+pub trait Subst<'tcx>: Sized {
     fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>) -> Self;
 }
 
@@ -24,10 +24,10 @@ where
 /// this is compared for equality by pointer equality
 /// i.e. the type for InferTy::TyVid(i) is Substitutions[i]
 /// this is also used to represent a slice of `Ty`s
-crate type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
+pub type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
 
 /// instantiates universal type variables with fresh inference variables
-crate struct InstantiationFolder<'tcx> {
+pub struct InstantiationFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstRef<'tcx>,
 }
@@ -57,7 +57,7 @@ impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
 }
 
 /// substitute inference variables according to some substitution
-crate struct InferenceVarSubstFolder<'tcx> {
+pub struct InferenceVarSubstFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstRef<'tcx>,
 }

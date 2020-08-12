@@ -5,8 +5,33 @@ use crate::util;
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Variant {
+    pub id: NodeId,
+    pub span: Span,
+    pub vis: Visibility,
+    pub ident: Ident,
+    pub kind: VariantKind,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Field {
+    pub id: NodeId,
+    pub span: Span,
+    pub vis: Visibility,
+    pub ident: Option<Ident>,
+    pub ty: P<Ty>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum VariantKind {
+    Struct(Vec<Field>),
+    Tuple(Vec<Field>),
+    Unit,
+}
+
 #[derive(Debug, Copy, Clone, Eq)]
-crate struct Ident {
+pub struct Ident {
     pub span: Span,
     pub symbol: Symbol,
 }
@@ -32,7 +57,7 @@ impl Display for Ident {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-crate struct Block {
+pub struct Block {
     pub span: Span,
     pub id: NodeId,
     pub stmts: Vec<P<Stmt>>,
@@ -45,13 +70,13 @@ impl Display for Block {
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct Generics {
+pub struct Generics {
     pub span: Span,
     pub params: Vec<TyParam>,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct TyParam {
+pub struct TyParam {
     pub span: Span,
     pub id: NodeId,
     pub ident: Ident,
@@ -59,7 +84,7 @@ crate struct TyParam {
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct FnSig {
+pub struct FnSig {
     pub inputs: Vec<Param>,
     pub output: Option<P<Ty>>,
 }
@@ -71,7 +96,7 @@ impl Display for FnSig {
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct Param {
+pub struct Param {
     pub span: Span,
     pub id: NodeId,
     pub pattern: P<Pattern>,
@@ -85,10 +110,10 @@ impl Display for Param {
     }
 }
 
-crate type Visibility = Spanned<VisibilityKind>;
+pub type Visibility = Spanned<VisibilityKind>;
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
-crate enum VisibilityKind {
+pub enum VisibilityKind {
     Public,
     Private,
 }
@@ -103,13 +128,13 @@ impl Display for VisibilityKind {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
-crate struct Spanned<T> {
+pub struct Spanned<T> {
     pub span: Span,
     pub node: T,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct Path {
+pub struct Path {
     pub span: Span,
     pub segments: Vec<PathSegment>,
 }
@@ -121,7 +146,7 @@ impl Display for Path {
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct PathSegment {
+pub struct PathSegment {
     pub ident: Ident,
     pub id: NodeId,
     pub args: Option<()>,
@@ -134,7 +159,7 @@ impl Display for PathSegment {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-crate enum Lit {
+pub enum Lit {
     Num(f64),
     Bool(bool),
 }
@@ -149,7 +174,7 @@ impl Display for Lit {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-crate enum BinOp {
+pub enum BinOp {
     Mul,
     Div,
     Add,
@@ -186,7 +211,7 @@ impl From<Tok> for BinOp {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-crate enum UnaryOp {
+pub enum UnaryOp {
     Neg,
     Not,
 }

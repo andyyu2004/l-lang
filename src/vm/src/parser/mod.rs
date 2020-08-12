@@ -10,8 +10,8 @@ mod ty_parser;
 
 use expr_parser::*;
 use item_parser::*;
-crate use parse::Parse;
-crate use parser::Parser;
+pub use parse::Parse;
+pub use parser::Parser;
 use parsers::*;
 use pattern_parser::*;
 use prog_parser::ProgParser;

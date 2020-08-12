@@ -10,7 +10,7 @@ mod stmt;
 #[cfg(test)]
 mod tests;
 
-crate use compiler::Compiler;
+pub use compiler::Compiler;
 pub use constant_pool::{ConstId, Constant, ConstantPool};
-crate use ctx::{FrameCtx, GlobalCompilerCtx};
+pub use ctx::{FrameCtx, GlobalCompilerCtx};
 pub use executable::Executable;

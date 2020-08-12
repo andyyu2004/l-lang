@@ -3,4 +3,4 @@ mod ctx;
 mod tests;
 mod util;
 
-crate use ctx::CodegenCtx;
+pub use ctx::CodegenCtx;

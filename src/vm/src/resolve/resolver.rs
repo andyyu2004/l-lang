@@ -5,7 +5,7 @@ use indexed_vec::IndexVec;
 use rustc_hash::FxHashMap;
 use std::marker::PhantomData;
 
-crate struct Resolver {
+pub struct Resolver {
     defs: Definitions,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
@@ -16,7 +16,7 @@ crate struct Resolver {
 }
 
 #[derive(Debug)]
-crate struct ResolverOutputs {
+pub struct ResolverOutputs {
     pub defs: Definitions,
 }
 
@@ -88,7 +88,7 @@ impl Resolver {
 }
 
 #[derive(Debug, Deref)]
-crate struct PrimitiveTypes {
+pub struct PrimitiveTypes {
     types: FxHashMap<Symbol, PrimTy>,
 }
 

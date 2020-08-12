@@ -4,7 +4,7 @@ use crate::util;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
-crate struct Expr {
+pub struct Expr {
     pub span: Span,
     pub id: NodeId,
     pub kind: ExprKind,
@@ -23,7 +23,7 @@ impl Display for Expr {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-crate enum ExprKind {
+pub enum ExprKind {
     Lit(Lit),
     Bin(BinOp, P<Expr>, P<Expr>),
     Unary(UnaryOp, P<Expr>),

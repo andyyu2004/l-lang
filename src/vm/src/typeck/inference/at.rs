@@ -4,7 +4,7 @@ use crate::span::Span;
 use crate::ty::{self, Ty};
 use crate::typeck::{Relate, TypeRelation};
 
-crate struct At<'a, 'tcx> {
+pub struct At<'a, 'tcx> {
     pub span: Span,
     pub infcx: &'a InferCtx<'a, 'tcx>,
 }

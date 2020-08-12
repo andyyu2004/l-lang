@@ -3,7 +3,7 @@ use crate::ast::{self, *};
 use crate::ir::DefKind;
 
 /// collects all `DefId`s
-crate struct DefVisitor<'a> {
+pub struct DefVisitor<'a> {
     resolver: &'a mut Resolver,
 }
 
@@ -25,7 +25,7 @@ impl<'ast> Visitor<'ast> for DefVisitor<'ast> {
 }
 
 impl Resolver {
-    crate fn resolve_items(&mut self, prog: &Prog) {
+    pub fn resolve_items(&mut self, prog: &Prog) {
         let mut visitor = DefVisitor::new(self);
         visitor.visit_prog(prog);
     }

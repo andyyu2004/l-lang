@@ -2,10 +2,11 @@ use super::*;
 use crate::ast::{Prog, P};
 use crate::error::ParseResult;
 
-crate struct ProgParser;
+pub struct ProgParser;
 
 impl Parse for ProgParser {
     type Output = P<Prog>;
+
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut items = vec![];
         while !parser.reached_eof() {

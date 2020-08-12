@@ -5,7 +5,7 @@ use crate::span::Span;
 use std::fmt::Display;
 
 #[derive(Debug)]
-crate struct Expr<'ir> {
+pub struct Expr<'ir> {
     pub span: Span,
     pub id: ir::Id,
     pub kind: ir::ExprKind<'ir>,
@@ -19,7 +19,7 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
 }
 
 #[derive(Debug)]
-crate enum ExprKind<'ir> {
+pub enum ExprKind<'ir> {
     Lit(ast::Lit),
     Bin(ast::BinOp, &'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Unary(ast::UnaryOp, &'ir ir::Expr<'ir>),

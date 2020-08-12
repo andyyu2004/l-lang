@@ -9,13 +9,13 @@ mod visit;
 
 newtype_index!(NodeId);
 
-crate type P<T> = Box<T>;
+pub type P<T> = Box<T>;
 
-crate use ast::*;
-crate use expr::{Expr, ExprKind};
-crate use item::{Item, ItemKind};
-crate use pattern::{Pattern, PatternKind};
-crate use prog::Prog;
-crate use stmt::{Let, Stmt, StmtKind};
-crate use ty::{Ty, TyKind};
-crate use visit::*;
+pub use ast::*;
+pub use expr::{Expr, ExprKind};
+pub use item::{Item, ItemKind};
+pub use pattern::{Pattern, PatternKind};
+pub use prog::Prog;
+pub use stmt::{Let, Stmt, StmtKind};
+pub use ty::{Ty, TyKind};
+pub use visit::*;

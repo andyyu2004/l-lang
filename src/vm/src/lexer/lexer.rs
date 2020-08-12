@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use lexing::TokenKind;
 use maplit::hashmap;
 use once_cell::unsync::Lazy;
+use span::with_interner;
 use std::collections::HashMap;
 
 lazy_static! {
@@ -23,12 +24,12 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-crate struct Tok {
+pub struct Tok {
     pub span: Span,
     pub ttype: TokenType,
 }
 
-crate struct Lexer<'ctx> {
+pub struct Lexer<'ctx> {
     ctx: &'ctx mut span::Ctx,
 }
 
@@ -84,10 +85,9 @@ impl<'ctx> Lexer<'ctx> {
                         if let Some(&keyword) = KEYWORDS.get(slice) {
                             keyword
                         } else {
-                            let symbol = self.ctx.symbol_interner.intern(slice);
+                            let symbol = with_interner(|interner| interner.intern(slice));
                             TokenType::Ident(symbol)
                         },
-
                     TokenKind::RawIdent => todo!(),
                     TokenKind::Literal { kind, suffix_start } =>
                         TokenType::Literal { kind, suffix_start },

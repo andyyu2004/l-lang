@@ -6,4 +6,4 @@ mod pattern;
 mod stmt;
 mod ty;
 
-crate use lowering_ctx::AstLoweringCtx;
+pub use lowering_ctx::AstLoweringCtx;

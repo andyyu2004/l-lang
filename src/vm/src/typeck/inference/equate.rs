@@ -4,7 +4,7 @@ use crate::ty::*;
 use crate::typeck::{TyCtx, TypeRelation};
 
 #[derive(Deref)]
-crate struct Equate<'a, 'tcx> {
+pub struct Equate<'a, 'tcx> {
     pub at: &'a At<'a, 'tcx>,
 }
 

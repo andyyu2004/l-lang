@@ -15,7 +15,7 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::fmt::Display;
 
-crate struct CodegenCtx<'tcx> {
+pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub ctx: &'tcx Context,
     pub builder: Builder<'tcx>,

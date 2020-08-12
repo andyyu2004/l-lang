@@ -4,7 +4,7 @@ use crate::tir;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
-crate struct Stmt<'tcx> {
+pub struct Stmt<'tcx> {
     pub id: Id,
     pub span: Span,
     pub kind: tir::StmtKind<'tcx>,
@@ -17,7 +17,7 @@ impl<'tcx> Display for Stmt<'tcx> {
 }
 
 #[derive(Debug)]
-crate enum StmtKind<'tcx> {
+pub enum StmtKind<'tcx> {
     Let(&'tcx tir::Let<'tcx>),
     Expr(&'tcx tir::Expr<'tcx>),
     Ret(Option<&'tcx tir::Expr<'tcx>>),

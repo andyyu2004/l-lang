@@ -7,7 +7,7 @@ use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 use std::cell::{Cell, RefCell};
 
-crate struct InferCtxBuilder<'tcx> {
+pub struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
     def_id: DefId,
     tcx: TyCtx<'tcx>,
@@ -25,7 +25,7 @@ impl<'tcx> InferCtxBuilder<'tcx> {
 }
 
 #[derive(Default)]
-crate struct InferCtxInner<'tcx> {
+pub struct InferCtxInner<'tcx> {
     type_variable_storage: TypeVariableStorage<'tcx>,
     undo_log: InferCtxUndoLogs<'tcx>,
 }
@@ -36,7 +36,7 @@ impl<'tcx> InferCtxInner<'tcx> {
     }
 }
 
-crate struct InferCtx<'a, 'tcx> {
+pub struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
     tables: &'a RefCell<TypeckTables<'tcx>>,

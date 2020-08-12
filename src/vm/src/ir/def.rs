@@ -4,16 +4,17 @@ use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-crate enum Res<Id = ir::Id> {
+pub enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
     Def(DefId, DefKind),
     Local(Id),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-crate enum DefKind {
+pub enum DefKind {
     Fn,
     Enum,
+    Struct,
     /// contains the index of the `TyParam` in its scope
     /// impl<T, U> Foo<T, U> {
     ///     fn bar<V> () { .. }
@@ -33,7 +34,7 @@ impl<Id> Res<Id> {
 }
 
 #[derive(Default, Debug)]
-crate struct Definitions {
+pub struct Definitions {
     /// just use a counter for DefIds for now
     def_id_counter: Cell<usize>,
     id_to_def_id: FxHashMap<ir::Id, DefId>,
@@ -50,14 +51,14 @@ impl Definitions {
 
 /// namespaces for types and values
 #[derive(Debug, Clone, Copy)]
-crate enum NS {
+pub enum NS {
     Type,
     Value,
 }
 
 /// a `T` for each namespace
 #[derive(Default, Debug)]
-crate struct PerNS<T> {
+pub struct PerNS<T> {
     pub value: T,
     pub ty: T,
 }

@@ -4,14 +4,14 @@ use crate::util;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate struct Ty {
+pub struct Ty {
     pub span: Span,
     pub id: NodeId,
     pub kind: TyKind,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
-crate enum TyKind {
+pub enum TyKind {
     Array(P<Ty>),
     Tuple(Vec<P<Ty>>),
     Paren(P<Ty>),

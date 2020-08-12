@@ -5,7 +5,7 @@ use crate::span::Span;
 use crate::ty::{Ty, TyKind};
 use crate::typeck::TyCtx;
 
-crate trait TyConv<'tcx> {
+pub trait TyConv<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx>;
     fn infer_ty(&self, span: Span) -> Ty<'tcx>;
 }
@@ -20,8 +20,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                 ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
                 ir::Res::Def(def_id, def_kind) => match def_kind {
                     ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
-                    ir::DefKind::Fn => panic!(),
-                    ir::DefKind::Enum => todo!(),
+                    ir::DefKind::Fn | ir::DefKind::Enum | ir::DefKind::Struct => unreachable!(),
                 },
                 ir::Res::Local(_) => panic!("unexpected resolution"),
             },

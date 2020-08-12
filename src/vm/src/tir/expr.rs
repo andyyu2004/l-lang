@@ -6,7 +6,7 @@ use fmt::Display;
 use std::fmt::{self, Formatter};
 
 #[derive(Debug)]
-crate struct Expr<'tcx> {
+pub struct Expr<'tcx> {
     pub id: ir::Id,
     pub ty: Ty<'tcx>,
     pub span: Span,
@@ -14,7 +14,7 @@ crate struct Expr<'tcx> {
 }
 
 #[derive(Debug)]
-crate enum ExprKind<'tcx> {
+pub enum ExprKind<'tcx> {
     Const(&'tcx Const<'tcx>),
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),

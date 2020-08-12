@@ -1,7 +1,7 @@
 use super::Parser;
 use crate::{error::ParseResult, span::Span};
 
-crate trait Parse: Sized {
+pub trait Parse: Sized {
     type Output;
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output>;
 
@@ -29,7 +29,7 @@ where
     }
 }
 
-crate struct SpannedParser<P> {
+pub struct SpannedParser<P> {
     inner: P,
     include_prev: bool,
 }
@@ -42,7 +42,7 @@ impl<P: Parse> Parse for SpannedParser<P> {
     }
 }
 
-crate struct OrParser<P, Q> {
+pub struct OrParser<P, Q> {
     fst: P,
     snd: Q,
 }

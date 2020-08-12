@@ -2,10 +2,10 @@ use crate::ast::Path;
 use crate::span::Span;
 use thiserror::Error;
 
-crate type ResolutionResult<T> = Result<T, ResolutionError>;
+pub type ResolutionResult<T> = Result<T, ResolutionError>;
 
 #[derive(Debug)]
-crate struct ResolutionError {
+pub struct ResolutionError {
     span: Span,
     kind: ResolutionErrorKind,
 }
@@ -21,7 +21,7 @@ impl ResolutionError {
 }
 
 #[derive(Debug, Error)]
-crate enum ResolutionErrorKind {
+pub enum ResolutionErrorKind {
     #[error("Unresolved path `{0}`")]
     UnresolvedPath(Path),
     #[error("Unresolved type `{0}`")]

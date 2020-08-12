@@ -1,6 +1,6 @@
 mod interner;
 
-crate use interner::Interner;
+pub use interner::Interner;
 use std::fmt::{self, Display, Formatter};
 
 // there is probably a better way than manually counting the symbol indices :)

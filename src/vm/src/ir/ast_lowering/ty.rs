@@ -8,7 +8,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         self.arena.alloc_from_iter(tys.iter().map(|x| self.lower_ty_inner(x)))
     }
 
-    crate fn lower_ty(&mut self, ty: &Ty) -> &'ir ir::Ty<'ir> {
+    pub fn lower_ty(&mut self, ty: &Ty) -> &'ir ir::Ty<'ir> {
         self.arena.alloc(self.lower_ty_inner(ty))
     }
 

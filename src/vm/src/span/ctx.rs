@@ -1,8 +1,7 @@
 use super::{source_map::SourceFile, SourceMap};
 use crate::{arena::DroplessArena, lexer::symbol};
 
-crate struct Ctx {
-    pub symbol_interner: symbol::Interner,
+pub struct Ctx {
     pub source_map: SourceMap,
     pub arena: DroplessArena,
 }
@@ -14,10 +13,6 @@ impl Ctx {
     }
 
     pub fn new(src: &str) -> Self {
-        Self {
-            symbol_interner: Default::default(),
-            source_map: SourceMap::new(src),
-            arena: Default::default(),
-        }
+        Self { source_map: SourceMap::new(src), arena: Default::default() }
     }
 }

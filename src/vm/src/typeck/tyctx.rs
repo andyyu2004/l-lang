@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 
 #[derive(Copy, Clone)]
-crate struct TyCtx<'tcx> {
+pub struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
 }
 
@@ -92,7 +92,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 }
 
-crate struct GlobalCtx<'tcx> {
+pub struct GlobalCtx<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub session: &'tcx Session,
@@ -155,6 +155,7 @@ impl<'tcx> TyCtx<'tcx> {
                 let generalized = self.generalize(generics, fn_ty);
                 self.item_tys.borrow_mut().insert(item.id.def, generalized);
             }
+            ir::ItemKind::Struct(_, _) => todo!(),
         }
     }
 
@@ -180,11 +181,12 @@ impl<'tcx> TyCtx<'tcx> {
                 let mut lctx = IrLoweringCtx::new(&inherited, tables);
                 lctx.lower_item(item)
             }
+            ir::ItemKind::Struct(_, _) => todo!(),
         })
     }
 }
 
-crate struct CommonTypes<'tcx> {
+pub struct CommonTypes<'tcx> {
     pub unit: Ty<'tcx>,
     pub boolean: Ty<'tcx>,
     pub character: Ty<'tcx>,

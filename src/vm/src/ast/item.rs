@@ -5,7 +5,7 @@ use indexed_vec::Idx;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
-crate struct Item {
+pub struct Item {
     pub span: Span,
     pub id: NodeId,
     pub vis: Visibility,
@@ -14,19 +14,18 @@ crate struct Item {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-crate enum ItemKind {
+pub enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
     Enum(Generics, Vec<Variant>),
+    Struct(Generics, VariantKind),
 }
-
-#[derive(Debug, PartialEq, Clone)]
-crate struct Variant {}
 
 impl ItemKind {
     pub fn def_kind(&self) -> DefKind {
         match self {
             ItemKind::Fn(..) => DefKind::Fn,
             ItemKind::Enum(..) => DefKind::Enum,
+            ItemKind::Struct(..) => DefKind::Struct,
         }
     }
 }
@@ -44,6 +43,7 @@ impl Display for Item {
                 body.as_ref().unwrap()
             ),
             ItemKind::Enum(generics, variants) => todo!(),
+            ItemKind::Struct(generics, variant_kind) => todo!(),
         }
     }
 }

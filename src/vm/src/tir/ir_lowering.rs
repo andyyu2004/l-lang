@@ -7,7 +7,7 @@ use indexed_vec::Idx;
 use std::marker::PhantomData;
 
 /// ir -> tir
-crate struct IrLoweringCtx<'a, 'tcx> {
+pub struct IrLoweringCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
     tables: &'a TypeckTables<'tcx>,
@@ -39,7 +39,7 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
 }
 
 /// trait for conversion to tir
-crate trait Tir<'tcx> {
+pub trait Tir<'tcx> {
     type Output;
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output;
 
@@ -59,6 +59,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let ty = ctx.tcx.item_ty(self.id.def);
                 tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
             }
+            ir::ItemKind::Struct(_, _) => todo!(),
         };
         tir::Item { kind, span, id, ident, vis }
     }
@@ -195,6 +196,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                     ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
                     ir::DefKind::TyParam(_) => todo!(),
                     ir::DefKind::Enum => todo!(),
+                    ir::DefKind::Struct => todo!(),
                 },
                 ir::Res::PrimTy(_) => unreachable!(),
             },

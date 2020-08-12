@@ -6,7 +6,7 @@ use crate::error::{ParseError, ParseResult};
 use crate::lexer::{Tok, TokenType};
 use crate::span::Span;
 
-crate struct RetParser {
+pub struct RetParser {
     pub ret_kw: Tok,
 }
 
@@ -21,7 +21,7 @@ impl Parse for RetParser {
     }
 }
 
-crate struct FnSigParser {
+pub struct FnSigParser {
     pub require_type_annotations: bool,
 }
 
@@ -49,7 +49,7 @@ impl Parse for FnSigParser {
 }
 
 /// parses function parameter <pat> (: <ty>)?
-crate struct ParamParser {
+pub struct ParamParser {
     pub require_type_annotations: bool,
 }
 
@@ -69,7 +69,7 @@ impl Parse for ParamParser {
     }
 }
 
-crate struct VisibilityParser;
+pub struct VisibilityParser;
 
 impl Parse for VisibilityParser {
     type Output = Visibility;
@@ -96,7 +96,7 @@ impl Parse for TokenType {
 /// this parser accepts a trailing separator
 ///
 /// <punctuated> = Ɛ | <inner> ( <sep> <inner> )* <sep>?
-crate struct PunctuatedParser<P, S> {
+pub struct PunctuatedParser<P, S> {
     pub inner: P,
     pub separator: S,
 }
@@ -117,7 +117,10 @@ where
         };
         vec.push(p);
         while self.separator.parse(parser).is_ok() {
-            vec.push(self.inner.parse(parser)?);
+            match self.inner.parse(parser) {
+                Ok(p) => vec.push(p),
+                Err(_) => break,
+            }
         }
         // parse the trailing separator if there is one
         let _ = self.separator.parse(parser);
@@ -127,7 +130,7 @@ where
 
 /// similar to `PunctuatedParser` except parses one or more occurences of `inner`
 /// accepts trailing separator
-crate struct Punctuated1Parser<P, S> {
+pub struct Punctuated1Parser<P, S> {
     pub inner: P,
     pub separator: S,
 }
@@ -152,7 +155,7 @@ where
 /// similar to `PunctuatedParser` except a single element tuple must have a trailing comma (to
 /// differentiate it from a parenthesization)
 /// <tuple> = () | '(' ( <inner> , )+ <inner>? ')'
-crate struct TupleParser<P> {
+pub struct TupleParser<P> {
     pub inner: P,
 }
 
@@ -182,7 +185,7 @@ where
 }
 
 /// parser some inner parser within parentheses
-crate struct ParenParser<P> {
+pub struct ParenParser<P> {
     pub inner: P,
 }
 
@@ -199,7 +202,7 @@ where
     }
 }
 
-crate struct PathParser;
+pub struct PathParser;
 
 impl Parse for PathParser {
     type Output = Path;
@@ -215,7 +218,7 @@ impl Parse for PathParser {
     }
 }
 
-crate struct PathSegmentParser;
+pub struct PathSegmentParser;
 
 impl Parse for PathSegmentParser {
     type Output = PathSegment;
@@ -227,7 +230,7 @@ impl Parse for PathSegmentParser {
     }
 }
 
-crate struct BlockParser {
+pub struct BlockParser {
     pub open_brace: Tok,
 }
 
@@ -257,7 +260,7 @@ impl Parse for BlockParser {
 
 /// fn (<pat>:<ty>) -> ret => <body>
 /// xs.map(fn(x) => y);
-crate struct LambdaParser {
+pub struct LambdaParser {
     pub fn_kw: Tok,
 }
 
@@ -273,7 +276,7 @@ impl Parse for LambdaParser {
     }
 }
 
-crate struct IfParser {
+pub struct IfParser {
     pub if_kw: Tok,
 }
 
@@ -294,7 +297,7 @@ impl Parse for IfParser {
     }
 }
 
-crate struct ElseParser {
+pub struct ElseParser {
     pub else_kw: Tok,
 }
 
@@ -313,7 +316,7 @@ impl Parse for ElseParser {
     }
 }
 
-crate struct GenericsParser;
+pub struct GenericsParser;
 
 impl Parse for GenericsParser {
     type Output = Generics;
@@ -333,7 +336,7 @@ impl Parse for GenericsParser {
     }
 }
 
-crate struct TyParamParser;
+pub struct TyParamParser;
 
 impl Parse for TyParamParser {
     type Output = TyParam;

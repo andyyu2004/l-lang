@@ -3,7 +3,7 @@ use crate::ty::{List, SubstRef, Ty, TyKind, TyS};
 use rustc_hash::FxHashMap;
 use std::{borrow::Borrow, cell::RefCell};
 
-crate struct CtxInterners<'tcx> {
+pub struct CtxInterners<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     /// map from tykind to the allocated ty ptr
     types: RefCell<FxHashMap<TyKind<'tcx>, Ty<'tcx>>>,

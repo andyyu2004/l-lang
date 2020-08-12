@@ -1,4 +1,4 @@
-use crate::ast::Ident;
+use crate::ast::{Ident, Visibility};
 use crate::ir;
 use crate::{lexer::Symbol, span::Span};
 use ir::{Id, Res};
@@ -7,6 +7,22 @@ use std::marker::PhantomData;
 
 newtype_index!(ParamIdx);
 
+#[derive(Debug)]
+pub enum VariantKind<'ir> {
+    Struct(&'ir [ir::Field<'ir>]),
+    Tuple(&'ir [ir::Field<'ir>]),
+    Unit,
+}
+
+#[derive(Debug)]
+pub struct Field<'ir> {
+    pub span: Span,
+    pub ident: Ident,
+    pub vis: Visibility,
+    pub id: ir::Id,
+    pub ty: &'ir ir::Ty<'ir>,
+}
+
 impl Display for ParamIdx {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
@@ -14,13 +30,13 @@ impl Display for ParamIdx {
 }
 
 #[derive(Debug)]
-crate struct Generics<'ir> {
+pub struct Generics<'ir> {
     pub span: Span,
     pub params: &'ir [ir::TyParam<'ir>],
 }
 
 #[derive(Debug)]
-crate struct TyParam<'ir> {
+pub struct TyParam<'ir> {
     pub span: Span,
     pub id: ir::Id,
     pub ident: Ident,
@@ -29,7 +45,7 @@ crate struct TyParam<'ir> {
 }
 
 #[derive(Debug)]
-crate struct Body<'ir> {
+pub struct Body<'ir> {
     pub params: &'ir [ir::Param<'ir>],
     pub expr: &'ir ir::Expr<'ir>,
 }
@@ -41,13 +57,13 @@ impl<'ir> Body<'ir> {
 }
 
 #[derive(Debug)]
-crate enum MatchSource {
+pub enum MatchSource {
     Match,
     If,
 }
 
 #[derive(Debug)]
-crate struct Arm<'ir> {
+pub struct Arm<'ir> {
     pub id: ir::Id,
     pub span: Span,
     pub pat: &'ir ir::Pattern<'ir>,
@@ -56,21 +72,21 @@ crate struct Arm<'ir> {
 }
 
 #[derive(Debug)]
-crate struct FnSig<'ir> {
+pub struct FnSig<'ir> {
     // rest of parameter information is in `Body`
     pub inputs: &'ir [ir::Ty<'ir>],
     pub output: Option<&'ir ir::Ty<'ir>>,
 }
 
 #[derive(Debug)]
-crate struct Path<'ir> {
+pub struct Path<'ir> {
     pub span: Span,
     pub res: Res,
     pub segments: &'ir [PathSegment<'ir>],
 }
 
 #[derive(Debug)]
-crate struct Param<'ir> {
+pub struct Param<'ir> {
     // no type as it is in `FnSig`
     pub span: Span,
     pub id: ir::Id,
@@ -78,14 +94,14 @@ crate struct Param<'ir> {
 }
 
 #[derive(Debug)]
-crate struct PathSegment<'ir> {
+pub struct PathSegment<'ir> {
     pub ident: Ident,
     pub id: ir::Id,
     pub pd: PhantomData<&'ir ()>,
 }
 
 #[derive(Debug)]
-crate struct Block<'ir> {
+pub struct Block<'ir> {
     pub id: Id,
     pub span: Span,
     pub stmts: &'ir [ir::Stmt<'ir>],
@@ -93,7 +109,7 @@ crate struct Block<'ir> {
 }
 
 #[derive(Debug)]
-crate struct Let<'ir> {
+pub struct Let<'ir> {
     pub id: Id,
     pub span: Span,
     pub pat: &'ir ir::Pattern<'ir>,

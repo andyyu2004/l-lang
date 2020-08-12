@@ -2,7 +2,7 @@ use ena::undo_log::UndoLogs;
 use std::marker::PhantomData;
 
 #[derive(Default)]
-crate struct InferCtxUndoLogs<'tcx> {
+pub struct InferCtxUndoLogs<'tcx> {
     marker: PhantomData<&'tcx ()>,
 }
 

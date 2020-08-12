@@ -3,5 +3,5 @@ mod from_inner;
 mod impl_as;
 mod join;
 
-crate use as_bytes::As8Bytes;
-crate use join::{join, join2};
+pub use as_bytes::As8Bytes;
+pub use join::{join, join2};

@@ -10,7 +10,7 @@ use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::{cell::RefCell, ops::Deref};
 
-crate struct FnCtx<'a, 'tcx> {
+pub struct FnCtx<'a, 'tcx> {
     inherited: &'a Inherited<'a, 'tcx>,
     pub(super) expected_ret_ty: Ty<'tcx>,
 }
@@ -60,12 +60,12 @@ impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
 /// stuff that is shared between functions
 /// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
 /// well as the outermost fn item
-crate struct Inherited<'a, 'tcx> {
+pub struct Inherited<'a, 'tcx> {
     infcx: &'a InferCtx<'a, 'tcx>,
     locals: RefCell<FxHashMap<ir::Id, Ty<'tcx>>>,
 }
 
-crate struct InheritedBuilder<'tcx> {
+pub struct InheritedBuilder<'tcx> {
     infcx: InferCtxBuilder<'tcx>,
 }
 

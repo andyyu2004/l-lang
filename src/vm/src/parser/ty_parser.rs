@@ -4,7 +4,7 @@ use crate::ast::*;
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::{Tok, TokenType};
 
-crate struct TyParser;
+pub struct TyParser;
 
 impl Parse for TyParser {
     type Output = P<Ty>;
@@ -36,7 +36,7 @@ impl Parse for TyParser {
 }
 
 /// fn (<ty>...) (-> <ty>)?
-crate struct FnTyParser;
+pub struct FnTyParser;
 
 impl Parse for FnTyParser {
     type Output = (Vec<P<Ty>>, Option<P<Ty>>);

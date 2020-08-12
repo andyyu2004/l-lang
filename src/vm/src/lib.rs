@@ -15,7 +15,6 @@
 #![feature(concat_idents)]
 #![feature(decl_macro)]
 #![feature(btree_drain_filter)]
-#![feature(crate_visibility_modifier)]
 #![feature(core_intrinsics)]
 #![feature(dropck_eyepatch)]
 #![feature(raw_vec_internals)]

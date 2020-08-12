@@ -10,7 +10,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         self.arena.alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
     }
 
-    crate fn lower_expr(&mut self, expr: &Expr) -> &'ir ir::Expr<'ir> {
+    pub fn lower_expr(&mut self, expr: &Expr) -> &'ir ir::Expr<'ir> {
         self.arena.alloc(self.lower_expr_inner(expr))
     }
 

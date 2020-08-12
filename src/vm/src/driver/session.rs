@@ -2,7 +2,7 @@ use crate::error::Diagnostics;
 use std::ops::Deref;
 
 #[derive(Default)]
-crate struct Session {
+pub struct Session {
     diagnostics: Diagnostics,
 }
 

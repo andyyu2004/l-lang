@@ -1,7 +1,7 @@
 use super::TyCtx;
 use crate::ir::DefId;
 
-crate struct ItemCtx<'tcx> {
+pub struct ItemCtx<'tcx> {
     tcx: TyCtx<'tcx>,
     def_id: DefId,
 }
