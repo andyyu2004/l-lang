@@ -1,5 +1,6 @@
 mod interner;
 
+use crate::span::with_interner;
 pub use interner::Interner;
 use std::fmt::{self, Display, Formatter};
 
@@ -17,6 +18,10 @@ pub struct Symbol(pub usize);
 impl Symbol {
     pub const fn new(n: usize) -> Self {
         Self(n)
+    }
+
+    pub fn intern(string: &str) -> Self {
+        with_interner(|interner| interner.intern(string))
     }
 }
 

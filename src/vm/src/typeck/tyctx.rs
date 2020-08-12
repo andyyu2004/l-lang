@@ -5,12 +5,13 @@ use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, ParamIdx};
 use crate::span::Span;
 use crate::tir::{self, IrLoweringCtx};
-use crate::ty::{self, Forall, List, SubstRef, Ty, TyConv, TyKind};
-use indexed_vec::Idx;
+use crate::ty::{self, Forall, List, SubstRef, Ty, TyConv, TyKind, VariantIdx};
+use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::ops::Deref;
+use ty::{AdtTy, VariantTy};
 
 #[derive(Copy, Clone)]
 pub struct TyCtx<'tcx> {
@@ -46,6 +47,14 @@ impl<'tcx> TyCtx<'tcx> {
         I: IntoIterator<Item = T>,
     {
         self.interners.arena.alloc_tir_iter(iter)
+    }
+
+    pub fn mk_adt_ty(
+        self,
+        def_id: DefId,
+        variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+    ) -> &'tcx AdtTy<'tcx> {
+        self.arena.alloc(AdtTy { def_id, variants })
     }
 
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
@@ -99,7 +108,7 @@ pub struct GlobalCtx<'tcx> {
     interners: CtxInterners<'tcx>,
     defs: &'tcx Definitions,
     /// where the results of type collection are stored
-    item_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
+    pub(super) item_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -144,23 +153,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.type_prog(ir)
     }
 
-    fn collect(self, prog: &ir::Prog<'tcx>) {
-        prog.items.values().for_each(|item| self.collect_item(item))
-    }
-
-    fn collect_item(self, item: &ir::Item<'tcx>) {
-        match item.kind {
-            ir::ItemKind::Fn(sig, generics, _body) => {
-                let fn_ty = TyConv::fn_sig_to_ty(&self, sig);
-                let generalized = self.generalize(generics, fn_ty);
-                self.item_tys.borrow_mut().insert(item.id.def, generalized);
-            }
-            ir::ItemKind::Struct(_, _) => todo!(),
-        }
-    }
-
     /// constructs a TypeScheme from a type and its generics
-    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let forall = Forall { binders };
         self.mk_ty(TyKind::Scheme(forall, ty))

@@ -14,6 +14,15 @@ pub enum VariantKind<'ir> {
     Unit,
 }
 
+impl<'ir> VariantKind<'ir> {
+    pub fn fields(&self) -> &'ir [ir::Field<'ir>] {
+        match self {
+            Self::Struct(fields) | Self::Tuple(fields) => fields,
+            Self::Unit => &[],
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Field<'ir> {
     pub span: Span,

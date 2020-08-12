@@ -26,7 +26,6 @@ pub struct Driver<'tcx> {
 
 impl<'tcx> Driver<'tcx> {
     pub fn new(src: &str) -> Self {
-        dbg!(span::GLOBALS);
         Self {
             span_ctx: RefCell::new(span::Ctx::new(src)),
             arena: Default::default(),
@@ -44,7 +43,7 @@ impl<'tcx> Driver<'tcx> {
     }
 
     /// used for testing parsing
-    pub fn  parse_expr(&self) -> LResult<P<ast::Expr>> {
+    pub fn parse_expr(&self) -> LResult<P<ast::Expr>> {
         let tokens = self.lex()?;
         let span_ctx = self.span_ctx.borrow();
         let mut parser = Parser::new(&span_ctx, tokens);

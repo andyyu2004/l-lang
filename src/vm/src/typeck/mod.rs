@@ -1,3 +1,4 @@
+mod collect;
 pub mod inference;
 mod item_ctx;
 mod relate;

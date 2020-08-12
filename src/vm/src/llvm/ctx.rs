@@ -174,6 +174,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Scheme(_, _) => todo!(),
             TyKind::Never => self.mk_unit_ty(),
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
+            TyKind::Adt(_) => todo!(),
         }
     }
 

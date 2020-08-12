@@ -1,6 +1,7 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
 use crate::ir;
+use crate::lexer::Symbol;
 use std::marker::PhantomData;
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
@@ -27,11 +28,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    /// this
     fn lower_field(&mut self, (i, field): (usize, &Field)) -> ir::Field<'ir> {
         let &Field { span, ident, vis, id, ref ty } = field;
-        let ident = ident.unwrap();
-        // let ident = ident.unwrap_or_else(|| );
+        let ident = ident
+            .unwrap_or_else(|| Ident { span: field.span, symbol: Symbol::intern(&i.to_string()) });
         ir::Field { span, ident, vis, id: self.lower_node_id(id), ty: self.lower_ty(ty) }
     }
 

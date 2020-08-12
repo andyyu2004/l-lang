@@ -1,8 +1,10 @@
+use crate::ast::{Ident, Visibility};
 use crate::ir::{DefId, ParamIdx};
 use crate::ty::{SubstRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
 use crate::util;
 use bitflags::bitflags;
+use indexed_vec::IndexVec;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::{marker::PhantomData, ptr};
@@ -65,7 +67,29 @@ pub enum TyKind<'tcx> {
     Tuple(SubstRef<'tcx>),
     Infer(InferTy),
     Param(ParamTy),
+    Adt(&'tcx AdtTy<'tcx>),
     Scheme(Forall<'tcx>, Ty<'tcx>),
+}
+
+newtype_index!(VariantIdx);
+
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+pub struct AdtTy<'tcx> {
+    pub def_id: DefId,
+    pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+}
+
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+pub struct VariantTy<'tcx> {
+    pub ident: Ident,
+    pub fields: &'tcx [FieldTy],
+}
+
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+pub struct FieldTy {
+    pub def_id: DefId,
+    pub ident: Ident,
+    pub vis: Visibility,
 }
 
 bitflags! {
@@ -120,7 +144,8 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Infer(_) => TyFlags::HAS_INFER,
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
-            TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num => TyFlags::empty(),
+            TyKind::Adt(_) | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num =>
+                TyFlags::empty(),
         }
     }
 }
@@ -140,6 +165,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
+            TyKind::Adt(_) => todo!(),
         }
     }
 }
