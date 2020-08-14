@@ -1,10 +1,12 @@
 use crate::span::Span;
-use std::ops::Index;
+use std::ops::{self, Index};
 
+#[derive(Debug)]
 pub struct SourceMap {
     pub files: Vec<SourceFile>,
 }
 
+#[derive(Debug)]
 pub struct SourceFile {
     pub src: String,
 }
@@ -16,9 +18,18 @@ impl SourceFile {
 }
 
 impl SourceMap {
+    // tmp function to use for now
+    pub fn main_file(&self) -> &SourceFile {
+        &self.files[0]
+    }
+
     // just one sourcefile for now
     pub fn new(src: &str) -> Self {
         Self { files: vec![SourceFile::new(src)] }
+    }
+
+    pub fn span_to_string(&self, span: Span) -> String {
+        self.files[0].src[span.lo..span.hi].to_owned()
     }
 }
 

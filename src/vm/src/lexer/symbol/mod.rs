@@ -31,7 +31,6 @@ impl Symbol {
 
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        println!("{}", self.as_str());
         write!(f, "{}", self.as_str())
     }
 }

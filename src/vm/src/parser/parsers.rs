@@ -264,8 +264,9 @@ impl Parse for PathParser {
             parser.expect(TokenType::Colon)?;
             parser.expect(TokenType::Colon)
         };
-        let (span, segments) = parser
-            .with_span(&mut Punctuated1Parser { inner: PathSegmentParser, separator }, false)?;
+        let (span, segments) = Punctuated1Parser { inner: PathSegmentParser, separator }
+            .spanned(false)
+            .parse(parser)?;
         // if the path is immediately followed by an open brace, it could be a struct expr
         Ok(Path { span, segments })
     }

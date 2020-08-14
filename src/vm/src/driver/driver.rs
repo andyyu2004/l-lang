@@ -14,10 +14,11 @@ use ir::AstLoweringCtx;
 use lexer::{symbol, Lexer, Tok};
 use once_cell::unsync::OnceCell;
 use parser::Parser;
+use span::SourceMap;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct Driver<'tcx> {
-    span_ctx: RefCell<span::Ctx>,
     arena: Arena<'tcx>,
     ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
@@ -26,8 +27,9 @@ pub struct Driver<'tcx> {
 
 impl<'tcx> Driver<'tcx> {
     pub fn new(src: &str) -> Self {
+        span::GLOBALS
+            .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(src))));
         Self {
-            span_ctx: RefCell::new(span::Ctx::new(src)),
             arena: Default::default(),
             ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
@@ -36,8 +38,7 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn lex(&self) -> LResult<Vec<Tok>> {
-        let mut span_ctx = self.span_ctx.borrow_mut();
-        let mut lexer = Lexer::new(&mut span_ctx);
+        let mut lexer = Lexer::new();
         let tokens = lexer.lex();
         Ok(tokens)
     }
@@ -45,16 +46,14 @@ impl<'tcx> Driver<'tcx> {
     /// used for testing parsing
     pub fn parse_expr(&self) -> LResult<P<ast::Expr>> {
         let tokens = self.lex()?;
-        let span_ctx = self.span_ctx.borrow();
-        let mut parser = Parser::new(&span_ctx, tokens);
+        let mut parser = Parser::new(tokens);
         let expr = parser.parse_expr()?;
         Ok(expr)
     }
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         let tokens = self.lex()?;
-        let span_ctx = self.span_ctx.borrow();
-        let mut parser = Parser::new(&span_ctx, tokens);
+        let mut parser = Parser::new(tokens);
         let prog = parser.parse()?;
         Ok(prog)
     }

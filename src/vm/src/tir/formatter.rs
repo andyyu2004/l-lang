@@ -74,7 +74,7 @@ where
                 indentln!(self, "#{:?} :: {}", item.id.def, ty)?;
                 indentln!(
                     self,
-                    "{}fn #{:?}<>({}) {}\n",
+                    "{}fn {}<>({}) {}\n",
                     item.vis.node,
                     item.ident,
                     // generics,
@@ -102,8 +102,8 @@ where
             tir::ExprKind::Bin(op, l, r) => indent!(self, "({} {} {})", op, l, r),
             tir::ExprKind::Unary(op, expr) => indent!(self, "({} {})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),
-            tir::ExprKind::VarRef(id) => indent!(self, "${:?}", id.local),
-            tir::ExprKind::ItemRef(def_id) => indent!(self, "#{:?}", def_id),
+            tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
+            tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
             tir::ExprKind::Lambda(b) =>

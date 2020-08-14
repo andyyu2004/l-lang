@@ -7,7 +7,6 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    // tmp function to use for now
     pub fn main_file(&self) -> &SourceFile {
         &self.source_map.files[0]
     }

@@ -6,19 +6,18 @@ use crate::span::{self, Span};
 use indexed_vec::Idx;
 use std::cell::Cell;
 
-pub struct Parser<'ctx> {
+pub struct Parser {
     tokens: Vec<Tok>,
     idx: usize,
-    pub(super) ctx: &'ctx span::Ctx,
     id_counter: Cell<usize>,
 }
 
-impl<'ctx> Parser<'ctx> {
-    pub fn new<I>(ctx: &'ctx span::Ctx, tokens: I) -> Self
+impl Parser {
+    pub fn new<I>(tokens: I) -> Self
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self { tokens: tokens.into_iter().collect(), ctx, idx: 0, id_counter: Cell::new(0) }
+        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0) }
     }
 
     /// runs some parser and returns the result and the span that it consumed
@@ -31,7 +30,11 @@ impl<'ctx> Parser<'ctx> {
         let lo =
             if include_prev { self.tokens[self.idx - 1].span.lo } else { self.curr_span_start() };
         let p = parser.parse(self)?;
-        Ok((Span::new(lo, self.curr_span_start()), p))
+        Ok((Span::new(lo, self.prev_span_end()), p))
+    }
+
+    pub fn prev_span_end(&self) -> usize {
+        self.tokens[self.idx - 1].span.hi
     }
 
     pub fn curr_span_start(&self) -> usize {

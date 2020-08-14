@@ -1,5 +1,5 @@
 use super::{lexing, LiteralKind, Symbol};
-use crate::span::{self, Span};
+use crate::span::{self, with_source_map, Span};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use lexing::TokenKind;
@@ -29,18 +29,16 @@ pub struct Tok {
     pub ttype: TokenType,
 }
 
-pub struct Lexer<'ctx> {
-    ctx: &'ctx mut span::Ctx,
-}
+pub struct Lexer {}
 
-impl<'ctx> Lexer<'ctx> {
-    pub fn new(ctx: &'ctx mut span::Ctx) -> Self {
-        Self { ctx }
+impl Lexer {
+    pub fn new() -> Self {
+        Self {}
     }
 
     /// transforms the rustc token with len into one with span
     pub fn lex(&mut self) -> Vec<Tok> {
-        let src = self.ctx.main_file().src.to_owned();
+        let src = with_source_map(|map| map.main_file().src.to_owned());
         let mut span_index = 0;
 
         // note: it is important to filter after so that the spans are correct
@@ -137,6 +135,7 @@ impl<'ctx> Lexer<'ctx> {
 /// token kind that has been further processed to include keywords
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
+    Ident(Symbol),
     /// ->
     RArrow,
     Return,
@@ -234,5 +233,4 @@ pub enum TokenType {
     Unknown,
     /// "_"
     Underscore,
-    Ident(Symbol),
 }

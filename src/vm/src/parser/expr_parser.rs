@@ -2,7 +2,7 @@ use super::*;
 use crate::ast::*;
 use crate::error::*;
 use crate::lexer::*;
-use crate::span::Span;
+use crate::span::{with_source_map, Span};
 
 const UNARY_OPS: [TokenType; 2] = [TokenType::Not, TokenType::Minus];
 const POSTFIX_OPS: [TokenType; 3] =
@@ -141,7 +141,7 @@ impl Parse for LiteralExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let slice = &parser.ctx.main_file()[self.span];
+        let slice = with_source_map(|map| map.main_file()[self.span].to_owned());
         let literal = match self.kind {
             LiteralKind::Float { base, .. } => {
                 if base != Base::Decimal {
@@ -150,7 +150,7 @@ impl Parse for LiteralExprParser {
                 Lit::Num(slice.parse().unwrap())
             }
             LiteralKind::Int { base, .. } =>
-                Lit::Num(i64::from_str_radix(slice, base as u32).unwrap() as f64),
+                Lit::Num(i64::from_str_radix(&slice, base as u32).unwrap() as f64),
             _ => todo!(),
         };
         Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))
