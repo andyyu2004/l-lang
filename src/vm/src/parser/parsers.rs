@@ -202,6 +202,51 @@ where
     }
 }
 
+pub struct StructExprParser {
+    path: Path,
+}
+
+impl Parse for StructExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let field_parser = |parser: &mut Parser| {
+            let ident = parser.expect_ident()?;
+            parser.expect(TokenType::Colon)?;
+            let expr = ExprParser.parse(parser)?;
+            let span = ident.span.merge(expr.span);
+            Ok(Field { ident, expr, span, id: parser.mk_id() })
+        };
+        let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Comma }
+            .spanned(false)
+            .parse(parser)?;
+        parser.expect(TokenType::CloseBrace)?;
+        let path = std::mem::take(&mut self.path);
+        Ok(parser.mk_expr(span, ExprKind::Struct(path, fields)))
+    }
+}
+
+pub struct PathExprParser;
+
+impl Parse for PathExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let (span, path) = PathParser.spanned(false).parse(parser)?;
+        // if the path is immediately followed by an open brace, it is a struct expr
+        // SomeStruct {
+        //    x: number,
+        //    y: bool,
+        // }
+        if let Some(_) = parser.accept(TokenType::OpenBrace) {
+            StructExprParser { path }.parse(parser)
+        } else {
+            Ok(parser.mk_expr(span, ExprKind::Path(path)))
+        }
+    }
+}
+
+/// parses a path a::b::c
 pub struct PathParser;
 
 impl Parse for PathParser {
@@ -214,6 +259,7 @@ impl Parse for PathParser {
         };
         let (span, segments) = parser
             .with_span(&mut Punctuated1Parser { inner: PathSegmentParser, separator }, false)?;
+        // if the path is immediately followed by an open brace, it could be a struct expr
         Ok(Path { span, segments })
     }
 }

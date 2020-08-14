@@ -28,8 +28,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    fn lower_field(&mut self, (i, field): (usize, &Field)) -> ir::Field<'ir> {
-        let &Field { span, ident, vis, id, ref ty } = field;
+    fn lower_field(&mut self, (i, field): (usize, &FieldDecl)) -> ir::Field<'ir> {
+        let &FieldDecl { span, ident, vis, id, ref ty } = field;
         let ident = ident
             .unwrap_or_else(|| Ident { span: field.span, symbol: Symbol::intern(&i.to_string()) });
         ir::Field { span, ident, vis, id: self.lower_node_id(id), ty: self.lower_ty(ty) }

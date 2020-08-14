@@ -68,6 +68,10 @@ pub trait Visitor<'ast>: Sized {
         self.visit_ty(&param.ty);
     }
 
+    fn visit_field_decl(&mut self, field: &'ast FieldDecl) {
+        walk_field_decl(self, field)
+    }
+
     fn visit_field(&mut self, field: &'ast Field) {
         walk_field(self, field)
     }
@@ -92,20 +96,16 @@ pub trait Visitor<'ast>: Sized {
     }
 }
 
-pub fn  walk_fn<'ast>(
-    visitor: &mut impl Visitor<'ast>,
-    sig: &'ast FnSig,
-    body: Option<&'ast Expr>,
-) {
+pub fn walk_fn<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, body: Option<&'ast Expr>) {
     visitor.visit_fn_sig(sig);
     body.as_ref().map(|body| visitor.visit_expr(body));
 }
 
-pub fn  walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
+pub fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
     block.stmts.iter().for_each(|stmt| visitor.visit_stmt(stmt))
 }
 
-pub fn  walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
+pub fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
     match &stmt.kind {
         StmtKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         StmtKind::Let(l) => visitor.visit_let(l),
@@ -114,7 +114,7 @@ pub fn  walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
     }
 }
 
-pub fn  walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
+pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
         ExprKind::Lit(_) => {}
         ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
@@ -123,6 +123,10 @@ pub fn  walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
+        ExprKind::Struct(path, fields) => {
+            visitor.visit_path(path);
+            fields.iter().for_each(|f| visitor.visit_field(f));
+        }
         ExprKind::Call(f, args) => {
             visitor.visit_expr(f);
             args.iter().for_each(|expr| visitor.visit_expr(expr));
@@ -139,16 +143,16 @@ pub fn  walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     }
 }
 
-pub fn  walk_generics<'ast>(visitor: &mut impl Visitor<'ast>, generics: &'ast Generics) {
+pub fn walk_generics<'ast>(visitor: &mut impl Visitor<'ast>, generics: &'ast Generics) {
     generics.params.iter().for_each(|p| visitor.visit_ty_param(p));
 }
 
-pub fn  walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {
+pub fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {
     visitor.visit_fn_sig(sig);
     visitor.visit_expr(expr);
 }
 
-pub fn  walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
+pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
     match &pat.kind {
         PatternKind::Wildcard => {}
         PatternKind::Ident(ident, pat) => {
@@ -160,7 +164,7 @@ pub fn  walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
     }
 }
 
-pub fn  walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
+pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
     match &ty.kind {
         TyKind::Array(ty) => visitor.visit_ty(ty),
         TyKind::Tuple(tys) => tys.iter().for_each(|ty| visitor.visit_ty(ty)),
@@ -174,21 +178,26 @@ pub fn  walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
     }
 }
 
-pub fn  walk_field<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast Field) {
+pub fn walk_field<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast Field) {
+    visitor.visit_expr(&field.expr);
+    visitor.visit_ident(field.ident);
+}
+
+pub fn walk_field_decl<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast FieldDecl) {
     field.ident.map(|ident| visitor.visit_ident(ident));
     visitor.visit_vis(&field.vis);
     visitor.visit_ty(&field.ty);
 }
 
-pub fn  walk_variant_kind<'ast>(visitor: &mut impl Visitor<'ast>, kind: &'ast VariantKind) {
+pub fn walk_variant_kind<'ast>(visitor: &mut impl Visitor<'ast>, kind: &'ast VariantKind) {
     match kind {
         VariantKind::Struct(fields) | VariantKind::Tuple(fields) =>
-            fields.iter().for_each(|f| visitor.visit_field(f)),
+            fields.iter().for_each(|f| visitor.visit_field_decl(f)),
         VariantKind::Unit => {}
     }
 }
 
-pub fn  walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
+pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
     let Item { vis, ident, kind, .. } = &item;
     visitor.visit_vis(vis);
     visitor.visit_ident(*ident);

@@ -114,8 +114,7 @@ impl Parse for PrimaryExprParser {
         } else if let Some((kind, span)) = parser.accept_literal() {
             LiteralExprParser { kind, span }.parse(parser)
         } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
-            let path = PathParser.parse(parser)?;
-            Ok(parser.mk_expr(path.span, ExprKind::Path(path)))
+            PathExprParser.parse(parser)
         } else if let Some(tok) = parser.accept(TokenType::False) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(false))))
         } else if let Some(tok) = parser.accept(TokenType::True) {
@@ -230,6 +229,12 @@ mod test {
     fn parse_empty_tuple() {
         let expr = parse_expr!("()");
         assert_eq!(expr, box Expr::new(Span::new(0, 2), NodeId::new(0), ExprKind::Tuple(vec![])));
+    }
+
+    #[test]
+    fn parse_struct_expr() {
+        let _expr = parse_expr!("SomeStruct { x: number, y: bool }");
+        dbg!(_expr);
     }
 
     #[test]

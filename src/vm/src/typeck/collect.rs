@@ -22,6 +22,7 @@ impl<'tcx> TyCtx<'tcx> {
                 self.generalize(generics, ty)
             }
         };
+        info!("collect: {:#?}", ty);
         self.item_tys.borrow_mut().insert(item.id.def, ty);
     }
 

@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
 pub struct Prog<'tcx> {
-    pub items: BTreeMap<ir::Id, &'tcx tir::Item<'tcx>>,
+    pub items: BTreeMap<ir::Id, tir::Item<'tcx>>,
 }
 
 impl<'tcx> Display for tir::Prog<'tcx> {

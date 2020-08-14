@@ -1,4 +1,4 @@
-use super::{NodeId, Pattern, Stmt, Ty, P};
+use super::{Expr, NodeId, Pattern, Stmt, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use crate::util;
@@ -14,8 +14,26 @@ pub struct Variant {
     pub kind: VariantKind,
 }
 
+/// access of field `p.x`
+/// also used in struct expressions
+/// `SomeStruct {
+///     <ident>: <expr>,
+///     ..
+/// }`
 #[derive(Debug, PartialEq, Clone)]
 pub struct Field {
+    pub id: NodeId,
+    pub span: Span,
+    pub ident: Ident,
+    pub expr: P<Expr>,
+}
+
+/// struct S {
+///     x: number, <- field decl
+///     y: bool,   <- field decl
+/// }
+#[derive(Debug, PartialEq, Clone)]
+pub struct FieldDecl {
     pub id: NodeId,
     pub span: Span,
     pub vis: Visibility,
@@ -25,8 +43,8 @@ pub struct Field {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariantKind {
-    Struct(Vec<Field>),
-    Tuple(Vec<Field>),
+    Struct(Vec<FieldDecl>),
+    Tuple(Vec<FieldDecl>),
     Unit,
 }
 
@@ -137,6 +155,13 @@ pub struct Spanned<T> {
 pub struct Path {
     pub span: Span,
     pub segments: Vec<PathSegment>,
+}
+
+// just to make it `std::mem::take` able
+impl Default for Path {
+    fn default() -> Self {
+        Self { span: Span::new(0, 0), segments: Default::default() }
+    }
 }
 
 impl Display for Path {

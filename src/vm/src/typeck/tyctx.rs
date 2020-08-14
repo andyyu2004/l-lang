@@ -10,6 +10,7 @@ use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use ty::{AdtTy, VariantTy};
 
@@ -162,21 +163,23 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// ir -> tir (`type` the ir prog to form tir)
     fn type_prog(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
-        let items = prog.items.iter().map(|(id, item)| (*id, self.type_item(item))).collect();
-        tir::Prog { items }
-    }
+        let mut items = BTreeMap::new();
 
-    /// ir::Item -> tir::Item
-    fn type_item(self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
-        Inherited::build(self, item.id.def).enter(|inherited| match item.kind {
-            ir::ItemKind::Fn(sig, generics, body) => {
-                let fcx = inherited.check_fn_item(item, sig, generics, body);
-                let tables = fcx.resolve_inference_variables(body);
-                let mut lctx = IrLoweringCtx::new(&inherited, tables);
-                lctx.lower_item(item)
-            }
-            ir::ItemKind::Struct(_, _) => todo!(),
-        })
+        for (&id, item) in &prog.items {
+            // only functions compile down to any runtime representation
+            // data definitions such as structs and enums are purely a compile time concept
+            match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) =>
+                    Inherited::build(self, item.id.def).enter(|inherited| {
+                        let fcx = inherited.check_fn_item(item, sig, generics, body);
+                        let tables = fcx.resolve_inference_variables(body);
+                        let mut lctx = IrLoweringCtx::new(&inherited, tables);
+                        items.insert(id, lctx.lower_item(item));
+                    }),
+                ir::ItemKind::Struct(..) => {}
+            };
+        }
+        tir::Prog { items }
     }
 }
 

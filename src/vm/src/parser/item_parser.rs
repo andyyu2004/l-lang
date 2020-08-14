@@ -17,7 +17,7 @@ impl Parse for ItemParser {
         let (kind_span, kind) = parser.with_span(
             &mut |parser: &mut Parser| match kw.ttype {
                 TokenType::Fn => FnParser { fn_kw: kw }.parse(parser),
-                TokenType::Struct => StructParser { struct_kw: kw }.parse(parser),
+                TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
                 _ => unreachable!(),
             },
@@ -32,12 +32,13 @@ enum FieldForm {
     Struct,
     Tuple,
 }
-pub struct FieldParser {
+
+pub struct FieldDeclParser {
     form: FieldForm,
 }
 
-impl Parse for FieldParser {
-    type Output = Field;
+impl Parse for FieldDeclParser {
+    type Output = FieldDecl;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
@@ -51,7 +52,7 @@ impl Parse for FieldParser {
         };
         let ty = TyParser.parse(parser)?;
         let span = vis.span.merge(ty.span);
-        Ok(Field { id: parser.mk_id(), span, vis, ident, ty })
+        Ok(FieldDecl { id: parser.mk_id(), span, vis, ident, ty })
     }
 }
 
@@ -65,11 +66,11 @@ impl Parse for VariantKindParser {
             Ok(VariantKind::Unit)
         } else if parser.accept(TokenType::OpenParen).is_some() {
             let form = FieldForm::Tuple;
-            let fields = TupleParser { inner: FieldParser { form } }.parse(parser)?;
+            let fields = TupleParser { inner: FieldDeclParser { form } }.parse(parser)?;
             Ok(VariantKind::Tuple(fields))
         } else if parser.accept(TokenType::OpenBrace).is_some() {
             let fields = PunctuatedParser {
-                inner: FieldParser { form: FieldForm::Struct },
+                inner: FieldDeclParser { form: FieldForm::Struct },
                 separator: TokenType::Comma,
             }
             .parse(parser)?;
@@ -81,11 +82,11 @@ impl Parse for VariantKindParser {
     }
 }
 
-pub struct StructParser {
+pub struct StructDeclParser {
     struct_kw: Tok,
 }
 
-impl Parse for StructParser {
+impl Parse for StructDeclParser {
     type Output = ItemKind;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {

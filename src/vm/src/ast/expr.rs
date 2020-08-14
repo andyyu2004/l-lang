@@ -1,4 +1,4 @@
-use super::{BinOp, Block, FnSig, Lit, NodeId, Path, UnaryOp, P};
+use super::{BinOp, Block, Field, FnSig, Lit, NodeId, Path, UnaryOp, P};
 use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
@@ -34,6 +34,7 @@ pub enum ExprKind {
     Lambda(FnSig, P<Expr>),
     Call(P<Expr>, Vec<P<Expr>>),
     If(P<Expr>, P<Block>, Option<P<Expr>>),
+    Struct(Path, Vec<Field>),
 }
 
 impl Display for ExprKind {
@@ -48,6 +49,7 @@ impl Display for ExprKind {
             Self::Tuple(xs) => write!(fmt, "({})", util::join(xs, ",")),
             Self::Lambda(sig, body) => write!(fmt, "fn ({}) => {}", sig, body),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
+            Self::Struct(path, fields) => todo!(),
             Self::If(c, l, r) => match r {
                 Some(r) => write!(fmt, "if {} {} {}", c, l, r),
                 None => write!(fmt, "if {} {}", c, l),

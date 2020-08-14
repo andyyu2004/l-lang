@@ -18,9 +18,9 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
-    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> &'tcx tir::Item<'tcx> {
+    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
-        item.to_tir_alloc(self)
+        item.to_tir(self)
     }
 
     fn node_type(&mut self, id: ir::Id) -> Ty<'tcx> {
