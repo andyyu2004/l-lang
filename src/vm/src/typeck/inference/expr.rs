@@ -20,7 +20,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
-            ir::ExprKind::Struct(path, fields) => self.check_struct_expr(path, fields),
+            ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
         };
         self.write_ty(expr.id, ty)
     }
@@ -46,19 +46,24 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         })
     }
 
-    fn check_struct_expr(&mut self, path: &ir::Path, fields: &[ir::Field]) -> Ty<'tcx> {
+    fn check_struct_expr(
+        &mut self,
+        expr: &ir::Expr,
+        path: &ir::Path,
+        fields: &[ir::Field],
+    ) -> Ty<'tcx> {
         let (variant_ty, ty) = match self.check_struct_path(path) {
             Some(variant_ty) => variant_ty,
             None => return self.tcx.mk_ty_err(),
         };
         let adt_ty = ty.expect_adt();
-        self.check_struct_expr_fields(adt_ty, variant_ty, fields);
-        dbg!(variant_ty);
-        dbg!(ty)
+        self.check_struct_expr_fields(expr, adt_ty, variant_ty, fields);
+        ty
     }
 
     fn check_struct_expr_fields(
         &mut self,
+        expr: &ir::Expr,
         adt_ty: &AdtTy,
         variant: &VariantTy<'tcx>,
         fields: &[ir::Field],
@@ -91,6 +96,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 }
             }
         }
+
+        if !remaining_fields.is_empty() {
+            has_error = true;
+            self.build_ty_err(expr.span, TypeError::Msg(format!("incomplete fields")));
+        }
+
         has_error
     }
 

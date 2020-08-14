@@ -1,3 +1,4 @@
+mod error;
 mod fn_tests;
 mod lambda_tests;
 

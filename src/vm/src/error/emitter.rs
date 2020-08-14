@@ -11,6 +11,6 @@ pub struct TextEmitter {}
 
 impl Emitter for TextEmitter {
     fn emit(&mut self, diagnostic: &Diagnostic) {
-        println!("{:?}", diagnostic)
+        println!("{:?}", diagnostic.messages)
     }
 }
