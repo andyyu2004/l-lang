@@ -128,7 +128,8 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
-            ExprKind::Path(path) => self.resolve_path(path, NS::Value).unwrap(),
+            ExprKind::Struct(path, _) | ExprKind::Path(path) =>
+                self.resolve_path(path, NS::Value).unwrap(),
             _ => {}
         };
         ast::walk_expr(self, expr);

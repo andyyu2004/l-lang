@@ -5,7 +5,7 @@ use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, ParamIdx};
 use crate::span::Span;
 use crate::tir::{self, IrLoweringCtx};
-use crate::ty::{self, Forall, List, SubstRef, Ty, TyConv, TyKind, VariantIdx};
+use crate::ty::{self, Forall, List, SubstsRef, Ty, TyConv, TyKind, VariantIdx};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -50,12 +50,20 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_tir_iter(iter)
     }
 
-    pub fn mk_adt_ty(
+    pub fn mk_adt(
         self,
         def_id: DefId,
         variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
     ) -> &'tcx AdtTy<'tcx> {
         self.arena.alloc(AdtTy { def_id, variants })
+    }
+
+    pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Adt(adt_ty, self.intern_substs(&[])))
+    }
+
+    pub fn mk_empty_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>) -> Ty<'tcx> {
+        self.mk_adt_ty(adt_ty, self.intern_substs(&[]))
     }
 
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
@@ -90,14 +98,14 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Error)
     }
 
-    pub fn mk_substs<I>(self, iter: I) -> SubstRef<'tcx>
+    pub fn mk_substs<I>(self, iter: I) -> SubstsRef<'tcx>
     where
         I: Iterator<Item = Ty<'tcx>>,
     {
         self.intern_substs(&iter.collect_vec())
     }
 
-    pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstRef<'tcx> {
+    pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
         if slice.is_empty() { List::empty() } else { self.interners.intern_substs(slice) }
     }
 }

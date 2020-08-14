@@ -4,6 +4,7 @@ use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Variant {
@@ -54,6 +55,14 @@ pub struct Ident {
     pub symbol: Symbol,
 }
 
+impl Deref for Ident {
+    type Target = Symbol;
+
+    fn deref(&self) -> &Self::Target {
+        &self.symbol
+    }
+}
+
 impl Hash for Ident {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.symbol.hash(state)
@@ -66,11 +75,9 @@ impl PartialEq for Ident {
     }
 }
 
-/// we don't have access to the actual identifier without further context
-/// so simply display it as $i where `i` is the symbol index
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.symbol.0)
+        write!(f, "{}", self.symbol)
     }
 }
 

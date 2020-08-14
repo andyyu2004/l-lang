@@ -1,5 +1,5 @@
 use crate::core::Arena;
-use crate::ty::{List, SubstRef, Ty, TyKind, TyS};
+use crate::ty::{List, SubstsRef, Ty, TyKind, TyS};
 use rustc_hash::FxHashMap;
 use std::{borrow::Borrow, cell::RefCell};
 
@@ -7,9 +7,9 @@ pub struct CtxInterners<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     /// map from tykind to the allocated ty ptr
     types: RefCell<FxHashMap<TyKind<'tcx>, Ty<'tcx>>>,
-    /// map from a slice of tys to a allocated substref
+    /// map from a slice of tys to a allocated SubstsRef
     /// this uses the fact the default slice equality is implemented by length + element wise comparison
-    substs: RefCell<FxHashMap<&'tcx [Ty<'tcx>], SubstRef<'tcx>>>,
+    substs: RefCell<FxHashMap<&'tcx [Ty<'tcx>], SubstsRef<'tcx>>>,
 }
 
 impl<'tcx> CtxInterners<'tcx> {
@@ -29,14 +29,14 @@ impl<'tcx> CtxInterners<'tcx> {
         }
     }
 
-    pub(crate) fn intern_substs(&self, slice: &[Ty<'tcx>]) -> SubstRef<'tcx> {
+    pub(crate) fn intern_substs(&self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
         let mut substs = self.substs.borrow_mut();
         match substs.get(slice) {
-            Some(&substref) => substref,
+            Some(&substs_ref) => substs_ref,
             None => {
-                let substref = List::from_arena(self.arena, slice);
-                substs.insert(&substref, substref);
-                substref
+                let substs_ref = List::from_arena(self.arena, slice);
+                substs.insert(&substs_ref, substs_ref);
+                substs_ref
             }
         }
     }

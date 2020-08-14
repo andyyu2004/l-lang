@@ -60,7 +60,7 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
             .map(|index| {
                 let val = self.probe(TyVid { index });
                 match val {
-                    TyVarValue::Known(ty) => Ok(ty),
+                    TyVarValue::Known(ty) => Ok(self.instantiate_if_known(ty)),
                     TyVarValue::Unknown => Err(TypeError::InferenceFailure),
                 }
             })

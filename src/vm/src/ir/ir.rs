@@ -9,13 +9,13 @@ newtype_index!(ParamIdx);
 
 #[derive(Debug)]
 pub enum VariantKind<'ir> {
-    Struct(&'ir [ir::Field<'ir>]),
-    Tuple(&'ir [ir::Field<'ir>]),
+    Struct(&'ir [ir::FieldDecl<'ir>]),
+    Tuple(&'ir [ir::FieldDecl<'ir>]),
     Unit,
 }
 
 impl<'ir> VariantKind<'ir> {
-    pub fn fields(&self) -> &'ir [ir::Field<'ir>] {
+    pub fn fields(&self) -> &'ir [ir::FieldDecl<'ir>] {
         match self {
             Self::Struct(fields) | Self::Tuple(fields) => fields,
             Self::Unit => &[],
@@ -25,6 +25,14 @@ impl<'ir> VariantKind<'ir> {
 
 #[derive(Debug)]
 pub struct Field<'ir> {
+    pub id: ir::Id,
+    pub span: Span,
+    pub ident: Ident,
+    pub expr: &'ir ir::Expr<'ir>,
+}
+
+#[derive(Debug)]
+pub struct FieldDecl<'ir> {
     pub span: Span,
     pub ident: Ident,
     pub vis: Visibility,

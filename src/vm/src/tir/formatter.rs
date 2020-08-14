@@ -76,7 +76,7 @@ where
                     self,
                     "{}fn #{:?}<>({}) {}\n",
                     item.vis.node,
-                    item.id.def,
+                    item.ident,
                     // generics,
                     util::join2(params, ", "),
                     body

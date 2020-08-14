@@ -2,6 +2,7 @@ use crate::ir::DefId;
 use crate::span::Span;
 use crate::ty::{Const, Ty};
 use crate::{ast, ir, tir, util};
+use ast::Ident;
 use fmt::Display;
 use std::fmt::{self, Formatter};
 

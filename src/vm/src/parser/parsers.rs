@@ -212,9 +212,16 @@ impl Parse for StructExprParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let field_parser = |parser: &mut Parser| {
             let ident = parser.expect_ident()?;
-            parser.expect(TokenType::Colon)?;
-            let expr = ExprParser.parse(parser)?;
-            let span = ident.span.merge(expr.span);
+            let (span, expr) = if parser.accept(TokenType::Colon).is_some() {
+                let expr = ExprParser.parse(parser)?;
+                let span = ident.span.merge(expr.span);
+                (span, expr)
+            } else {
+                let span = parser.empty_span();
+                // construct a Path node which the a single segment with ident `ident`
+                // this is the implementation of the struct shorthand
+                todo!()
+            };
             Ok(Field { ident, expr, span, id: parser.mk_id() })
         };
         let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Comma }

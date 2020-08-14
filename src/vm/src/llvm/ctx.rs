@@ -3,7 +3,7 @@ use crate::ast;
 use crate::ir::{self, DefId};
 use crate::lexer::symbol;
 use crate::tir;
-use crate::ty::{Const, ConstKind, SubstRef, Ty, TyKind};
+use crate::ty::{Const, ConstKind, SubstsRef, Ty, TyKind};
 use crate::typeck::TyCtx;
 use inkwell::types::{BasicType, BasicTypeEnum, FloatType, FunctionType};
 use inkwell::values::*;
@@ -156,7 +156,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    fn llvm_fn_ty(&self, params: SubstRef, ret: Ty) -> FunctionType<'tcx> {
+    fn llvm_fn_ty(&self, params: SubstsRef, ret: Ty) -> FunctionType<'tcx> {
         self.llvm_ty(ret)
             .fn_type(&params.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
@@ -174,7 +174,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Scheme(_, _) => todo!(),
             TyKind::Never => self.mk_unit_ty(),
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
-            TyKind::Adt(_) => todo!(),
+            TyKind::Adt(..) => todo!(),
         }
     }
 

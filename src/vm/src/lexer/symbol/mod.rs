@@ -20,6 +20,10 @@ impl Symbol {
         Self(n)
     }
 
+    pub fn as_str(self) -> &'static str {
+        with_interner(|interner| interner.get_str(self))
+    }
+
     pub fn intern(string: &str) -> Self {
         with_interner(|interner| interner.intern(string))
     }
@@ -27,6 +31,7 @@ impl Symbol {
 
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "${}", self.0)
+        println!("{}", self.as_str());
+        write!(f, "{}", self.as_str())
     }
 }

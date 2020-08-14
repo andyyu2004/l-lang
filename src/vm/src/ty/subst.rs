@@ -6,14 +6,14 @@ use indexed_vec::Idx;
 use rustc_hash::FxHashMap;
 
 pub trait Subst<'tcx>: Sized {
-    fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>) -> Self;
+    fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self;
 }
 
 impl<'tcx, T> Subst<'tcx> for T
 where
     T: TypeFoldable<'tcx>,
 {
-    fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>) -> Self {
+    fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self {
         let mut folder = InferenceVarSubstFolder { tcx, substs };
         self.fold_with(&mut folder)
     }
@@ -24,12 +24,12 @@ where
 /// this is compared for equality by pointer equality
 /// i.e. the type for InferTy::TyVid(i) is Substitutions[i]
 /// this is also used to represent a slice of `Ty`s
-pub type SubstRef<'tcx> = &'tcx List<Ty<'tcx>>;
+pub type SubstsRef<'tcx> = &'tcx List<Ty<'tcx>>;
 
 /// instantiates universal type variables with fresh inference variables
 pub struct InstantiationFolder<'tcx> {
     tcx: TyCtx<'tcx>,
-    substs: SubstRef<'tcx>,
+    substs: SubstsRef<'tcx>,
 }
 
 impl<'tcx> InstantiationFolder<'tcx> {
@@ -59,11 +59,11 @@ impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
 /// substitute inference variables according to some substitution
 pub struct InferenceVarSubstFolder<'tcx> {
     tcx: TyCtx<'tcx>,
-    substs: SubstRef<'tcx>,
+    substs: SubstsRef<'tcx>,
 }
 
 impl<'tcx> InferenceVarSubstFolder<'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>, substs: SubstRef<'tcx>) -> Self {
+    pub fn new(tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self {
         Self { tcx, substs }
     }
 }

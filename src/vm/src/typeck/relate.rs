@@ -37,8 +37,8 @@ pub trait TypeRelation<'tcx>: Sized {
 
     fn relate_tuples(
         &mut self,
-        s: SubstRef<'tcx>,
-        t: SubstRef<'tcx>,
+        s: SubstsRef<'tcx>,
+        t: SubstsRef<'tcx>,
     ) -> TypeResult<'tcx, Ty<'tcx>> {
         Ok(self.tcx().mk_ty(TyKind::Tuple(self.relate(s, t)?)))
     }
@@ -54,7 +54,7 @@ impl<'tcx> Relate<'tcx> for Ty<'tcx> {
     }
 }
 
-impl<'tcx> Relate<'tcx> for SubstRef<'tcx> {
+impl<'tcx> Relate<'tcx> for SubstsRef<'tcx> {
     fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self> {
         if a.len() != b.len() {
             return Err(TypeError::TupleSizeMismatch(a.len(), b.len()));

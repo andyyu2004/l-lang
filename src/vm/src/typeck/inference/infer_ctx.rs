@@ -6,6 +6,7 @@ use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 use std::cell::{Cell, RefCell};
+use std::error::Error;
 
 pub struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
@@ -64,6 +65,11 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
+    pub fn build_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
+        let diag = self.tcx.session.build_error(span, err);
+        self.emit_ty_err(diag)
+    }
+
     pub fn emit_ty_err(&self, err: DiagnosticBuilder) -> Ty<'tcx> {
         err.emit();
         self.report_ty_err()
@@ -75,7 +81,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     /// creates the substitutions for the inference variables
-    pub fn inference_substs(&self) -> TypeResult<'tcx, SubstRef<'tcx>> {
+    pub fn inference_substs(&self) -> TypeResult<'tcx, SubstsRef<'tcx>> {
         let vec = self.inner.borrow_mut().type_variables().gen_substs()?;
         let mut substs = self.tcx.intern_substs(&vec);
         // repeatedly substitutes its inference variables value

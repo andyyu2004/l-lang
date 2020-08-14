@@ -5,7 +5,7 @@ mod ty_conv;
 mod type_fold;
 
 pub use list::List;
-pub use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, SubstRef};
+pub use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, SubstsRef};
 pub use ty::InferTy::*;
 pub use ty::TyKind::*;
 pub use ty::*;

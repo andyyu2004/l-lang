@@ -1,10 +1,12 @@
 use super::FnCtx;
-use crate::error::TypeResult;
+use crate::error::{TypeError, TypeResult};
 use crate::ir::{DefId, DefKind};
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
+use ast::Ident;
 use itertools::Itertools;
+use rustc_hash::FxHashMap;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
@@ -18,8 +20,72 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
+            ir::ExprKind::Struct(path, fields) => self.check_struct_expr(path, fields),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_struct_path(&mut self, path: &ir::Path) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
+        let ty = self.check_expr_path(path);
+        let variant = match path.res {
+            ir::Res::Def(_, DefKind::Struct) => match ty.kind {
+                Adt(adt, _substs) => Some((adt.only_variant(), ty)),
+                _ => unreachable!(),
+            },
+            ir::Res::Local(_) => None,
+            ir::Res::PrimTy(_) => unreachable!(),
+            _ => unimplemented!(),
+        };
+
+        variant.or_else(|| {
+            self.build_ty_err(
+                path.span,
+                TypeError::Msg(format!("expected struct path, found {:?}", path)),
+            );
+            None
+        })
+    }
+
+    fn check_struct_expr(&mut self, path: &ir::Path, fields: &[ir::Field]) -> Ty<'tcx> {
+        let (variant_ty, ty) = match self.check_struct_path(path) {
+            Some(variant_ty) => variant_ty,
+            None => return self.tcx.mk_ty_err(),
+        };
+        let adt_ty = ty.expect_adt();
+        self.check_struct_expr_fields(adt_ty, variant_ty, fields);
+        dbg!(variant_ty);
+        dbg!(ty)
+    }
+
+    fn check_struct_expr_fields(
+        &mut self,
+        adt_ty: &AdtTy,
+        variant: &VariantTy<'tcx>,
+        fields: &[ir::Field],
+    ) -> bool {
+        let mut remaining_fields =
+            variant.fields.iter().map(|f| (f.ident, f)).collect::<FxHashMap<Ident, &FieldTy>>();
+        let mut seen_fields = FxHashMap::default();
+        let mut has_error = false;
+        for field in fields {
+            if remaining_fields.remove(&field.ident).is_none() {
+                // unknown field or setting field twice
+                has_error = true;
+                if seen_fields.contains_key(&field.ident) {
+                    self.build_ty_err(
+                        field.span,
+                        TypeError::Msg(format!("field `{}` set more than once", field.ident)),
+                    );
+                } else {
+                    self.build_ty_err(
+                        field.span,
+                        TypeError::Msg(format!("unknown field `{}`", field.ident)),
+                    );
+                }
+            }
+            seen_fields.insert(field.ident, field.span);
+        }
+        has_error
     }
 
     fn check_match_expr(
@@ -85,7 +151,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         body_ty
     }
 
-    fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstRef<'tcx> {
+    fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstsRef<'tcx> {
         let tcx = self.tcx;
         let tys = xs.iter().map(|expr| self.check_expr(expr));
         tcx.mk_substs(tys)
@@ -108,9 +174,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_expr_path_def(&mut self, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
         match def_kind {
             // instantiate ty params
-            DefKind::Fn => self.instantiate(self.tcx.item_ty(def_id)),
-            DefKind::Enum => todo!(),
-            DefKind::Struct => todo!(),
+            DefKind::Fn | DefKind::Enum | DefKind::Struct =>
+                self.instantiate(self.tcx.item_ty(def_id)),
             DefKind::TyParam(_) => unreachable!(),
         }
     }

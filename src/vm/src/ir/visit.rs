@@ -63,6 +63,10 @@ pub trait Visitor<'ir>: Sized {
     fn visit_arm(&mut self, arm: &'ir ir::Arm<'ir>) {
         walk_arm(self, arm)
     }
+
+    fn visit_field(&mut self, field: &'ir ir::Field<'ir>) {
+        walk_field(self, field)
+    }
 }
 
 pub fn walk_prog<'ir, V: Visitor<'ir>>(v: &mut V, prog: &'ir ir::Prog<'ir>) {
@@ -124,7 +128,16 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(expr);
             arms.iter().for_each(|arm| v.visit_arm(arm));
         }
+        ir::ExprKind::Struct(path, fields) => {
+            v.visit_path(path);
+            fields.iter().for_each(|f| v.visit_field(f));
+        }
     }
+}
+
+pub fn walk_field<'ir, V: Visitor<'ir>>(v: &mut V, field: &'ir ir::Field<'ir>) {
+    v.visit_ident(field.ident);
+    v.visit_expr(field.expr);
 }
 
 pub fn walk_arm<'ir, V: Visitor<'ir>>(v: &mut V, arm: &'ir ir::Arm<'ir>) {

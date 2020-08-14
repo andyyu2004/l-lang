@@ -15,7 +15,7 @@ impl<'tcx> TypeckTables<'tcx> {
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
-        self.node_type_opt(id).expect("no entry for node in typecktables")
+        self.node_type_opt(id).expect(&format!("no entry for node {} in typecktables", id))
     }
 
     pub fn node_type_opt(&self, id: ir::Id) -> Option<Ty<'tcx>> {

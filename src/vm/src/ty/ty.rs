@@ -1,10 +1,10 @@
 use crate::ast::{Ident, Visibility};
 use crate::ir::{DefId, ParamIdx};
-use crate::ty::{SubstRef, TypeFoldable, TypeVisitor};
+use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
 use crate::util;
 use bitflags::bitflags;
-use indexed_vec::IndexVec;
+use indexed_vec::{Idx, IndexVec};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::{marker::PhantomData, ptr};
@@ -24,14 +24,21 @@ impl<'tcx> TyS<'tcx> {
     pub fn expect_scheme(&self) -> (Forall<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Scheme(forall, ty) => (forall, ty),
+            _ => panic!("expected TyKind::Scheme, found {}", self),
+        }
+    }
+
+    pub fn expect_fn(&self) -> (SubstsRef<'tcx>, Ty<'tcx>) {
+        match self.kind {
+            TyKind::Fn(params, ret) => (params, ret),
             _ => panic!("expected TyKind::Fn, found {}", self),
         }
     }
 
-    pub fn expect_fn(&self) -> (SubstRef<'tcx>, Ty<'tcx>) {
+    pub fn expect_adt(&self) -> &'tcx AdtTy<'tcx> {
         match self.kind {
-            TyKind::Fn(params, ret) => (params, ret),
-            _ => panic!("expected TyKind::Fn, found {}", self),
+            TyKind::Adt(adt, _) => adt,
+            _ => panic!("expected TyKind::Adt, found {}", self),
         }
     }
 }
@@ -63,11 +70,11 @@ pub enum TyKind<'tcx> {
     /// [<ty>]
     Array(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
-    Fn(SubstRef<'tcx>, Ty<'tcx>),
-    Tuple(SubstRef<'tcx>),
+    Fn(SubstsRef<'tcx>, Ty<'tcx>),
+    Tuple(SubstsRef<'tcx>),
     Infer(InferTy),
     Param(ParamTy),
-    Adt(&'tcx AdtTy<'tcx>),
+    Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
     Scheme(Forall<'tcx>, Ty<'tcx>),
 }
 
@@ -77,6 +84,13 @@ newtype_index!(VariantIdx);
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
     pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+}
+
+impl<'tcx> AdtTy<'tcx> {
+    pub fn only_variant(&self) -> &VariantTy<'tcx> {
+        assert_eq!(self.variants.len(), 1);
+        &self.variants[VariantIdx::new(0)]
+    }
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
@@ -110,9 +124,9 @@ impl<'tcx> TyFlag for TyS<'tcx> {
     }
 }
 
-impl<'tcx> TyFlag for SubstRef<'tcx> {
+impl<'tcx> TyFlag for SubstsRef<'tcx> {
     fn ty_flags(&self) -> TyFlags {
-        self.iter().fold(TyFlags::empty(), |acc, ty| ty.ty_flags())
+        self.iter().fold(TyFlags::empty(), |acc, ty| acc | ty.ty_flags())
     }
 }
 
@@ -144,8 +158,8 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Infer(_) => TyFlags::HAS_INFER,
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
-            TyKind::Adt(_) | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num =>
-                TyFlags::empty(),
+            TyKind::Adt(_, substs) => substs.ty_flags(),
+            TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num => TyFlags::empty(),
         }
     }
 }
@@ -153,9 +167,6 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            TyKind::Bool => write!(f, "bool"),
-            TyKind::Char => write!(f, "char"),
-            TyKind::Num => write!(f, "number"),
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
@@ -163,9 +174,12 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
+            TyKind::Adt(adt, _) => write!(f, "@{}", adt.def_id),
+            TyKind::Bool => write!(f, "bool"),
+            TyKind::Char => write!(f, "char"),
+            TyKind::Num => write!(f, "number"),
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
-            TyKind::Adt(_) => todo!(),
         }
     }
 }

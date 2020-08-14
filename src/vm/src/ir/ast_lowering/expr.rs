@@ -32,10 +32,18 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Call(f, args) =>
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
             ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
-            ExprKind::Struct(_, _) => todo!(),
+            ExprKind::Struct(path, fields) => ir::ExprKind::Struct(
+                self.lower_path(path),
+                self.arena.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
+            ),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
+    }
+
+    fn lower_field(&mut self, field: &Field) -> ir::Field<'ir> {
+        let &Field { id, span, ident, ref expr } = field;
+        ir::Field { id: self.lower_node_id(id), span, ident, expr: self.lower_expr(expr) }
     }
 
     /// desugars into a match with a `true` branch and a wildcard branch

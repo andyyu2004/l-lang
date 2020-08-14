@@ -1,6 +1,6 @@
 use crate::ir;
 use crate::tir;
-use crate::ty::{List, SubstRef, Ty};
+use crate::ty::{List, SubstsRef, Ty};
 use crate::{ast::Ident, span::Span};
 use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
