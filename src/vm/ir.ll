@@ -3,7 +3,7 @@ source_filename = "main"
 
 define double @"0"() {
 body:
-  %fcall = call double @"1"(double 1.000000e+01)
+  %fcall = call double @"1"(double 4.000000e+01)
   ret double %fcall
 }
 

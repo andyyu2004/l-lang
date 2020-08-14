@@ -68,22 +68,28 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let mut seen_fields = FxHashMap::default();
         let mut has_error = false;
         for field in fields {
-            if remaining_fields.remove(&field.ident).is_none() {
-                // unknown field or setting field twice
-                has_error = true;
-                if seen_fields.contains_key(&field.ident) {
-                    self.build_ty_err(
-                        field.span,
-                        TypeError::Msg(format!("field `{}` set more than once", field.ident)),
-                    );
-                } else {
-                    self.build_ty_err(
-                        field.span,
-                        TypeError::Msg(format!("unknown field `{}`", field.ident)),
-                    );
+            // handle unknown field or setting field twice
+            match remaining_fields.remove(&field.ident) {
+                Some(f) => {
+                    seen_fields.insert(field.ident, field.span);
+                    let ty = self.check_expr(field.expr);
+                    self.unify(field.span, f.ty, ty);
+                }
+                None => {
+                    has_error = true;
+                    if seen_fields.contains_key(&field.ident) {
+                        self.build_ty_err(
+                            field.span,
+                            TypeError::Msg(format!("field `{}` set more than once", field.ident)),
+                        );
+                    } else {
+                        self.build_ty_err(
+                            field.span,
+                            TypeError::Msg(format!("unknown field `{}`", field.ident)),
+                        );
+                    }
                 }
             }
-            seen_fields.insert(field.ident, field.span);
         }
         has_error
     }

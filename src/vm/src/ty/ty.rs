@@ -96,14 +96,15 @@ impl<'tcx> AdtTy<'tcx> {
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct VariantTy<'tcx> {
     pub ident: Ident,
-    pub fields: &'tcx [FieldTy],
+    pub fields: &'tcx [FieldTy<'tcx>],
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
-pub struct FieldTy {
+pub struct FieldTy<'tcx> {
     pub def_id: DefId,
     pub ident: Ident,
     pub vis: Visibility,
+    pub ty: Ty<'tcx>,
 }
 
 bitflags! {

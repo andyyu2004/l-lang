@@ -31,6 +31,7 @@ impl<'tcx> TyCtx<'tcx> {
             def_id: f.id.def,
             ident: f.ident,
             vis: f.vis,
+            ty: TyConv::ir_ty_to_ty(&self, f.ty),
         }));
         VariantTy { ident, fields }
     }
