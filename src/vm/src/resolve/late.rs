@@ -49,7 +49,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     /// search for a local variable in the scopes otherwise look for a resolution to an item
-    fn resolve_value(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+    fn resolve_var(&mut self, ident: Ident) -> Option<Res<NodeId>> {
         match self.scopes[NS::Value].lookup(&ident) {
             Some(&res) => Some(res),
             None => self.resolver.resolve_item(ident),
@@ -74,7 +74,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         let segment = &path.segments[0];
         let res = match ns {
             NS::Value => self
-                .resolve_value(segment.ident)
+                .resolve_var(segment.ident)
                 .ok_or_else(|| ResolutionError::unbound_variable(path.clone()))?,
             // just lookup primitive type for now as there are no other potential types
             NS::Type => self.resolve_ty_path(path)?,

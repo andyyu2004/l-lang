@@ -182,6 +182,7 @@ impl<'tcx> TyCtx<'tcx> {
                     Inherited::build(self, item.id.def).enter(|inherited| {
                         let fcx = inherited.check_fn_item(item, sig, generics, body);
                         let tables = fcx.resolve_inference_variables(body);
+                        // fcx.analyze_escape(body);
                         let mut lctx = IrLoweringCtx::new(&inherited, tables);
                         items.insert(id, lctx.lower_item(item));
                     }),
