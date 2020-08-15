@@ -25,6 +25,7 @@ pub struct CodegenCtx<'tcx> {
     curr_fn: Option<FunctionValue<'tcx>>,
     vars: FxHashMap<ir::Id, PointerValue<'tcx>>,
     dead_blocks: FxHashSet<BasicBlock<'tcx>>,
+    fn_def_id_to_str: FxHashMap<DefId, String>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -55,6 +56,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             curr_fn: None,
             dead_blocks: Default::default(),
             vars: Default::default(),
+            fn_def_id_to_str: Default::default(),
         }
     }
 
@@ -81,7 +83,12 @@ impl<'tcx> CodegenCtx<'tcx> {
                 let (arg_tys, ret_ty) = fn_ty.expect_fn();
                 let llvm_arg_tys = arg_tys.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec();
                 let llvm_fn_ty = self.llvm_ty(ret_ty).fn_type(&llvm_arg_tys, false);
-                let fn_val = self.module.add_function(&item.id.def.to_string(), llvm_fn_ty, None);
+                self.fn_def_id_to_str.insert(item.id.def, item.ident.to_string());
+                let fn_val = self.module.add_function(
+                    &self.fn_def_id_to_str[&item.id.def],
+                    llvm_fn_ty,
+                    None,
+                );
                 // define parameters
                 for (param, arg) in body.params.into_iter().zip(fn_val.get_param_iter()) {
                     arg.set_name(&param.pat.id.to_string());
@@ -117,7 +124,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         generics: &tir::Generics,
         body: &tir::Body,
     ) -> FunctionValue<'tcx> {
-        let fn_val = self.module.get_function(&item.id.def.to_string()).unwrap();
+        let fn_val = self.module.get_function(&item.ident.to_string()).unwrap();
         self.with_fn(fn_val, |this| {
             this.compile_body(body);
             this.remove_dead_blocks();
@@ -145,9 +152,9 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     fn compile_let_pat(&mut self, pat: &tir::Pattern) -> PointerValue<'tcx> {
         match pat.kind {
-            tir::PatternKind::Wildcard => self.alloca(pat.ty, pat.id),
+            tir::PatternKind::Wildcard => self.alloca(pat.ty, pat),
             tir::PatternKind::Binding(ident, _) => {
-                let ptr = self.alloca(pat.ty, pat.id);
+                let ptr = self.alloca(pat.ty, ident);
                 self.def_var(pat.id, ptr);
                 ptr
             }
@@ -305,7 +312,8 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn compile_item_ref(&mut self, id: DefId) -> BasicValueEnum<'tcx> {
-        self.module.get_function(&id.to_string()).unwrap().as_llvm_ptr().into()
+        let name = &self.fn_def_id_to_str[&id];
+        self.module.get_function(name).unwrap().as_llvm_ptr().into()
     }
 
     fn compile_var_ref(&mut self, id: ir::Id) -> BasicValueEnum<'tcx> {
@@ -324,7 +332,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                     .init
                     .map(|expr| self.compile_expr(expr))
                     .unwrap_or_else(|| self.vals.zero.into());
-                let ptr = self.alloca(l.pat.ty, l.pat.id);
+                let ptr = self.alloca(l.pat.ty, l.pat.span.to_string());
                 self.def_var(l.pat.id, ptr);
                 self.builder.build_store(ptr, v);
             }

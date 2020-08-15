@@ -4,8 +4,8 @@ struct S {
 }
 
 fn main() -> number {
-    S { x: 5 }
-
+    // S { x: 5 }
+    (fn () => 5)()
 }
 
 // fn fib(n: number) -> number {
