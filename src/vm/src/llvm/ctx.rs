@@ -190,8 +190,18 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Lambda(body) => self.compile_lambda(expr, body).into(),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
-            tir::ExprKind::Assign(l, r) => todo!(),
+            tir::ExprKind::Assign(l, r) => self.compile_assign(l, r),
         }
+    }
+
+    fn compile_assign(&mut self, l: &tir::Expr, r: &tir::Expr) -> BasicValueEnum<'tcx> {
+        let ptr = match l.kind {
+            tir::ExprKind::VarRef(id) => self.vars[&id],
+            _ => unreachable!(),
+        };
+        let rhs = self.compile_expr(r);
+        self.builder.build_store(ptr, rhs);
+        rhs
     }
 
     fn compile_lambda(&mut self, expr: &tir::Expr, body: &tir::Body) -> PointerValue<'tcx> {
