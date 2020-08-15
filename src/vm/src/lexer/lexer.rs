@@ -20,6 +20,7 @@ lazy_static! {
         "if" => TokenType::If,
         "else" => TokenType::Else,
         "return" => TokenType::Return,
+        "mut" => TokenType::Mut,
     };
 }
 
@@ -138,6 +139,7 @@ pub enum TokenType {
     Ident(Symbol),
     /// ->
     RArrow,
+    Mut,
     Return,
     /// =>
     RFArrow,

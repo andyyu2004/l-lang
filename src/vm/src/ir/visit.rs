@@ -132,6 +132,10 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_path(path);
             fields.iter().for_each(|f| v.visit_field(f));
         }
+        ir::ExprKind::Assign(l, r) => {
+            v.visit_expr(l);
+            v.visit_expr(r);
+        }
     }
 }
 
@@ -191,7 +195,7 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
         ir::PatternKind::Wildcard => {}
         ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
         ir::PatternKind::Lit(expr) => v.visit_expr(expr),
-        ir::PatternKind::Binding(ident, subpat) => {
+        ir::PatternKind::Binding(ident, subpat, m) => {
             v.visit_ident(*ident);
             subpat.map(|p| v.visit_pat(p));
         }

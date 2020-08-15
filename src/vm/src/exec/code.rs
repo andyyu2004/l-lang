@@ -120,8 +120,8 @@ impl CodeBuilder {
         self.emit_op(Op::dloadl).emit_byte(index)
     }
 
-    pub fn emit_istorel(&mut self, index: u8, value: i64) -> &mut Self {
-        self.emit_iconst(value).emit_op(Op::istorel).emit_byte(index)
+    pub fn emit_istorel(&mut self, index: u8) -> &mut Self {
+        self.emit_op(Op::istorel).emit_byte(index)
     }
 
     pub fn emit_popscp(&mut self, n: u8) -> &mut Self {

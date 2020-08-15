@@ -51,7 +51,7 @@ impl<'ir> EscapeVisitor<'ir> {
 
     fn def_pattern(&mut self, pat: &'ir ir::Pattern<'ir>) {
         match pat.kind {
-            ir::PatternKind::Binding(ident, _) => {}
+            ir::PatternKind::Binding(ident, ..) => {}
             ir::PatternKind::Wildcard => {}
             ir::PatternKind::Tuple(_) => {}
             ir::PatternKind::Lit(_) => panic!(),

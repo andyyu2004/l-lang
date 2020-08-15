@@ -18,6 +18,18 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
     }
 }
 
+impl<'ir> Expr<'ir> {
+    pub fn is_lvalue(&self) -> bool {
+        match self.kind {
+            ExprKind::Path(p) => match p.res {
+                ir::Res::Local(_) => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ExprKind<'ir> {
     Lit(ast::Lit),
@@ -27,6 +39,7 @@ pub enum ExprKind<'ir> {
     Path(&'ir ir::Path<'ir>),
     Tuple(&'ir [ir::Expr<'ir>]),
     Lambda(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
+    Assign(&'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
     Struct(&'ir ir::Path<'ir>, &'ir [ir::Field<'ir>]),

@@ -1,4 +1,4 @@
-use crate::ast::Ident;
+use crate::ast::{Ident, Mutability};
 use crate::ir;
 use crate::span::Span;
 
@@ -13,6 +13,6 @@ pub struct Pattern<'ir> {
 pub enum PatternKind<'ir> {
     Wildcard,
     Lit(&'ir ir::Expr<'ir>),
-    Binding(Ident, Option<&'ir ir::Pattern<'ir>>),
+    Binding(Ident, Option<&'ir ir::Pattern<'ir>>, Mutability),
     Tuple(&'ir [ir::Pattern<'ir>]),
 }

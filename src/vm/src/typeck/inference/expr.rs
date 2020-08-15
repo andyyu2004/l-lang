@@ -21,8 +21,27 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
             ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
+            ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    /// checks the expressions is a lvalue and hence assignable
+    fn check_lvalue(&mut self, l: &ir::Expr) {
+        if !l.is_lvalue() {
+            self.emit_ty_err(
+                l.span,
+                TypeError::Msg(format!("expected lvalue as target of assignment")),
+            );
+        }
+    }
+
+    fn check_assign_expr(&mut self, expr: &ir::Expr, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
+        self.check_lvalue(l);
+        let lty = self.check_expr(l);
+        let rty = self.check_expr(r);
+        self.unify(expr.span, lty, rty);
+        rty
     }
 
     fn check_struct_path(&mut self, path: &ir::Path) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
@@ -38,7 +57,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         };
 
         variant.or_else(|| {
-            self.build_ty_err(
+            self.emit_ty_err(
                 path.span,
                 TypeError::Msg(format!("expected struct path, found {:?}", path)),
             );
@@ -83,12 +102,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 None => {
                     has_error = true;
                     if seen_fields.contains_key(&field.ident) {
-                        self.build_ty_err(
+                        self.emit_ty_err(
                             field.span,
                             TypeError::Msg(format!("field `{}` set more than once", field.ident)),
                         );
                     } else {
-                        self.build_ty_err(
+                        self.emit_ty_err(
                             field.span,
                             TypeError::Msg(format!("unknown field `{}`", field.ident)),
                         );
@@ -99,7 +118,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         if !remaining_fields.is_empty() {
             has_error = true;
-            self.build_ty_err(expr.span, TypeError::Msg(format!("incomplete fields")));
+            self.emit_ty_err(expr.span, TypeError::Msg(format!("incomplete fields")));
         }
 
         has_error

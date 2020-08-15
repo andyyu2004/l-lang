@@ -2,6 +2,24 @@ use super::*;
 use itertools::Itertools;
 
 #[test]
+#[should_panic]
+fn check_lambda_wrong_arity_0() {
+    typeck!("(fn () => 5)(3); 5");
+}
+
+#[test]
+#[should_panic]
+fn check_lambda_wrong_arity_1() {
+    typeck!("(fn (x) => x)(3, 5); 5");
+}
+
+#[test]
+#[should_panic]
+fn check_call_non_function() {
+    typeck!("5(5); 5");
+}
+
+#[test]
 fn check_simple_lambda_no_capture() {
     let tir = typeck!("fn () => 5; 5");
     let lines = lines!(&tir);

@@ -13,8 +13,13 @@ mod test {
     ///
     #[test]
     fn test_access_set_local() -> VMResult<()> {
-        let main =
-            CodeBuilder::default().emit_iconst(2).emit_istorel(0, -5).emit_op(Op::iret).build();
+        let main = CodeBuilder::default()
+            .emit_iconst(2)
+            .emit_iconst(-5)
+            .emit_istorel(0)
+            .emit_op(Op::pop)
+            .emit_op(Op::iret)
+            .build();
 
         let exec = Executable::from(Function::new(main));
         let mut vm = VM::with_default_gc(exec);

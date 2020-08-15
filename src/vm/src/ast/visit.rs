@@ -123,6 +123,10 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
+        ExprKind::Assign(l, r) => {
+            visitor.visit_expr(l);
+            visitor.visit_expr(r);
+        }
         ExprKind::Struct(path, fields) => {
             visitor.visit_path(path);
             fields.iter().for_each(|f| visitor.visit_field(f));
@@ -155,7 +159,7 @@ pub fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, exp
 pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
     match &pat.kind {
         PatternKind::Wildcard => {}
-        PatternKind::Ident(ident, pat) => {
+        PatternKind::Ident(ident, pat, _) => {
             visitor.visit_ident(*ident);
             pat.as_ref().map(|p| visitor.visit_pattern(p));
         }

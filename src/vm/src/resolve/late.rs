@@ -43,7 +43,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         match &pat.kind {
-            PatternKind::Ident(ident, _) => self.scopes[NS::Value].def(*ident, Res::Local(pat.id)),
+            PatternKind::Ident(ident, ..) => self.scopes[NS::Value].def(*ident, Res::Local(pat.id)),
             PatternKind::Wildcard | PatternKind::Tuple(_) | PatternKind::Paren(_) => {}
         }
     }

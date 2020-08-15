@@ -50,27 +50,20 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
-        self.unify_diag(span, expected, actual).unwrap_or_else(|err| self.emit_ty_err(err));
-    }
-
-    fn unify_diag(
-        &self,
-        span: Span,
-        expected: Ty<'tcx>,
-        actual: Ty<'tcx>,
-    ) -> Result<Ty<'tcx>, DiagnosticBuilder> {
-        match self.at(span).equate(expected, actual) {
-            Ok(ty) => Ok(ty),
-            Err(err) => Err(self.tcx.session.build_error(span, err)),
+        if expected.contains_err() || actual.contains_err() {
+            return;
+        }
+        if let Err(err) = self.at(span).equate(expected, actual) {
+            self.emit_ty_err(span, err);
         }
     }
 
-    pub fn build_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
+    pub fn emit_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
         let diag = self.tcx.session.build_error(span, err);
-        self.emit_ty_err(diag)
+        self.emit_err(diag)
     }
 
-    pub fn emit_ty_err(&self, err: DiagnosticBuilder) -> Ty<'tcx> {
+    pub fn emit_err(&self, err: DiagnosticBuilder) -> Ty<'tcx> {
         err.emit();
         self.report_ty_err()
     }

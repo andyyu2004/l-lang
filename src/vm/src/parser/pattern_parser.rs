@@ -1,5 +1,5 @@
 use super::{parsers::*, Parse, Parser};
-use crate::ast::{Pattern, PatternKind, P};
+use crate::ast::{Mutability, Pattern, PatternKind, P};
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::TokenType;
 
@@ -12,7 +12,11 @@ impl Parse for PatParser {
         if let Some(token) = parser.accept(TokenType::Underscore) {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
         } else if let Some(ident) = parser.accept_ident() {
-            Ok(parser.mk_pat(ident.span, PatternKind::Ident(ident, None)))
+            Ok(parser.mk_pat(ident.span, PatternKind::Ident(ident, None, Mutability::Imm)))
+        } else if let Some(m) = parser.accept(TokenType::Mut) {
+            let ident = parser.expect_ident()?;
+            let pat = PatternKind::Ident(ident, None, Mutability::Mut);
+            Ok(parser.mk_pat(m.span.merge(ident.span), pat))
         } else if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
             if let Some((span, pattern)) =
                 parser.try_parse(&mut ParenParser { inner: PatParser }.spanned(true))

@@ -14,7 +14,7 @@ pub type P<T> = Box<T>;
 pub use ast::*;
 pub use expr::{Expr, ExprKind};
 pub use item::{Item, ItemKind};
-pub use pattern::{Pattern, PatternKind};
+pub use pattern::{Mutability, Pattern, PatternKind};
 pub use prog::Prog;
 pub use stmt::{Let, Stmt, StmtKind};
 pub use ty::{Ty, TyKind};

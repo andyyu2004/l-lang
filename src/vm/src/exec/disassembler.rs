@@ -130,6 +130,10 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             Op::popscp
             | Op::ldc
             | Op::iloadl
+            | Op::istorel
+            | Op::ustorel
+            | Op::dstorel
+            | Op::rstorel
             | Op::uloadl
             | Op::iloadu
             | Op::rloadl
@@ -140,10 +144,6 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::dloadu
             | Op::rloadu
             | Op::call => self.count_inst(),
-            Op::istorel => todo!(),
-            Op::ustorel => todo!(),
-            Op::dstorel => todo!(),
-            Op::rstorel => todo!(),
             Op::istoreu => todo!(),
             Op::ustoreu => todo!(),
             Op::dstoreu => todo!(),

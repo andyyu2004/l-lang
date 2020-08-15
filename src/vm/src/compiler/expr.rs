@@ -19,7 +19,18 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::Lambda(f) => self.compile_lambda(f),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(expr, arms) => self.compile_match(expr, arms),
+            tir::ExprKind::Assign(l, r) => self.compile_assign(l, r),
         };
+    }
+
+    fn compile_assign(&mut self, l: &tir::Expr, r: &tir::Expr) {
+        let var_id = match l.kind {
+            tir::ExprKind::VarRef(id) => id,
+            _ => unreachable!(),
+        };
+        let idx = self.resolve_local(var_id).unwrap();
+        self.compile_expr(r);
+        self.emit_istorel(idx);
     }
 
     fn compile_block(&mut self, block: &tir::Block) {

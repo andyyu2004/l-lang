@@ -81,7 +81,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
         let &Self { id, span, ref kind } = self;
         let kind = match kind {
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
-            ir::PatternKind::Binding(ident, sub) => {
+            ir::PatternKind::Binding(ident, sub, _) => {
                 let subpat = sub.map(|pat| pat.to_tir_alloc(ctx));
                 tir::PatternKind::Binding(*ident, subpat)
             }
@@ -208,6 +208,8 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Match(expr, arms, _) =>
                 tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
             ir::ExprKind::Struct(_, _) => todo!(),
+            ir::ExprKind::Assign(l, r) =>
+                tir::ExprKind::Assign(l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
         };
         let ty = ctx.node_type(self.id);
         tir::Expr { span, id, kind, ty }

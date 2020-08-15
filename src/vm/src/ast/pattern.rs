@@ -9,12 +9,18 @@ pub struct Pattern {
     pub kind: PatternKind,
 }
 
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Copy)]
+pub enum Mutability {
+    Mut,
+    Imm,
+}
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum PatternKind {
     /// _
     Wildcard,
     /// ident ( @ <subpattern> )?
-    Ident(Ident, Option<P<Pattern>>),
+    Ident(Ident, Option<P<Pattern>>, Mutability),
     Paren(P<Pattern>),
     Tuple(Vec<P<Pattern>>),
 }

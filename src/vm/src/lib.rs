@@ -63,6 +63,11 @@ fn mk_driver(src: &str) -> Driver {
     Driver::new(src)
 }
 
+pub fn parse(src: &str) -> LResult<Box<ast::Prog>> {
+    let driver = mk_driver(src);
+    driver.parse()
+}
+
 pub fn exec(src: &str) -> LResult<exec::Val> {
     let driver = mk_driver(src);
     let res = driver.exec()?;

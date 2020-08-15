@@ -36,6 +36,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 self.lower_path(path),
                 self.arena.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
             ),
+            ExprKind::Assign(l, r) => ir::ExprKind::Assign(self.lower_expr(l), self.lower_expr(r)),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }

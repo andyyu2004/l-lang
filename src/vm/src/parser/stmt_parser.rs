@@ -1,8 +1,7 @@
 use super::*;
 use crate::ast::{Let, Stmt, StmtKind, P};
-use crate::{
-    error::ParseResult, lexer::{Tok, TokenType}
-};
+use crate::error::ParseResult;
+use crate::lexer::{Tok, TokenType};
 
 pub struct StmtParser;
 
@@ -40,5 +39,15 @@ impl Parse for LetParser {
         let semi = parser.expect(TokenType::Semi)?;
         let span = self.let_kw.span.merge(semi.span);
         Ok(parser.mk_stmt(span, StmtKind::Let(box Let { id: parser.mk_id(), span, pat, ty, init })))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parse;
+
+    #[test]
+    fn parse_mut_binding() {
+        let _prog = parse("fn main() { let mut x = 5; x }").unwrap();
     }
 }

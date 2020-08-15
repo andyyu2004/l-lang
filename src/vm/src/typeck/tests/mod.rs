@@ -1,6 +1,6 @@
-mod error;
 mod fn_tests;
 mod lambda_tests;
+mod struct_tests;
 
 use crate::driver::Driver;
 use crate::wrap_in_main;

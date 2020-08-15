@@ -19,11 +19,26 @@ impl Parse for ExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        CmpExprParser.parse(parser)
+        AssnExprParser.parse(parser)
     }
 }
 
-pub(super) struct CmpExprParser;
+struct AssnExprParser;
+
+impl Parse for AssnExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let mut expr = CmpExprParser.parse(parser)?;
+        while let Some(eq) = parser.accept(TokenType::Eq) {
+            let right = Self.parse(parser)?;
+            expr = parser.mk_expr(expr.span.merge(right.span), ExprKind::Assign(expr, right));
+        }
+        Ok(expr)
+    }
+}
+
+struct CmpExprParser;
 
 impl Parse for CmpExprParser {
     type Output = P<Expr>;
@@ -33,7 +48,7 @@ impl Parse for CmpExprParser {
     }
 }
 
-pub(super) struct TermExprParser;
+struct TermExprParser;
 
 impl Parse for TermExprParser {
     type Output = P<Expr>;
@@ -43,7 +58,7 @@ impl Parse for TermExprParser {
     }
 }
 
-pub(super) struct FactorExprParser;
+struct FactorExprParser;
 
 impl Parse for FactorExprParser {
     type Output = P<Expr>;
@@ -71,7 +86,7 @@ impl Parse for UnaryExprParser {
 
 /// parses field accesses, function calls, and index expressions
 /// these are all left associative
-pub(super) struct PostfixExprParser;
+struct PostfixExprParser;
 
 impl Parse for PostfixExprParser {
     type Output = P<Expr>;
@@ -94,7 +109,7 @@ impl Parse for PostfixExprParser {
     }
 }
 
-pub(super) struct PrimaryExprParser;
+struct PrimaryExprParser;
 
 impl Parse for PrimaryExprParser {
     type Output = P<Expr>;
@@ -132,7 +147,7 @@ impl Parse for PrimaryExprParser {
     }
 }
 
-pub(super) struct LiteralExprParser {
+struct LiteralExprParser {
     kind: LiteralKind,
     span: Span,
 }
@@ -197,6 +212,13 @@ mod test {
         let expr = parse_expr!($src);
         format!("{}", expr)
     }}
+
+    #[test]
+    fn parse_assign() {
+        let _expr = parse_expr!("x = y");
+        let _expr = parse_expr!("x = y = 2");
+        dbg!(_expr);
+    }
 
     #[test]
     fn parse_nested_if() {
