@@ -4,7 +4,7 @@ use crate::ir::{DefId, DefKind};
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
-use ast::Ident;
+use ast::{Ident, Mutability};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
@@ -26,14 +26,29 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.write_ty(expr.id, ty)
     }
 
-    /// checks the expressions is a lvalue and hence assignable
+    /// checks the expressions is a lvalue and mutable, hence assignable
     fn check_lvalue(&mut self, l: &ir::Expr) {
-        if !l.is_lvalue() {
-            self.emit_ty_err(
+        match l.lvalue() {
+            Some(lvalue) => match lvalue {
+                ir::LValue::Local(id) => {
+                    let local_ty = self.local_ty(id);
+                    match local_ty.mtbl {
+                        Mutability::Mut => local_ty.ty,
+                        Mutability::Imm => self.emit_ty_err(
+                            l.span,
+                            TypeError::Msg(format!(
+                                "cannot assign to immutable binding `{}`",
+                                l.span.to_string()
+                            )),
+                        ),
+                    }
+                }
+            },
+            None => self.emit_ty_err(
                 l.span,
                 TypeError::Msg(format!("expected lvalue as target of assignment")),
-            );
-        }
+            ),
+        };
     }
 
     fn check_assign_expr(&mut self, expr: &ir::Expr, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
@@ -201,7 +216,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {
         match path.res {
-            ir::Res::Local(id) => self.local_ty(id),
+            ir::Res::Local(id) => self.local_ty(id).ty,
             ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(def_id, def_kind),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
         }

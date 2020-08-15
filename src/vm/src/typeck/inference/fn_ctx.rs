@@ -1,4 +1,5 @@
 use super::{InferCtx, InferCtxBuilder};
+use crate::ast::Mutability;
 use crate::error::{DiagnosticBuilder, TypeResult};
 use crate::ir::{self, DefId};
 use crate::span::Span;
@@ -62,11 +63,23 @@ impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
 /// well as the outermost fn item
 pub struct Inherited<'a, 'tcx> {
     infcx: &'a InferCtx<'a, 'tcx>,
-    locals: RefCell<FxHashMap<ir::Id, Ty<'tcx>>>,
+    locals: RefCell<FxHashMap<ir::Id, LocalTy<'tcx>>>,
 }
 
 pub struct InheritedBuilder<'tcx> {
     infcx: InferCtxBuilder<'tcx>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct LocalTy<'tcx> {
+    pub ty: Ty<'tcx>,
+    pub mtbl: Mutability,
+}
+
+impl<'tcx> LocalTy<'tcx> {
+    pub fn new(ty: Ty<'tcx>, mtbl: Mutability) -> Self {
+        Self { ty, mtbl }
+    }
 }
 
 impl<'tcx> InheritedBuilder<'tcx> {
@@ -108,13 +121,13 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         (fcx, fn_ty)
     }
 
-    pub fn def_local(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn def_local(&self, id: ir::Id, ty: Ty<'tcx>, mtbl: Mutability) -> Ty<'tcx> {
         info!("deflocal {:?} : {}", id, ty);
-        self.locals.borrow_mut().insert(id, ty);
+        self.locals.borrow_mut().insert(id, LocalTy::new(ty, mtbl));
         ty
     }
 
-    pub fn local_ty(&self, id: ir::Id) -> Ty<'tcx> {
+    pub fn local_ty(&self, id: ir::Id) -> LocalTy<'tcx> {
         info!("lookup ty for local {:?}", id);
         self.locals.borrow().get(&id).cloned().expect("no entry for local variable")
     }

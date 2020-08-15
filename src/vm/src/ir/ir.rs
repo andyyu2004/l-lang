@@ -125,6 +125,10 @@ pub struct Block<'ir> {
     pub expr: Option<&'ir ir::Expr<'ir>>,
 }
 
+pub enum LValue {
+    Local(ir::Id),
+}
+
 #[derive(Debug)]
 pub struct Let<'ir> {
     pub id: Id,

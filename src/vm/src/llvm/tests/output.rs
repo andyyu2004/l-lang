@@ -14,6 +14,17 @@ fn llvm_fib() {
 }
 
 #[test]
+fn llvm_side_effects() {
+    let src = r#"
+    fn main() -> number {
+        let mut x = 0;
+        x = x + 1;
+        x
+    }"#;
+    assert_eq!(llvm_exec!(src), 1.0);
+}
+
+#[test]
 fn llvm_multiple_returns() {
     let src = r#"
     fn main() -> number {
