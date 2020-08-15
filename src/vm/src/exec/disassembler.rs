@@ -142,12 +142,12 @@ impl<'a, 'f> Disassembler<'a, 'f> {
             | Op::mklst
             | Op::uloadu
             | Op::dloadu
+            | Op::istoreu
+            | Op::ustoreu
+            | Op::dstoreu
+            | Op::rstoreu
             | Op::rloadu
             | Op::call => self.count_inst(),
-            Op::istoreu => todo!(),
-            Op::ustoreu => todo!(),
-            Op::dstoreu => todo!(),
-            Op::rstoreu => todo!(),
             Op::newarr => todo!(),
             Op::iaload => todo!(),
             Op::uaload => todo!(),

@@ -28,9 +28,13 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::VarRef(id) => id,
             _ => unreachable!(),
         };
-        let idx = self.resolve_local(var_id).unwrap();
         self.compile_expr(r);
-        self.emit_istorel(idx);
+        if let Some(local_idx) = self.resolve_local(var_id) {
+            self.emit_istorel(local_idx);
+        } else {
+            let upvar_idx = self.resolve_upvar(var_id);
+            self.emit_istoreu(upvar_idx);
+        }
     }
 
     fn compile_block(&mut self, block: &tir::Block) {
@@ -48,7 +52,7 @@ impl<'tcx> Compiler<'tcx> {
         if let Some(local_idx) = self.resolve_local(id) {
             self.emit_loadl(local_idx);
         } else {
-            let upvar_idx = self.resolve_upvar(id, 0);
+            let upvar_idx = self.resolve_upvar(id);
             self.emit_loadu(upvar_idx);
         }
     }
@@ -59,7 +63,11 @@ impl<'tcx> Compiler<'tcx> {
         &mut self.frames[n - scope - 1]
     }
 
-    fn resolve_upvar(&mut self, id: ir::Id, scope: usize) -> u8 {
+    fn resolve_upvar(&mut self, id: ir::Id) -> u8 {
+        self.resolve_upvar_inner(id, 0)
+    }
+
+    fn resolve_upvar_inner(&mut self, id: ir::Id, scope: usize) -> u8 {
         let n = self.frames.len();
         if scope == n {
             panic!("unresolved upvar")
@@ -69,7 +77,7 @@ impl<'tcx> Compiler<'tcx> {
             Some(upvar_idx) => self.frame_mut(scope).mk_upvar(true, upvar_idx),
             None => {
                 // if not resolved, recursively search outer `FrameCtx`
-                let upvar_idx = self.resolve_upvar(id, 1 + scope);
+                let upvar_idx = self.resolve_upvar_inner(id, 1 + scope);
                 self.frame_mut(scope).mk_upvar(false, upvar_idx)
             }
         }

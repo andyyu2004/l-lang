@@ -207,7 +207,10 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
             ir::ExprKind::Match(expr, arms, _) =>
                 tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
-            ir::ExprKind::Struct(_, _) => todo!(),
+            ir::ExprKind::Struct(_, _) => {
+                // => tir::ExprKind::Adt,
+                todo!()
+            }
             ir::ExprKind::Assign(l, r) =>
                 tir::ExprKind::Assign(l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
         };

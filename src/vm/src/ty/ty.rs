@@ -2,7 +2,7 @@ use crate::ast::{Ident, Visibility};
 use crate::ir::{DefId, ParamIdx};
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
-use crate::util;
+use crate::{span::Span, util};
 use bitflags::bitflags;
 use indexed_vec::{Idx, IndexVec};
 use std::fmt::{self, Debug, Display, Formatter};
@@ -83,6 +83,7 @@ newtype_index!(VariantIdx);
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
+    pub ident: Ident,
     pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
 }
 
@@ -175,7 +176,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
-            TyKind::Adt(adt, _) => write!(f, "@{}", adt.def_id),
+            TyKind::Adt(adt, _) => write!(f, "{}", adt.ident),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
             TyKind::Num => write!(f, "number"),

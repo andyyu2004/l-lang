@@ -155,12 +155,12 @@ impl Op {
             | Op::ustorel
             | Op::dstorel
             | Op::rstorel
+            | Op::istoreu
+            | Op::ustoreu
+            | Op::dstoreu
+            | Op::rstoreu
             | Op::rloadu
             | Op::call => 2,
-            Op::istoreu => todo!(),
-            Op::ustoreu => todo!(),
-            Op::dstoreu => todo!(),
-            Op::rstoreu => todo!(),
             Op::newarr => todo!(),
             Op::iaload => todo!(),
             Op::uaload => todo!(),

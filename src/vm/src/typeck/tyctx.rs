@@ -1,18 +1,18 @@
 use super::inference::{FnCtx, InferCtx, InferCtxBuilder, Inherited};
+use crate::ast::Ident;
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, ParamIdx};
 use crate::span::Span;
 use crate::tir::{self, IrLoweringCtx};
-use crate::ty::{self, Forall, List, SubstsRef, Ty, TyConv, TyKind, VariantIdx};
+use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Deref;
-use ty::{AdtTy, VariantTy};
 
 #[derive(Copy, Clone)]
 pub struct TyCtx<'tcx> {
@@ -53,9 +53,10 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn mk_adt(
         self,
         def_id: DefId,
+        ident: Ident,
         variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
     ) -> &'tcx AdtTy<'tcx> {
-        self.arena.alloc(AdtTy { def_id, variants })
+        self.arena.alloc(AdtTy { ident, def_id, variants })
     }
 
     pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {

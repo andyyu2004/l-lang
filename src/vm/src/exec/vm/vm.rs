@@ -366,6 +366,7 @@ where
             // then mutate the open upvalue to a closed upvalue
             for mut upvar_ptr in to_close {
                 let val: Val = **upvar_ptr;
+                info!("closed upvar with value `{}`", val);
                 *upvar_ptr = Upvar::Closed(vm.alloc(val));
             }
         });

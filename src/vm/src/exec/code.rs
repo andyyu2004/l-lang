@@ -132,6 +132,10 @@ impl CodeBuilder {
         self.emit_op(Op::dloadu).emit_byte(index)
     }
 
+    pub fn emit_istoreu(&mut self, index: u8) -> &mut Self {
+        self.emit_storeu(index)
+    }
+
     /// store a constant into an upvar
     pub fn emit_istoreu_const(&mut self, index: u8, value: i64) -> &mut Self {
         self.emit_iconst(value).emit_storeu(index)
