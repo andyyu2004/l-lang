@@ -13,6 +13,8 @@ fn llvm_fib() {
     assert_eq!(llvm_exec!(src), 55.0)
 }
 
+/// checks that the expression statements are actually being performed, even though their results
+/// (`BasicValueEnum`) are ignored during compilation
 #[test]
 fn llvm_side_effects() {
     let src = r#"
@@ -36,6 +38,17 @@ fn llvm_multiple_returns() {
 }
 
 #[test]
+fn llvm_non_escaping_closure() {
+    let src = r#"
+    fn main() -> number {
+        let x = 5;
+        (fn () => x + 4)()
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 9.0);
+}
+
+// #[test]
 fn llvm_fib_all_explicit_returns() {
     let src = r#"
     fn main() -> number { return fib(10); }
@@ -47,7 +60,7 @@ fn llvm_fib_all_explicit_returns() {
     assert_eq!(llvm_exec!(src), 55.0)
 }
 
-#[test]
+// #[test]
 fn llvm_fib_mixed_returns() {
     let src = r#"
     fn main() -> number { return fib(10); }

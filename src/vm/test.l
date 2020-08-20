@@ -5,7 +5,12 @@ struct S {
 
 fn main() -> number {
     // S { x: 5 }
+    f();
     (fn () => 5)()
+}
+
+fn f() -> S {
+    S { x: 5 }
 }
 
 // fn fib(n: number) -> number {

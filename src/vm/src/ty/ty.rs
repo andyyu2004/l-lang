@@ -232,13 +232,13 @@ impl<'tcx> Display for TyS<'tcx> {
 }
 
 /// typed constant value
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Const<'tcx> {
     pub kind: ConstKind,
     marker: PhantomData<&'tcx ()>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ConstKind {
     Floating(f64),
     Bool(u64),

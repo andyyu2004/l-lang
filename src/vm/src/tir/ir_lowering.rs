@@ -1,12 +1,13 @@
 use crate::ast::Lit;
 use crate::ir::{self, DefId};
+use crate::mir;
 use crate::tir;
 use crate::ty::{Const, ConstKind, InferenceVarSubstFolder, Subst, Ty};
 use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
-/// ir -> tir
+/// ir -> tir -> mir
 pub struct IrLoweringCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
@@ -18,9 +19,16 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
-    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
+    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
-        item.to_tir(self)
+        let tir = item.to_tir(&mut self);
+        match tir.kind {
+            tir::ItemKind::Fn(_, _, body) => {
+                let mir = mir::build_fn(self, body);
+                // return tir for now
+                tir
+            }
+        }
     }
 
     fn node_type(&mut self, id: ir::Id) -> Ty<'tcx> {

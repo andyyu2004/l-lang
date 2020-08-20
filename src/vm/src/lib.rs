@@ -3,6 +3,7 @@
 #![recursion_limit = "256"]
 #![feature(refcell_take)]
 #![feature(split_inclusive)]
+#![feature(const_raw_ptr_deref)]
 #![feature(type_ascription)]
 #![feature(debug_non_exhaustive)]
 #![feature(associated_type_defaults)]
@@ -46,6 +47,7 @@ pub mod gc;
 pub mod ir;
 pub mod lexer;
 pub mod llvm;
+pub mod mir;
 pub mod parser;
 pub mod resolve;
 pub mod span;

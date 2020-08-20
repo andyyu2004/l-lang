@@ -38,6 +38,8 @@ struct BodyReturnAnalyzer<'ir> {
     body_ids: Vec<ir::Id>,
     /// potential returns for each body id
     potential_returns: FxHashMap<ir::Id, Vec<ir::Id>>,
+    /// PatId -> BodyId
+    body_owners: FxHashMap<ir::Id, ir::Id>,
     /// map of `Id` -> `Expr`, we need this to analyze expressions such as `f(x)` as we need to
     /// know the body of `f`
     expr_map: FxHashMap<ir::Id, &'ir ir::Expr<'ir>>,

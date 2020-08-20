@@ -46,7 +46,7 @@ impl<T: Display> Display for List<T> {
 
 impl<T: Copy> List<T> {
     #[inline]
-    pub fn  from_arena<'tcx>(arena: &'tcx Arena<'tcx>, slice: &[T]) -> &'tcx List<T> {
+    pub fn from_arena<'tcx>(arena: &'tcx Arena<'tcx>, slice: &[T]) -> &'tcx List<T> {
         assert!(!mem::needs_drop::<T>());
         assert!(mem::size_of::<T>() != 0);
         assert!(!slice.is_empty());
@@ -149,10 +149,10 @@ impl<'a, T: Copy> IntoIterator for &'a List<T> {
 
 impl<T> List<T> {
     #[inline(always)]
-    pub fn empty<'a>() -> &'a List<T> {
+    pub const fn empty<'a>() -> &'a List<T> {
         #[repr(align(64), C)]
         struct EmptySlice([u8; 64]);
-        static EMPTY_SLICE: EmptySlice = EmptySlice([0; 64]);
+        const EMPTY_SLICE: EmptySlice = EmptySlice([0; 64]);
         assert!(mem::align_of::<T>() <= 64);
         unsafe { &*(&EMPTY_SLICE as *const _ as *const List<T>) }
     }
