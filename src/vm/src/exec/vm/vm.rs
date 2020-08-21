@@ -11,15 +11,15 @@ pub struct VM<G> {
     pub(super) heap: Heap<G>,
 }
 
-impl VM<GC> {
+impl<'tcx> VM<GC<'tcx>> {
     pub fn with_default_gc(executable: Executable) -> Self {
         Self::new(GC::default(), executable)
     }
 }
 
-impl<G> VM<G>
+impl<'tcx, G> VM<G>
 where
-    G: GarbageCollector,
+    G: GarbageCollector<'tcx>,
 {
     pub fn new(gc: G, executable: Executable) -> Self {
         let mut heap = Heap::new(gc);
@@ -389,7 +389,7 @@ where
 
     fn alloc<T>(&mut self, t: T) -> Gc<T>
     where
-        T: Trace + 'static,
+        T: Trace + 'tcx,
     {
         self.heap.alloc_and_gc(t, &self.ctx)
     }

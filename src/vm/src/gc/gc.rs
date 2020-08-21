@@ -1,4 +1,4 @@
-use super::{GCStateMap, GarbageCollector, Gc, Trace};
+use super::{garbage_collector::GarbageCollector, GCStateMap, Gc, Trace};
 use rustc_hash::FxHashSet;
 use std::alloc::{self, Layout};
 use std::ptr::NonNull;
@@ -6,14 +6,14 @@ use std::ptr::NonNull;
 /// the garbage collector
 /// not to be confused with the `Gc` ptr type
 #[derive(Default)]
-pub struct GC {
+pub struct GC<'tcx> {
     allocated_bytes: usize,
-    allocated: FxHashSet<NonNull<dyn Trace>>,
+    allocated: FxHashSet<NonNull<dyn Trace + 'tcx>>,
     #[cfg(debug_assertions)]
-    pub dbg_allocations: Vec<Option<NonNull<dyn Trace>>>,
+    pub dbg_allocations: Vec<Option<NonNull<dyn Trace + 'tcx>>>,
 }
 
-impl GC {
+impl<'tcx> GC<'tcx> {
     fn alloc_t<T: ?Sized>(t: &T) -> *mut u8 {
         unsafe { alloc::alloc(Layout::for_value(t)) }
     }
@@ -24,10 +24,10 @@ impl GC {
     }
 }
 
-impl GarbageCollector for GC {
+impl<'tcx> GarbageCollector<'tcx> for GC<'tcx> {
     fn alloc<T>(&mut self, t: T) -> Gc<T>
     where
-        T: Trace + 'static,
+        T: Trace + 'tcx,
     {
         self.allocated_bytes += std::mem::size_of_val(&t);
         let ptr = Self::alloc_t(&t).cast::<T>();

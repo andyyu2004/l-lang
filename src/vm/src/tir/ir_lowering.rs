@@ -24,7 +24,7 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
         let tir = item.to_tir(&mut self);
         match tir.kind {
             tir::ItemKind::Fn(_, _, body) => {
-                let mir = mir::build_fn(self, body);
+                // let mir = mir::build_fn(self, body);
                 // return tir for now
                 tir
             }

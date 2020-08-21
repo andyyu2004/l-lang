@@ -2,11 +2,10 @@
 
 mod build;
 
-pub use build::build_fn;
-
 use crate::span::Span;
 use crate::ty::Const;
 use crate::{ast, mir};
+pub use build::build_fn;
 use indexed_vec::IndexVec;
 use std::marker::PhantomData;
 
@@ -25,7 +24,7 @@ pub struct BasicBlock<'tcx> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Stmt<'tcx> {
-    pub info: SourceInfo,
+    pub info: SpanData,
     pub kind: mir::StmtKind<'tcx>,
 }
 
@@ -55,12 +54,13 @@ pub enum Operand<'tcx> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Terminator<'tcx> {
-    pub info: SourceInfo,
+    pub info: SpanData,
     pub kind: TerminatorKind<'tcx>,
 }
 
+/// information of the original source code that was converted into the mir
 #[derive(Clone, Debug, PartialEq)]
-pub struct SourceInfo {
+pub struct SpanData {
     span: Span,
 }
 

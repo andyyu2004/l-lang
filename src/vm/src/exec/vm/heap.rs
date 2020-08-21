@@ -8,9 +8,9 @@ pub struct Heap<G> {
     pub(super) disabled: Cell<bool>,
 }
 
-impl<G> Heap<G>
+impl<'tcx, G> Heap<G>
 where
-    G: GarbageCollector,
+    G: GarbageCollector<'tcx>,
 {
     pub fn new(gc: G) -> Self {
         Self { gc, disabled: Cell::new(false) }
@@ -40,7 +40,7 @@ where
 
     pub fn alloc_and_gc<T>(&mut self, t: T, root: impl Trace) -> Gc<T>
     where
-        T: Trace + 'static,
+        T: Trace + 'tcx,
     {
         if !self.disabled.get() {
             self.gc.mark_sweep(root);
