@@ -3,10 +3,10 @@
 mod build;
 
 use crate::span::Span;
-use crate::ty::Const;
+use crate::ty::{Const, Ty};
 use crate::{ast, mir};
 pub use build::build_fn;
-use indexed_vec::IndexVec;
+use indexed_vec::{Idx, IndexVec};
 use std::marker::PhantomData;
 
 newtype_index!(BlockId);
@@ -24,7 +24,7 @@ pub struct BasicBlock<'tcx> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Stmt<'tcx> {
-    pub info: SpanData,
+    pub info: SpanInfo,
     pub kind: mir::StmtKind<'tcx>,
 }
 
@@ -34,9 +34,18 @@ pub enum StmtKind<'tcx> {
     Nop,
 }
 
+newtype_index!(VarId);
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Lvalue<'tcx> {
-    pd: PhantomData<&'tcx ()>,
+    var: VarId,
+    ty: Ty<'tcx>,
+}
+
+impl<'tcx> Lvalue<'tcx> {
+    pub fn ret(ty: Ty<'tcx>) -> Self {
+        Self { var: VarId::new(0), ty }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -46,6 +55,7 @@ pub enum Rvalue<'tcx> {
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
 }
 
+// this design flattens out recursive expressions into a series of temporaries
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operand<'tcx> {
     Const(&'tcx Const<'tcx>),
@@ -54,13 +64,13 @@ pub enum Operand<'tcx> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Terminator<'tcx> {
-    pub info: SpanData,
+    pub info: SpanInfo,
     pub kind: TerminatorKind<'tcx>,
 }
 
 /// information of the original source code that was converted into the mir
 #[derive(Clone, Debug, PartialEq)]
-pub struct SpanData {
+pub struct SpanInfo {
     span: Span,
 }
 

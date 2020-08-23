@@ -140,7 +140,6 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
         let &Self { id, span, ref kind } = self;
         let kind = match kind {
             ir::StmtKind::Let(l) => tir::StmtKind::Let(l.to_tir_alloc(ctx)),
-            ir::StmtKind::Ret(expr) => tir::StmtKind::Ret(expr.map(|expr| expr.to_tir_alloc(ctx))),
             // we can map both semi and expr to expressions and their distinction is no longer
             // important after typechecking is done
             ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) =>
@@ -219,6 +218,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 // => tir::ExprKind::Adt,
                 todo!()
             }
+            ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| expr.to_tir_alloc(ctx))),
             ir::ExprKind::Assign(l, r) =>
                 tir::ExprKind::Assign(l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
         };

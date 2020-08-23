@@ -56,7 +56,6 @@ impl<'tcx> GarbageCollector<'tcx> for GC<'tcx> {
 
             // otherwise free the pointer
             to_release.insert(ptr);
-            // I don't think dealloc_t drops the stuff inside the GcPtr (such as vectors etc)
             unsafe { std::ptr::drop_in_place(ptr.as_ptr()) }
             self.allocated_bytes -= std::mem::size_of_val(unsafe { &*ptr.as_ptr() });
             Self::dealloc_t(ptr)

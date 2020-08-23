@@ -11,8 +11,6 @@ impl Parse for StmtParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         if let Some(let_kw) = parser.accept(TokenType::Let) {
             LetParser { let_kw }.parse(parser)
-        } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
-            RetParser { ret_kw }.parse(parser)
         } else {
             let expr = ExprParser.parse(parser)?;
             if let Some(semi) = parser.accept(TokenType::Semi) {

@@ -198,6 +198,10 @@ impl<'tcx> CodegenCtx<'tcx> {
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(scrut, arms) => self.compile_match(expr, scrut, arms),
             tir::ExprKind::Assign(l, r) => self.compile_assign(l, r),
+            tir::ExprKind::Ret(ret_expr) => {
+                self.compile_ret(ret_expr);
+                todo!()
+            }
         }
     }
 
@@ -336,7 +340,6 @@ impl<'tcx> CodegenCtx<'tcx> {
                 self.def_var(l.pat.id, ptr);
                 self.builder.build_store(ptr, v);
             }
-            tir::StmtKind::Ret(ret_expr) => self.compile_ret(ret_expr),
             tir::StmtKind::Expr(expr) => {
                 self.compile_expr(expr);
             }

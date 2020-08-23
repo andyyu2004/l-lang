@@ -22,8 +22,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
             ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
             ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
+            ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    /// return expressions have the type of the expression that follows the return
+    fn check_ret_expr(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
+        let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
+        // self.unify(expr.span, self.expected_ret_ty, ty);
+        self.tcx.types.never
     }
 
     /// checks the expressions is a lvalue and mutable, hence assignable
@@ -235,13 +243,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
         match &block.expr {
             Some(expr) => self.check_expr(expr),
-            None => {
-                // explicitly handle the case when the final stmt is a return stmt
-                match block.stmts.last().map(|stmt| &stmt.kind) {
-                    Some(ir::StmtKind::Ret(_)) => self.tcx.types.never,
-                    _ => self.tcx.types.unit,
-                }
-            }
+            None => self.tcx.types.unit,
         }
     }
 

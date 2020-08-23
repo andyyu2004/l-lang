@@ -11,6 +11,26 @@ pub struct Expr {
 }
 
 impl Expr {
+    pub fn is_diverging(&self) -> bool {
+        match self.kind {
+            ExprKind::Ret(_) => true,
+            ExprKind::Lit(_)
+            | ExprKind::Bin(..)
+            | ExprKind::Unary(..)
+            | ExprKind::Paren(_)
+            | ExprKind::Block(_)
+            | ExprKind::Path(_)
+            | ExprKind::Tuple(_)
+            | ExprKind::Assign(..)
+            | ExprKind::Lambda(..)
+            | ExprKind::Call(..)
+            | ExprKind::If(..)
+            | ExprKind::Struct(..) => false,
+        }
+    }
+}
+
+impl Expr {
     pub fn new(span: Span, id: NodeId, kind: ExprKind) -> Self {
         Self { span, id, kind }
     }
@@ -31,6 +51,7 @@ pub enum ExprKind {
     Block(P<Block>),
     Path(Path),
     Tuple(Vec<P<Expr>>),
+    Ret(Option<P<Expr>>),
     Assign(P<Expr>, P<Expr>),
     Lambda(FnSig, P<Expr>),
     Call(P<Expr>, Vec<P<Expr>>),
@@ -52,6 +73,10 @@ impl Display for ExprKind {
             Self::Lambda(sig, body) => write!(fmt, "fn ({}) => {}", sig, body),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
             Self::Struct(path, fields) => todo!(),
+            Self::Ret(expr) => match expr {
+                Some(expr) => write!(fmt, "{}", expr),
+                None => write!(fmt, ""),
+            },
             Self::If(c, l, r) => match r {
                 Some(r) => write!(fmt, "if {} {} {}", c, l, r),
                 None => write!(fmt, "if {} {}", c, l),

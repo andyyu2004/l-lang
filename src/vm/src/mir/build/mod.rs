@@ -1,8 +1,27 @@
+mod cfg;
+mod expr;
+mod stmt;
+
 use crate::mir::{self, *};
 use crate::tir::{self, IrLoweringCtx};
+use cfg::Cfg;
 use indexed_vec::{Idx, IndexVec};
 
-mod expr;
+/// set a block pointer and return the value
+/// `let x = set!(block = self.foo(block, foo))`
+#[macro_export]
+macro_rules! set {
+    ($x:ident = $c:expr) => {{
+        let BlockAnd(b, v) = $c;
+        $x = b;
+        v
+    }};
+
+    ($c:expr) => {{
+        let BlockAnd(b, ()) = $c;
+        b
+    }};
+}
 
 /// lowers `tir::Body` into `mir::Body`
 pub fn build_fn<'a, 'tcx>(
@@ -10,58 +29,20 @@ pub fn build_fn<'a, 'tcx>(
     body: &'tcx tir::Body<'tcx>,
 ) -> mir::Body<'tcx> {
     let mut builder = Builder::new(ctx);
-    let init_block = BlockId::new(0);
-    builder.build_body(init_block, body);
-    todo!();
+    let entry_block = BlockId::new(0);
+    let _ = builder.build_body(entry_block, body);
+    let mir = builder.complete();
+    dbg!(&mir);
+    mir
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> mir::Body<'tcx> {
-        todo!()
+    fn complete(self) -> mir::Body<'tcx> {
+        mir::Body { basic_blocks: self.cfg.basic_blocks }
     }
 
-    /// compiles `expr` into `dest`
-    fn build_expr(
-        &mut self,
-        mut block: BlockId,
-        expr: &'tcx tir::Expr<'tcx>,
-        dest: Rvalue<'tcx>,
-    ) -> BlockAnd<()> {
-        match expr.kind {
-            tir::ExprKind::Const(_) => {}
-            tir::ExprKind::Bin(_, _, _) => {}
-            tir::ExprKind::Unary(_, _) => {}
-            tir::ExprKind::Block(_) => {}
-            tir::ExprKind::VarRef(_) => {}
-            tir::ExprKind::ItemRef(_) => {}
-            tir::ExprKind::Tuple(_) => {}
-            tir::ExprKind::Lambda(_) => {}
-            tir::ExprKind::Call(_, _) => {}
-            tir::ExprKind::Match(_, _) => {}
-            tir::ExprKind::Assign(_, _) => {}
-        };
-        todo!()
-    }
-
-    fn build_rvalue(
-        &mut self,
-        mut block: BlockId,
-        expr: &'tcx tir::Expr<'tcx>,
-    ) -> BlockAnd<Rvalue<'tcx>> {
-        match expr.kind {
-            tir::ExprKind::Const(_) => {}
-            tir::ExprKind::Bin(op, l, r) => {}
-            tir::ExprKind::Unary(_, _) => {}
-            tir::ExprKind::Block(_) => {}
-            tir::ExprKind::VarRef(_) => {}
-            tir::ExprKind::ItemRef(_) => {}
-            tir::ExprKind::Tuple(_) => {}
-            tir::ExprKind::Lambda(_) => {}
-            tir::ExprKind::Call(_, _) => {}
-            tir::ExprKind::Match(_, _) => {}
-            tir::ExprKind::Assign(_, _) => {}
-        }
-        todo!()
+    fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
+        self.expr(block, body.expr, Lvalue::ret(body.expr.ty))
     }
 }
 
@@ -74,12 +55,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn new(ctx: IrLoweringCtx<'a, 'tcx>) -> Self {
         Self { ctx, cfg: Default::default() }
     }
-}
 
-/// control flow graph
-#[derive(Default)]
-struct Cfg<'tcx> {
-    basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
+    pub fn span_info(&self, span: Span) -> SpanInfo {
+        SpanInfo { span }
+    }
 }
 
 #[must_use]
@@ -103,19 +82,4 @@ impl BlockAndExt for mir::BlockId {
     fn unit(self) -> BlockAnd<()> {
         BlockAnd(self, ())
     }
-}
-
-/// update a block pointer and return the value
-/// `let x = unpack!(block = self.foo(block, foo))`
-macro_rules! unpack {
-    ($x:ident = $c:expr) => {{
-        let BlockAnd(b, v) = $c;
-        $x = b;
-        v
-    }};
-
-    ($c:expr) => {{
-        let BlockAnd(b, ()) = $c;
-        b
-    }};
 }

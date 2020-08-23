@@ -8,6 +8,18 @@ pub struct Stmt {
     pub kind: StmtKind,
 }
 
+impl Stmt {
+    /// if the stmt is diverging e.g. return, break, continue,
+    /// then change `Semi` to `Expr` for easier typechecking
+    crate fn upgrade_diverging_to_expr(&mut self) {
+        match &mut self.kind {
+            // don't think there is a way to avoid cloning without unsafe
+            StmtKind::Semi(expr) if expr.is_diverging() => self.kind = StmtKind::Expr(expr.clone()),
+            _ => {}
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum StmtKind {
     /// let binding
@@ -16,8 +28,6 @@ pub enum StmtKind {
     Expr(P<Expr>),
     /// expression stmt (with trailing semicolon)
     Semi(P<Expr>),
-    /// return stmt
-    Ret(Option<P<Expr>>),
 }
 
 /// let <pat>:<ty> = <init>;

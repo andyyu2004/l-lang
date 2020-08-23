@@ -16,8 +16,6 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             StmtKind::Let(l) => ir::StmtKind::Let(self.lower_let_stmt(l)),
             StmtKind::Expr(expr) => ir::StmtKind::Expr(self.lower_expr(expr)),
             StmtKind::Semi(expr) => ir::StmtKind::Semi(self.lower_expr(expr)),
-            StmtKind::Ret(expr) =>
-                ir::StmtKind::Ret(expr.as_deref().map(|expr| self.lower_expr(expr))),
         };
         ir::Stmt { id: self.lower_node_id(stmt.id), span: stmt.span, kind }
     }

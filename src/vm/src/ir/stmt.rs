@@ -13,5 +13,4 @@ pub enum StmtKind<'ir> {
     Let(&'ir ir::Let<'ir>),
     Expr(&'ir ir::Expr<'ir>),
     Semi(&'ir ir::Expr<'ir>),
-    Ret(Option<&'ir ir::Expr<'ir>>),
 }

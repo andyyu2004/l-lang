@@ -11,13 +11,15 @@ pub struct RetParser {
 }
 
 impl Parse for RetParser {
-    type Output = P<Stmt>;
+    type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let expr = parser.try_parse(&mut ExprParser);
-        let semi = parser.expect(TokenType::Semi)?;
-        let span = self.ret_kw.span.merge(semi.span);
-        Ok(parser.mk_stmt(span, StmtKind::Ret(expr)))
+        let span = self
+            .ret_kw
+            .span
+            .merge(expr.as_ref().map(|expr| expr.span).unwrap_or_else(|| parser.empty_span()));
+        Ok(parser.mk_expr(span, ExprKind::Ret(expr)))
     }
 }
 
@@ -300,13 +302,16 @@ impl Parse for BlockParser {
             stmts.push(StmtParser.parse(parser)?);
         };
         let span = self.open_brace.span.merge(close_brace.span);
-        // check there are no missing semicolons in expression statements
         if stmts.len() > 1 {
-            for stmt in &stmts[..stmts.len() - 1] {
+            let len = stmts.len() - 1;
+            // check there are no missing semicolons in expression statements
+            for stmt in &stmts[..len] {
                 if let StmtKind::Expr(_) = stmt.kind {
                     return Err(ParseError::expected_semi(stmt.span));
                 }
             }
+            // for easier typechecking when the final statement is diverging
+            stmts[len].upgrade_diverging_to_expr();
         }
         Ok(box Block { span, id: parser.mk_id(), stmts })
     }

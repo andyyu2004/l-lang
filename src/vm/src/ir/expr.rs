@@ -35,6 +35,7 @@ pub enum ExprKind<'ir> {
     Lit(ast::Lit),
     Bin(ast::BinOp, &'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Unary(ast::UnaryOp, &'ir ir::Expr<'ir>),
+    Ret(Option<&'ir ir::Expr<'ir>>),
     Block(&'ir ir::Block<'ir>),
     Path(&'ir ir::Path<'ir>),
     Tuple(&'ir [ir::Expr<'ir>]),

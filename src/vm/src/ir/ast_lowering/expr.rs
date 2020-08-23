@@ -17,6 +17,8 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_expr_inner(&mut self, expr: &Expr) -> ir::Expr<'ir> {
         let kind = match &expr.kind {
             ExprKind::Lit(lit) => ir::ExprKind::Lit(*lit),
+            ExprKind::Ret(expr) =>
+                ir::ExprKind::Ret(expr.as_deref().map(|expr| self.lower_expr(expr))),
             ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(&expr)),
             ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),

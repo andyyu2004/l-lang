@@ -89,10 +89,6 @@ where
         match stmt.kind {
             tir::StmtKind::Let(l) => indent!(self, "{}", l),
             tir::StmtKind::Expr(expr) => indent!(self, "{}", expr),
-            tir::StmtKind::Ret(expr) => match expr {
-                Some(expr) => indent!(self, "return {}", expr),
-                None => indent!(self, "return"),
-            },
         }
     }
 
@@ -105,6 +101,10 @@ where
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
+            tir::ExprKind::Ret(expr) => match expr {
+                Some(expr) => indent!(self, "return {}", expr),
+                None => indent!(self, "return"),
+            },
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
             tir::ExprKind::Lambda(b) =>
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),

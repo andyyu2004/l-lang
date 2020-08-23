@@ -20,5 +20,4 @@ impl<'tcx> Display for Stmt<'tcx> {
 pub enum StmtKind<'tcx> {
     Let(&'tcx tir::Let<'tcx>),
     Expr(&'tcx tir::Expr<'tcx>),
-    Ret(Option<&'tcx tir::Expr<'tcx>>),
 }

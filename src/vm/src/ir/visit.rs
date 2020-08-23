@@ -124,6 +124,7 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             args.iter().for_each(|arg| v.visit_expr(arg));
         }
         ir::ExprKind::Lit(_) => {}
+        ir::ExprKind::Ret(expr) => expr.iter().for_each(|expr| v.visit_expr(expr)),
         ir::ExprKind::Match(expr, arms, _) => {
             v.visit_expr(expr);
             arms.iter().for_each(|arm| v.visit_arm(arm));
@@ -153,7 +154,6 @@ pub fn walk_arm<'ir, V: Visitor<'ir>>(v: &mut V, arm: &'ir ir::Arm<'ir>) {
 pub fn walk_stmt<'ir, V: Visitor<'ir>>(v: &mut V, stmt: &'ir ir::Stmt<'ir>) {
     match &stmt.kind {
         ir::StmtKind::Let(l) => v.visit_let(l),
-        ir::StmtKind::Ret(expr) => expr.iter().for_each(|expr| v.visit_expr(expr)),
         ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) => v.visit_expr(expr),
     }
 }

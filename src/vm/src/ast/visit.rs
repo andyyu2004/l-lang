@@ -107,7 +107,6 @@ pub fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
 
 pub fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
     match &stmt.kind {
-        StmtKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         StmtKind::Let(l) => visitor.visit_let(l),
         StmtKind::Expr(expr) => visitor.visit_expr(expr),
         StmtKind::Semi(expr) => visitor.visit_expr(expr),
@@ -117,6 +116,7 @@ pub fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
         ExprKind::Lit(_) => {}
+        ExprKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
         ExprKind::Paren(expr) => visitor.visit_expr(expr),
         ExprKind::Block(block) => visitor.visit_block(block),

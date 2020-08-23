@@ -128,6 +128,8 @@ impl Parse for PrimaryExprParser {
             }
         } else if let Some((kind, span)) = parser.accept_literal() {
             LiteralExprParser { kind, span }.parse(parser)
+        } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
+            RetParser { ret_kw }.parse(parser)
         } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
             PathExprParser.parse(parser)
         } else if let Some(tok) = parser.accept(TokenType::False) {

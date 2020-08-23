@@ -68,6 +68,10 @@ impl<'ir> BodyReturnAnalyzer<'ir> {
     fn analyze_expr(&mut self, expr: &'ir ir::Expr<'ir>) {
         match expr.kind {
             ir::ExprKind::Lit(_) => {}
+            ir::ExprKind::Ret(expr) =>
+                if let Some(expr) = expr {
+                    self.analyze_expr(expr)
+                },
             ir::ExprKind::Bin(_, _, _) => {}
             ir::ExprKind::Unary(_, _) => {}
             ir::ExprKind::Block(b) => ir::walk_block(self, b),
@@ -119,10 +123,6 @@ impl<'ir> BodyReturnAnalyzer<'ir> {
             ir::StmtKind::Expr(_) => {}
             ir::StmtKind::Semi(_) => {}
             ir::StmtKind::Let(l) => self.analyze_let(l),
-            ir::StmtKind::Ret(expr) =>
-                if let Some(expr) = expr {
-                    self.analyze_expr(expr)
-                },
         }
     }
 
