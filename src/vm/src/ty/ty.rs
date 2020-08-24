@@ -17,6 +17,15 @@ pub struct TyS<'tcx> {
     pub kind: TyKind<'tcx>,
 }
 
+impl<'tcx> TyS<'tcx> {
+    pub fn is_unit(&self) -> bool {
+        match self.kind {
+            TyKind::Tuple(tys) => tys.is_empty(),
+            _ => false,
+        }
+    }
+}
+
 /// visitor that searches for inference variables
 struct InferenceVarVisitor;
 

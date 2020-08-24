@@ -9,14 +9,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn as_rvalue(
         &mut self,
         mut block: BlockId,
-        expr: &'tcx tir::Expr<'tcx>,
+        expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
         match expr.kind {
-            tir::ExprKind::Const(_) => todo!(),
+            tir::ExprKind::Const(_) => {
+                let operand = set!(block = self.as_operand(block, expr));
+                block.and(Rvalue::Use(operand))
+            }
             tir::ExprKind::Bin(op, l, r) => {
                 let lhs = set!(block = self.as_operand(block, l));
                 let rhs = set!(block = self.as_operand(block, r));
-                block.and(Rvalue::Bin(op, lhs, rhs))
+                self.build_binary_op(block, expr.span, expr.ty, op, lhs, rhs)
             }
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
@@ -33,13 +36,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     pub(super) fn build_binary_op(
         &mut self,
-        mut block: BlockId,
+        block: BlockId,
         span: Span,
-        op: ast::BinOp,
         ty: Ty<'tcx>,
+        op: ast::BinOp,
         lhs: Operand<'tcx>,
         rhs: Operand<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
+        // TODO some checks
         block.and(Rvalue::Bin(op, lhs, rhs))
     }
 }

@@ -6,21 +6,12 @@ use crate::span::Span;
 use crate::ty::Ty;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    crate fn as_operand(
-        &mut self,
-        mut block: BlockId,
-        expr: &tir::Expr<'tcx>,
-    ) -> BlockAnd<Operand<'tcx>> {
+    pub fn as_tmp(&mut self, mut block: BlockId, expr: &tir::Expr<'tcx>) -> BlockAnd<Lvalue<'tcx>> {
+        let info = self.span_info(expr.span);
+        let lvalue = self.alloc_tmp(info, expr.ty).into();
         match expr.kind {
-            tir::ExprKind::Const(c) => {
-                let constant = set!(block = self.as_const(block, expr));
-                block.and(Operand::Const(c))
-            }
-            tir::ExprKind::Bin(op, l, r) => {
-                // create temporary var to hold the result
-                let lvalue = set!(block = self.as_tmp(block, expr));
-                block.and(Operand::Ref(lvalue))
-            }
+            tir::ExprKind::Bin(op, l, r) => set!(block = self.write_expr(block, lvalue, expr)),
+            tir::ExprKind::Const(_) => unreachable!(),
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
             tir::ExprKind::VarRef(_) => todo!(),
@@ -31,6 +22,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Match(_, _) => todo!(),
             tir::ExprKind::Assign(_, _) => todo!(),
             tir::ExprKind::Ret(_) => todo!(),
-        }
+        };
+        block.and(lvalue)
     }
 }

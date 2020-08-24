@@ -38,6 +38,10 @@ impl Span {
         Self { lo, hi }
     }
 
+    pub fn hi(self) -> Self {
+        Self::new(self.hi, self.hi)
+    }
+
     pub fn merge(self, with: Span) -> Self {
         Self { lo: self.lo, hi: with.hi }
     }

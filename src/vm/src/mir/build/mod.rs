@@ -6,6 +6,9 @@ use crate::mir::{self, *};
 use crate::tir::{self, IrLoweringCtx};
 use cfg::Cfg;
 use indexed_vec::{Idx, IndexVec};
+use rustc_hash::FxHashMap;
+
+static ENTRY_BLOCK_ID: usize = 0;
 
 /// set a block pointer and return the value
 /// `let x = set!(block = self.foo(block, foo))`
@@ -28,36 +31,59 @@ pub fn build_fn<'a, 'tcx>(
     ctx: IrLoweringCtx<'a, 'tcx>,
     body: &'tcx tir::Body<'tcx>,
 ) -> mir::Body<'tcx> {
-    let mut builder = Builder::new(ctx);
-    let entry_block = BlockId::new(0);
+    let mut builder = Builder::new(ctx, body);
+    let entry_block = BlockId::new(ENTRY_BLOCK_ID);
     let _ = builder.build_body(entry_block, body);
     let mir = builder.complete();
-    dbg!(&mir);
+    println!("{}", mir);
     mir
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
+    fn new(ctx: IrLoweringCtx<'a, 'tcx>, body: &tir::Body<'tcx>) -> Self {
+        let mut cfg = Cfg::default();
+        assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
+        let vars = IndexVec::default();
+        let mut builder = Self { ctx, cfg, vars };
+        let info = builder.span_info(body.expr.span);
+        builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
+        builder
+    }
+
     fn complete(self) -> mir::Body<'tcx> {
         mir::Body { basic_blocks: self.cfg.basic_blocks }
     }
 
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
-        self.expr(block, body.expr, Lvalue::ret(body.expr.ty))
+        set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
+        let info = self.span_info(body.expr.span.hi());
+        self.cfg.terminate(info, block, TerminatorKind::Return);
+        block.unit()
     }
 }
 
 struct Builder<'a, 'tcx> {
     ctx: IrLoweringCtx<'a, 'tcx>,
     cfg: Cfg<'tcx>,
+    vars: IndexVec<VarId, Var<'tcx>>,
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    fn new(ctx: IrLoweringCtx<'a, 'tcx>) -> Self {
-        Self { ctx, cfg: Default::default() }
-    }
-
     pub fn span_info(&self, span: Span) -> SpanInfo {
         SpanInfo { span }
+    }
+
+    fn return_block(&mut self) -> BlockId {
+        self.cfg.append_basic_block()
+    }
+
+    fn alloc_tmp(&mut self, info: SpanInfo, ty: Ty<'tcx>) -> VarId {
+        self.alloc_var(info, VarKind::Tmp, ty)
+    }
+
+    fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {
+        let var = Var { info, kind, ty };
+        self.vars.push(var)
     }
 }
 

@@ -24,14 +24,14 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
         let tir = item.to_tir(&mut self);
         match tir.kind {
             tir::ItemKind::Fn(_, _, body) => {
-                // let mir = mir::build_fn(self, body);
+                let mir = mir::build_fn(self, body);
                 // return tir for now
                 tir
             }
         }
     }
 
-    fn node_type(&mut self, id: ir::Id) -> Ty<'tcx> {
+    pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
         info!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
     }
