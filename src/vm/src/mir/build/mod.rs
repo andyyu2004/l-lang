@@ -51,7 +51,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn complete(self) -> mir::Body<'tcx> {
-        mir::Body { basic_blocks: self.cfg.basic_blocks }
+        mir::Body { basic_blocks: self.cfg.basic_blocks, vars: self.vars }
     }
 
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {

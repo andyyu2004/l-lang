@@ -6,12 +6,21 @@ use crate::ty::{Const, ConstKind, InferenceVarSubstFolder, Subst, Ty};
 use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 /// ir -> tir -> mir
 pub struct IrLoweringCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
     tables: &'a TypeckTables<'tcx>,
+}
+
+impl<'a, 'tcx> Deref for IrLoweringCtx<'a, 'tcx> {
+    type Target = &'a InferCtx<'a, 'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.infcx
+    }
 }
 
 impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {

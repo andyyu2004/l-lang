@@ -125,7 +125,7 @@ pub struct Block<'ir> {
     pub expr: Option<&'ir ir::Expr<'ir>>,
 }
 
-pub enum LValue {
+pub enum Lvalue {
     Local(ir::Id),
 }
 

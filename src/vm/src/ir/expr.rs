@@ -19,10 +19,10 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
 }
 
 impl<'ir> Expr<'ir> {
-    pub fn lvalue(&self) -> Option<ir::LValue> {
+    pub fn lvalue(&self) -> Option<ir::Lvalue> {
         match self.kind {
             ExprKind::Path(p) => match p.res {
-                ir::Res::Local(id) => Some(ir::LValue::Local(id)),
+                ir::Res::Local(id) => Some(ir::Lvalue::Local(id)),
                 _ => None,
             },
             _ => None,

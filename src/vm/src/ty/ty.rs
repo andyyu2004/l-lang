@@ -247,6 +247,18 @@ pub struct Const<'tcx> {
     marker: PhantomData<&'tcx ()>,
 }
 
+impl<'tcx> std::ops::Add for Const<'tcx> {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self.kind, rhs.kind) {
+            (ConstKind::Floating(x), ConstKind::Floating(y)) =>
+                Self::new(ConstKind::Floating(x + y)),
+            _ => panic!(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ConstKind {
     Floating(f64),

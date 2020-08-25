@@ -1,6 +1,6 @@
 //! typed ir
 mod expr;
-mod formatter;
+mod fmt;
 mod ir_lowering;
 mod item;
 mod map;
@@ -11,7 +11,7 @@ mod tir;
 mod visitor;
 
 pub use expr::{Expr, ExprKind};
-pub use formatter::Formatter;
+pub use fmt::Formatter;
 pub use ir_lowering::IrLoweringCtx;
 pub use item::{Item, ItemKind};
 pub use map::Map;

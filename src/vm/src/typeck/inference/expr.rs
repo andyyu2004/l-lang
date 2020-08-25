@@ -38,7 +38,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_lvalue(&mut self, l: &ir::Expr) {
         match l.lvalue() {
             Some(lvalue) => match lvalue {
-                ir::LValue::Local(id) => {
+                ir::Lvalue::Local(id) => {
                     let local_ty = self.local_ty(id);
                     match local_ty.mtbl {
                         Mutability::Mut => local_ty.ty,

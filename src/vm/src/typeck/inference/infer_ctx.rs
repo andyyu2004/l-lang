@@ -7,6 +7,7 @@ use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 use std::cell::{Cell, RefCell};
 use std::error::Error;
+use std::ops::Deref;
 
 pub struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
@@ -42,6 +43,14 @@ pub struct InferCtx<'a, 'tcx> {
     pub inner: RefCell<InferCtxInner<'tcx>>,
     tables: &'a RefCell<TypeckTables<'tcx>>,
     has_error: Cell<bool>,
+}
+
+impl<'tcx> Deref for InferCtx<'_, 'tcx> {
+    type Target = TyCtx<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tcx
+    }
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
