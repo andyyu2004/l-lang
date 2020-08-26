@@ -40,6 +40,8 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         rvalue: &mir::Rvalue<'tcx>,
     ) -> fmt::Result {
         lvalue.mir_fmt(self)?;
+        let ty = self.mir.vars[lvalue.var].ty;
+        write!(self, ":{} ← ", ty)?;
         rvalue.mir_fmt(self)
     }
 
@@ -83,9 +85,7 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        write!(f, "%{:?}", self.var)?;
-        let ty = f.mir.vars[self.var].ty;
-        write!(f, ":{} ← ", ty)
+        write!(f, "%{:?}", self.var)
     }
 }
 
