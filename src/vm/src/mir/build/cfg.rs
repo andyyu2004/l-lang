@@ -47,6 +47,6 @@ impl<'tcx> Cfg<'tcx> {
         lvalue: Lvalue<'tcx>,
         rvalue: Rvalue<'tcx>,
     ) {
-        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Assign(box (lvalue, rvalue)) });
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Assign(lvalue, rvalue) });
     }
 }

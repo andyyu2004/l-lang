@@ -7,10 +7,9 @@ fn main() -> number {
     // S { x: 5 }
     /* f(); */
     /* (fn () => 5)() */
-    /* let mut x = 69; */
-    /* x = x + 1; */
-    /* x */
-    5
+    let mut x = 69;
+    x = x + 1;
+    x + 5
 }
 
 // fn f() -> S {

@@ -16,6 +16,7 @@ use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::fmt::Display;
+use std::ops::Deref;
 
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
@@ -49,17 +50,20 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     /// returns the main function
-    pub fn compile(&mut self, prog: &'tcx mir::Prog<'tcx>) -> FunctionValue<'tcx> {
+    pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> FunctionValue<'tcx> {
         let main = prog.bodies.values().next().unwrap();
-        let llvm_fn = self.compile_fn(main);
+        let llvm_fn = self.codegen_body(main);
         self.module.verify().unwrap();
         self.module.print_to_file("ir.ll").unwrap();
+        self.module.print_to_stderr();
         llvm_fn
     }
 
-    fn compile_fn(&mut self, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
+    fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
         let tmp_fn_ty = self.llvm_ty(self.tcx.types.num).fn_type(&[], false);
         let llvm_fn = self.module.add_function("main", tmp_fn_ty, None);
+        let block = self.llctx.append_basic_block(llvm_fn, "start");
+        self.builder.position_at_end(block);
         let mut fcx = FnCtx::new(&self, body, llvm_fn);
         fcx.codegen_body(body);
         llvm_fn.verify(true);
@@ -86,5 +90,13 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
             TyKind::Adt(..) => todo!(),
         }
+    }
+}
+
+impl<'tcx> Deref for CodegenCtx<'tcx> {
+    type Target = Builder<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.builder
     }
 }

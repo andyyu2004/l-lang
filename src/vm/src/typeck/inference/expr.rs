@@ -35,6 +35,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     /// checks the expressions is a lvalue and mutable, hence assignable
+    // maybe this can move to mir analysis?
     fn check_lvalue(&mut self, l: &ir::Expr) {
         match l.lvalue() {
             Some(lvalue) => match lvalue {

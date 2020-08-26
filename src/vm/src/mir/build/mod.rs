@@ -48,7 +48,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let vars = IndexVec::default();
         let mut builder = Self { ctx, cfg, vars, var_ir_map: Default::default() };
         let info = builder.span_info(body.expr.span);
-        builder.alloc_var(info, VarKind::Tmp, tcx.types.never);
         builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
         builder
     }

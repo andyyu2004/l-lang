@@ -34,6 +34,14 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
     }
 
     pub fn fmt(&mut self) -> fmt::Result {
+        writeln!(self, "MIR")?;
+
+        for (id, var) in self.mir.vars.iter_enumerated() {
+            writeln!(self, "%{:?}:{} ({:?})", id, var.ty, var.kind)?;
+        }
+
+        writeln!(self)?;
+
         for (i, block) in self.mir.basic_blocks.iter_enumerated() {
             writeln!(self.writer, "basic_block {:?}:", i)?;
             block.mir_fmt(self)?;
@@ -83,7 +91,7 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         write!(f, "    ")?;
         match self {
-            mir::StmtKind::Assign(box (lvalue, rvalue)) => f.fmt_assign(lvalue, rvalue),
+            mir::StmtKind::Assign(lvalue, rvalue) => f.fmt_assign(lvalue, rvalue),
             mir::StmtKind::Nop => write!(f, "nop"),
         }?;
         writeln!(f)
@@ -146,6 +154,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Terminator<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
+        write!(f, "    ")?;
         match self {
             mir::TerminatorKind::Branch(_) => todo!(),
             mir::TerminatorKind::Return => write!(f, "return"),

@@ -15,6 +15,8 @@ use std::marker::PhantomData;
 
 newtype_index!(BlockId);
 
+pub const RETURN: usize = 0;
+
 #[derive(Clone, Debug)]
 pub struct Prog<'tcx> {
     pub bodies: BTreeMap<ir::Id, Body<'tcx>>,
@@ -66,7 +68,7 @@ pub struct Stmt<'tcx> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum StmtKind<'tcx> {
-    Assign(Box<(Lvalue<'tcx>, Rvalue<'tcx>)>),
+    Assign(Lvalue<'tcx>, Rvalue<'tcx>),
     Nop,
 }
 
@@ -74,7 +76,7 @@ newtype_index!(VarId);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Lvalue<'tcx> {
-    var: VarId,
+    pub var: VarId,
     pd: PhantomData<&'tcx ()>,
 }
 
@@ -85,12 +87,12 @@ impl<'tcx> Lvalue<'tcx> {
 
     /// `VarId` 1 is reserved for return lvalues
     pub fn ret() -> Self {
-        Self::new(VarId::new(1))
+        Self::new(VarId::new(RETURN))
     }
 
     /// `VarId` 0 is reserved for the null lvalue (something akin to /dev/null)
     pub fn null() -> Self {
-        Self::new(VarId::new(0))
+        unimplemented!()
     }
 }
 
