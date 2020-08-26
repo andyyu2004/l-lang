@@ -2,20 +2,37 @@
 
 mod build;
 mod fmt;
+pub use fmt::MirFmt;
 
+use crate::ir;
 use crate::span::Span;
 use crate::ty::{Const, Ty};
 use crate::{ast, mir};
 pub use build::build_fn;
 use indexed_vec::{Idx, IndexVec};
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
 newtype_index!(BlockId);
 
 #[derive(Clone, Debug)]
+pub struct Prog<'tcx> {
+    pub bodies: BTreeMap<ir::Id, Body<'tcx>>,
+}
+
+impl<'tcx> std::fmt::Display for Prog<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for body in self.bodies.values() {
+            writeln!(f, "{}", body)?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Body<'tcx> {
-    basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
-    vars: IndexVec<VarId, Var<'tcx>>,
+    pub basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
+    pub vars: IndexVec<VarId, Var<'tcx>>,
 }
 
 impl<'tcx> std::fmt::Display for Body<'tcx> {
@@ -66,8 +83,13 @@ impl<'tcx> Lvalue<'tcx> {
         Self { var, pd: PhantomData }
     }
 
-    /// `VarId` 0 is reserved for return lvalues
+    /// `VarId` 1 is reserved for return lvalues
     pub fn ret() -> Self {
+        Self::new(VarId::new(1))
+    }
+
+    /// `VarId` 0 is reserved for the null lvalue (something akin to /dev/null)
+    pub fn null() -> Self {
         Self::new(VarId::new(0))
     }
 }
@@ -78,19 +100,19 @@ impl<'tcx> From<VarId> for Lvalue<'tcx> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Var<'tcx> {
-    info: SpanInfo,
-    kind: VarKind,
-    ty: Ty<'tcx>,
+    pub info: SpanInfo,
+    pub kind: VarKind,
+    pub ty: Ty<'tcx>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VarKind {
     /// mir introduced temporary
     Tmp,
     /// user declared variable
-    Var,
+    Local,
     /// function argument
     Arg,
     /// location of return value.
@@ -118,7 +140,7 @@ pub struct Terminator<'tcx> {
 }
 
 /// information of the original source code that was converted into the mir
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct SpanInfo {
     span: Span,
 }

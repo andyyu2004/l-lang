@@ -28,6 +28,8 @@
 #![allow(unused_macros)]
 
 #[macro_use]
+extern crate serde;
+#[macro_use]
 extern crate derive_deref;
 #[macro_use]
 extern crate indexed_vec;
@@ -70,11 +72,11 @@ pub fn parse(src: &str) -> LResult<Box<ast::Prog>> {
     driver.parse()
 }
 
-pub fn exec(src: &str) -> LResult<exec::Val> {
-    let driver = mk_driver(src);
-    let res = driver.exec()?;
-    Ok(res)
-}
+// pub fn exec(src: &str) -> LResult<exec::Val> {
+//     let driver = mk_driver(src);
+//     let res = driver.exec()?;
+//     Ok(res)
+// }
 
 pub fn llvm_exec(src: &str) -> LResult<f64> {
     let driver = mk_driver(src);
@@ -97,10 +99,10 @@ pub fn llvm_exec_expr(src: &str) -> LResult<f64> {
     llvm_exec(&src)
 }
 
-pub fn exec_expr(src: &str) -> LResult<exec::Val> {
-    let src = wrap_in_main(src);
-    exec(&src)
-}
+// pub fn exec_expr(src: &str) -> LResult<exec::Val> {
+//     let src = wrap_in_main(src);
+//     exec(&src)
+// }
 
 #[cfg(test)]
 mod test {

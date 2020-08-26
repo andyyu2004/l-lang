@@ -1,10 +1,17 @@
 //! mir formatter
 
-use crate::{
-    ast::BinOp, mir::{self, BasicBlock}
-};
+use crate::ast::BinOp;
+use crate::mir::{self, BasicBlock, Body, VarId};
 use std::fmt;
 use std::fmt::Write;
+
+impl<'tcx> Body<'tcx> {
+    pub fn var_name(&self, var: VarId) -> String {
+        let mut s = String::new();
+        var.mir_fmt(&mut Formatter::new(&mut s, self)).unwrap();
+        s
+    }
+}
 
 pub struct Formatter<'a, 'tcx> {
     writer: &'a mut dyn Write,
@@ -17,7 +24,7 @@ impl<'a, 'tcx> Write for Formatter<'a, 'tcx> {
     }
 }
 
-trait MirFmt<'tcx> {
+pub trait MirFmt<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result;
 }
 
@@ -85,15 +92,28 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        write!(f, "%{:?}", self.var)
+        self.var.mir_fmt(f)
     }
 }
 
-impl<'tcx> MirFmt<'tcx> for mir::Var<'tcx> {
+impl<'tcx> MirFmt<'tcx> for mir::VarId {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
+        let var = f.mir.vars[*self];
+        match var.kind {
+            mir::VarKind::Tmp => write!(f, "tmp{:?}", self),
+            mir::VarKind::Local => write!(f, "{}", var.info.span.to_string()),
+            mir::VarKind::Arg => todo!(),
+            mir::VarKind::Ret => write!(f, "retvar"),
+        }
+    }
+}
+
+// this implementation is used for giving names for llvm
+impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            mir::VarKind::Tmp => write!(f, "tmpvar"),
-            mir::VarKind::Var => write!(f, "{}", self.info.span.to_string()),
+            mir::VarKind::Tmp => write!(f, "tmp"),
+            mir::VarKind::Local => write!(f, "{}", self.info.span.to_string()),
             mir::VarKind::Arg => todo!(),
             mir::VarKind::Ret => write!(f, "retvar"),
         }

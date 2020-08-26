@@ -21,9 +21,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let lvalue = set!(block = self.as_tmp(block, expr));
                 block.and(Operand::Ref(lvalue))
             }
+            tir::ExprKind::VarRef(id) => {
+                let var = self.var_ir_map[&id];
+                block.and(Operand::Ref(Lvalue::from(var)))
+            }
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
-            tir::ExprKind::VarRef(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),

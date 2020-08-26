@@ -28,15 +28,12 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
-    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
+    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> mir::Body<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
         let tir = item.to_tir(&mut self);
+        println!("{}", tir);
         match tir.kind {
-            tir::ItemKind::Fn(_, _, body) => {
-                let mir = mir::build_fn(self, body);
-                // return tir for now
-                tir
-            }
+            tir::ItemKind::Fn(_, _, body) => mir::build_fn(self, body),
         }
     }
 

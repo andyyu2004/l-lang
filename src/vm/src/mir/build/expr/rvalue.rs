@@ -23,7 +23,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
-            tir::ExprKind::VarRef(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
@@ -31,6 +30,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Match(_, _) => todo!(),
             tir::ExprKind::Assign(_, _) => todo!(),
             tir::ExprKind::Ret(_) => todo!(),
+            tir::ExprKind::VarRef(_) => {
+                let operand = set!(block = self.as_operand(block, expr));
+                block.and(Rvalue::Use(operand))
+            }
         }
     }
 

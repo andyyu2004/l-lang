@@ -4,6 +4,7 @@ use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, ParamIdx};
+use crate::mir;
 use crate::span::Span;
 use crate::tir::{self, IrLoweringCtx};
 use crate::ty::{self, *};
@@ -157,10 +158,10 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    /// top level entrace to typechecking
-    pub fn check_prog(self, ir: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
+    /// top level entrace to typechecking and lowering
+    pub fn lower_prog(self, ir: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
         self.collect(ir);
-        self.type_prog(ir)
+        self.lower_prog_inner(ir)
     }
 
     /// constructs a TypeScheme from a type and its generics
@@ -170,9 +171,9 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
-    /// ir -> tir (`type` the ir prog to form tir)
-    fn type_prog(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
-        let mut items = BTreeMap::new();
+    /// ir -> tir -> mir
+    fn lower_prog_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
+        let mut bodies = BTreeMap::new();
 
         for (&id, item) in &prog.items {
             // only functions compile down to any runtime representation
@@ -183,12 +184,12 @@ impl<'tcx> TyCtx<'tcx> {
                         let fcx = inherited.check_fn_item(item, sig, generics, body);
                         let tables = fcx.resolve_inference_variables(body);
                         let lctx = IrLoweringCtx::new(&inherited, tables);
-                        items.insert(id, lctx.lower_item(item));
+                        bodies.insert(id, lctx.lower_item(item));
                     }),
                 ir::ItemKind::Struct(..) => {}
             };
         }
-        tir::Prog { items }
+        mir::Prog { bodies }
     }
 }
 

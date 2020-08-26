@@ -7,7 +7,7 @@ use crate::error::{DiagnosticBuilder, LError, LResult};
 use crate::llvm::CodegenCtx;
 use crate::resolve::{Resolver, ResolverOutputs};
 use crate::typeck::GlobalCtx;
-use crate::{exec, ir, lexer, parser, span, tir};
+use crate::{exec, ir, lexer, mir, parser, span, tir};
 use exec::VM;
 use inkwell::{context::Context as LLVMCtx, values::FunctionValue, OptimizationLevel};
 use ir::AstLoweringCtx;
@@ -68,22 +68,21 @@ impl<'tcx> Driver<'tcx> {
         Ok((ir, resolutions))
     }
 
-    pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
+    pub fn gen_mir(&'tcx self) -> LResult<mir::Prog<'tcx>> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
         let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
-        let tir = gcx.enter_tcx(|tcx| tcx.check_prog(&ir));
-        if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(tir) }
+        let mir = gcx.enter_tcx(|tcx| tcx.lower_prog(&ir));
+        if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(mir) }
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
-        let tir = self.gen_tir()?;
-        println!("{}", tir);
+        let mir = self.arena.alloc(self.gen_mir()?);
         let gcx = self.global_ctx.get().unwrap();
         let llvm_ctx = LLVMCtx::create();
-        let mut ctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
-        let main_fn = ctx.compile(&tir);
-        Ok((ctx, main_fn))
+        let mut cctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
+        let main_fn = cctx.compile(&mir);
+        Ok((cctx, main_fn))
     }
 
     pub fn llvm_exec(&'tcx self) -> LResult<f64> {
@@ -91,24 +90,24 @@ impl<'tcx> Driver<'tcx> {
         // execution
         let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::Aggressive).unwrap();
         let val = unsafe { jit.run_function(main_fn, &[]) };
-        Ok(val.as_float(&ctx.ctx.f64_type()))
+        Ok(val.as_float(&ctx.llctx.f64_type()))
     }
 
-    pub fn compile(&'tcx self) -> LResult<Executable> {
-        let tir = self.gen_tir()?;
-        println!("{}", tir);
-        let gcx = self.global_ctx.get().unwrap();
+    // pub fn compile(&'tcx self) -> LResult<Executable> {
+    //     let tir = self.gen_mir()?;
+    //     println!("{}", tir);
+    //     let gcx = self.global_ctx.get().unwrap();
 
-        let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
-        let executable = Compiler::new(cctx).compile(&tir);
-        println!("{}", executable);
-        Ok(executable)
-    }
+    //     let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
+    //     let executable = Compiler::new(cctx).compile(&tir);
+    //     println!("{}", executable);
+    //     Ok(executable)
+    // }
 
-    pub fn exec(&'tcx self) -> LResult<exec::Val> {
-        let executable = self.compile()?;
-        let mut vm = VM::with_default_gc(executable);
-        let value = vm.run()?;
-        Ok(value)
-    }
+    // pub fn exec(&'tcx self) -> LResult<exec::Val> {
+    //     let executable = self.compile()?;
+    //     let mut vm = VM::with_default_gc(executable);
+    //     let value = vm.run()?;
+    //     Ok(value)
+    // }
 }

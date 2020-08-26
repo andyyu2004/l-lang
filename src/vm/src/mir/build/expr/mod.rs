@@ -4,6 +4,7 @@ use crate::set;
 use crate::tir;
 
 mod constant;
+mod lvalue;
 mod operand;
 mod rvalue;
 mod tmp;
@@ -19,14 +20,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         match expr.kind {
             tir::ExprKind::Block(ir) => self.ir_block(block, lvalue, expr, ir),
-            tir::ExprKind::VarRef(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
             tir::ExprKind::Call(_, _) => todo!(),
             tir::ExprKind::Match(_, _) => todo!(),
-            tir::ExprKind::Assign(_, _) => todo!(),
-            tir::ExprKind::Unary(..) | tir::ExprKind::Bin(..) | tir::ExprKind::Const(..) => {
+            tir::ExprKind::Assign(lhs, rhs) => {
+                let rvalue = set!(block = self.as_rvalue(block, rhs));
+                let lvalue = set!(block = self.as_lvalue(block, lhs));
+                self.cfg.push_assignment(info, block, lvalue, rvalue);
+                block.unit()
+            }
+            tir::ExprKind::VarRef(..)
+            | tir::ExprKind::Unary(..)
+            | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Const(..) => {
                 let rvalue = set!(block = self.as_rvalue(block, expr));
                 self.cfg.push_assignment(info, block, lvalue, rvalue);
                 block.unit()

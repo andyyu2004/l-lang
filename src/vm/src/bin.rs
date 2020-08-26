@@ -14,13 +14,14 @@ fn main() {
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
         return if interpret {
-            println!(
-                "{:?}",
-                libvm::exec(&src).unwrap_or_else(|err| {
-                    println!("{:?}", err);
-                    std::process::exit(1)
-                })
-            );
+            unimplemented!();
+        // println!(
+        //     "{:?}",
+        //     libvm::exec(&src).unwrap_or_else(|err| {
+        //         println!("{:?}", err);
+        //         std::process::exit(1)
+        //     })
+        // );
         } else {
             // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
             println!(

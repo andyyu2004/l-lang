@@ -9,7 +9,7 @@ use itertools::Itertools;
 
 macro typeck($src:expr) {{
     let driver = Driver::new($src);
-    let tir = driver.gen_tir().unwrap();
+    let tir = driver.gen_mir().unwrap();
     tir.to_string()
 }}
 
