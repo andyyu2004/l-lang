@@ -4,7 +4,7 @@ use crate::set;
 use crate::tir;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    crate fn build_stmt(&mut self, block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
+    crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
         let info = self.span_info(stmt.span);
         match stmt.kind {
             tir::StmtKind::Let(tir::Let { id, pat, init }) => match pat.kind {
@@ -19,7 +19,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 tir::PatternKind::Field(_) => todo!(),
                 tir::PatternKind::Lit(_) => unreachable!(),
             },
-            tir::StmtKind::Expr(expr) => self.write_expr(block, Lvalue::null(), expr),
+            tir::StmtKind::Expr(expr) => {
+                // write the expr stmt into some unused tmp
+                set!(block = self.as_tmp(block, expr));
+                block.unit()
+            }
         }
     }
 }

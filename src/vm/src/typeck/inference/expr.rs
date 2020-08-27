@@ -203,10 +203,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // the resolver resolved the closure name to the closure id
         // so we define a local variable for it with a type to infer
         self.def_local(closure.id, infer, Mutability::Imm);
-        let (_fcx, ty) = self.check_fn(sig, body);
+        let (_fcx, clsr_ty) = self.check_fn(sig, body);
         // we then unify the types and hope it works out
-        self.unify(closure.span, infer, ty);
-        ty
+        self.unify(closure.span, infer, clsr_ty);
+        clsr_ty
     }
 
     /// inputs are the types from the type signature (or inference variables)
