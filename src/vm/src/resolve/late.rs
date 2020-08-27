@@ -118,12 +118,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     }
 
     fn visit_closure(&mut self, name: Option<Ident>, sig: &'ast FnSig, body: &'ast Expr) {
-        self.with_val_scope(|this| {
-            if let Some(ident) = name {
-                this.def_val(ident, Res::Local(body.id));
-            }
-            ast::walk_closure(this, name, sig, body);
-        });
+        self.with_val_scope(|this| ast::walk_closure(this, name, sig, body));
     }
 
     fn visit_item(&mut self, item: &'ast Item) {
@@ -149,6 +144,10 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
             // TODO better error handling
             ExprKind::Struct(path, _) | ExprKind::Path(path) =>
                 self.resolve_path(path, NS::Value).unwrap(),
+            ExprKind::Closure(name, sig, body) =>
+                if let Some(ident) = name {
+                    self.def_val(*ident, Res::Local(expr.id))
+                },
             _ => {}
         };
         ast::walk_expr(self, expr);

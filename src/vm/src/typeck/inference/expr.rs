@@ -17,7 +17,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
-            ir::ExprKind::Closure(sig, body) => self.check_closure_expr(sig, body),
+            ir::ExprKind::Closure(sig, body) => self.check_closure_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
             ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
@@ -193,12 +193,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ret_ty
     }
 
-    fn check_closure_expr(&mut self, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
+    fn check_closure_expr(
+        &mut self,
+        closure: &ir::Expr,
+        sig: &ir::FnSig,
+        body: &ir::Body,
+    ) -> Ty<'tcx> {
         let infer = self.new_infer_var();
-        // the resolver resolved the closure name to the body id
-        self.def_local(body.expr.id, infer, Mutability::Imm);
+        // the resolver resolved the closure name to the closure id
+        // so we define a local variable for it with a type to infer
+        self.def_local(closure.id, infer, Mutability::Imm);
         let (_fcx, ty) = self.check_fn(sig, body);
-        self.unify(body.expr.span, infer, ty);
+        // we then unify the types and hope it works out
+        self.unify(closure.span, infer, ty);
         ty
     }
 
