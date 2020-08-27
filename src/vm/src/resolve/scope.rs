@@ -14,7 +14,7 @@ impl<T> Default for Scopes<T> {
 
 impl<T> Scopes<T> {
     /// returns index for next param
-    pub fn new_ty_param(&mut self) -> usize {
+    pub fn def_ty_param(&mut self) -> usize {
         let index = self.paramc();
         self.curr_scope_mut().paramc += 1;
         index

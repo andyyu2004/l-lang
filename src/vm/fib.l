@@ -1,4 +1,7 @@
 fn main() -> number {
+    fn f(n) {
+	if n < 2 { n } else { fib(n-1) + fib(n-2) }
+    };
     fib(40)
 }
 

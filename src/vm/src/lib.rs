@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
 #![feature(box_syntax, box_patterns)]
+#![feature(bindings_after_at)]
 #![feature(crate_visibility_modifier)]
 #![recursion_limit = "256"]
 #![feature(refcell_take)]

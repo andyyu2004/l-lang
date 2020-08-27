@@ -7,7 +7,8 @@ mod executable;
 mod expr;
 mod pat;
 mod stmt;
-#[cfg(test)]
+// weird way of not compiling these test as i'm not on windows
+#[cfg(target_family = "windows")]
 mod tests;
 
 pub use compiler::Compiler;

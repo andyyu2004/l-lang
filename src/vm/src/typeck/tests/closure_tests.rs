@@ -20,6 +20,11 @@ fn check_call_non_function() {
 }
 
 #[test]
+fn check_recursive_named_closure() {
+    let tir = typeck_expr!("fn f() { f() }");
+}
+
+#[test]
 fn check_simple_lambda_no_capture() {
     let tir = typeck_expr!("fn () => 5; 5");
     let lines = lines!(&tir);

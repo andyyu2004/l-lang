@@ -214,7 +214,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 ir::Res::PrimTy(_) => unreachable!(),
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
-            ir::ExprKind::Lambda(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
+            ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),

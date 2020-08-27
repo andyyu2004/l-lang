@@ -110,13 +110,13 @@ pub struct TyParam {
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub struct FnSig {
-    pub inputs: Vec<Param>,
-    pub output: Option<P<Ty>>,
+    pub params: Vec<Param>,
+    pub ret_ty: Option<P<Ty>>,
 }
 
 impl Display for FnSig {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "fn {} -> {:?}", util::join(&self.inputs, ", "), self.output)
+        write!(f, "fn {} -> {:?}", util::join(&self.params, ", "), self.ret_ty)
     }
 }
 

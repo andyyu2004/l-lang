@@ -72,8 +72,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub(super) fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
         let inputs =
-            self.arena.alloc_from_iter(sig.inputs.iter().map(|p| self.lower_ty_inner(&p.ty)));
-        let output = sig.output.as_ref().map(|ty| self.lower_ty(ty));
+            self.arena.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));
+        let output = sig.ret_ty.as_ref().map(|ty| self.lower_ty(ty));
         self.arena.alloc(ir::FnSig { inputs, output })
     }
 }

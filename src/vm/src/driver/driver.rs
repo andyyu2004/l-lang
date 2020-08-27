@@ -54,8 +54,8 @@ impl<'tcx> Driver<'tcx> {
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         let tokens = self.lex()?;
         let mut parser = Parser::new(tokens);
-        let prog = parser.parse()?;
-        Ok(prog)
+        let ast = parser.parse()?;
+        Ok(ast)
     }
 
     pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {

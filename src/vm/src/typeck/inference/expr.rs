@@ -17,7 +17,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
-            ir::ExprKind::Lambda(sig, body) => self.check_lambda_expr(sig, body),
+            ir::ExprKind::Closure(sig, body) => self.check_closure_expr(sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
             ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
@@ -193,8 +193,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ret_ty
     }
 
-    fn check_lambda_expr(&mut self, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
-        self.check_fn(sig, body).1
+    fn check_closure_expr(&mut self, sig: &ir::FnSig, body: &ir::Body) -> Ty<'tcx> {
+        let infer = self.new_infer_var();
+        // the resolver resolved the closure name to the body id
+        self.def_local(body.expr.id, infer, Mutability::Imm);
+        let (_fcx, ty) = self.check_fn(sig, body);
+        self.unify(body.expr.span, infer, ty);
+        ty
     }
 
     /// inputs are the types from the type signature (or inference variables)

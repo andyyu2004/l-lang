@@ -38,10 +38,8 @@ pub trait Visitor<'ast>: Sized {
     /// let x = 1;
     /// let x = x;
     /// this will only behave correctly if the pattern is resolved after the initializer
-    fn visit_let(&mut self, Let { pat, ty, init, .. }: &'ast Let) {
-        init.as_ref().map(|expr| self.visit_expr(expr));
-        self.visit_pattern(pat);
-        ty.as_ref().map(|ty| self.visit_ty(ty));
+    fn visit_let(&mut self, l: &'ast Let) {
+        walk_let(self, l);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
@@ -53,14 +51,14 @@ pub trait Visitor<'ast>: Sized {
     }
 
     fn visit_fn_sig(&mut self, sig: &'ast FnSig) {
-        sig.inputs.iter().for_each(|p| self.visit_param(p));
-        if let Some(ret_ty) = &sig.output {
+        sig.params.iter().for_each(|p| self.visit_param(p));
+        if let Some(ret_ty) = &sig.ret_ty {
             self.visit_ty(ret_ty)
         }
     }
 
-    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
-        walk_lambda(self, sig, expr)
+    fn visit_closure(&mut self, name: Option<Ident>, sig: &'ast FnSig, expr: &'ast Expr) {
+        walk_closure(self, name, sig, expr)
     }
 
     fn visit_param(&mut self, param: &'ast Param) {
@@ -113,6 +111,16 @@ pub fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
     }
 }
 
+/// visit the initializer first in case the same pattern is referenced in the initializer
+/// let x = 1;
+/// let x = x;
+/// this will only behave correctly if the pattern is resolved after the initializer
+pub fn walk_let<'ast>(visitor: &mut impl Visitor<'ast>, Let { pat, ty, init, .. }: &'ast Let) {
+    init.as_ref().map(|expr| visitor.visit_expr(expr));
+    visitor.visit_pattern(pat);
+    ty.as_ref().map(|ty| visitor.visit_ty(ty));
+}
+
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
         ExprKind::Lit(_) => {}
@@ -122,7 +130,7 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Block(block) => visitor.visit_block(block),
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
-        ExprKind::Lambda(sig, expr) => visitor.visit_lambda(sig, expr),
+        ExprKind::Closure(name, sig, expr) => visitor.visit_closure(*name, sig, expr),
         ExprKind::Assign(l, r) => {
             visitor.visit_expr(l);
             visitor.visit_expr(r);
@@ -151,7 +159,13 @@ pub fn walk_generics<'ast>(visitor: &mut impl Visitor<'ast>, generics: &'ast Gen
     generics.params.iter().for_each(|p| visitor.visit_ty_param(p));
 }
 
-pub fn walk_lambda<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, expr: &'ast Expr) {
+pub fn walk_closure<'ast>(
+    visitor: &mut impl Visitor<'ast>,
+    name: Option<Ident>,
+    sig: &'ast FnSig,
+    expr: &'ast Expr,
+) {
+    name.map(|ident| visitor.visit_ident(ident));
     visitor.visit_fn_sig(sig);
     visitor.visit_expr(expr);
 }

@@ -26,10 +26,10 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Tuple(xs) => ir::ExprKind::Tuple(self.lower_exprs(xs)),
             ExprKind::Bin(op, l, r) =>
                 ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r)),
-            ExprKind::Lambda(sig, expr) => {
+            ExprKind::Closure(name, sig, expr) => {
                 let lowered_sig = self.lower_fn_sig(sig);
                 let body = self.lower_body(sig, expr);
-                ir::ExprKind::Lambda(self.lower_fn_sig(sig), body)
+                ir::ExprKind::Closure(self.lower_fn_sig(sig), body)
             }
             ExprKind::Call(f, args) =>
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),

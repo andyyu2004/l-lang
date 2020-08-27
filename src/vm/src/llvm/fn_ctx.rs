@@ -32,9 +32,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         for (id, &var) in body.vars.iter_enumerated() {
             self.alloca(id, var);
         }
-        for basic_block in &body.basic_blocks {
-            self.compile_basic_block(basic_block);
-        }
+        body.basic_blocks.iter().for_each(|bb| self.compile_basic_block(bb));
     }
 
     fn alloca(&mut self, id: VarId, var: mir::Var<'tcx>) -> Var<'tcx> {

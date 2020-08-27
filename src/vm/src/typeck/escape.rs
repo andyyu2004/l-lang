@@ -77,7 +77,7 @@ impl<'ir> BodyReturnAnalyzer<'ir> {
             ir::ExprKind::Block(b) => ir::walk_block(self, b),
             ir::ExprKind::Path(p) => self.analyze_path(p),
             ir::ExprKind::Tuple(xs) => xs.iter().for_each(|x| self.analyze_expr(x)),
-            ir::ExprKind::Lambda(_, body) => {
+            ir::ExprKind::Closure(_, body) => {
                 self.record_escape(expr.id);
                 self.visit_body(body);
             }
@@ -99,11 +99,11 @@ impl<'ir> BodyReturnAnalyzer<'ir> {
                 ir::Res::PrimTy(_) => unreachable!(),
                 ir::Res::Def(_, _) => {}
                 ir::Res::Local(id) => match self.find_expr(id).kind {
-                    ir::ExprKind::Lambda(_, body) => self.analyze_expr(body.expr),
+                    ir::ExprKind::Closure(_, body) => self.analyze_expr(body.expr),
                     _ => unreachable!(),
                 },
             },
-            ir::ExprKind::Lambda(_, body) => self.analyze_expr(body.expr),
+            ir::ExprKind::Closure(_, body) => self.analyze_expr(body.expr),
             _ => unreachable!(),
         }
     }

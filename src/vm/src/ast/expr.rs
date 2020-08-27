@@ -1,4 +1,4 @@
-use super::{BinOp, Block, Field, FnSig, Lit, NodeId, Path, UnaryOp, P};
+use super::{BinOp, Block, Field, FnSig, Ident, Lit, NodeId, Path, UnaryOp, P};
 use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
@@ -11,6 +11,13 @@ pub struct Expr {
 }
 
 impl Expr {
+    pub fn is_named_closure(&self) -> bool {
+        match self.kind {
+            ExprKind::Closure(name, ..) => name.is_some(),
+            _ => false,
+        }
+    }
+
     pub fn is_diverging(&self) -> bool {
         match self.kind {
             ExprKind::Ret(_) => true,
@@ -22,7 +29,7 @@ impl Expr {
             | ExprKind::Path(_)
             | ExprKind::Tuple(_)
             | ExprKind::Assign(..)
-            | ExprKind::Lambda(..)
+            | ExprKind::Closure(..)
             | ExprKind::Call(..)
             | ExprKind::If(..)
             | ExprKind::Struct(..) => false,
@@ -53,7 +60,7 @@ pub enum ExprKind {
     Tuple(Vec<P<Expr>>),
     Ret(Option<P<Expr>>),
     Assign(P<Expr>, P<Expr>),
-    Lambda(FnSig, P<Expr>),
+    Closure(Option<Ident>, FnSig, P<Expr>),
     Call(P<Expr>, Vec<P<Expr>>),
     If(P<Expr>, P<Block>, Option<P<Expr>>),
     Struct(Path, Vec<Field>),
@@ -70,9 +77,12 @@ impl Display for ExprKind {
             Self::Block(block) => write!(fmt, "{}", block),
             Self::Path(path) => write!(fmt, "{}", path),
             Self::Tuple(xs) => write!(fmt, "({})", util::join(xs, ",")),
-            Self::Lambda(sig, body) => write!(fmt, "fn ({}) => {}", sig, body),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
             Self::Struct(path, fields) => todo!(),
+            Self::Closure(name, sig, body) => match name {
+                Some(name) => write!(fmt, "fn {} ({}) => {}", name, sig, body),
+                None => write!(fmt, "fn ({}) => {}", sig, body),
+            },
             Self::Ret(expr) => match expr {
                 Some(expr) => write!(fmt, "{}", expr),
                 None => write!(fmt, ""),

@@ -38,8 +38,8 @@ impl Display for Item {
                 "{} fn {}({}) -> {:?} {}",
                 self.vis.node,
                 self.ident,
-                util::join(&sig.inputs, ", "),
-                sig.output,
+                util::join(&sig.params, ", "),
+                sig.ret_ty,
                 body.as_ref().unwrap()
             ),
             ItemKind::Enum(generics, variants) => todo!(),

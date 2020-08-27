@@ -33,7 +33,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     fn with_generics<R>(&mut self, generics: &Generics, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
             for param in &generics.params {
-                let index = this.scopes[NS::Type].new_ty_param();
+                let index = this.scopes[NS::Type].def_ty_param();
                 let res = this.resolver.def_ty_param(param.id, ParamIdx::new(index));
                 this.scopes[NS::Type].def(param.ident, res)
             }
@@ -41,9 +41,13 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         })
     }
 
+    fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
+        self.scopes[NS::Value].def(ident, res);
+    }
+
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
-        match &pat.kind {
-            PatternKind::Ident(ident, ..) => self.scopes[NS::Value].def(*ident, Res::Local(pat.id)),
+        match pat.kind {
+            PatternKind::Ident(ident, ..) => self.def_val(ident, Res::Local(pat.id)),
             PatternKind::Wildcard | PatternKind::Tuple(_) | PatternKind::Paren(_) => {}
         }
     }
@@ -113,12 +117,26 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
         self.with_val_scope(|this| ast::walk_fn(this, sig, body));
     }
 
-    fn visit_lambda(&mut self, sig: &'ast FnSig, expr: &'ast Expr) {
-        self.with_val_scope(|this| ast::walk_lambda(this, sig, expr));
+    fn visit_closure(&mut self, name: Option<Ident>, sig: &'ast FnSig, body: &'ast Expr) {
+        self.with_val_scope(|this| {
+            if let Some(ident) = name {
+                this.def_val(ident, Res::Local(body.id));
+            }
+            ast::walk_closure(this, name, sig, body);
+        });
     }
 
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolve_item(item)
+    }
+
+    fn visit_let(&mut self, l @ Let { init, .. }: &'ast Let) {
+        if let Some(expr) = init {
+            if expr.is_named_closure() {
+                panic!("let binding to named closure")
+            }
+        }
+        ast::walk_let(self, l)
     }
 
     fn visit_pattern(&mut self, pattern: &'ast Pattern) {
@@ -128,6 +146,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
+            // TODO better error handling
             ExprKind::Struct(path, _) | ExprKind::Path(path) =>
                 self.resolve_path(path, NS::Value).unwrap(),
             _ => {}

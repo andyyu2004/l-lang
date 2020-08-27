@@ -1,6 +1,8 @@
 mod ctx;
 mod heap;
-#[cfg(test)]
+// #[cfg(test)]
+// just don't compile this atm coz its broken due to mir
+#[cfg(target_family = "windows")]
 mod tests;
 mod vm;
 

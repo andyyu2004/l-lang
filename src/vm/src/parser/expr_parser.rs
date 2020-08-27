@@ -140,7 +140,7 @@ impl Parse for PrimaryExprParser {
             let block = BlockParser { open_brace }.parse(parser)?;
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
         } else if let Some(fn_kw) = parser.accept(TokenType::Fn) {
-            LambdaParser { fn_kw }.parse(parser)
+            ClosureParser { fn_kw }.parse(parser)
         } else if let Some(if_kw) = parser.accept(TokenType::If) {
             IfParser { if_kw }.parse(parser)
         } else {

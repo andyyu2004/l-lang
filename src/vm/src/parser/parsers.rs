@@ -46,7 +46,7 @@ impl Parse for FnSigParser {
             output = Some(parser.mk_infer_ty())
         }
 
-        Ok(FnSig { inputs, output })
+        Ok(FnSig { params: inputs, ret_ty: output })
     }
 }
 
@@ -317,21 +317,28 @@ impl Parse for BlockParser {
     }
 }
 
-/// fn (<pat>:<ty>) -> ret => <body>
+/// fn <ident>? (<pat>:<ty>) -> ret => <body>
+/// "=>" is optional if body is a block expression
 /// xs.map(fn(x) => y);
-pub struct LambdaParser {
+pub struct ClosureParser {
     pub fn_kw: Tok,
 }
 
-impl Parse for LambdaParser {
+impl Parse for ClosureParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let name = parser.accept_ident();
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
-        parser.expect(TokenType::RFArrow)?;
-        let body = ExprParser.parse(parser)?;
+        let body = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+            let block = BlockParser { open_brace }.parse(parser)?;
+            parser.mk_expr(block.span, ExprKind::Block(block))
+        } else {
+            parser.expect(TokenType::RFArrow)?;
+            ExprParser.parse(parser)?
+        };
         let span = self.fn_kw.span.merge(body.span);
-        Ok(parser.mk_expr(span, ExprKind::Lambda(sig, body)))
+        Ok(parser.mk_expr(span, ExprKind::Closure(name, sig, body)))
     }
 }
 

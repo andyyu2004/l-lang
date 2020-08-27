@@ -1,6 +1,6 @@
+mod closure_tests;
 mod fn_tests;
 mod general_tests;
-mod lambda_tests;
 mod struct_tests;
 
 use crate::driver::Driver;
