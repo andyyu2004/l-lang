@@ -9,7 +9,8 @@ fn main() -> number {
     /* (fn () => 5)() */
     let mut x = 69;
     x = x + 1;
-    x + 5
+    x + 5;
+    if false { 5 } else { 4 }
 }
 
 // fn f() -> S {

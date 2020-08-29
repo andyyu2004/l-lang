@@ -62,8 +62,6 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
         let tmp_fn_ty = self.llvm_ty(self.tcx.types.num).fn_type(&[], false);
         let llvm_fn = self.module.add_function("main", tmp_fn_ty, None);
-        let block = self.llctx.append_basic_block(llvm_fn, "start");
-        self.builder.position_at_end(block);
         let mut fcx = FnCtx::new(&self, body, llvm_fn);
         fcx.codegen_body(body);
         llvm_fn.verify(true);

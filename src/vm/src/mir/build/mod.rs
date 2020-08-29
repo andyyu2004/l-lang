@@ -1,5 +1,6 @@
 mod cfg;
 mod expr;
+mod pat;
 mod stmt;
 
 use crate::ir;
@@ -101,9 +102,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 #[must_use]
 struct BlockAnd<T>(mir::BlockId, T);
 
-trait BlockAndExtension {
-    fn and<T>(self, v: T) -> BlockAnd<T>;
-    fn unit(self) -> BlockAnd<()>;
+impl<T> BlockAnd<T> {
+    fn unpack(self) -> (BlockId, T) {
+        let Self(block, t) = self;
+        (block, t)
+    }
 }
 
 trait BlockAndExt {

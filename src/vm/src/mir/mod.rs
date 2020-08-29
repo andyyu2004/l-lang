@@ -156,10 +156,10 @@ pub enum TerminatorKind<'tcx> {
         f: Operand<'tcx>,
         args: Vec<Operand<'tcx>>,
     },
+    /// if `discr` evaluates to the `Rvalue`, then the respective block is executed
     Switch {
-        discr: Operand<'tcx>,
-        // i32 is placeholder type for now
-        arms: Vec<(i32, BlockId)>,
+        discr: Rvalue<'tcx>,
+        arms: Vec<(BlockId, Rvalue<'tcx>)>,
         default: Option<BlockId>,
     },
 }

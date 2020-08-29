@@ -1,18 +1,24 @@
 use super::CodegenCtx;
 use crate::ast;
-use crate::mir::{self, VarId};
+use crate::mir::{self, BlockId, VarId};
 use crate::ty::ConstKind;
-use indexed_vec::Idx;
-use inkwell::{values::*, FloatPredicate};
+use indexed_vec::{Idx, IndexVec};
+use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate};
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
 pub(super) struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
     body: &'tcx mir::Body<'tcx>,
-    function: FunctionValue<'tcx>,
+    llfn: FunctionValue<'tcx>,
     vars: FxHashMap<mir::VarId, Var<'tcx>>,
+    /// map from mir block to llvm block
+    blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
 }
+
+// TODO
+struct BlockCtx {}
 
 #[derive(Debug, Clone, Copy)]
 struct Var<'tcx> {
@@ -23,16 +29,24 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(
         cctx: &'a CodegenCtx<'tcx>,
         body: &'tcx mir::Body<'tcx>,
-        function: FunctionValue<'tcx>,
+        llfn: FunctionValue<'tcx>,
     ) -> Self {
-        Self { cctx, body, function, vars: Default::default() }
+        let blocks = body
+            .basic_blocks
+            .indices()
+            .map(|i| cctx.llctx.append_basic_block(llfn, &format!("basic_block{:?}", i)))
+            .collect();
+        Self { cctx, body, llfn, vars: Default::default(), blocks }
     }
 
     crate fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) {
         for (id, &var) in body.vars.iter_enumerated() {
             self.alloca(id, var);
         }
-        body.basic_blocks.iter().for_each(|bb| self.compile_basic_block(bb));
+
+        for id in body.basic_blocks.indices() {
+            self.codegen_basic_block(id);
+        }
     }
 
     fn alloca(&mut self, id: VarId, var: mir::Var<'tcx>) -> Var<'tcx> {
@@ -42,12 +56,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         var
     }
 
-    fn compile_basic_block(&mut self, basic_block: &mir::BasicBlock) {
-        basic_block.stmts.iter().for_each(|stmt| self.compile_stmt(stmt));
-        self.codegen_terminator(basic_block.terminator());
+    /// sets the current llvm block to write to
+    fn set_block(&self, block: BlockId) -> &'tcx mir::BasicBlock<'tcx> {
+        self.position_at_end(self.blocks[block]);
+        &self.body.basic_blocks[block]
     }
 
-    fn compile_stmt(&mut self, stmt: &mir::Stmt) {
+    fn codegen_basic_block(&mut self, id: BlockId) {
+        let block = self.set_block(id);
+        block.stmts.iter().for_each(|stmt| self.codegen_stmt(stmt));
+        self.codegen_terminator(block.terminator());
+    }
+
+    fn codegen_stmt(&mut self, stmt: &mir::Stmt) {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => {
                 let val = self.codegen_rvalue(rvalue);
@@ -114,10 +135,43 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::TerminatorKind::Unreachable => {
                 self.builder.build_unreachable();
             }
-            mir::TerminatorKind::Branch(_) => todo!(),
+            mir::TerminatorKind::Branch(block) => {
+                self.build_unconditional_branch(self.blocks[*block]);
+            }
             mir::TerminatorKind::Call { f, args } => todo!(),
-            mir::TerminatorKind::Switch { discr, arms, default } => todo!(),
+            mir::TerminatorKind::Switch { discr, arms, default } =>
+                self.codegen_switch(discr, arms, *default),
         }
+    }
+
+    fn mk_dead_block(&self) -> BasicBlock<'tcx> {
+        self.llctx.append_basic_block(self.llfn, "dead")
+    }
+
+    fn codegen_switch(
+        &mut self,
+        discr: &mir::Rvalue,
+        arms: &[(BlockId, mir::Rvalue)],
+        default: Option<BlockId>,
+    ) {
+        // don't need to return any value as the code to write the result is in mir
+        let discr = self.codegen_rvalue(discr).into_int_value();
+        let default = match default {
+            Some(block) => {
+                self.codegen_basic_block(block);
+                self.blocks[block]
+            }
+            None => self.mk_dead_block(),
+        };
+        let arms = arms
+            .iter()
+            .map(|&(block, ref rvalue)| {
+                let rvalue = self.codegen_rvalue(rvalue).into_int_value();
+                self.codegen_basic_block(block);
+                (rvalue, self.blocks[block])
+            })
+            .collect_vec();
+        self.build_switch(discr, default, &arms);
     }
 }
 

@@ -5,6 +5,9 @@ use crate::mir::{self, BasicBlock, Body, VarId};
 use std::fmt;
 use std::fmt::Write;
 
+/// indentation constant
+const INDENT: &str = "    ";
+
 impl<'tcx> Body<'tcx> {
     pub fn var_name(&self, var: VarId) -> String {
         let mut s = String::new();
@@ -31,6 +34,17 @@ pub trait MirFmt<'tcx> {
 impl<'a, 'tcx> Formatter<'a, 'tcx> {
     pub fn new(writer: &'a mut dyn Write, body: &'a mir::Body<'tcx>) -> Self {
         Self { writer, mir: body }
+    }
+
+    pub fn indent(&mut self) -> fmt::Result {
+        write!(self, "{}", INDENT)
+    }
+
+    pub fn indentn(&mut self, n: usize) -> fmt::Result {
+        for _ in 0..n {
+            write!(self, "{}", INDENT)?;
+        }
+        Ok(())
     }
 
     pub fn fmt(&mut self) -> fmt::Result {
@@ -89,7 +103,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Stmt<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        write!(f, "    ")?;
+        f.indent()?;
         match self {
             mir::StmtKind::Assign(lvalue, rvalue) => f.fmt_assign(lvalue, rvalue),
             mir::StmtKind::Nop => write!(f, "nop"),
@@ -154,13 +168,25 @@ impl<'tcx> MirFmt<'tcx> for mir::Terminator<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        write!(f, "    ")?;
+        f.indent()?;
         match self {
-            mir::TerminatorKind::Branch(_) => todo!(),
-            mir::TerminatorKind::Return => write!(f, "return"),
-            mir::TerminatorKind::Unreachable => write!(f, "unreachable"),
+            mir::TerminatorKind::Branch(block) => writeln!(f, "branch {:?}", block),
+            mir::TerminatorKind::Return => writeln!(f, "return"),
+            mir::TerminatorKind::Unreachable => writeln!(f, "unreachable"),
             mir::TerminatorKind::Call { f, args } => todo!(),
-            mir::TerminatorKind::Switch { discr, arms, default } => todo!(),
-        }
+            mir::TerminatorKind::Switch { discr, arms, default } => {
+                write!(f, "switch ")?;
+                discr.mir_fmt(f)?;
+                writeln!(f, " {{")?;
+                for (block, rvalue) in arms {
+                    f.indentn(2)?;
+                    write!(f, "[")?;
+                    rvalue.mir_fmt(f)?;
+                    writeln!(f, " -> {:?}]", block)?;
+                }
+                writeln!(f, "{}}}", INDENT)
+            }
+        }?;
+        writeln!(f)
     }
 }
