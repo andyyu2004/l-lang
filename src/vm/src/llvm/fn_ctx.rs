@@ -40,6 +40,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     crate fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) {
+        self.set_block(BlockId::new(0));
         for (id, &var) in body.vars.iter_enumerated() {
             self.alloca(id, var);
         }
@@ -62,10 +63,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &self.body.basic_blocks[block]
     }
 
-    fn codegen_basic_block(&mut self, id: BlockId) {
+    fn codegen_basic_block(&mut self, id: BlockId) -> BasicBlock<'tcx> {
         let block = self.set_block(id);
         block.stmts.iter().for_each(|stmt| self.codegen_stmt(stmt));
         self.codegen_terminator(block.terminator());
+        self.blocks[id]
     }
 
     fn codegen_stmt(&mut self, stmt: &mir::Stmt) {
@@ -144,10 +146,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn mk_dead_block(&self) -> BasicBlock<'tcx> {
-        self.llctx.append_basic_block(self.llfn, "dead")
-    }
-
     fn codegen_switch(
         &mut self,
         discr: &mir::Rvalue,
@@ -156,22 +154,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) {
         // don't need to return any value as the code to write the result is in mir
         let discr = self.codegen_rvalue(discr).into_int_value();
-        let default = match default {
-            Some(block) => {
-                self.codegen_basic_block(block);
-                self.blocks[block]
-            }
-            None => self.mk_dead_block(),
-        };
         let arms = arms
             .iter()
             .map(|&(block, ref rvalue)| {
                 let rvalue = self.codegen_rvalue(rvalue).into_int_value();
-                self.codegen_basic_block(block);
-                (rvalue, self.blocks[block])
+                let block = self.blocks[block];
+                (rvalue, block)
             })
             .collect_vec();
-        self.build_switch(discr, default, &arms);
+        self.build_switch(discr, self.blocks[default.unwrap()], &arms);
     }
 }
 

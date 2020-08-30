@@ -53,9 +53,9 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> FunctionValue<'tcx> {
         let main = prog.bodies.values().next().unwrap();
         let llvm_fn = self.codegen_body(main);
-        self.module.verify().unwrap();
-        self.module.print_to_file("ir.ll").unwrap();
         self.module.print_to_stderr();
+        self.module.print_to_file("ir.ll").unwrap();
+        self.module.verify().unwrap();
         llvm_fn
     }
 
@@ -64,7 +64,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let llvm_fn = self.module.add_function("main", tmp_fn_ty, None);
         let mut fcx = FnCtx::new(&self, body, llvm_fn);
         fcx.codegen_body(body);
-        llvm_fn.verify(true);
+        // llvm_fn.verify(true);
         llvm_fn
     }
 

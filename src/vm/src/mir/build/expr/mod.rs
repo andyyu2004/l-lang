@@ -1,6 +1,7 @@
 use super::{BlockAnd, BlockAndExt, Builder};
 use crate::mir::{BlockId, Lvalue, Operand, Rvalue, TerminatorKind};
 use crate::set;
+use crate::span::Span;
 use crate::tir;
 use itertools::Itertools;
 
@@ -63,12 +64,24 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         arm_blocks
             .iter()
             .for_each(|&(b, _)| self.cfg.terminate(info, b, TerminatorKind::Branch(end)));
+        let unreachable = self.mk_unreachable(expr.span);
         self.cfg.terminate(
             info,
             block,
-            TerminatorKind::Switch { discr: scrut_rvalue, arms: arm_blocks, default: None },
+            TerminatorKind::Switch {
+                discr: scrut_rvalue,
+                arms: arm_blocks,
+                default: Some(unreachable),
+            },
         );
         end.unit()
+    }
+
+    fn mk_unreachable(&mut self, span: Span) -> BlockId {
+        let info = self.span_info(span);
+        let block = self.cfg.append_basic_block();
+        self.cfg.terminate(info, block, TerminatorKind::Unreachable);
+        block
     }
 
     fn build_arm(
