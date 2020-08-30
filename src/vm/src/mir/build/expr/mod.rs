@@ -1,5 +1,5 @@
 use super::{BlockAnd, BlockAndExt, Builder};
-use crate::mir::{BlockId, Lvalue, Operand, Rvalue, TerminatorKind};
+use crate::mir::{BlockId, Lvalue, Operand, Rvalue, SpanInfo, TerminatorKind};
 use crate::set;
 use crate::span::Span;
 use crate::tir;
@@ -56,44 +56,51 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         let scrut_rvalue = set!(block = self.as_rvalue(block, scrut));
         // TODO
-        let arm_blocks = arms
-            .iter()
-            .map(|arm| self.build_arm(lvalue, &scrut_rvalue, arm).unpack())
-            .collect_vec();
+        let (arm_blocks, default) = self.build_arms(lvalue, &scrut_rvalue, arms);
+
+        // terminate all the switch blocks to branch back together again
         let end = self.cfg.append_basic_block();
         arm_blocks
             .iter()
-            .for_each(|&(b, _)| self.cfg.terminate(info, b, TerminatorKind::Branch(end)));
-        let unreachable = self.mk_unreachable(expr.span);
+            .for_each(|&(_, b)| self.cfg.terminate(info, b, TerminatorKind::Branch(end)));
+        default.map(|id| self.cfg.terminate(info, id, TerminatorKind::Branch(end)));
+
+        // if there is no default block, just create an unreachable one
+        let default = default.unwrap_or_else(|| self.mk_unreachable(info));
+
         self.cfg.terminate(
             info,
             block,
-            TerminatorKind::Switch {
-                discr: scrut_rvalue,
-                arms: arm_blocks,
-                default: Some(unreachable),
-            },
+            TerminatorKind::Switch { discr: scrut_rvalue, arms: arm_blocks, default },
         );
         end.unit()
     }
 
-    fn mk_unreachable(&mut self, span: Span) -> BlockId {
-        let info = self.span_info(span);
+    fn mk_unreachable(&mut self, info: SpanInfo) -> BlockId {
         let block = self.cfg.append_basic_block();
         self.cfg.terminate(info, block, TerminatorKind::Unreachable);
         block
     }
 
-    fn build_arm(
+    /// returns the switch arms and maybe the default block
+    fn build_arms(
         &mut self,
         dest: Lvalue<'tcx>,
         scrut_rvalue: &Rvalue<'tcx>,
-        arm: &tir::Arm<'tcx>,
-    ) -> BlockAnd<Rvalue<'tcx>> {
-        let mut block = self.cfg.append_basic_block();
-        set!(block = self.write_expr(block, dest, arm.body));
-        let rvalue = set!(block = self.build_arm_pat(block, arm.pat, scrut_rvalue));
-        block.and(rvalue)
+        arms: &[tir::Arm<'tcx>],
+    ) -> (Vec<(Rvalue<'tcx>, BlockId)>, Option<BlockId>) {
+        let mut switch_arms = Vec::with_capacity(arms.len());
+        for arm in arms {
+            let mut block = self.cfg.append_basic_block();
+            set!(block = self.write_expr(block, dest, arm.body));
+            // the first irrefutable pattern will be assigned the default block of the switch
+            let rvalue = set!(block = self.build_arm_pat(block, arm.pat, scrut_rvalue));
+            if !arm.pat.is_refutable() {
+                return (switch_arms, Some(block));
+            }
+            switch_arms.push((rvalue, block));
+        }
+        (switch_arms, None)
     }
 
     fn build_arm_pat(

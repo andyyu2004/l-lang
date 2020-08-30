@@ -149,20 +149,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_switch(
         &mut self,
         discr: &mir::Rvalue,
-        arms: &[(BlockId, mir::Rvalue)],
-        default: Option<BlockId>,
+        arms: &[(mir::Rvalue, BlockId)],
+        default: BlockId,
     ) {
-        // don't need to return any value as the code to write the result is in mir
         let discr = self.codegen_rvalue(discr).into_int_value();
         let arms = arms
             .iter()
-            .map(|&(block, ref rvalue)| {
+            .map(|&(ref rvalue, block)| {
                 let rvalue = self.codegen_rvalue(rvalue).into_int_value();
                 let block = self.blocks[block];
                 (rvalue, block)
             })
             .collect_vec();
-        self.build_switch(discr, self.blocks[default.unwrap()], &arms);
+        self.build_switch(discr, self.blocks[default], &arms);
     }
 }
 

@@ -178,7 +178,7 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
                 write!(f, "switch ")?;
                 discr.mir_fmt(f)?;
                 writeln!(f, " {{")?;
-                for (block, rvalue) in arms {
+                for (rvalue, block) in arms {
                     f.indentn(2)?;
                     write!(f, "[")?;
                     rvalue.mir_fmt(f)?;

@@ -27,6 +27,17 @@ pub struct Pattern<'tcx> {
     pub kind: tir::PatternKind<'tcx>,
 }
 
+impl<'tcx> Pattern<'tcx> {
+    pub fn is_refutable(&self) -> bool {
+        match self.kind {
+            PatternKind::Wildcard => false,
+            PatternKind::Binding(_, _) => false,
+            PatternKind::Field(_) => todo!(),
+            PatternKind::Lit(_) => true,
+        }
+    }
+}
+
 impl<'tcx> Display for Pattern<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {

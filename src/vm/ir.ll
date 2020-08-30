@@ -14,9 +14,8 @@ basic_block0:
   %load2 = load double, double* %"mut x"
   %tmpadd3 = fadd double %load2, 5.000000e+00
   store double %tmpadd3, double* %tmp1
-  switch i1 false, label %basic_block4 [
+  switch i1 false, label %basic_block2 [
     i1 true, label %basic_block1
-    i1 false, label %basic_block2
   ]
 
 basic_block1:                                     ; preds = %basic_block0
@@ -30,7 +29,4 @@ basic_block2:                                     ; preds = %basic_block0
 basic_block3:                                     ; preds = %basic_block2, %basic_block1
   %load_ret = load double, double* %retvar
   ret double %load_ret
-
-basic_block4:                                     ; preds = %basic_block0
-  unreachable
 }
