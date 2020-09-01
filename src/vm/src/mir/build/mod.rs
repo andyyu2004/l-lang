@@ -47,19 +47,22 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let tcx = ctx.tcx;
         assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
         let vars = IndexVec::default();
-        let mut builder = Self { ctx, cfg, vars, var_ir_map: Default::default() };
+        let mut builder = Self { ctx, cfg, vars, var_ir_map: Default::default(), argc: 0 };
         let info = builder.span_info(body.expr.span);
         builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
         builder
     }
 
     fn complete(self) -> mir::Body<'tcx> {
-        mir::Body { basic_blocks: self.cfg.basic_blocks, vars: self.vars }
+        mir::Body { basic_blocks: self.cfg.basic_blocks, vars: self.vars, argc: self.argc }
     }
 
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
-        set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
         let info = self.span_info(body.expr.span.hi());
+        for param in body.params {
+            set!(block = self.declare_pat(block, param.pat));
+        }
+        set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
         self.cfg.terminate(info, block, TerminatorKind::Return);
         block.unit()
     }
@@ -70,6 +73,7 @@ struct Builder<'a, 'tcx> {
     cfg: Cfg<'tcx>,
     var_ir_map: FxHashMap<ir::Id, VarId>,
     vars: IndexVec<VarId, Var<'tcx>>,
+    argc: usize,
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {

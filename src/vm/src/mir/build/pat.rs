@@ -4,7 +4,7 @@ use crate::set;
 use crate::tir;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    crate fn build_pat(&mut self, block: BlockId, pat: &tir::Pattern<'tcx>) -> BlockAnd<VarId> {
+    crate fn declare_pat(&mut self, block: BlockId, pat: &tir::Pattern<'tcx>) -> BlockAnd<VarId> {
         let info = self.span_info(pat.span);
         match pat.kind {
             tir::PatternKind::Wildcard => todo!(),

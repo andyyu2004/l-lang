@@ -2,6 +2,7 @@
 
 use crate::ast::BinOp;
 use crate::mir::{self, BasicBlock, Body, VarId};
+use crate::util;
 use std::fmt;
 use std::fmt::Write;
 
@@ -69,7 +70,7 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         rvalue: &mir::Rvalue<'tcx>,
     ) -> fmt::Result {
         lvalue.mir_fmt(self)?;
-        let ty = self.mir.vars[lvalue.var].ty;
+        let ty = self.mir.vars[lvalue.id].ty;
         write!(self, ":{} ← ", ty)?;
         rvalue.mir_fmt(self)
     }
@@ -114,7 +115,7 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        self.var.mir_fmt(f)
+        self.id.mir_fmt(f)
     }
 }
 
@@ -156,6 +157,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
             mir::Operand::Ref(lvalue) => lvalue.mir_fmt(f),
+            mir::Operand::Item(def) => write!(f, "#{:?}", def),
         }
     }
 }
@@ -167,26 +169,41 @@ impl<'tcx> MirFmt<'tcx> for mir::Terminator<'tcx> {
 }
 
 impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
-    fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        f.indent()?;
+    fn mir_fmt(&self, fmt: &mut Formatter<'_, 'tcx>) -> fmt::Result {
+        fmt.indent()?;
         match self {
-            mir::TerminatorKind::Branch(block) => writeln!(f, "branch {:?}", block),
-            mir::TerminatorKind::Return => writeln!(f, "return"),
-            mir::TerminatorKind::Unreachable => writeln!(f, "unreachable"),
-            mir::TerminatorKind::Call { f, args } => todo!(),
-            mir::TerminatorKind::Switch { discr, arms, default } => {
-                write!(f, "switch ")?;
-                discr.mir_fmt(f)?;
-                writeln!(f, " {{")?;
-                for (rvalue, block) in arms {
-                    f.indentn(2)?;
-                    write!(f, "[")?;
-                    rvalue.mir_fmt(f)?;
-                    writeln!(f, " -> {:?}]", block)?;
+            mir::TerminatorKind::Branch(block) => writeln!(fmt, "branch {:?}", block),
+            mir::TerminatorKind::Return => writeln!(fmt, "return"),
+            mir::TerminatorKind::Unreachable => writeln!(fmt, "unreachable"),
+            mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
+                lvalue.mir_fmt(fmt)?;
+                write!(fmt, " <- (")?;
+                f.mir_fmt(fmt)?;
+                for arg in args {
+                    write!(fmt, " ")?;
+                    arg.mir_fmt(fmt)?;
                 }
-                writeln!(f, "{}}}", INDENT)
+                writeln!(fmt, ") -> [{:?}]", target)?;
+                writeln!(fmt)
+            }
+            mir::TerminatorKind::Switch { discr, arms, default } => {
+                write!(fmt, "switch ")?;
+                discr.mir_fmt(fmt)?;
+                writeln!(fmt, " {{")?;
+                for (rvalue, block) in arms {
+                    fmt.indentn(2)?;
+                    write!(fmt, "[")?;
+                    rvalue.mir_fmt(fmt)?;
+                    writeln!(fmt, " -> {:?}]", block)?;
+                }
+
+                fmt.indentn(2)?;
+                write!(fmt, "[")?;
+                writeln!(fmt, "_ -> {:?}]", default)?;
+
+                writeln!(fmt, "{}}}", INDENT)
             }
         }?;
-        writeln!(f)
+        writeln!(fmt)
     }
 }

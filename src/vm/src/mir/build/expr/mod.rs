@@ -25,7 +25,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
-            tir::ExprKind::Call(_, _) => todo!(),
+            tir::ExprKind::Call(f, args) => self.build_call(block, expr, lvalue, f, args),
             tir::ExprKind::Match(scrut, arms) => self.build_match(block, expr, lvalue, scrut, arms),
             tir::ExprKind::Assign(lhs, rhs) => {
                 let rvalue = set!(block = self.as_rvalue(block, rhs));
@@ -43,6 +43,26 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
         }
+    }
+
+    fn build_call(
+        &mut self,
+        mut block: BlockId,
+        expr: &tir::Expr<'tcx>,
+        lvalue: Lvalue<'tcx>,
+        f: &tir::Expr<'tcx>,
+        args: &[tir::Expr<'tcx>],
+    ) -> BlockAnd<()> {
+        let info = self.span_info(expr.span);
+        let f = set!(block = self.as_operand(block, f));
+        let args = args.iter().map(|arg| set!(block = self.as_operand(block, arg))).collect_vec();
+        let target = self.cfg.append_basic_block();
+        self.cfg.terminate(
+            info,
+            block,
+            TerminatorKind::Call { f, args, lvalue, target, unwind: None },
+        );
+        target.unit()
     }
 
     fn build_match(

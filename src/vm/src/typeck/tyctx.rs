@@ -173,23 +173,27 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// ir -> tir -> mir
     fn lower_prog_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
-        let mut bodies = BTreeMap::new();
+        let mut items = BTreeMap::new();
 
-        for (&id, item) in &prog.items {
+        for (&id, &item) in &prog.items {
+            let &ir::Item { id, span, vis, ident, ref kind } = item;
             // only functions compile down to any runtime representation
             // data definitions such as structs and enums are purely a compile time concept
-            match item.kind {
+            match kind {
                 ir::ItemKind::Fn(sig, generics, body) =>
                     Inherited::build(self, item.id.def).enter(|inherited| {
                         let fcx = inherited.check_fn_item(item, sig, generics, body);
                         let tables = fcx.resolve_inference_variables(body);
                         let lctx = IrLoweringCtx::new(&inherited, tables);
-                        bodies.insert(id, lctx.lower_item(item));
+                        let mir_body = lctx.lower_item(item);
+                        let mir_item =
+                            mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) };
+                        items.insert(id, mir_item);
                     }),
                 ir::ItemKind::Struct(..) => {}
             };
         }
-        mir::Prog { bodies }
+        mir::Prog { items }
     }
 }
 

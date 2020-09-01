@@ -8,7 +8,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(stmt.span);
         match stmt.kind {
             tir::StmtKind::Let(tir::Let { id, pat, init }) => {
-                let lvalue = set!(block = self.build_pat(block, pat)).into();
+                let lvalue = set!(block = self.declare_pat(block, pat)).into();
                 match init {
                     Some(expr) => self.write_expr(block, lvalue, expr),
                     None => todo!(),

@@ -25,7 +25,7 @@ fn main() {
         } else {
             // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
             println!(
-                "result? {}",
+                "result {}",
                 libvm::llvm_exec(&src).unwrap_or_else(|err| {
                     println!("{:?}", err);
                     std::process::exit(1)

@@ -74,7 +74,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => {
                 let val = self.codegen_rvalue(rvalue);
-                let var = self.vars[&lvalue.var];
+                let var = self.vars[&lvalue.id];
                 self.build_store(var.ptr, val);
             }
             mir::StmtKind::Nop => {}
@@ -88,8 +88,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ConstKind::Bool(b) => self.llctx.bool_type().const_int(b, true).into(),
             },
             mir::Operand::Ref(lvalue) => {
-                let var = self.vars[&lvalue.var];
+                let var = self.vars[&lvalue.id];
                 self.build_load(var.ptr, "load").into()
+            }
+            mir::Operand::Item(def_id) => {
+                // TODO assume item is fn for now
+                let ident = self.items.borrow()[def_id];
+                let llfn = self.module.get_function(ident.as_str()).unwrap();
+                // probably not the `correct` way to do this :)
+                unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into()
             }
         }
     }
@@ -140,7 +147,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::TerminatorKind::Branch(block) => {
                 self.build_unconditional_branch(self.blocks[*block]);
             }
-            mir::TerminatorKind::Call { f, args } => todo!(),
+            mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
+                let f = self.codegen_operand(f).into_pointer_value();
+                let args = args.iter().map(|arg| self.codegen_operand(arg)).collect_vec();
+                let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
+                let var = self.vars[&lvalue.id];
+                self.build_store(var.ptr, value);
+                self.build_unconditional_branch(self.blocks[*target]);
+            }
             mir::TerminatorKind::Switch { discr, arms, default } =>
                 self.codegen_switch(discr, arms, *default),
         }

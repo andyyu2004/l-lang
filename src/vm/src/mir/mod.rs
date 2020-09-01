@@ -4,10 +4,11 @@ mod build;
 mod fmt;
 pub use fmt::MirFmt;
 
-use crate::ir;
+use crate::ir::{self, DefId};
 use crate::span::Span;
 use crate::ty::{Const, Ty};
 use crate::{ast, mir};
+use ast::{Ident, Visibility};
 pub use build::build_fn;
 use indexed_vec::{Idx, IndexVec};
 use std::collections::BTreeMap;
@@ -17,24 +18,47 @@ newtype_index!(BlockId);
 
 pub const RETURN: usize = 0;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Prog<'tcx> {
-    pub bodies: BTreeMap<ir::Id, Body<'tcx>>,
+    pub items: BTreeMap<ir::Id, Item<'tcx>>,
 }
 
 impl<'tcx> std::fmt::Display for Prog<'tcx> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for body in self.bodies.values() {
-            writeln!(f, "{}", body)?;
+        for item in self.items.values() {
+            writeln!(f, "{}", item)?;
         }
         Ok(())
     }
+}
+
+impl<'tcx> std::fmt::Display for Item<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.kind {
+            ItemKind::Fn(body) => write!(f, "{}", body),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Item<'tcx> {
+    pub span: Span,
+    pub id: ir::Id,
+    pub vis: Visibility,
+    pub ident: Ident,
+    pub kind: mir::ItemKind<'tcx>,
+}
+
+#[derive(Debug)]
+pub enum ItemKind<'tcx> {
+    Fn(mir::Body<'tcx>),
 }
 
 #[derive(Clone, Debug)]
 pub struct Body<'tcx> {
     pub basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
     pub vars: IndexVec<VarId, Var<'tcx>>,
+    pub argc: usize,
 }
 
 impl<'tcx> std::fmt::Display for Body<'tcx> {
@@ -76,23 +100,18 @@ newtype_index!(VarId);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Lvalue<'tcx> {
-    pub var: VarId,
+    pub id: VarId,
     pd: PhantomData<&'tcx ()>,
 }
 
 impl<'tcx> Lvalue<'tcx> {
     pub fn new(var: VarId) -> Self {
-        Self { var, pd: PhantomData }
+        Self { id: var, pd: PhantomData }
     }
 
-    /// `VarId` 1 is reserved for return lvalues
+    /// `VarId` 0 is reserved for return lvalues
     pub fn ret() -> Self {
         Self::new(VarId::new(RETURN))
-    }
-
-    /// `VarId` 0 is reserved for the null lvalue (something akin to /dev/null)
-    pub fn null() -> Self {
-        unimplemented!()
     }
 }
 
@@ -133,6 +152,7 @@ pub enum Rvalue<'tcx> {
 pub enum Operand<'tcx> {
     Const(&'tcx Const<'tcx>),
     Ref(Lvalue<'tcx>),
+    Item(DefId),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -155,6 +175,11 @@ pub enum TerminatorKind<'tcx> {
     Call {
         f: Operand<'tcx>,
         args: Vec<Operand<'tcx>>,
+        /// lvalue to write the function return value to
+        lvalue: Lvalue<'tcx>,
+        /// the block to branch to after the call (if no unwind)
+        target: BlockId,
+        unwind: Option<BlockId>,
     },
     /// if `discr` evaluates to the `Rvalue`, then the respective block is executed
     Switch {

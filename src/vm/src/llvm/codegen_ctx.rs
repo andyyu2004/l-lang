@@ -7,6 +7,7 @@ use crate::mir::{self, *};
 use crate::tir;
 use crate::ty::{Const, ConstKind, SubstsRef, Ty, TyKind};
 use crate::typeck::TyCtx;
+use ast::Ident;
 use inkwell::types::{BasicType, BasicTypeEnum, FloatType, FunctionType};
 use inkwell::values::*;
 use inkwell::{
@@ -15,8 +16,10 @@ use inkwell::{
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::cell::RefCell;
 use std::fmt::Display;
 use std::ops::Deref;
+use symbol::Symbol;
 
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
@@ -25,6 +28,9 @@ pub struct CodegenCtx<'tcx> {
     pub fpm: PassManager<FunctionValue<'tcx>>,
     pub module: Module<'tcx>,
     pub vals: CommonValues<'tcx>,
+    /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
+    /// this api is a bit awkward, but its what inkwell has so..
+    pub items: RefCell<FxHashMap<DefId, Ident>>,
     curr_fn: Option<FunctionValue<'tcx>>,
 }
 
@@ -33,8 +39,8 @@ pub struct CommonValues<'tcx> {
 }
 
 impl<'tcx> CodegenCtx<'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>, ctx: &'tcx Context) -> Self {
-        let module = ctx.create_module("main");
+    pub fn new(tcx: TyCtx<'tcx>, llctx: &'tcx Context) -> Self {
+        let module = llctx.create_module("main");
         let fpm = PassManager::create(&module);
         fpm.add_instruction_combining_pass();
         fpm.add_reassociate_pass();
@@ -45,32 +51,64 @@ impl<'tcx> CodegenCtx<'tcx> {
         fpm.add_instruction_combining_pass();
         fpm.add_reassociate_pass();
         fpm.initialize();
-        let vals = CommonValues { zero: ctx.i64_type().const_zero() };
-        Self { tcx, llctx: ctx, module, fpm, builder: ctx.create_builder(), vals, curr_fn: None }
+        let vals = CommonValues { zero: llctx.i64_type().const_zero() };
+        Self {
+            tcx,
+            llctx,
+            module,
+            fpm,
+            builder: llctx.create_builder(),
+            vals,
+            curr_fn: None,
+            items: Default::default(),
+        }
     }
 
     /// returns the main function
     pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> FunctionValue<'tcx> {
-        let main = prog.bodies.values().next().unwrap();
-        let llvm_fn = self.codegen_body(main);
+        // we need to predeclare all items as we don't require them to be declared in the source
+        // file in topological order
+        for (id, item) in &prog.items {
+            self.items.borrow_mut().insert(id.def, item.ident);
+            match &item.kind {
+                ItemKind::Fn(body) => {
+                    let (_, ty) = self.tcx.item_ty(id.def).expect_scheme();
+                    let (params, ret) = ty.expect_fn();
+                    let llty = self.llvm_fn_ty(params, ret);
+                    let llfn = self.module.add_function(item.ident.as_str(), llty, None);
+
+                    // TODO
+                    // define the parameters
+                    // for (param, arg) in body.params.into_iter().zip(llfn.get_param_iter()) {
+                    //     arg.set_name(&param.pat.id.to_string());
+                    // }
+                }
+            };
+        }
+        for (id, item) in &prog.items {
+            match &item.kind {
+                ItemKind::Fn(body) => self.codegen_body(item, body),
+            };
+        }
         self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
-        llvm_fn
+        self.module.get_function(symbol::MAIN.as_str()).unwrap()
     }
 
-    fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
-        let tmp_fn_ty = self.llvm_ty(self.tcx.types.num).fn_type(&[], false);
-        let llvm_fn = self.module.add_function("main", tmp_fn_ty, None);
-        let mut fcx = FnCtx::new(&self, body, llvm_fn);
+    fn codegen_body(
+        &mut self,
+        item: &mir::Item,
+        body: &'tcx mir::Body<'tcx>,
+    ) -> FunctionValue<'tcx> {
+        let llfn = self.module.get_function(item.ident.as_str()).unwrap();
+        let mut fcx = FnCtx::new(&self, body, llfn);
         fcx.codegen_body(body);
-        // llvm_fn.verify(true);
-        llvm_fn
+        llfn
     }
 
     pub fn llvm_fn_ty(&self, params: SubstsRef, ret: Ty) -> FunctionType<'tcx> {
-        self.llvm_ty(ret)
-            .fn_type(&params.into_iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
     pub fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
