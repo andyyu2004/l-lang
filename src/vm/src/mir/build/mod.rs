@@ -47,7 +47,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let tcx = ctx.tcx;
         assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
         let vars = IndexVec::default();
-        let mut builder = Self { ctx, cfg, vars, var_ir_map: Default::default(), argc: 0 };
+        let mut builder =
+            Self { ctx, cfg, vars, var_ir_map: Default::default(), argc: body.params.len() };
         let info = builder.span_info(body.expr.span);
         builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
         builder

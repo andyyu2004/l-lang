@@ -103,7 +103,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     ) -> FunctionValue<'tcx> {
         let llfn = self.module.get_function(item.ident.as_str()).unwrap();
         let mut fcx = FnCtx::new(&self, body, llfn);
-        fcx.codegen_body(body);
+        fcx.codegen_body();
         llfn
     }
 

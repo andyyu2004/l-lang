@@ -61,6 +61,22 @@ pub struct Body<'tcx> {
     pub argc: usize,
 }
 
+impl<'tcx> Body<'tcx> {
+    /// returns the `VarId` of all the parameters/arguments of the `Body`
+    pub fn arg_iter(&self) -> impl Iterator<Item = VarId> + ExactSizeIterator {
+        // 0 is reserved for returns
+        // so 1..1 + argc are the parameters
+        (1..1 + self.argc).map(VarId::new)
+    }
+
+    /// iterates over all non arg and non return vars
+    pub fn var_iter(&self) -> impl Iterator<Item = VarId> + ExactSizeIterator {
+        // 0 is reserved for returns
+        // so 1..1 + argc are the parameters
+        (1 + self.argc..self.vars.len()).map(VarId::new)
+    }
+}
+
 impl<'tcx> std::fmt::Display for Body<'tcx> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         fmt::Formatter::new(f, self).fmt()

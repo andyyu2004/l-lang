@@ -4,10 +4,14 @@ fn main() -> number {
     /* }; */
     /* fn () => 5; */
     /* f(5); */
-    fib(2)
+    /* fib(4) */
+    fac(1)
+}
+
+fn fac(n: number) -> number {
+    if n < 1 { 1 } else { n * fac(n-1) }
 }
 
 fn fib(n: number) -> number {
-    if n < 1 { 1 } else { 2 }
-    /* if n < 2 { n } else { fib(n-1) + fib(n-2) } */
+    if n < 2 { n } else { fib(n-1) + fib(n-2) }
 }

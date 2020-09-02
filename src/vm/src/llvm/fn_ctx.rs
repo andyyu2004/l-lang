@@ -12,7 +12,7 @@ pub(super) struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
     body: &'tcx mir::Body<'tcx>,
     llfn: FunctionValue<'tcx>,
-    vars: FxHashMap<mir::VarId, Var<'tcx>>,
+    vars: IndexVec<mir::VarId, Var<'tcx>>,
     /// map from mir block to llvm block
     blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
 }
@@ -36,25 +36,36 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             .indices()
             .map(|i| cctx.llctx.append_basic_block(llfn, &format!("basic_block{:?}", i)))
             .collect();
-        Self { cctx, body, llfn, vars: Default::default(), blocks }
+        let mut ctx = Self { cctx, body, llfn, vars: Default::default(), blocks };
+        ctx.set_block(BlockId::new(0));
+        ctx.vars = ctx.alloc_vars();
+        ctx
     }
 
-    crate fn codegen_body(&mut self, body: &'tcx mir::Body<'tcx>) {
-        self.set_block(BlockId::new(0));
-        for (id, &var) in body.vars.iter_enumerated() {
-            self.alloca(id, var);
-        }
+    fn alloc_vars(&mut self) -> IndexVec<VarId, Var<'tcx>> {
+        let alloca = |var_id| {
+            let mir_var = self.body.vars[var_id];
+            let ptr = self.build_alloca(self.llvm_ty(mir_var.ty), &mir_var.to_string());
+            Var { ptr }
+        };
 
-        for id in body.basic_blocks.indices() {
+        // store arguments into the respective vars
+        let args = self.body.arg_iter().zip(self.llfn.get_param_iter()).map(|(id, llval)| {
+            let var = alloca(id);
+            // store the provided argument into the local variable we provided for args
+            self.build_store(var.ptr, llval);
+            var
+        });
+
+        let retvar = alloca(VarId::new(mir::RETURN));
+        let vars = self.body.var_iter().map(alloca);
+        std::iter::once(retvar).chain(args).chain(vars).collect()
+    }
+
+    crate fn codegen_body(&mut self) {
+        for id in self.body.basic_blocks.indices() {
             self.codegen_basic_block(id);
         }
-    }
-
-    fn alloca(&mut self, id: VarId, var: mir::Var<'tcx>) -> Var<'tcx> {
-        let ptr = self.build_alloca(self.llvm_ty(var.ty), &var.to_string());
-        let var = Var { ptr };
-        self.vars.insert(id, var);
-        var
     }
 
     /// sets the current llvm block to write to
@@ -74,7 +85,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => {
                 let val = self.codegen_rvalue(rvalue);
-                let var = self.vars[&lvalue.id];
+                let var = self.vars[lvalue.id];
                 self.build_store(var.ptr, val);
             }
             mir::StmtKind::Nop => {}
@@ -88,7 +99,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ConstKind::Bool(b) => self.llctx.bool_type().const_int(b, true).into(),
             },
             mir::Operand::Ref(lvalue) => {
-                let var = self.vars[&lvalue.id];
+                let var = self.vars[lvalue.id];
                 self.build_load(var.ptr, "load").into()
             }
             mir::Operand::Item(def_id) => {
@@ -136,7 +147,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_terminator(&mut self, terminator: &mir::Terminator) {
         match &terminator.kind {
             mir::TerminatorKind::Return => {
-                let var = self.vars[&VarId::new(mir::RETURN)];
+                let var = self.vars[VarId::new(mir::RETURN)];
                 let val = self.build_load(var.ptr, "load_ret");
                 let dyn_val = &val as &dyn BasicValue;
                 self.build_return(Some(dyn_val));
@@ -151,7 +162,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let f = self.codegen_operand(f).into_pointer_value();
                 let args = args.iter().map(|arg| self.codegen_operand(arg)).collect_vec();
                 let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
-                let var = self.vars[&lvalue.id];
+                let var = self.vars[lvalue.id];
                 self.build_store(var.ptr, value);
                 self.build_unconditional_branch(self.blocks[*target]);
             }
