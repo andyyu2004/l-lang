@@ -4,51 +4,13 @@ source_filename = "main"
 define double @main() {
 basic_block0:
   %retvar = alloca double
-  %fcall = call double @fib(double 3.900000e+01)
+  %fcall = call double @fib(double 1.000000e+01)
   store double %fcall, double* %retvar
   br label %basic_block1
 
 basic_block1:                                     ; preds = %basic_block0
   %load_ret = load double, double* %retvar
   ret double %load_ret
-}
-
-define double @fac(double %0) {
-basic_block0:
-  %retvar = alloca double
-  %n = alloca double
-  store double %0, double* %n
-  %tmp = alloca double
-  %tmp1 = alloca double
-  %load = load double, double* %n
-  %fcmp_lt = fcmp olt double %load, 1.000000e+00
-  switch i1 %fcmp_lt, label %basic_block3 [
-    i1 true, label %basic_block2
-  ]
-
-basic_block1:                                     ; preds = %basic_block4, %basic_block2
-  %load_ret = load double, double* %retvar
-  ret double %load_ret
-
-basic_block2:                                     ; preds = %basic_block0
-  store double 1.000000e+00, double* %retvar
-  br label %basic_block1
-
-basic_block3:                                     ; preds = %basic_block0
-  %load2 = load double, double* %n
-  %tmpfsub = fsub double %load2, 1.000000e+00
-  store double %tmpfsub, double* %tmp1
-  %load3 = load double, double* %tmp1
-  %fcall = call double @fac(double %load3)
-  store double %fcall, double* %tmp
-  br label %basic_block4
-
-basic_block4:                                     ; preds = %basic_block3
-  %load4 = load double, double* %n
-  %load5 = load double, double* %tmp
-  %tmpfmul = fmul double %load4, %load5
-  store double %tmpfmul, double* %retvar
-  br label %basic_block1
 }
 
 define double @fib(double %0) {
