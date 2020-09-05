@@ -73,7 +73,17 @@ impl<'tcx> Driver<'tcx> {
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
         let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
         let mir = gcx.enter_tcx(|tcx| tcx.lower_prog(&ir));
-        if self.session.has_errors() { Err(LError::ErrorReported) } else { Ok(mir) }
+        if self.session.has_errors() {
+            let errc = self.session.err_count();
+            if errc == 1 {
+                red_ln!("{} error emitted", errc)
+            } else {
+                red_ln!("{} errors emitted", errc)
+            }
+            Err(LError::ErrorReported)
+        } else {
+            Ok(mir)
+        }
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {

@@ -1,4 +1,5 @@
 fn main() -> number {
+    let x: bool = 5;
     let counter = mk_counter();
     counter();
     counter();

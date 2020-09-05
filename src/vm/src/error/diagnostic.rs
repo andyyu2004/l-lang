@@ -1,4 +1,5 @@
 use super::DiagnosticBuilder;
+use crate::error::{LError, LResult};
 use crate::span::Span;
 use std::cell::Cell;
 use std::error::Error;
@@ -19,6 +20,10 @@ impl Diagnostics {
 
     pub fn has_errors(&self) -> bool {
         self.err_count.get() > 0
+    }
+
+    pub fn check_for_errors(&self) -> LResult<()> {
+        if self.has_errors() { Err(LError::ErrorReported) } else { Ok(()) }
     }
 
     pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder {
@@ -43,7 +48,7 @@ impl Diagnostic {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
 pub struct MultiSpan {
-    primary_spans: Vec<Span>,
+    pub primary_spans: Vec<Span>,
 }
 
 impl From<Span> for MultiSpan {

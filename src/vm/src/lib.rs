@@ -29,6 +29,8 @@
 #![allow(unused_macros)]
 
 #[macro_use]
+extern crate colour;
+#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate derive_deref;
