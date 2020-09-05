@@ -82,8 +82,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         SpanInfo { span }
     }
 
-    fn return_block(&mut self) -> BlockId {
-        self.cfg.append_basic_block()
+    fn ret_lvalue(&mut self) -> Lvalue<'tcx> {
+        Lvalue::new(VarId::new(RETURN))
     }
 
     fn alloc_tmp(&mut self, info: SpanInfo, ty: Ty<'tcx>) -> VarId {

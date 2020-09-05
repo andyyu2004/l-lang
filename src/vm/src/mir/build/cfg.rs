@@ -35,7 +35,8 @@ impl<'tcx> Cfg<'tcx> {
         self.basic_blocks[block].stmts.push(stmt);
     }
 
-    pub fn push_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
+    /// writes a unit into `lvalue`
+    pub fn push_assign_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
         todo!();
         // self.push_assignment(info, block, lvalue, Rvalue::Ref());
     }

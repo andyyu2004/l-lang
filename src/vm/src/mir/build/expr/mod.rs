@@ -158,7 +158,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         if let Some(expr) = ir.expr {
             set!(block = self.write_expr(block, lvalue, expr));
         } else {
-            self.cfg.push_unit(info, block, lvalue)
+            self.cfg.push_assign_unit(info, block, lvalue)
         }
         block.unit()
     }

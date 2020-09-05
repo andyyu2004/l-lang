@@ -13,12 +13,15 @@ use std::{cell::RefCell, ops::Deref};
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a Inherited<'a, 'tcx>,
-    pub(super) expected_ret_ty: Ty<'tcx>,
+    pub(super) fn_ty: Ty<'tcx>,
+    pub(super) param_tys: SubstsRef<'tcx>,
+    pub(super) ret_ty: Ty<'tcx>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(inherited: &'a Inherited<'a, 'tcx>) -> Self {
-        Self { inherited, expected_ret_ty: inherited.new_infer_var() }
+    pub fn new(inherited: &'a Inherited<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
+        let (param_tys, ret_ty) = fn_ty.expect_fn();
+        Self { inherited, fn_ty, param_tys, ret_ty }
     }
 }
 
@@ -62,7 +65,7 @@ impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
 /// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
 /// well as the outermost fn item
 pub struct Inherited<'a, 'tcx> {
-    infcx: &'a InferCtx<'a, 'tcx>,
+    pub(super) infcx: &'a InferCtx<'a, 'tcx>,
     locals: RefCell<FxHashMap<ir::Id, LocalTy<'tcx>>>,
 }
 
@@ -111,14 +114,13 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         let (_forall, ty) = fn_ty.expect_scheme();
         debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
         let (param_tys, ret_ty) = ty.expect_fn();
-        self.check_fn(sig, body).0
+        self.check_fn(ty, body)
     }
 
-    pub fn check_fn(&'a self, sig: &ir::FnSig, body: &ir::Body) -> (FnCtx<'a, 'tcx>, Ty<'tcx>) {
-        let fn_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
-        let mut fcx = FnCtx::new(self);
-        let body_ty = fcx.check_body(fn_ty, body);
-        (fcx, fn_ty)
+    pub fn check_fn(&'a self, fn_ty: Ty<'tcx>, body: &ir::Body) -> FnCtx<'a, 'tcx> {
+        let mut fcx = FnCtx::new(self, fn_ty);
+        fcx.check_body(body);
+        fcx
     }
 
     pub fn def_local(&self, id: ir::Id, ty: Ty<'tcx>, mtbl: Mutability) -> Ty<'tcx> {

@@ -30,7 +30,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// return expressions have the type of the expression that follows the return
     fn check_ret_expr(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
         let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
-        // self.unify(expr.span, self.expected_ret_ty, ty);
+        self.unify(expr.span, self.ret_ty, ty);
         self.tcx.types.never
     }
 
@@ -203,7 +203,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // the resolver resolved the closure name to the closure id
         // so we define a local variable for it with a type to infer
         self.def_local(closure.id, infer, Mutability::Imm);
-        let (_fcx, clsr_ty) = self.check_fn(sig, body);
+        let clsr_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
+        let _fcx = self.check_fn(clsr_ty, body);
         // we then unify the types and hope it works out
         self.unify(closure.span, infer, clsr_ty);
         clsr_ty
@@ -211,16 +212,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// inputs are the types from the type signature (or inference variables)
     /// adds the parameters to locals and typechecks the expr of the body
-    pub fn check_body(&mut self, fn_ty: Ty<'tcx>, body: &ir::Body) -> Ty<'tcx> {
-        let (param_tys, ret_ty) = fn_ty.expect_fn();
-        debug_assert_eq!(param_tys.len(), body.params.len());
-        for (param, ty) in body.params.iter().zip(param_tys) {
+    pub fn check_body(&mut self, body: &ir::Body) {
+        for (param, ty) in body.params.iter().zip(self.param_tys) {
             self.check_pat(param.pat, ty);
         }
         let body_ty = self.check_expr(body.expr);
-        self.unify(body.expr.span, self.expected_ret_ty, ret_ty);
-        self.unify(body.expr.span, ret_ty, body_ty);
-        body_ty
+        self.unify(body.expr.span, self.ret_ty, body_ty);
+        // f explicitly overwrite the type of body in case it is never
+        // this is a special case due to return statements in the top level block
+        self.write_ty(body.id(), self.ret_ty);
     }
 
     fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstsRef<'tcx> {
