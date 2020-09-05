@@ -6,13 +6,13 @@ use indexed_vec::Idx;
 #[test]
 fn simple_closure() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         let x = 5;
         let f = fn(y) => x + y;
         apply(f, 8)
     }
 
-    fn apply(f: fn(number) -> number, x: number) -> number {
+    fn apply(f: fn(number) -> int, x: int) -> int {
         f(x)
     }"#;
 

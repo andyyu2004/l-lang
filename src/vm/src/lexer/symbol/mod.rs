@@ -6,11 +6,12 @@ use std::fmt::{self, Display, Formatter};
 
 // there is probably a better way than manually counting the symbol indices :)
 // without proc macro?
-pub const SYMBOLS: &[&str] = &["number", "bool", "char", "main"];
-pub const NUMBER: Symbol = Symbol(0);
+pub const SYMBOLS: &[&str] = &["float", "bool", "char", "int", "main"];
+pub const FLOAT: Symbol = Symbol(0);
 pub const BOOL: Symbol = Symbol(1);
 pub const CHAR: Symbol = Symbol(2);
-pub const MAIN: Symbol = Symbol(3);
+pub const INT: Symbol = Symbol(3);
+pub const MAIN: Symbol = Symbol(4);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Symbol(pub usize);

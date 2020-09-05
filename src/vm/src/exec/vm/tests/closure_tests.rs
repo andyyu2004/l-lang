@@ -7,13 +7,13 @@ mod test {
     #[test]
     fn multilayer_closures() {
         let src = r#"
-        fn main() -> number {
+        fn main() -> int {
             let middle = f();
             let inner = middle();
             inner()
         }
 
-        fn f() -> fn() -> fn() -> number {
+        fn f() -> fn() -> fn() -> int {
             let x = 5;
             let middle = fn() => {
                 let inner = fn() => x;

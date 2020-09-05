@@ -1,4 +1,4 @@
-fn main() -> number {
+fn main() -> int {
     let x: bool = 5;
     let counter = mk_counter();
     counter();
@@ -7,7 +7,7 @@ fn main() -> number {
     counter()
 }
 
-fn mk_counter() -> fn() -> number {
+fn mk_counter() -> fn() -> int {
     let mut i = 0;
     fn() => i = i + 1
 }

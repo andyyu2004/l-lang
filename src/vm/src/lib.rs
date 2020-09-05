@@ -94,7 +94,7 @@ pub macro tir($src:expr) {{
 
 // just stupidly wraps the expr string in an int function to form a program
 fn wrap_in_main(src: &str) -> String {
-    format!("fn main() -> number {{ {} }}", src)
+    format!("fn main() -> int {{ {} }}", src)
 }
 
 pub fn llvm_exec_expr(src: &str) -> LResult<f64> {

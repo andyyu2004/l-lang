@@ -72,8 +72,10 @@ pub enum TyKind<'tcx> {
     Bool,
     /// char
     Char,
-    /// number
-    Num,
+    /// float
+    Float,
+    /// Int
+    Int,
     Error,
     Never,
     /// [<ty>]
@@ -170,7 +172,8 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
             TyKind::Adt(_, substs) => substs.ty_flags(),
-            TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Num => TyFlags::empty(),
+            TyKind::Float | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Int =>
+                TyFlags::empty(),
         }
     }
 }
@@ -188,7 +191,8 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Adt(adt, _) => write!(f, "{}", adt.ident),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
-            TyKind::Num => write!(f, "number"),
+            TyKind::Int => write!(f, "int"),
+            TyKind::Float => write!(f, "float"),
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
         }
@@ -252,8 +256,8 @@ impl<'tcx> std::ops::Add for Const<'tcx> {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self.kind, rhs.kind) {
-            (ConstKind::Floating(x), ConstKind::Floating(y)) =>
-                Self::new(ConstKind::Floating(x + y)),
+            (ConstKind::Float(x), ConstKind::Float(y)) => Self::new(ConstKind::Float(x + y)),
+            (ConstKind::Int(x), ConstKind::Int(y)) => Self::new(ConstKind::Int(x + y)),
             _ => panic!(),
         }
     }
@@ -261,8 +265,9 @@ impl<'tcx> std::ops::Add for Const<'tcx> {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ConstKind {
-    Floating(f64),
-    Bool(u64),
+    Float(f64),
+    Int(i64),
+    Bool(bool),
 }
 
 impl<'tcx> Const<'tcx> {
@@ -274,8 +279,9 @@ impl<'tcx> Const<'tcx> {
 impl<'tcx> Display for Const<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ConstKind::Floating(d) => write!(f, "{}", d),
-            ConstKind::Bool(i) => write!(f, "{}", i),
+            ConstKind::Float(d) => write!(f, "{}", d),
+            ConstKind::Int(i) => write!(f, "{}", i),
+            ConstKind::Bool(b) => write!(f, "{}", b),
         }
     }
 }

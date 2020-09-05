@@ -80,7 +80,8 @@ impl<'tcx> TyCtx<'tcx> {
         match prim_ty {
             ir::PrimTy::Char => self.types.character,
             ir::PrimTy::Bool => self.types.boolean,
-            ir::PrimTy::Num => self.types.num,
+            ir::PrimTy::Float => self.types.float,
+            ir::PrimTy::Int => self.types.int,
         }
     }
 
@@ -201,23 +202,25 @@ pub struct CommonTypes<'tcx> {
     pub unit: Ty<'tcx>,
     pub boolean: Ty<'tcx>,
     pub character: Ty<'tcx>,
-    pub num: Ty<'tcx>,
+    pub float: Ty<'tcx>,
+    pub int: Ty<'tcx>,
     pub never: Ty<'tcx>,
-    /// type of `main` must be `fn() -> number`
+    /// type of `main` must be `fn() -> int`
     pub main: Ty<'tcx>,
 }
 
 impl<'tcx> CommonTypes<'tcx> {
     fn new(interners: &CtxInterners<'tcx>) -> CommonTypes<'tcx> {
         let mk = |ty| interners.intern_ty(ty);
-        let num = mk(TyKind::Num);
+        let int = mk(TyKind::Int);
         CommonTypes {
             boolean: mk(TyKind::Bool),
             character: mk(TyKind::Char),
             never: mk(TyKind::Never),
-            main: mk(TyKind::Fn(List::empty(), num)),
+            float: mk(TyKind::Float),
+            main: mk(TyKind::Fn(List::empty(), int)),
             unit: mk(TyKind::Tuple(List::empty())),
-            num,
+            int,
         }
     }
 }

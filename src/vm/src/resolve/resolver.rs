@@ -96,7 +96,8 @@ impl Default for PrimitiveTypes {
     fn default() -> Self {
         let mut types = FxHashMap::default();
         types.insert(symbol::BOOL, PrimTy::Bool);
-        types.insert(symbol::NUMBER, PrimTy::Num);
+        types.insert(symbol::FLOAT, PrimTy::Float);
+        types.insert(symbol::INT, PrimTy::Int);
         types.insert(symbol::CHAR, PrimTy::Char);
         Self { types }
     }

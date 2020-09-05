@@ -4,9 +4,9 @@ use super::llvm_exec;
 #[test]
 fn llvm_fib() {
     let src = r#"
-    fn main() -> number { fib(10) }
+    fn main() -> int { fib(10) }
 
-    fn fib(n: number) -> number {
+    fn fib(n: int) -> int {
         if n < 2 { n } else { fib(n - 1) + fib(n - 2) }
     }
     "#;
@@ -18,7 +18,7 @@ fn llvm_fib() {
 #[test]
 fn llvm_side_effects() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         let mut x = 0;
         x = x + 1;
         x
@@ -29,7 +29,7 @@ fn llvm_side_effects() {
 #[test]
 fn llvm_multiple_returns() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         return 5;
         return 6;
         return 7;
@@ -40,7 +40,7 @@ fn llvm_multiple_returns() {
 #[test]
 fn llvm_non_escaping_closure() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         let x = 5;
         (fn () => x + 4)()
     }
@@ -51,9 +51,9 @@ fn llvm_non_escaping_closure() {
 // #[test]
 fn llvm_fib_all_explicit_returns() {
     let src = r#"
-    fn main() -> number { return fib(10); }
+    fn main() -> int { return fib(10); }
 
-    fn fib(n: number) -> number {
+    fn fib(n: int) -> int {
         return if n < 2 { return n; } else { return fib(n - 1) + fib(n - 2); };
     }
     "#;
@@ -63,9 +63,9 @@ fn llvm_fib_all_explicit_returns() {
 // #[test]
 fn llvm_fib_mixed_returns() {
     let src = r#"
-    fn main() -> number { return fib(10); }
+    fn main() -> int { return fib(10); }
 
-    fn fib(n: number) -> number {
+    fn fib(n: int) -> int {
         // note one branch is explicit return and one is not
         return if n < 2 { n } else { return fib(n - 1) + fib(n - 2); };
     }
@@ -76,7 +76,7 @@ fn llvm_fib_mixed_returns() {
 #[test]
 fn llvm_vars() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         let x = 2;
         let y = 4;
         x + y
@@ -88,7 +88,7 @@ fn llvm_vars() {
 #[test]
 fn llvm_lambda_no_capture() {
     let src = r#"
-    fn main() -> number {
+    fn main() -> int {
         let f = fn() => 5;
         2 + f()
     }

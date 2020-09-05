@@ -164,10 +164,10 @@ impl Parse for LiteralExprParser {
                 if base != Base::Decimal {
                     panic!("only decimal float literals are supported")
                 }
-                Lit::Num(slice.parse().unwrap())
+                Lit::Float(slice.parse().unwrap())
             }
             LiteralKind::Int { base, .. } =>
-                Lit::Num(i64::from_str_radix(&slice, base as u32).unwrap() as f64),
+                Lit::Int(i64::from_str_radix(&slice, base as u32).unwrap()),
             _ => todo!(),
         };
         Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))
@@ -245,7 +245,7 @@ mod test {
         dbg!(&expr);
         assert_eq!(
             expr,
-            box Expr::new(Span::new(4, 5), NodeId::new(0), ExprKind::Lit(Lit::Num(3.0)))
+            box Expr::new(Span::new(4, 5), NodeId::new(0), ExprKind::Lit(Lit::Int(3)))
         );
     }
 
@@ -257,7 +257,7 @@ mod test {
 
     #[test]
     fn parse_struct_expr() {
-        let _expr = parse_expr!("SomeStruct { x: number, y: bool }");
+        let _expr = parse_expr!("SomeStruct { x: int, y: bool }");
         dbg!(_expr);
     }
 
@@ -270,8 +270,8 @@ mod test {
                 Span::new(0, 6),
                 NodeId::new(2),
                 ExprKind::Tuple(vec![
-                    box Expr::new(Span::new(1, 2), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
-                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Num(3.0)))
+                    box Expr::new(Span::new(1, 2), NodeId::new(0), ExprKind::Lit(Lit::Int(2))),
+                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Int(3)))
                 ])
             )
         );
@@ -282,7 +282,7 @@ mod test {
         let expr = parse_expr!("2");
         assert_eq!(
             expr,
-            box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0)))
+            box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Int(2)))
         );
     }
 
@@ -296,8 +296,8 @@ mod test {
                 NodeId::new(2),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
-                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Num(3.0))),
+                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Int(2))),
+                    box Expr::new(Span::new(4, 5), NodeId::new(1), ExprKind::Lit(Lit::Int(3))),
                 )
             )
         );
@@ -333,7 +333,7 @@ mod test {
                 NodeId::new(4),
                 ExprKind::Bin(
                     BinOp::Add,
-                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Num(2.0))),
+                    box Expr::new(Span::new(0, 1), NodeId::new(0), ExprKind::Lit(Lit::Int(2))),
                     box Expr::new(
                         Span::new(4, 9),
                         NodeId::new(3),
@@ -342,12 +342,12 @@ mod test {
                             box Expr::new(
                                 Span::new(4, 5),
                                 NodeId::new(1),
-                                ExprKind::Lit(Lit::Num(3.0))
+                                ExprKind::Lit(Lit::Int(3))
                             ),
                             box Expr::new(
                                 Span::new(8, 9),
                                 NodeId::new(2),
-                                ExprKind::Lit(Lit::Num(4.0))
+                                ExprKind::Lit(Lit::Int(4))
                             ),
                         )
                     ),

@@ -5,7 +5,8 @@ use crate::{span::Span, ty::List};
 pub enum PrimTy {
     Char,
     Bool,
-    Num,
+    Float,
+    Int,
 }
 
 #[derive(Debug)]

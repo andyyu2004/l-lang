@@ -30,7 +30,7 @@ pub struct Field {
 }
 
 /// struct S {
-///     x: number, <- field decl
+///     x: int, <- field decl
 ///     y: bool,   <- field decl
 /// }
 #[derive(Debug, PartialEq, Clone)]
@@ -192,14 +192,16 @@ impl Display for PathSegment {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Lit {
-    Num(f64),
+    Float(f64),
+    Int(i64),
     Bool(bool),
 }
 
 impl Display for Lit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Num(i) => write!(f, "{}", i),
+            Self::Float(d) => write!(f, "{}", d),
+            Self::Int(i) => write!(f, "{}", i),
             Self::Bool(b) => write!(f, "{}", b),
         }
     }

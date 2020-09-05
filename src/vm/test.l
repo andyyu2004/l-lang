@@ -1,9 +1,9 @@
 
 struct S {
-    x: number,
+    x: int,
 }
 
-fn main() -> number {
+fn main() -> int {
     // S { x: 5 }
     /* f(); */
     /* (fn () => 5)() */
@@ -17,7 +17,7 @@ fn main() -> number {
 //     S { x: 5 }
 // }
 
-// fn fib(n: number) -> number {
+// fn fib(n: int) -> int {
 //    return if n < 2 { return n; } else { return fib(n - 1) + fib(n - 2); };
 //}
 

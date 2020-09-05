@@ -43,8 +43,9 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             | TyKind::Infer(_)
             | TyKind::Char
             | TyKind::Never
-            | TyKind::Num
+            | TyKind::Int
             | TyKind::Bool
+            | TyKind::Float
             | TyKind::Error => {
                 return self;
             }
@@ -75,7 +76,8 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             | TyKind::Never
             | TyKind::Error
             | TyKind::Char
-            | TyKind::Num
+            | TyKind::Int
+            | TyKind::Float
             | TyKind::Bool => false,
         }
     }

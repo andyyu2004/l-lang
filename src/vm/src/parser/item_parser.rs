@@ -153,8 +153,8 @@ mod tests {
 
     #[test]
     fn parse_struct() {
-        let _prog = parse!("struct S { x: number }");
-        let _prog = parse!("struct S { x: number, y: bool }");
+        let _prog = parse!("struct S { x: int }");
+        let _prog = parse!("struct S { x: int, y: bool }");
     }
 
     #[test]

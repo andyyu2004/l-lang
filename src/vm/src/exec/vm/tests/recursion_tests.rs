@@ -4,9 +4,9 @@ use crate::{compiler::Executable, exec::*};
 #[test]
 fn run_fib() {
     let src = r#"
-    fn main() -> number { fib(10) }
+    fn main() -> int { fib(10) }
 
-    fn fib(n: number) -> number {
+    fn fib(n: int) -> int {
         if n < 2 { n } else { fib(n - 1) + fib(n - 2) }
     }
     "#;

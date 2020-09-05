@@ -139,9 +139,9 @@ impl<'tcx> Compiler<'tcx> {
 
     fn compile_expr_lit(&mut self, c: &Const, ty: Ty) {
         match (c.kind, &ty.kind) {
-            (ConstKind::Bool(i), TyKind::Bool) => self.emit_uconst(i),
-            (ConstKind::Bool(c), TyKind::Char) => self.emit_uconst(c),
-            (ConstKind::Floating(f), TyKind::Num) => self.emit_dconst(f),
+            (ConstKind::Int(i), TyKind::Bool) => self.emit_iconst(i),
+            (ConstKind::Int(c), TyKind::Char) => self.emit_iconst(c),
+            (ConstKind::Float(f), TyKind::Int) => self.emit_dconst(f),
             _ => unreachable!("type error"),
         };
     }

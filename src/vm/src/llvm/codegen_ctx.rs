@@ -115,7 +115,8 @@ impl<'tcx> CodegenCtx<'tcx> {
         match ty.kind {
             TyKind::Bool => self.llctx.bool_type().into(),
             TyKind::Char => todo!(),
-            TyKind::Num => self.llctx.f64_type().into(),
+            TyKind::Int => self.llctx.i64_type().into(),
+            TyKind::Float => self.llctx.f64_type().into(),
             TyKind::Array(ty) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),

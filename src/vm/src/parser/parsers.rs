@@ -244,7 +244,7 @@ impl Parse for PathExprParser {
         let (span, path) = PathParser.spanned(false).parse(parser)?;
         // if the path is immediately followed by an open brace, it is a struct expr
         // SomeStruct {
-        //    x: number,
+        //    x: int,
         //    y: bool,
         // }
         if let Some(_) = parser.accept(TokenType::OpenBrace) {
