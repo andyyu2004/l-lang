@@ -1,7 +1,8 @@
 //! this pass goes over the entire hir and constructs a `TypeckTable` which replaces all inference
 //! variables with their actual values
 
-use super::{inference::FnCtx, TypeckTables};
+use super::{inference::FnCtx, TypeckOutputs};
+use crate::error::TypeError;
 use crate::ty::{InferenceVarSubstFolder, Ty, TypeFoldable, TypeFolder};
 use crate::{ir, span::Span};
 use ir::Visitor;
@@ -11,7 +12,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn resolve_inference_variables(
         &self,
         body: &'tcx ir::Body<'tcx>,
-    ) -> &'tcx TypeckTables<'tcx> {
+    ) -> &'tcx TypeckOutputs<'tcx> {
         let mut wbctx = WritebackCtx::new(self, body);
         wbctx.visit_body(body);
         self.tcx.arena.alloc(wbctx.tables)
@@ -20,7 +21,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
 struct WritebackCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
-    tables: TypeckTables<'tcx>,
+    tables: TypeckOutputs<'tcx>,
     subst_folder: InferenceVarSubstFolder<'tcx>,
     body: &'tcx ir::Body<'tcx>,
 }
@@ -29,9 +30,9 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
     fn new(fcx: &'a FnCtx<'a, 'tcx>, body: &'tcx ir::Body<'tcx>) -> Self {
         // the `DefId` of the body is the same as the `DefId` of the expr of the body
         let def_id = body.expr.id.def;
-        let substs = fcx.inference_substs().expect("unresolved inference variables");
+        let substs = fcx.inference_substs();
         let subst_folder = InferenceVarSubstFolder::new(fcx.tcx, substs);
-        Self { fcx, tables: TypeckTables::new(def_id), body, subst_folder }
+        Self { fcx, tables: TypeckOutputs::new(def_id), body, subst_folder }
     }
 
     fn write_ty(&mut self, id: ir::Id, ty: Ty<'tcx>) {

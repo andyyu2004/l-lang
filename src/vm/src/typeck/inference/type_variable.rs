@@ -1,8 +1,10 @@
-use super::InferCtxUndoLogs;
+use super::{InferCtx, InferCtxUndoLogs};
 use crate::error::{TypeError, TypeResult};
+use crate::span::Span;
 use crate::ty::InferenceVarSubstFolder;
 use crate::ty::{self, Ty, TyKind};
 use ena::unify as ut;
+use rustc_hash::FxHashMap;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
@@ -24,9 +26,15 @@ pub enum TyVarValue<'tcx> {
     Unknown,
 }
 
+#[derive(Debug)]
+pub struct TyVarData {
+    span: Span,
+}
+
 #[derive(Default, Debug)]
 pub struct TypeVariableStorage<'tcx> {
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
+    tyvar_data: FxHashMap<TyVid, TyVarData>,
     /// the number of type variables that have been generated
     tyvid_count: u32,
 }
@@ -55,13 +63,17 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     }
 
     /// generates an indexed substitution based on the contents of the UnificationTable
-    pub fn gen_substs(&mut self) -> TypeResult<'tcx, Vec<Ty<'tcx>>> {
+    pub fn gen_substs(&mut self, infcx: &'a InferCtx<'a, 'tcx>) -> Vec<Ty<'tcx>> {
         (0..self.storage.tyvid_count)
             .map(|index| {
-                let val = self.probe(TyVid { index });
+                let vid = TyVid { index };
+                let val = self.probe(vid);
                 match val {
-                    TyVarValue::Known(ty) => Ok(self.instantiate_if_known(ty)),
-                    TyVarValue::Unknown => Err(TypeError::InferenceFailure),
+                    TyVarValue::Known(ty) => self.instantiate_if_known(ty),
+                    TyVarValue::Unknown => {
+                        let span = self.storage.tyvar_data[&vid].span;
+                        infcx.emit_ty_err(span, TypeError::InferenceFailure)
+                    }
                 }
             })
             .collect()
@@ -97,9 +109,10 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         self.eq_relations().probe_value(vid)
     }
 
-    pub fn new_ty_var(&mut self) -> TyVid {
+    pub fn new_ty_var(&mut self, span: Span) -> TyVid {
         let mut tables = self.eq_relations();
         let key = tables.new_key(TyVarValue::Unknown);
+        self.storage.tyvar_data.insert(key.vid, TyVarData { span });
         debug_assert_eq!(key.vid.index, self.storage.tyvid_count);
         self.storage.tyvid_count += 1;
         key.vid
@@ -131,7 +144,7 @@ impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
 /// These structs (a newtyped TyVid) are used as the unification key
 /// for the `eq_relations`; they carry a `TypeVariableValue` along
 /// with them.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TyVidEqKey<'tcx> {
     pub vid: TyVid,
 

@@ -1,7 +1,7 @@
 use super::FnCtx;
 use crate::error::TypeResult;
 use crate::ty::*;
-use crate::typeck::{TyCtx, TypeckTables};
+use crate::typeck::TyCtx;
 use crate::{ast, ir, tir};
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -25,8 +25,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_pat_tuple(&mut self, pats: &[ir::Pattern]) -> Ty<'tcx> {
         // create inference variables for each element
-        let n = pats.len();
-        let tys = self.tcx.mk_substs((0..n).map(|_| self.new_infer_var()));
+        let tys = self.tcx.mk_substs(pats.iter().map(|pat| self.new_infer_var(pat.span)));
         for (pat, ty) in pats.iter().zip(tys) {
             self.check_pat(pat, ty);
         }

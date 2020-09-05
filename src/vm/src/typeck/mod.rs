@@ -11,5 +11,5 @@ mod writeback;
 
 pub use item_ctx::ItemCtx;
 pub use relate::{Relate, TypeRelation};
-pub use tables::TypeckTables;
+pub use tables::TypeckOutputs;
 pub use tyctx::{GlobalCtx, TyCtx};

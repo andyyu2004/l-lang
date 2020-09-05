@@ -3,13 +3,13 @@ use crate::ty::Ty;
 use rustc_hash::FxHashMap;
 
 #[derive(Debug)]
-pub struct TypeckTables<'tcx> {
+pub struct TypeckOutputs<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
     pub def_id: DefId,
     pub node_types: FxHashMap<LocalId, Ty<'tcx>>,
 }
 
-impl<'tcx> TypeckTables<'tcx> {
+impl<'tcx> TypeckOutputs<'tcx> {
     pub fn new(def_id: DefId) -> Self {
         Self { def_id, node_types: Default::default() }
     }

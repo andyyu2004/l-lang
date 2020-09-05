@@ -21,7 +21,7 @@ fn check_call_non_function() {
 
 #[test]
 fn check_recursive_named_closure() {
-    let tir = typeck_expr!("fn f() { f() }");
+    let _tir = typeck_expr!("fn f() { 1 + f() }; 5");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn check_higher_order_lambda() {
     let tir = typeck_expr!("let f = fn(x) => false; let g = fn(p) => p(3); g(f); 5");
     let lines = lines!(&tir);
     // note `false` is represented as `0`
-    assert_eq!(lines[0], "let f:fn(int)->bool = (λ(x:int) 0:bool):fn(int)->bool;");
+    assert_eq!(lines[0], "let f:fn(int)->bool = (λ(x:int) false:bool):fn(int)->bool;");
     assert_eq!(
         lines[1],
         "let g:fn(fn(int)->bool)->bool = (λ(p:fn(int)->bool) (p:fn(int)->bool 3:int):bool):fn(fn(int)->bool)->bool;"

@@ -6,7 +6,7 @@ use crate::core::Arena;
 use crate::error::{DiagnosticBuilder, LError, LResult};
 use crate::llvm::CodegenCtx;
 use crate::resolve::{Resolver, ResolverOutputs};
-use crate::typeck::GlobalCtx;
+use crate::typeck::{GlobalCtx, TyCtx};
 use crate::{exec, ir, lexer, mir, parser, span, tir};
 use exec::VM;
 use inkwell::{context::Context as LLVMCtx, values::FunctionValue, OptimizationLevel};
@@ -68,11 +68,14 @@ impl<'tcx> Driver<'tcx> {
         Ok((ir, resolutions))
     }
 
-    pub fn gen_mir(&'tcx self) -> LResult<mir::Prog<'tcx>> {
+    fn with_tcx_and_ir<R>(
+        &'tcx self,
+        f: impl for<'ir> FnOnce(TyCtx<'tcx>, &'ir ir::Prog<'tcx>) -> R,
+    ) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
         let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
-        let mir = gcx.enter_tcx(|tcx| tcx.lower_prog(&ir));
+        let ret = gcx.enter_tcx(|tcx| f(tcx, &ir));
         if self.session.has_errors() {
             let errc = self.session.err_count();
             if errc == 1 {
@@ -82,8 +85,16 @@ impl<'tcx> Driver<'tcx> {
             }
             Err(LError::ErrorReported)
         } else {
-            Ok(mir)
+            Ok(ret)
         }
+    }
+
+    pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
+        self.with_tcx_and_ir(|tcx, ir| tcx.build_tir(ir))
+    }
+
+    pub fn gen_mir(&'tcx self) -> LResult<mir::Prog<'tcx>> {
+        self.with_tcx_and_ir(|tcx, ir| tcx.build_mir(ir))
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {

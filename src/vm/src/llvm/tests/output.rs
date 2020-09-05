@@ -37,7 +37,7 @@ fn llvm_multiple_returns() {
     assert_eq!(llvm_exec!(src), 5);
 }
 
-#[test]
+// #[test]
 fn llvm_non_escaping_closure() {
     let src = r#"
     fn main() -> int {
@@ -49,6 +49,17 @@ fn llvm_non_escaping_closure() {
 }
 
 // #[test]
+fn llvm_lambda_no_capture() {
+    let src = r#"
+    fn main() -> int {
+        let f = fn() => 5;
+        2 + f()
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 7)
+}
+
+#[test]
 fn llvm_fib_all_explicit_returns() {
     let src = r#"
     fn main() -> int { return fib(10); }
@@ -60,7 +71,7 @@ fn llvm_fib_all_explicit_returns() {
     assert_eq!(llvm_exec!(src), 55)
 }
 
-// #[test]
+#[test]
 fn llvm_fib_mixed_returns() {
     let src = r#"
     fn main() -> int { return fib(10); }
@@ -83,15 +94,4 @@ fn llvm_vars() {
     }
     "#;
     assert_eq!(llvm_exec!(src), 6)
-}
-
-#[test]
-fn llvm_lambda_no_capture() {
-    let src = r#"
-    fn main() -> int {
-        let f = fn() => 5;
-        2 + f()
-    }
-    "#;
-    assert_eq!(llvm_exec!(src), 7)
 }

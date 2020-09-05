@@ -1,8 +1,9 @@
 use super::FnCtx;
 use crate::error::{TypeError, TypeResult};
 use crate::ir::{DefId, DefKind};
+use crate::span::Span;
 use crate::ty::*;
-use crate::typeck::{TyCtx, TypeckTables};
+use crate::typeck::{TyCtx, TypeckOutputs};
 use crate::{ast, ir, tir};
 use ast::{Ident, Mutability};
 use itertools::Itertools;
@@ -185,7 +186,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn check_call_expr(&mut self, expr: &ir::Expr, f: &ir::Expr, args: &[ir::Expr]) -> Ty<'tcx> {
-        let ret_ty = self.new_infer_var();
+        let ret_ty = self.new_infer_var(expr.span);
         let f_ty = self.check_expr(f);
         let arg_tys = self.check_expr_list(args);
         let ty = self.tcx.mk_ty(TyKind::Fn(arg_tys, ret_ty));
@@ -199,7 +200,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         sig: &ir::FnSig,
         body: &ir::Body,
     ) -> Ty<'tcx> {
-        let infer = self.new_infer_var();
+        let infer = self.new_infer_var(closure.span);
         // the resolver resolved the closure name to the closure id
         // so we define a local variable for it with a type to infer
         self.def_local(closure.id, infer, Mutability::Imm);
@@ -218,8 +219,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         let body_ty = self.check_expr(body.expr);
         self.unify(body.expr.span, self.ret_ty, body_ty);
-        // f explicitly overwrite the type of body in case it is never
-        // this is a special case due to return statements in the top level block
+        // explicitly overwrite the type of body with the return type of the function
+        // in case it is !
+        // this is a special case due to return statements in the top level block expr
         self.write_ty(body.id(), self.ret_ty);
     }
 
@@ -238,16 +240,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {
         match path.res {
             ir::Res::Local(id) => self.local_ty(id).ty,
-            ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(def_id, def_kind),
+            ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
         }
     }
 
-    fn check_expr_path_def(&mut self, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
+    fn check_expr_path_def(&mut self, span: Span, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
         match def_kind {
             // instantiate ty params
             DefKind::Fn | DefKind::Enum | DefKind::Struct =>
-                self.instantiate(self.tcx.item_ty(def_id)),
+                self.instantiate(span, self.tcx.item_ty(def_id)),
             DefKind::TyParam(_) => unreachable!(),
         }
     }

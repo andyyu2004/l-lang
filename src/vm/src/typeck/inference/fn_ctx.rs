@@ -5,7 +5,7 @@ use crate::ir::{self, DefId};
 use crate::span::Span;
 use crate::tir;
 use crate::ty::{SubstsRef, Ty, TyConv, TyKind};
-use crate::typeck::{TyCtx, TypeckTables};
+use crate::typeck::{TyCtx, TypeckOutputs};
 use ir::FnSig;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -49,7 +49,7 @@ impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
     }
 
     fn infer_ty(&self, span: Span) -> Ty<'tcx> {
-        self.new_infer_var()
+        self.new_infer_var(span)
     }
 }
 

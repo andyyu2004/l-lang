@@ -11,6 +11,7 @@ use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Deref;
@@ -159,10 +160,16 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    /// top level entrace to typechecking and lowering
-    pub fn lower_prog(self, ir: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
+    /// top level entrace to typechecking and lowering to mir
+    pub fn build_mir(self, ir: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
         self.collect(ir);
-        self.lower_prog_inner(ir)
+        self.build_mir_inner(ir)
+    }
+
+    /// top level entrace to typechecking and lowering to tir
+    pub fn build_tir(self, ir: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
+        self.collect(ir);
+        self.build_tir_inner(ir)
     }
 
     /// constructs a TypeScheme from a type and its generics
@@ -172,27 +179,42 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
-    /// ir -> tir -> mir
-    fn lower_prog_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
+    fn with_ir_lctx<R>(
+        self,
+        item: &ir::Item<'tcx>,
+        f: impl for<'a> FnOnce(IrLoweringCtx<'a, 'tcx>) -> R,
+    ) -> Option<R> {
+        let &ir::Item { id, span, vis, ident, ref kind } = item;
+        // only functions compile down to any runtime representation
+        // data definitions such as structs and enums are purely a compile time concept
+        match kind {
+            ir::ItemKind::Fn(sig, generics, body) =>
+                Inherited::build(self, item.id.def).enter(|inherited| {
+                    let fcx = inherited.check_fn_item(item, sig, generics, body);
+                    let tables = fcx.resolve_inference_variables(body);
+                    let lctx = IrLoweringCtx::new(&inherited, tables);
+                    Some(f(lctx))
+                }),
+            ir::ItemKind::Struct(..) => None,
+        }
+    }
+
+    /// ir -> tir
+    fn build_tir_inner(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
         for (&id, &item) in &prog.items {
-            let &ir::Item { id, span, vis, ident, ref kind } = item;
-            // only functions compile down to any runtime representation
-            // data definitions such as structs and enums are purely a compile time concept
-            match kind {
-                ir::ItemKind::Fn(sig, generics, body) =>
-                    Inherited::build(self, item.id.def).enter(|inherited| {
-                        let fcx = inherited.check_fn_item(item, sig, generics, body);
-                        let tables = fcx.resolve_inference_variables(body);
-                        let lctx = IrLoweringCtx::new(&inherited, tables);
-                        let mir_body = lctx.lower_item(item);
-                        let mir_item =
-                            mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) };
-                        items.insert(id, mir_item);
-                    }),
-                ir::ItemKind::Struct(..) => {}
-            };
+            self.with_ir_lctx(item, |mut lctx| items.insert(id, lctx.lower_item_tir(item)));
+        }
+        tir::Prog { items }
+    }
+
+    /// ir -> tir -> mir
+    fn build_mir_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
+        let mut items = BTreeMap::new();
+
+        for (&id, &item) in &prog.items {
+            self.with_ir_lctx(item, |lctx| items.insert(id, lctx.lower_item(item)));
         }
         mir::Prog { items }
     }

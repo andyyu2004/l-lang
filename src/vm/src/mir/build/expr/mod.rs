@@ -1,4 +1,5 @@
 use super::{BlockAnd, BlockAndExt, Builder};
+use crate::error::TypeError;
 use crate::mir::{BlockId, Lvalue, Operand, Rvalue, SpanInfo, TerminatorKind};
 use crate::set;
 use crate::span::Span;

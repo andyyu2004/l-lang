@@ -3,7 +3,7 @@ use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
 use crate::ir::DefId;
 use crate::span::Span;
 use crate::ty::*;
-use crate::typeck::{TyCtx, TypeckTables};
+use crate::typeck::{TyCtx, TypeckOutputs};
 use crate::{ast, ir, tir};
 use std::cell::{Cell, RefCell};
 use std::error::Error;
@@ -13,12 +13,12 @@ pub struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
     def_id: DefId,
     tcx: TyCtx<'tcx>,
-    tables: RefCell<TypeckTables<'tcx>>,
+    tables: RefCell<TypeckOutputs<'tcx>>,
 }
 
 impl<'tcx> InferCtxBuilder<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, def_id: DefId) -> Self {
-        Self { tcx, def_id, tables: RefCell::new(TypeckTables::new(def_id)) }
+        Self { tcx, def_id, tables: RefCell::new(TypeckOutputs::new(def_id)) }
     }
 
     pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(InferCtx<'a, 'tcx>) -> R) -> R {
@@ -41,7 +41,7 @@ impl<'tcx> InferCtxInner<'tcx> {
 pub struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
-    tables: &'a RefCell<TypeckTables<'tcx>>,
+    tables: &'a RefCell<TypeckOutputs<'tcx>>,
     has_error: Cell<bool>,
 }
 
@@ -54,7 +54,7 @@ impl<'tcx> Deref for InferCtx<'_, 'tcx> {
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
+    pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckOutputs<'tcx>>) -> Self {
         Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
     }
 
@@ -83,8 +83,8 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     /// creates the substitutions for the inference variables
-    pub fn inference_substs(&self) -> TypeResult<'tcx, SubstsRef<'tcx>> {
-        let vec = self.inner.borrow_mut().type_variables().gen_substs()?;
+    pub fn inference_substs(&self) -> SubstsRef<'tcx> {
+        let vec: Vec<_> = self.inner.borrow_mut().type_variables().gen_substs(self);
         let mut substs = self.tcx.intern_substs(&vec);
         // repeatedly substitutes its inference variables value
         // until it contains no inference variables or failure
@@ -98,13 +98,13 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
             substs = new_substs;
         }
         debug_assert!(substs.iter().all(|ty| !ty.has_infer_vars()));
-        Ok(substs)
+        substs
     }
 
-    pub fn instantiate(&self, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn instantiate(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             TyKind::Scheme(forall, ty) => {
-                let mut folder = InstantiationFolder::new(self, forall);
+                let mut folder = InstantiationFolder::new(self, span, forall);
                 ty.fold_with(&mut folder)
             }
             _ => ty,
@@ -112,8 +112,8 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     /// create new type inference variable
-    pub fn new_infer_var(&self) -> Ty<'tcx> {
-        let vid = self.inner.borrow_mut().type_variables().new_ty_var();
+    pub fn new_infer_var(&self, span: Span) -> Ty<'tcx> {
+        let vid = self.inner.borrow_mut().type_variables().new_ty_var(span);
         self.tcx.mk_ty(TyKind::Infer(InferTy::TyVar(vid)))
     }
 

@@ -1,4 +1,5 @@
 use crate::ir;
+use crate::span::Span;
 use crate::ty::Ty;
 use thiserror::Error;
 
@@ -12,8 +13,8 @@ pub enum TypeError<'tcx> {
     Mismatch(Ty<'tcx>, Ty<'tcx>),
     #[error("expected `{0}-tuple`, found `{1}-tuple`")]
     TupleSizeMismatch(usize, usize),
-    #[error("require type annotations")]
-    InferenceFailure,
     #[error("{0}")]
     Msg(String),
+    #[error("type annotations required")]
+    InferenceFailure,
 }

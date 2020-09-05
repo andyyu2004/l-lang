@@ -3,7 +3,7 @@ use crate::ir::{self, DefId};
 use crate::mir;
 use crate::tir;
 use crate::ty::{Const, ConstKind, InferenceVarSubstFolder, Subst, Ty};
-use crate::typeck::{inference::InferCtx, TyCtx, TypeckTables};
+use crate::typeck::{inference::InferCtx, TyCtx, TypeckOutputs};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -12,7 +12,7 @@ use std::ops::Deref;
 pub struct IrLoweringCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
-    tables: &'a TypeckTables<'tcx>,
+    tables: &'a TypeckOutputs<'tcx>,
 }
 
 impl<'a, 'tcx> Deref for IrLoweringCtx<'a, 'tcx> {
@@ -24,16 +24,26 @@ impl<'a, 'tcx> Deref for IrLoweringCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckTables<'tcx>) -> Self {
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckOutputs<'tcx>) -> Self {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
-    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> mir::Body<'tcx> {
+    /// ir -> mir
+    pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
-        let tir = item.to_tir(&mut self);
+        item.to_tir(self)
+    }
+
+    /// ir -> tir -> mir
+    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
+        let &ir::Item { id, span, vis, ident, ref kind } = item;
+        let tir = self.lower_item_tir(item);
         println!("{}", tir);
         match tir.kind {
-            tir::ItemKind::Fn(_, _, body) => mir::build_fn(self, body),
+            tir::ItemKind::Fn(_, _, body) => {
+                let mir_body = mir::build_fn(self, body);
+                mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) }
+            }
         }
     }
 
@@ -73,7 +83,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let ty = ctx.tcx.item_ty(self.id.def);
                 tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
             }
-            ir::ItemKind::Struct(_, _) => todo!(),
+            ir::ItemKind::Struct(_, _) => unreachable!(),
         };
         tir::Item { kind, span, id, ident, vis }
     }

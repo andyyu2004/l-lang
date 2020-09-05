@@ -33,12 +33,12 @@ pub struct InstantiationFolder<'tcx> {
 }
 
 impl<'tcx> InstantiationFolder<'tcx> {
-    pub fn new(infcx: &InferCtx<'_, 'tcx>, forall: &Forall<'tcx>) -> Self {
+    pub fn new(infcx: &InferCtx<'_, 'tcx>, span: Span, forall: &Forall<'tcx>) -> Self {
         let tcx = infcx.tcx;
         // check that the index of the binders aren't weird
         let n = forall.binders.len();
         assert!(forall.binders.iter().map(|idx| idx.index()).eq(0..n));
-        let substs = tcx.mk_substs((0..n).map(|_| infcx.new_infer_var()));
+        let substs = tcx.mk_substs((0..n).map(|_| infcx.new_infer_var(span)));
         Self { tcx, substs }
     }
 }
