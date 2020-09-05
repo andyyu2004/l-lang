@@ -239,7 +239,7 @@ impl<'tcx> Tir<'tcx> for Lit {
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         match *self {
             Lit::Float(n) => Const::new(ConstKind::Float(n)),
-            Lit::Bool(b) => Const::new(ConstKind::Int(b as i64)),
+            Lit::Bool(b) => Const::new(ConstKind::Bool(b)),
             Lit::Int(i) => Const::new(ConstKind::Int(i)),
         }
     }

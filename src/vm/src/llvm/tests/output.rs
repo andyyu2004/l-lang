@@ -10,7 +10,7 @@ fn llvm_fib() {
         if n < 2 { n } else { fib(n - 1) + fib(n - 2) }
     }
     "#;
-    assert_eq!(llvm_exec!(src), 55.0)
+    assert_eq!(llvm_exec!(src), 55)
 }
 
 /// checks that the expression statements are actually being performed, even though their results
@@ -23,7 +23,7 @@ fn llvm_side_effects() {
         x = x + 1;
         x
     }"#;
-    assert_eq!(llvm_exec!(src), 1.0);
+    assert_eq!(llvm_exec!(src), 1);
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn llvm_multiple_returns() {
         return 6;
         return 7;
     }"#;
-    assert_eq!(llvm_exec!(src), 5.0);
+    assert_eq!(llvm_exec!(src), 5);
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn llvm_non_escaping_closure() {
         (fn () => x + 4)()
     }
     "#;
-    assert_eq!(llvm_exec!(src), 9.0);
+    assert_eq!(llvm_exec!(src), 9);
 }
 
 // #[test]
@@ -57,7 +57,7 @@ fn llvm_fib_all_explicit_returns() {
         return if n < 2 { return n; } else { return fib(n - 1) + fib(n - 2); };
     }
     "#;
-    assert_eq!(llvm_exec!(src), 55.0)
+    assert_eq!(llvm_exec!(src), 55)
 }
 
 // #[test]
@@ -70,7 +70,7 @@ fn llvm_fib_mixed_returns() {
         return if n < 2 { n } else { return fib(n - 1) + fib(n - 2); };
     }
     "#;
-    assert_eq!(llvm_exec!(src), 55.0)
+    assert_eq!(llvm_exec!(src), 55)
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn llvm_vars() {
         x + y
     }
     "#;
-    assert_eq!(llvm_exec!(src), 6.0)
+    assert_eq!(llvm_exec!(src), 6)
 }
 
 #[test]
@@ -93,5 +93,5 @@ fn llvm_lambda_no_capture() {
         2 + f()
     }
     "#;
-    assert_eq!(llvm_exec!(src), 7.0)
+    assert_eq!(llvm_exec!(src), 7)
 }

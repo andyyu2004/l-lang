@@ -95,12 +95,12 @@ impl<'tcx> Driver<'tcx> {
         Ok((cctx, main_fn))
     }
 
-    pub fn llvm_exec(&'tcx self) -> LResult<f64> {
+    pub fn llvm_exec(&'tcx self) -> LResult<i64> {
         let (ctx, main_fn) = self.llvm_compile()?;
         // execution
         let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::Aggressive).unwrap();
         let val = unsafe { jit.run_function(main_fn, &[]) };
-        Ok(val.as_float(&ctx.llctx.f64_type()))
+        Ok(val.as_int(true) as i64)
     }
 
     // pub fn compile(&'tcx self) -> LResult<Executable> {

@@ -3,7 +3,7 @@ use crate::ast;
 use crate::mir::{self, BlockId, VarId};
 use crate::ty::ConstKind;
 use indexed_vec::{Idx, IndexVec};
-use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate};
+use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
@@ -117,20 +117,63 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match rvalue {
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Bin(op, l, r) => {
-                let lhs = self.codegen_operand(l).into_float_value();
-                let rhs = self.codegen_operand(r).into_float_value();
-                match op {
-                    ast::BinOp::Mul => self.build_float_mul(lhs, rhs, "tmpfmul").into(),
-                    ast::BinOp::Div => self.build_float_div(lhs, rhs, "tmpfdiv").into(),
-                    ast::BinOp::Add => self.build_float_add(lhs, rhs, "tmpadd").into(),
-                    ast::BinOp::Sub => self.build_float_sub(lhs, rhs, "tmpfsub").into(),
-                    ast::BinOp::Lt | ast::BinOp::Gt => self.compile_cmp(*op, lhs, rhs).into(),
+                let lhs = self.codegen_operand(l);
+                let rhs = self.codegen_operand(r);
+                match (lhs, rhs) {
+                    (BasicValueEnum::FloatValue(l), BasicValueEnum::FloatValue(r)) =>
+                        self.codegen_float_op(*op, l, r),
+                    (BasicValueEnum::IntValue(l), BasicValueEnum::IntValue(r)) =>
+                        self.codegen_int_op(*op, l, r),
+                    _ => unreachable!(),
                 }
             }
         }
     }
 
-    fn compile_cmp(
+    fn codegen_int_op(
+        &mut self,
+        op: ast::BinOp,
+        lhs: IntValue<'tcx>,
+        rhs: IntValue<'tcx>,
+    ) -> BasicValueEnum<'tcx> {
+        match op {
+            ast::BinOp::Mul => self.build_int_mul(lhs, rhs, "tmpimul").into(),
+            ast::BinOp::Div => self.build_int_signed_div(lhs, rhs, "tmpidiv").into(),
+            ast::BinOp::Add => self.build_int_add(lhs, rhs, "tmpidd").into(),
+            ast::BinOp::Sub => self.build_int_sub(lhs, rhs, "tmpisub").into(),
+            ast::BinOp::Lt | ast::BinOp::Gt => self.compile_icmp(op, lhs, rhs).into(),
+        }
+    }
+
+    fn codegen_float_op(
+        &mut self,
+        op: ast::BinOp,
+        lhs: FloatValue<'tcx>,
+        rhs: FloatValue<'tcx>,
+    ) -> BasicValueEnum<'tcx> {
+        match op {
+            ast::BinOp::Mul => self.build_float_mul(lhs, rhs, "tmpfmul").into(),
+            ast::BinOp::Div => self.build_float_div(lhs, rhs, "tmpfdiv").into(),
+            ast::BinOp::Add => self.build_float_add(lhs, rhs, "tmpadd").into(),
+            ast::BinOp::Sub => self.build_float_sub(lhs, rhs, "tmpfsub").into(),
+            ast::BinOp::Lt | ast::BinOp::Gt => self.compile_fcmp(op, lhs, rhs).into(),
+        }
+    }
+
+    fn compile_icmp(
+        &mut self,
+        op: ast::BinOp,
+        l: IntValue<'tcx>,
+        r: IntValue<'tcx>,
+    ) -> IntValue<'tcx> {
+        match op {
+            ast::BinOp::Lt => self.builder.build_int_compare(IntPredicate::SLT, l, r, "icmp_lt"),
+            ast::BinOp::Gt => self.builder.build_int_compare(IntPredicate::SGT, l, r, "icmp_gt"),
+            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
+        }
+    }
+
+    fn compile_fcmp(
         &mut self,
         op: ast::BinOp,
         l: FloatValue<'tcx>,

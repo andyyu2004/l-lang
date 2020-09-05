@@ -279,7 +279,7 @@ impl<'tcx> Const<'tcx> {
 impl<'tcx> Display for Const<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ConstKind::Float(d) => write!(f, "{}", d),
+            ConstKind::Float(d) => write!(f, "{:?}", d),
             ConstKind::Int(i) => write!(f, "{}", i),
             ConstKind::Bool(b) => write!(f, "{}", b),
         }

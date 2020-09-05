@@ -81,7 +81,7 @@ pub fn parse(src: &str) -> LResult<Box<ast::Prog>> {
 //     Ok(res)
 // }
 
-pub fn llvm_exec(src: &str) -> LResult<f64> {
+pub fn llvm_exec(src: &str) -> LResult<i64> {
     let driver = mk_driver(src);
     let res = driver.llvm_exec()?;
     Ok(res)
@@ -97,7 +97,7 @@ fn wrap_in_main(src: &str) -> String {
     format!("fn main() -> int {{ {} }}", src)
 }
 
-pub fn llvm_exec_expr(src: &str) -> LResult<f64> {
+pub fn llvm_exec_expr(src: &str) -> LResult<i64> {
     let src = wrap_in_main(src);
     llvm_exec(&src)
 }
