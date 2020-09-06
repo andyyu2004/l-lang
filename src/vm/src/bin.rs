@@ -15,22 +15,8 @@ fn main() {
         let src = std::fs::read_to_string(path).unwrap();
         return if interpret {
             unimplemented!();
-        // println!(
-        //     "{:?}",
-        //     libvm::exec(&src).unwrap_or_else(|err| {
-        //         println!("{:?}", err);
-        //         std::process::exit(1)
-        //     })
-        // );
         } else {
-            // error reporting is in a kind of half ass state between `DiagnosticBuilder` and `LResult`
-            println!(
-                "result {}",
-                libvm::llvm_exec(&src).unwrap_or_else(|err| {
-                    println!("{:?}", err);
-                    std::process::exit(1)
-                })
-            );
+            println!("{}", libvm::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
         };
     }
 
@@ -44,10 +30,7 @@ fn main() {
                     continue;
                 }
                 rl.add_history_entry(line.as_str());
-                match libvm::llvm_exec_expr(&line) {
-                    Ok(res) => println!("{}", res),
-                    Err(err) => println!("{:?}", err),
-                }
+                libvm::llvm_exec_expr(&line).unwrap_or_else(|_| std::process::exit(1));
             }
             Err(ReadlineError::Interrupted) => break,
             Err(ReadlineError::Eof) => break,

@@ -12,18 +12,18 @@ pub struct TextEmitter {}
 
 impl TextEmitter {
     fn emit_span(&mut self, span: Span) {
-        println!("{}", span.to_string())
+        eprintln!("source: {}", span.to_string())
     }
 }
 
 impl Emitter for TextEmitter {
     fn emit(&mut self, diagnostic: &Diagnostic) {
-        red!("error: ");
+        e_red!("error: ");
         let Diagnostic { span, messages } = diagnostic;
         for message in messages {
-            red_ln!("{}", message)
+            e_red_ln!("{}", message)
         }
         span.primary_spans.iter().for_each(|&s| self.emit_span(s));
-        println!()
+        eprintln!()
     }
 }

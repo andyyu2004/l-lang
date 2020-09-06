@@ -268,11 +268,16 @@ pub enum ConstKind {
     Float(f64),
     Int(i64),
     Bool(bool),
+    Unit,
 }
 
 impl<'tcx> Const<'tcx> {
     pub fn new(kind: ConstKind) -> Self {
         Self { kind, marker: PhantomData }
+    }
+
+    pub fn unit() -> Self {
+        Self::new(ConstKind::Unit)
     }
 }
 
@@ -282,6 +287,7 @@ impl<'tcx> Display for Const<'tcx> {
             ConstKind::Float(d) => write!(f, "{:?}", d),
             ConstKind::Int(i) => write!(f, "{}", i),
             ConstKind::Bool(b) => write!(f, "{}", b),
+            ConstKind::Unit => write!(f, "()"),
         }
     }
 }

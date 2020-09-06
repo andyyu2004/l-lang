@@ -62,10 +62,10 @@ fn llvm_lambda_no_capture() {
 #[test]
 fn llvm_fib_all_explicit_returns() {
     let src = r#"
-    fn main() -> int { return fib(10); }
+    fn main() -> int { return fib(10) }
 
     fn fib(n: int) -> int {
-        return if n < 2 { return n; } else { return fib(n - 1) + fib(n - 2); };
+        return if n < 2 { return n } else { return fib(n - 1) + fib(n - 2) }
     }
     "#;
     assert_eq!(llvm_exec!(src), 55)
@@ -74,11 +74,11 @@ fn llvm_fib_all_explicit_returns() {
 #[test]
 fn llvm_fib_mixed_returns() {
     let src = r#"
-    fn main() -> int { return fib(10); }
+    fn main() -> int { return fib(10) }
 
     fn fib(n: int) -> int {
         // note one branch is explicit return and one is not
-        return if n < 2 { n } else { return fib(n - 1) + fib(n - 2); };
+        return if n < 2 { n } else { return fib(n - 1) + fib(n - 2) }
     }
     "#;
     assert_eq!(llvm_exec!(src), 55)

@@ -2,8 +2,9 @@
 
 use super::{BasicBlock, BlockId};
 use crate::mir;
+use crate::ty::Const;
 use indexed_vec::IndexVec;
-use mir::{Lvalue, Rvalue, SpanInfo, Terminator, TerminatorKind};
+use mir::{Lvalue, Operand, Rvalue, SpanInfo, Terminator, TerminatorKind};
 
 #[derive(Default)]
 pub struct Cfg<'tcx> {
@@ -37,8 +38,7 @@ impl<'tcx> Cfg<'tcx> {
 
     /// writes a unit into `lvalue`
     pub fn push_assign_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
-        todo!();
-        // self.push_assignment(info, block, lvalue, Rvalue::Ref());
+        self.push_assignment(info, block, lvalue, Rvalue::Use(Operand::Const(box Const::unit())));
     }
 
     pub fn push_assignment(

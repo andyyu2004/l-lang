@@ -98,6 +98,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ConstKind::Float(f) => self.llctx.f64_type().const_float(f).into(),
                 ConstKind::Int(i) => self.llctx.i64_type().const_int(i as u64, true).into(),
                 ConstKind::Bool(b) => self.llctx.bool_type().const_int(b as u64, true).into(),
+                ConstKind::Unit => self.llctx.const_struct(&[], false).into(),
             },
             mir::Operand::Ref(lvalue) => {
                 let var = self.vars[lvalue.id];

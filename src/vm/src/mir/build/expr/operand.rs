@@ -14,7 +14,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         match expr.kind {
             tir::ExprKind::Const(c) => {
                 let constant = set!(block = self.as_const(block, expr));
-                block.and(Operand::Const(c))
+                block.and(Operand::Const(box constant))
             }
             tir::ExprKind::VarRef(id) => {
                 let var = self.var_ir_map[&id];

@@ -7,12 +7,15 @@ fn main() -> int {
     // S { x: 5 }
     /* f(); */
     /* (fn () => 5)() */
-    return;
+    g();
+    return 3;
     let mut x = 69;
     x = x + 1;
     x + 5;
     if false { 5 } else { 4 }
 }
+
+fn g() { }
 
 // fn f() -> S {
 //     S { x: 5 }

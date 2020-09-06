@@ -79,9 +79,9 @@ impl<'tcx> Driver<'tcx> {
         if self.session.has_errors() {
             let errc = self.session.err_count();
             if errc == 1 {
-                red_ln!("{} error emitted", errc)
+                e_red_ln!("{} error emitted", errc)
             } else {
-                red_ln!("{} errors emitted", errc)
+                e_red_ln!("{} errors emitted", errc)
             }
             Err(LError::ErrorReported)
         } else {

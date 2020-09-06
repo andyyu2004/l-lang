@@ -2,6 +2,8 @@
 
 mod build;
 mod fmt;
+mod traversal;
+
 pub use fmt::MirFmt;
 
 use crate::ir::{self, DefId};
@@ -166,7 +168,7 @@ pub enum Rvalue<'tcx> {
 // this design flattens out recursive expressions into a series of temporaries
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operand<'tcx> {
-    Const(&'tcx Const<'tcx>),
+    Const(Box<Const<'tcx>>),
     Ref(Lvalue<'tcx>),
     Item(DefId),
 }
@@ -175,6 +177,19 @@ pub enum Operand<'tcx> {
 pub struct Terminator<'tcx> {
     pub info: SpanInfo,
     pub kind: TerminatorKind<'tcx>,
+}
+
+impl<'tcx> Terminator<'tcx> {
+    pub fn successors(&self) -> Vec<BlockId> {
+        match self.kind {
+            TerminatorKind::Branch(block)
+            | TerminatorKind::Call { target: block, unwind: None, .. } => vec![block],
+            TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
+            TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
+            TerminatorKind::Switch { ref arms, default, .. } =>
+                arms.iter().map(|(_, b)| *b).collect(),
+        }
+    }
 }
 
 /// information of the original source code that was converted into the mir

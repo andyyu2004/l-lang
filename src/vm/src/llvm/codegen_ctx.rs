@@ -120,6 +120,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Array(ty) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
+            TyKind::Tuple(xs) if xs.is_empty() => self.llctx.struct_type(&[], false).into(),
             TyKind::Tuple(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
