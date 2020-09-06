@@ -95,10 +95,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_operand(&mut self, operand: &mir::Operand) -> BasicValueEnum<'tcx> {
         match operand {
             mir::Operand::Const(c) => match c.kind {
-                ConstKind::Float(f) => self.llctx.f64_type().const_float(f).into(),
-                ConstKind::Int(i) => self.llctx.i64_type().const_int(i as u64, true).into(),
-                ConstKind::Bool(b) => self.llctx.bool_type().const_int(b as u64, true).into(),
-                ConstKind::Unit => self.llctx.const_struct(&[], false).into(),
+                ConstKind::Float(f) => self.types.float.const_float(f).into(),
+                ConstKind::Int(i) => self.types.int.const_int(i as u64, true).into(),
+                ConstKind::Bool(b) => self.types.boolean.const_int(b as u64, true).into(),
+                ConstKind::Unit => self.vals.unit.into(),
             },
             mir::Operand::Ref(lvalue) => {
                 let var = self.vars[lvalue.id];

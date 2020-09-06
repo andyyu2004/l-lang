@@ -8,7 +8,7 @@ use crate::tir;
 use crate::ty::{Const, ConstKind, SubstsRef, Ty, TyKind};
 use crate::typeck::TyCtx;
 use ast::Ident;
-use inkwell::types::{BasicType, BasicTypeEnum, FloatType, FunctionType};
+use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::{
     basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager
@@ -28,6 +28,7 @@ pub struct CodegenCtx<'tcx> {
     pub fpm: PassManager<FunctionValue<'tcx>>,
     pub module: Module<'tcx>,
     pub vals: CommonValues<'tcx>,
+    pub types: CommonTypes<'tcx>,
     /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
     /// this api is a bit awkward, but its what inkwell has so..
     pub items: RefCell<FxHashMap<DefId, Ident>>,
@@ -35,7 +36,15 @@ pub struct CodegenCtx<'tcx> {
 }
 
 pub struct CommonValues<'tcx> {
-    zero: IntValue<'tcx>,
+    pub zero: IntValue<'tcx>,
+    pub unit: StructValue<'tcx>,
+}
+
+pub struct CommonTypes<'tcx> {
+    pub unit: StructType<'tcx>,
+    pub int: IntType<'tcx>,
+    pub float: FloatType<'tcx>,
+    pub boolean: IntType<'tcx>,
 }
 
 impl<'tcx> CodegenCtx<'tcx> {
@@ -51,7 +60,14 @@ impl<'tcx> CodegenCtx<'tcx> {
         fpm.add_instruction_combining_pass();
         fpm.add_reassociate_pass();
         fpm.initialize();
-        let vals = CommonValues { zero: llctx.i64_type().const_zero() };
+        let types = CommonTypes {
+            unit: llctx.struct_type(&[], false),
+            int: llctx.i64_type(),
+            float: llctx.f64_type(),
+            boolean: llctx.bool_type(),
+        };
+        let vals =
+            CommonValues { zero: llctx.i64_type().const_zero(), unit: types.unit.get_undef() };
         Self {
             tcx,
             llctx,
@@ -59,6 +75,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             fpm,
             builder: llctx.create_builder(),
             vals,
+            types,
             curr_fn: None,
             items: Default::default(),
         }
@@ -113,14 +130,14 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
         match ty.kind {
-            TyKind::Bool => self.llctx.bool_type().into(),
+            TyKind::Bool => self.types.boolean.into(),
+            TyKind::Int => self.types.int.into(),
+            TyKind::Float => self.types.float.into(),
+            TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Char => todo!(),
-            TyKind::Int => self.llctx.i64_type().into(),
-            TyKind::Float => self.llctx.f64_type().into(),
             TyKind::Array(ty) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Tuple(xs) if xs.is_empty() => self.llctx.struct_type(&[], false).into(),
             TyKind::Tuple(_) => todo!(),
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
