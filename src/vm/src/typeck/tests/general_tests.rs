@@ -1,7 +1,6 @@
-use super::typeck;
+use super::expect_error;
 
 #[test]
-#[should_panic]
 fn check_assignment_to_immutable_var() {
-    typeck!("fn main() -> int { let x = 5; x = 7 }");
+    expect_error!("fn main() -> int { let x = 5; x = 7 }");
 }

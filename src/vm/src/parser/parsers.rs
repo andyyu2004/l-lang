@@ -302,7 +302,7 @@ impl Parse for BlockParser {
             stmts.push(StmtParser.parse(parser)?);
         };
         let span = self.open_brace.span.merge(close_brace.span);
-        if stmts.len() > 1 {
+        if !stmts.is_empty() {
             let len = stmts.len() - 1;
             // check there are no missing semicolons in expression statements
             for stmt in &stmts[..len] {

@@ -2,21 +2,18 @@ use super::*;
 use itertools::Itertools;
 
 #[test]
-#[should_panic]
 fn check_lambda_wrong_arity_0() {
-    typeck_expr!("(fn () => 5)(3); 5");
+    expect_error_expr!("(fn () => 5)(3); 5");
 }
 
 #[test]
-#[should_panic]
 fn check_lambda_wrong_arity_1() {
-    typeck_expr!("(fn (x) => x)(3, 5); 5");
+    expect_error_expr!("(fn (x) => x)(3, 5); 5");
 }
 
 #[test]
-#[should_panic]
 fn check_call_non_function() {
-    typeck!("5(5); 5");
+    expect_error_expr!("5(5); 5");
 }
 
 #[test]
