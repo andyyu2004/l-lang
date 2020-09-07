@@ -32,10 +32,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     Some(expr) => {
                         set!(block = self.write_expr(block, ret_lvalue, expr));
                     }
-                    None => self.cfg.push_assign_unit(info, block, ret_lvalue),
+                    None => self.push_assign_unit(info, block, ret_lvalue),
                 }
-                self.cfg.terminate(info, block, TerminatorKind::Return);
-                self.cfg.append_basic_block().unit()
+                self.terminate(info, block, TerminatorKind::Return);
+                self.append_basic_block().unit()
             }
             tir::ExprKind::Const(_)
             | tir::ExprKind::Bin(_, _, _)

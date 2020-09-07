@@ -1,20 +1,32 @@
 use crate::core::Arena;
-use crate::ty::{List, SubstsRef, Ty, TyKind, TyS};
-use rustc_hash::FxHashMap;
-use std::{borrow::Borrow, cell::RefCell};
+use crate::ty::{Const, List, SubstsRef, Ty, TyKind, TyS};
+use rustc_hash::{FxHashMap, FxHasher};
+use std::borrow::Borrow;
+use std::cell::RefCell;
+use std::collections::hash_map::RawEntryMut;
+use std::hash::{Hash, Hasher};
 
 pub struct CtxInterners<'tcx> {
+    /// general arena
     pub arena: &'tcx Arena<'tcx>,
     /// map from tykind to the allocated ty ptr
     types: RefCell<FxHashMap<TyKind<'tcx>, Ty<'tcx>>>,
     /// map from a slice of tys to a allocated SubstsRef
-    /// this uses the fact the default slice equality is implemented by length + element wise comparison
+    /// this uses the fact the default slice equality is implemented by
+    /// length + element wise comparison
     substs: RefCell<FxHashMap<&'tcx [Ty<'tcx>], SubstsRef<'tcx>>>,
+    // need a hashmap for the raw_entry api
+    consts: RefCell<FxHashMap<&'tcx Const<'tcx>, ()>>,
 }
 
 impl<'tcx> CtxInterners<'tcx> {
     pub fn new(arena: &'tcx Arena<'tcx>) -> Self {
-        Self { arena, types: Default::default(), substs: Default::default() }
+        Self {
+            arena,
+            types: Default::default(),
+            substs: Default::default(),
+            consts: Default::default(),
+        }
     }
 
     pub(crate) fn intern_ty(&self, kind: TyKind<'tcx>) -> Ty<'tcx> {
@@ -25,6 +37,21 @@ impl<'tcx> CtxInterners<'tcx> {
                 let ty = self.arena.alloc_ty(kind.clone());
                 types.insert(kind, ty);
                 ty
+            }
+        }
+    }
+
+    pub(crate) fn intern_const(&self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
+        // this method avoids needing to clone `c`
+        let mut consts = self.consts.borrow_mut();
+        let hash = fx_hash(&c);
+        let entry = consts.raw_entry_mut().from_key_hashed_nocheck(hash, &c);
+        match entry {
+            RawEntryMut::Occupied(e) => e.key(),
+            RawEntryMut::Vacant(e) => {
+                let c = self.arena.alloc_const(c);
+                e.insert_hashed_nocheck(hash, c, ());
+                c
             }
         }
     }
@@ -40,4 +67,11 @@ impl<'tcx> CtxInterners<'tcx> {
             }
         }
     }
+}
+
+#[inline]
+fn fx_hash<K: Hash + ?Sized>(val: &K) -> u64 {
+    let mut state = FxHasher::default();
+    val.hash(&mut state);
+    state.finish()
 }

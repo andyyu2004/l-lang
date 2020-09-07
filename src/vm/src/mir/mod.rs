@@ -158,7 +158,7 @@ pub enum VarKind {
     Ret,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
     /// usage of some variable
     Use(Operand<'tcx>),
@@ -166,9 +166,9 @@ pub enum Rvalue<'tcx> {
 }
 
 // this design flattens out recursive expressions into a series of temporaries
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operand<'tcx> {
-    Const(Box<Const<'tcx>>),
+    Const(&'tcx Const<'tcx>),
     Ref(Lvalue<'tcx>),
     Item(DefId),
 }

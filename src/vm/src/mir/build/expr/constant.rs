@@ -6,9 +6,13 @@ use crate::span::Span;
 use crate::ty::Ty;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    pub fn as_const(&mut self, block: BlockId, expr: &tir::Expr<'tcx>) -> BlockAnd<Const<'tcx>> {
+    pub fn as_const(
+        &mut self,
+        block: BlockId,
+        expr: &tir::Expr<'tcx>,
+    ) -> BlockAnd<&'tcx Const<'tcx>> {
         match expr.kind {
-            tir::ExprKind::Const(c) => block.and(*c),
+            tir::ExprKind::Const(c) => block.and(c),
             tir::ExprKind::Unary(_, _)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Block(_)

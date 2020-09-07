@@ -138,10 +138,10 @@ impl<'tcx> Compiler<'tcx> {
     }
 
     fn compile_expr_lit(&mut self, c: &Const, ty: Ty) {
-        match (c.kind, &ty.kind) {
-            (ConstKind::Int(i), TyKind::Bool) => self.emit_iconst(i),
-            (ConstKind::Int(c), TyKind::Char) => self.emit_iconst(c),
-            (ConstKind::Float(f), TyKind::Int) => self.emit_dconst(f),
+        match (&c.kind, &ty.kind) {
+            (ConstKind::Int(i), TyKind::Bool) => self.emit_iconst(*i),
+            (ConstKind::Int(c), TyKind::Char) => self.emit_iconst(*c),
+            (ConstKind::Float(f), TyKind::Int) => self.emit_dconst(*f),
             _ => unreachable!("type error"),
         };
     }

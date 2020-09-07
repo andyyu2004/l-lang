@@ -245,7 +245,7 @@ impl<'tcx> Display for TyS<'tcx> {
 }
 
 /// typed constant value
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Clone, Eq)]
 pub struct Const<'tcx> {
     pub kind: ConstKind,
     marker: PhantomData<&'tcx ()>,
@@ -263,12 +263,27 @@ impl<'tcx> std::ops::Add for Const<'tcx> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ConstKind {
     Float(f64),
     Int(i64),
     Bool(bool),
     Unit,
+}
+
+// maybe this is a bad idea due to the presence of an f64?
+impl Eq for ConstKind {
+}
+
+impl std::hash::Hash for ConstKind {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            ConstKind::Float(f) => f.to_bits().hash(state),
+            ConstKind::Int(i) => i.hash(state),
+            ConstKind::Bool(b) => b.hash(state),
+            ConstKind::Unit => {}
+        };
+    }
 }
 
 impl<'tcx> Const<'tcx> {

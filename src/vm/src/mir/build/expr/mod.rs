@@ -29,9 +29,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Call(f, args) => self.build_call(block, expr, lvalue, f, args),
             tir::ExprKind::Match(scrut, arms) => self.build_match(block, expr, lvalue, scrut, arms),
             tir::ExprKind::Assign(lhs, rhs) => {
-                let rvalue = set!(block = self.as_rvalue(block, rhs));
-                let lvalue = set!(block = self.as_lvalue(block, lhs));
-                self.cfg.push_assignment(info, block, lvalue, rvalue);
+                let rhs = set!(block = self.as_rvalue(block, rhs));
+                let lhs = set!(block = self.as_lvalue(block, lhs));
+                self.push_assignment(info, block, lhs, rhs);
+                // as assignment is an expression which evaluates to the rhs
+                // we write it to the `lvalue` too
+                self.push_assignment(info, block, lvalue, rhs);
                 block.unit()
             }
             tir::ExprKind::VarRef(..)
@@ -39,7 +42,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Const(..) => {
                 let rvalue = set!(block = self.as_rvalue(block, expr));
-                self.cfg.push_assignment(info, block, lvalue, rvalue);
+                self.push_assignment(info, block, lvalue, rvalue);
                 block.unit()
             }
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
@@ -57,12 +60,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         let f = set!(block = self.as_operand(block, f));
         let args = args.iter().map(|arg| set!(block = self.as_operand(block, arg))).collect_vec();
-        let target = self.cfg.append_basic_block();
-        self.cfg.terminate(
-            info,
-            block,
-            TerminatorKind::Call { f, args, lvalue, target, unwind: None },
-        );
+        let target = self.append_basic_block();
+        self.terminate(info, block, TerminatorKind::Call { f, args, lvalue, target, unwind: None });
         target.unit()
     }
 
@@ -78,13 +77,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let scrut_rvalue = set!(block = self.as_rvalue(block, scrut));
 
         // terminate all the switch blocks to branch back together again
-        let end_block = self.cfg.append_basic_block();
+        let end_block = self.append_basic_block();
         let (arm_blocks, default) = self.build_arms(info, lvalue, &scrut_rvalue, arms, end_block);
 
         // if there is no default block, just create an unreachable one
         let default = default.unwrap_or_else(|| self.mk_unreachable(info));
 
-        self.cfg.terminate(
+        self.terminate(
             info,
             block,
             TerminatorKind::Switch { discr: scrut_rvalue, arms: arm_blocks, default },
@@ -94,8 +93,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn mk_unreachable(&mut self, info: SpanInfo) -> BlockId {
-        let block = self.cfg.append_basic_block();
-        self.cfg.terminate(info, block, TerminatorKind::Unreachable);
+        let block = self.append_basic_block();
+        self.terminate(info, block, TerminatorKind::Unreachable);
         block
     }
 
@@ -111,14 +110,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let mut switch_arms = Vec::with_capacity(arms.len());
         for arm in arms {
             // create the block for the body of the arm
-            let start_block = self.cfg.append_basic_block();
+            let start_block = self.append_basic_block();
             // we need to two block pointers as we need to terminate the end block,
             // but we need to return the start block for the switch terminator
             let mut block = start_block;
             // the first irrefutable pattern will be assigned the default block of the switch
             let rvalue = set!(block = self.build_arm_pat(block, arm.pat, scrut_rvalue));
             set!(block = self.write_expr(block, dest, arm.body));
-            self.cfg.terminate(info, block, TerminatorKind::Branch(end_block));
+            self.terminate(info, block, TerminatorKind::Branch(end_block));
             if !arm.pat.is_refutable() {
                 return (switch_arms, Some(start_block));
             }
@@ -159,7 +158,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         if let Some(expr) = ir.expr {
             set!(block = self.write_expr(block, lvalue, expr));
         } else {
-            self.cfg.push_assign_unit(info, block, lvalue)
+            self.push_assign_unit(info, block, lvalue)
         }
         block.unit()
     }

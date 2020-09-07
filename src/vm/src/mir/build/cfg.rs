@@ -1,8 +1,9 @@
 //! control flow graph
 
-use super::{BasicBlock, BlockId};
+use super::{BasicBlock, BlockId, Builder};
 use crate::mir;
 use crate::ty::Const;
+use crate::typeck::TyCtx;
 use indexed_vec::IndexVec;
 use mir::{Lvalue, Operand, Rvalue, SpanInfo, Terminator, TerminatorKind};
 
@@ -15,9 +16,15 @@ impl<'tcx> Cfg<'tcx> {
     pub fn append_basic_block(&mut self) -> BlockId {
         self.basic_blocks.push(BasicBlock::default())
     }
+}
+
+impl<'a, 'tcx> Builder<'a, 'tcx> {
+    pub fn append_basic_block(&mut self) -> BlockId {
+        self.cfg.append_basic_block()
+    }
 
     fn block_mut(&mut self, block: BlockId) -> &mut BasicBlock<'tcx> {
-        &mut self.basic_blocks[block]
+        &mut self.cfg.basic_blocks[block]
     }
 
     /// branch inst
@@ -33,12 +40,13 @@ impl<'tcx> Cfg<'tcx> {
 
     /// push a statement onto the given block
     pub fn push(&mut self, block: BlockId, stmt: mir::Stmt<'tcx>) {
-        self.basic_blocks[block].stmts.push(stmt);
+        self.cfg.basic_blocks[block].stmts.push(stmt);
     }
 
     /// writes a unit into `lvalue`
     pub fn push_assign_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
-        self.push_assignment(info, block, lvalue, Rvalue::Use(Operand::Const(box Const::unit())));
+        let unit = self.tcx.intern_const(Const::unit());
+        self.push_assignment(info, block, lvalue, Rvalue::Use(Operand::Const(unit)));
     }
 
     pub fn push_assignment(

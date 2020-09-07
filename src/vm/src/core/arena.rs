@@ -1,6 +1,6 @@
 use crate::arena::{DropArena, DroplessArena, TypedArena};
 use crate::ir::Definitions;
-use crate::ty::{List, SubstsRef, Ty, TyFlag, TyKind, TyS};
+use crate::ty::{Const, List, SubstsRef, Ty, TyFlag, TyKind, TyS};
 use std::{alloc::Layout, marker::PhantomData};
 
 /// collective arena which contains all main arenas
@@ -9,8 +9,9 @@ pub struct Arena<'tcx> {
     dropless: DroplessArena,
     drop: DropArena,
     tys: TypedArena<TyS<'tcx>>,
-    tir: DroplessArena,
+    consts: TypedArena<Const<'tcx>>,
     substs: TypedArena<SubstsRef<'tcx>>,
+    tir: DroplessArena,
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
 }
@@ -39,6 +40,10 @@ impl<'tcx> Arena<'tcx> {
         let flags = kind.ty_flags();
         let ty_structure = TyS { kind, flags };
         self.tys.alloc(ty_structure)
+    }
+
+    pub fn alloc_const(&'tcx self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
+        self.consts.alloc(c)
     }
 
     pub fn alloc_tir<T>(&self, tir: T) -> &T {

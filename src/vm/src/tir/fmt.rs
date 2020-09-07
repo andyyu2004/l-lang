@@ -109,7 +109,7 @@ where
             tir::ExprKind::Lambda(b) =>
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
-            tir::ExprKind::Assign(l, r) => indent!(self, "{} = {}", l, r),
+            tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
         }?;
         write!(self.writer, ":{}", expr.ty)
     }

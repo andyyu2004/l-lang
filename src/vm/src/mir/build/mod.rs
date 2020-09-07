@@ -6,6 +6,7 @@ mod stmt;
 use crate::ir;
 use crate::mir::{self, *};
 use crate::tir::{self, IrLoweringCtx};
+use crate::typeck::TyCtx;
 use cfg::Cfg;
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
@@ -47,8 +48,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let tcx = ctx.tcx;
         assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
         let vars = IndexVec::default();
-        let mut builder =
-            Self { ctx, cfg, vars, var_ir_map: Default::default(), argc: body.params.len() };
+        let mut builder = Self {
+            tcx: ctx.tcx,
+            ctx,
+            cfg,
+            vars,
+            var_ir_map: Default::default(),
+            argc: body.params.len(),
+        };
         let info = builder.span_info(body.expr.span);
         builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
         builder
@@ -64,12 +71,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             set!(block = self.declare_pat(block, param.pat));
         }
         set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
-        self.cfg.terminate(info, block, TerminatorKind::Return);
+        self.terminate(info, block, TerminatorKind::Return);
         block.unit()
     }
 }
 
 struct Builder<'a, 'tcx> {
+    tcx: TyCtx<'tcx>,
     ctx: IrLoweringCtx<'a, 'tcx>,
     cfg: Cfg<'tcx>,
     var_ir_map: FxHashMap<ir::Id, VarId>,

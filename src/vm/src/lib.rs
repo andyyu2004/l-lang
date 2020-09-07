@@ -5,6 +5,7 @@
 #![recursion_limit = "256"]
 #![feature(refcell_take)]
 #![feature(split_inclusive)]
+#![feature(hash_raw_entry)]
 #![feature(const_raw_ptr_deref)]
 #![feature(type_ascription)]
 #![feature(debug_non_exhaustive)]

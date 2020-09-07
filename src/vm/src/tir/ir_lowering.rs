@@ -253,6 +253,11 @@ impl<'tcx> Tir<'tcx> for Lit {
             Lit::Int(i) => Const::new(ConstKind::Int(i)),
         }
     }
+
+    fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
+        let c = self.to_tir(ctx);
+        ctx.tcx.intern_const(c)
+    }
 }
 
 impl<'tcx> Tir<'tcx> for ir::Arm<'tcx> {

@@ -15,6 +15,29 @@ fn llvm_fib() {
 }
 
 #[test]
+fn llvm_assignment_value() {
+    let src = r#"
+    fn main() -> int {
+        let mut x = 0;
+        x = 6
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 6);
+}
+
+#[test]
+fn llvm_chained_assignment() {
+    let src = r#"
+    fn main() -> int {
+        let x = 0;
+        let y = 0;
+        x = y = 6
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 6);
+}
+
+#[test]
 fn llvm_missing_main() {
     llvm_expect_error!("");
 }

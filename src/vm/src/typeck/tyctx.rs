@@ -31,6 +31,9 @@ impl<'tcx> Deref for TyCtx<'tcx> {
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn alloc<T>(self, t: T) -> &'tcx T {
+        // these types have their own typed arena
+        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<TyKind>());
+        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<Const>());
         self.interners.arena.alloc(t)
     }
 
@@ -107,6 +110,10 @@ impl<'tcx> TyCtx<'tcx> {
         I: Iterator<Item = Ty<'tcx>>,
     {
         self.intern_substs(&iter.collect_vec())
+    }
+
+    pub fn intern_const(self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
+        self.interners.intern_const(c)
     }
 
     pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
