@@ -25,6 +25,21 @@ pub struct Driver<'tcx> {
     session: Session,
 }
 
+/// exits if any errors have been reported
+macro check_errors($self:expr, $ret:expr) {{
+    if $self.session.has_errors() {
+        let errc = $self.session.err_count();
+        if errc == 1 {
+            e_red_ln!("{} error emitted", errc)
+        } else {
+            e_red_ln!("{} errors emitted", errc)
+        }
+        Err(LError::ErrorReported)
+    } else {
+        Ok($ret)
+    }
+}}
+
 impl<'tcx> Driver<'tcx> {
     pub fn new(src: &str) -> Self {
         span::GLOBALS
@@ -76,17 +91,7 @@ impl<'tcx> Driver<'tcx> {
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
         let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
         let ret = gcx.enter_tcx(|tcx| f(tcx, &ir));
-        if self.session.has_errors() {
-            let errc = self.session.err_count();
-            if errc == 1 {
-                e_red_ln!("{} error emitted", errc)
-            } else {
-                e_red_ln!("{} errors emitted", errc)
-            }
-            Err(LError::ErrorReported)
-        } else {
-            Ok(ret)
-        }
+        check_errors!(self, ret)
     }
 
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
@@ -103,7 +108,7 @@ impl<'tcx> Driver<'tcx> {
         let llvm_ctx = LLVMCtx::create();
         let mut cctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
         let main_fn = cctx.codegen(&mir);
-        Ok((cctx, main_fn))
+        check_errors!(self, (cctx, main_fn.unwrap()))
     }
 
     pub fn llvm_exec(&'tcx self) -> LResult<i64> {

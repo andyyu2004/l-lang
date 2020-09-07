@@ -38,6 +38,10 @@ impl Span {
         Self { lo, hi }
     }
 
+    pub const fn empty() -> Self {
+        Self::new(0, 0)
+    }
+
     pub fn hi(self) -> Self {
         Self::new(self.hi, self.hi)
     }

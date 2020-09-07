@@ -1,5 +1,6 @@
 //! simply tests for the expected output
-use super::llvm_exec;
+
+use super::*;
 
 #[test]
 fn llvm_fib() {
@@ -11,6 +12,11 @@ fn llvm_fib() {
     }
     "#;
     assert_eq!(llvm_exec!(src), 55)
+}
+
+#[test]
+fn llvm_missing_main() {
+    llvm_expect_error!("");
 }
 
 /// checks that the expression statements are actually being performed, even though their results

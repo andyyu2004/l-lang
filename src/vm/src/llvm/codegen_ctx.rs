@@ -1,9 +1,11 @@
 use super::util::LLVMAsPtrVal;
 use super::FnCtx;
 use crate::ast;
+use crate::error::{LLVMError, LResult};
 use crate::ir::{self, DefId};
 use crate::lexer::symbol;
 use crate::mir::{self, *};
+use crate::span::Span;
 use crate::tir;
 use crate::ty::{Const, ConstKind, SubstsRef, Ty, TyKind};
 use crate::typeck::TyCtx;
@@ -68,6 +70,10 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
         let vals =
             CommonValues { zero: llctx.i64_type().const_zero(), unit: types.unit.get_undef() };
+
+        // assert `unit` is indeed a zst
+        assert_eq!(vals.unit.get_type().size_of().unwrap().print_to_string().to_string(), "i64 0");
+
         Self {
             tcx,
             llctx,
@@ -82,7 +88,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     /// returns the main function
-    pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> FunctionValue<'tcx> {
+    pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> Option<FunctionValue<'tcx>> {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
         for (id, item) in &prog.items {
@@ -93,12 +99,6 @@ impl<'tcx> CodegenCtx<'tcx> {
                     let (params, ret) = ty.expect_fn();
                     let llty = self.llvm_fn_ty(params, ret);
                     let llfn = self.module.add_function(item.ident.as_str(), llty, None);
-
-                    // TODO
-                    // define the parameters
-                    // for (param, arg) in body.params.into_iter().zip(llfn.get_param_iter()) {
-                    //     arg.set_name(&param.pat.id.to_string());
-                    // }
                 }
             };
         }
@@ -110,7 +110,10 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
-        self.module.get_function(symbol::MAIN.as_str()).unwrap()
+        self.module.get_function(symbol::MAIN.as_str()).or_else(|| {
+            self.tcx.session.build_error(Span::empty(), LLVMError::MissingMain).emit();
+            None
+        })
     }
 
     fn codegen_body(
