@@ -14,6 +14,9 @@ mod tmp;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     /// writes `expr` into `lvalue`
+    // this method exists as it is easier to implement certain expressions
+    // given an `lvalue` to write the result of the expression into
+    // opposed to returning an rvalue directly
     pub fn write_expr(
         &mut self,
         mut block: BlockId,
@@ -23,21 +26,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         match expr.kind {
             tir::ExprKind::Block(ir) => self.ir_block(block, lvalue, expr, ir),
+            tir::ExprKind::Call(f, args) => self.build_call(block, expr, lvalue, f, args),
+            tir::ExprKind::Match(scrut, arms) => self.build_match(block, expr, lvalue, scrut, arms),
+            tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Tuple(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
-            tir::ExprKind::Call(f, args) => self.build_call(block, expr, lvalue, f, args),
-            tir::ExprKind::Match(scrut, arms) => self.build_match(block, expr, lvalue, scrut, arms),
-            tir::ExprKind::Assign(lhs, rhs) => {
-                let rhs = set!(block = self.as_rvalue(block, rhs));
-                let lhs = set!(block = self.as_lvalue(block, lhs));
-                self.push_assignment(info, block, lhs, rhs);
-                // as assignment is an expression which evaluates to the rhs
-                // we write it to the `lvalue` too
-                self.push_assignment(info, block, lvalue, rhs);
-                block.unit()
-            }
             tir::ExprKind::VarRef(..)
+            | tir::ExprKind::Assign(..)
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Const(..) => {
@@ -45,7 +41,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.push_assignment(info, block, lvalue, rvalue);
                 block.unit()
             }
-            tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
         }
     }
 

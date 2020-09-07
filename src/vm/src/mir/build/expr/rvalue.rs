@@ -11,6 +11,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         mut block: BlockId,
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
+        let info = self.span_info(expr.span);
         match expr.kind {
             tir::ExprKind::Const(_) => {
                 let operand = set!(block = self.as_operand(block, expr));
@@ -28,7 +29,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Lambda(_) => todo!(),
             tir::ExprKind::Call(_, _) => todo!(),
             tir::ExprKind::Match(_, _) => todo!(),
-            tir::ExprKind::Assign(_, _) => todo!(),
+            tir::ExprKind::Assign(l, r) => {
+                let lhs = set!(block = self.as_lvalue(block, l));
+                let rhs = set!(block = self.as_rvalue(block, r));
+                self.push_assignment(info, block, lhs, rhs);
+                block.and(rhs)
+            }
             tir::ExprKind::Ret(_) => todo!(),
             tir::ExprKind::VarRef(_) => {
                 let operand = set!(block = self.as_operand(block, expr));

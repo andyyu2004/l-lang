@@ -27,11 +27,34 @@ fn llvm_assignment_value() {
 
 #[test]
 fn llvm_chained_assignment() {
+    // check the value of the assignment,
+    // as well as the fact that both `x` and `y` get assigned to
+
     let src = r#"
     fn main() -> int {
-        let x = 0;
-        let y = 0;
+        let mut x = 0;
+        let mut y = 0;
         x = y = 6
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 6);
+
+    let src = r#"
+    fn main() -> int {
+        let mut x = 0;
+        let mut y = 0;
+        x = y = 6;
+        y
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 6);
+
+    let src = r#"
+    fn main() -> int {
+        let mut x = 0;
+        let mut y = 0;
+        x = y = 6;
+        x
     }
     "#;
     assert_eq!(llvm_exec!(src), 6);
