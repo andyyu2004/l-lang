@@ -1,8 +1,5 @@
 image: "rust:latest"
 
-stages:
-  - test
-
-test:
+test:cargo:
   script:
     - cargo test --workspace --verbose
