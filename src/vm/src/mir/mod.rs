@@ -114,6 +114,8 @@ pub enum StmtKind<'tcx> {
     Nop,
 }
 
+const RET_VAR: VarId = VarId(0);
+
 newtype_index!(VarId);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -129,7 +131,7 @@ impl<'tcx> Lvalue<'tcx> {
 
     /// `VarId` 0 is reserved for return lvalues
     pub fn ret() -> Self {
-        Self::new(VarId::new(RETURN))
+        Self::new(RET_VAR)
     }
 }
 

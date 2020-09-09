@@ -15,13 +15,14 @@ name = "vm"
 path = "src/bin.rs"
 
 [dependencies]
-colour = "0.5.0"
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm10-0" }
+vm-derive = { path = "../vm-derive" }
+indexed_vec = "1.2.1"
 llvm-sys = "100"
+colour = "0.5.0"
 log = "0.4.8"
 simple-logging = "2.0.2"
-vm-derive = { path = "../vm-derive" }
 maplit = "1"
 once_cell = "1.4"
 rustyline = "6.2"
@@ -34,7 +35,6 @@ rustc-hash = "1.1.0"
 scoped-tls = "1"
 unicode-xid = "0.2.1"
 smallvec = "1.4.0"
-indexed_vec = "1.2.1"
 lazy_static = "1.4.0"
 bitflags = "1.2.1"
 serde = "1.0.115"
