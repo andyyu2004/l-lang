@@ -1,5 +1,9 @@
-image: "rust:nightly"
+stages:
+  - build
 
-test:cargo:
+rust-nightly:
+  stage: build
+  image: rustlang/rust:nightly
   script:
-    - cargo test --workspace --verbose
+    - cargo build --verbose
+    - cargo test --verbose
