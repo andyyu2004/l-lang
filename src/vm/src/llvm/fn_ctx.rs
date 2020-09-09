@@ -128,6 +128,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
+            mir::Rvalue::Tuple(xs) => {
+                let operands = xs.iter().map(|x| self.codegen_operand(x)).collect_vec();
+                self.llctx.const_struct(&operands, false).into()
+            }
         }
     }
 

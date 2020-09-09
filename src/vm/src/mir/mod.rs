@@ -160,11 +160,12 @@ pub enum VarKind {
     Ret,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
     /// usage of some variable
     Use(Operand<'tcx>),
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
+    Tuple(Vec<Operand<'tcx>>),
 }
 
 // this design flattens out recursive expressions into a series of temporaries

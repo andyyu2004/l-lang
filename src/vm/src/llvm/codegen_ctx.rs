@@ -141,7 +141,11 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Array(ty) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Tuple(_) => todo!(),
+            TyKind::Tuple(tys) => {
+                // tuples are represented as anonymous structs
+                let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
+                self.llctx.struct_type(&lltys, false).into()
+            }
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
             TyKind::Never => todo!(),

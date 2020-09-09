@@ -18,7 +18,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
-    // does not allocate any locals as there is no result produced or the result is ignored
+    // some expressions can have a more efficient implementation if we know the return value will
+    // be unused (as it is an expression statement)
     crate fn build_expr_stmt(
         &mut self,
         mut block: BlockId,
@@ -37,6 +38,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.terminate(info, block, TerminatorKind::Return);
                 self.append_basic_block().unit()
             }
+            tir::ExprKind::Assign(l, r) => {
+                let lvalue = set!(block = self.as_lvalue(block, l));
+                let rvalue = set!(block = self.as_rvalue(block, r));
+                self.push_assignment(info, block, lvalue, rvalue);
+                block.unit()
+            }
             tir::ExprKind::Const(_)
             | tir::ExprKind::Bin(_, _, _)
             | tir::ExprKind::Unary(_, _)
@@ -46,8 +53,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Lambda(_)
             | tir::ExprKind::Call(_, _)
-            | tir::ExprKind::Match(_, _)
-            | tir::ExprKind::Assign(_, _) => {
+            | tir::ExprKind::Match(_, _) => {
                 // write the expr stmt into some (unused) tmp var
                 set!(block = self.as_tmp(block, expr));
                 block.unit()
