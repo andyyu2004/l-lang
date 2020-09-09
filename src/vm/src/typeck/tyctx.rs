@@ -6,7 +6,7 @@ use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, ParamIdx};
 use crate::mir;
 use crate::span::Span;
-use crate::tir::{self, IrLoweringCtx};
+use crate::tir::{self, Field, IrLoweringCtx};
 use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
@@ -105,11 +105,41 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Error)
     }
 
+    pub fn lvalue_project_field(
+        self,
+        lvalue: mir::Lvalue<'tcx>,
+        field: Field,
+        ty: Ty<'tcx>,
+    ) -> mir::Lvalue<'tcx> {
+        self.project_lvalue(lvalue, Projection::Field(field, ty))
+    }
+
+    pub fn project_lvalue(
+        self,
+        mir::Lvalue { id, projs }: mir::Lvalue<'tcx>,
+        proj: Projection<'tcx>,
+    ) -> mir::Lvalue<'tcx> {
+        let mut projs = projs.to_vec();
+        projs.push(proj);
+        mir::Lvalue { id, projs: self.intern_lvalue_projections(&projs) }
+    }
+
     pub fn mk_substs<I>(self, iter: I) -> SubstsRef<'tcx>
     where
         I: Iterator<Item = Ty<'tcx>>,
     {
         self.intern_substs(&iter.collect_vec())
+    }
+
+    pub fn intern_lvalue_projections(
+        self,
+        projs: &[Projection<'tcx>],
+    ) -> &'tcx List<Projection<'tcx>> {
+        if projs.is_empty() {
+            List::empty()
+        } else {
+            self.interners.intern_lvalue_projections(projs)
+        }
     }
 
     pub fn intern_const(self, c: Const<'tcx>) -> &'tcx Const<'tcx> {

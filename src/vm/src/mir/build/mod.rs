@@ -68,7 +68,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
         let info = self.span_info(body.expr.span.hi());
         for param in body.params {
-            set!(block = self.declare_pat(block, param.pat));
+            self.declare_pat(block, param.pat);
         }
         set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
         self.terminate(info, block, TerminatorKind::Return);

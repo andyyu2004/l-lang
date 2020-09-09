@@ -30,10 +30,9 @@ pub struct Pattern<'tcx> {
 impl<'tcx> Pattern<'tcx> {
     pub fn is_refutable(&self) -> bool {
         match self.kind {
-            PatternKind::Wildcard => false,
-            PatternKind::Binding(_, _) => false,
-            PatternKind::Field(_) => todo!(),
-            PatternKind::Lit(_) => true,
+            PatternKind::Wildcard | PatternKind::Binding(..) => false,
+            PatternKind::Field(fs) => fs.iter().any(|f| f.pat.is_refutable()),
+            PatternKind::Lit(..) => true,
         }
     }
 }
@@ -62,6 +61,7 @@ pub enum PatternKind<'tcx> {
     Wildcard,
     Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
     /// generalization of tuple patterns
+    /// used to match tuples, and single variant adts (i.e. structs)
     Field(&'tcx [tir::FieldPat<'tcx>]),
     Lit(&'tcx tir::Expr<'tcx>),
 }

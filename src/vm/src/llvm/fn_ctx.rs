@@ -1,10 +1,11 @@
 use super::CodegenCtx;
 use crate::ast;
 use crate::mir::{self, BlockId, VarId};
-use crate::ty::ConstKind;
+use crate::ty::{ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
 use itertools::Itertools;
+use mir::Lvalue;
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
@@ -12,7 +13,7 @@ pub(super) struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
     body: &'tcx mir::Body<'tcx>,
     llfn: FunctionValue<'tcx>,
-    vars: IndexVec<mir::VarId, Var<'tcx>>,
+    vars: IndexVec<mir::VarId, LLVMVar<'tcx>>,
     /// map from mir block to llvm block
     blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
 }
@@ -21,7 +22,7 @@ pub(super) struct FnCtx<'a, 'tcx> {
 struct BlockCtx {}
 
 #[derive(Debug, Clone, Copy)]
-struct Var<'tcx> {
+struct LLVMVar<'tcx> {
     ptr: PointerValue<'tcx>,
 }
 
@@ -42,11 +43,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ctx
     }
 
-    fn alloc_vars(&mut self) -> IndexVec<VarId, Var<'tcx>> {
+    fn alloc_vars(&mut self) -> IndexVec<VarId, LLVMVar<'tcx>> {
         let alloca = |var_id| {
             let mir_var = self.body.vars[var_id];
             let ptr = self.build_alloca(self.llvm_ty(mir_var.ty), &mir_var.to_string());
-            Var { ptr }
+            LLVMVar { ptr }
         };
 
         // store arguments into the respective vars
@@ -81,18 +82,39 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.blocks[id]
     }
 
-    fn codegen_stmt(&mut self, stmt: &mir::Stmt) {
+    fn codegen_stmt(&mut self, stmt: &mir::Stmt<'tcx>) {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => {
                 let val = self.codegen_rvalue(rvalue);
-                let var = self.vars[lvalue.id];
+                let var = self.codegen_lvalue(*lvalue);
                 self.build_store(var.ptr, val);
             }
             mir::StmtKind::Nop => {}
         }
     }
 
-    fn codegen_operand(&mut self, operand: &mir::Operand) -> BasicValueEnum<'tcx> {
+    fn codegen_lvalue(&mut self, lvalue: Lvalue<'tcx>) -> LLVMVar<'tcx> {
+        self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
+    }
+
+    fn codegen_lvalue_inner(&mut self, var_id: VarId, projs: &[Projection<'tcx>]) -> LLVMVar<'tcx> {
+        match projs {
+            [] => self.vars[var_id],
+            [base @ .., proj] => {
+                // recursively process all the projections to the left
+                let var = self.codegen_lvalue_inner(var_id, base);
+                match proj {
+                    Projection::Field(f, ty) => {
+                        let index = f.index() as u32;
+                        let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
+                        LLVMVar { ptr }
+                    }
+                }
+            }
+        }
+    }
+
+    fn codegen_operand(&mut self, operand: &mir::Operand<'tcx>) -> BasicValueEnum<'tcx> {
         match operand {
             mir::Operand::Const(c) => match c.kind {
                 ConstKind::Float(f) => self.types.float.const_float(f).into(),
@@ -100,8 +122,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ConstKind::Bool(b) => self.types.boolean.const_int(b as u64, true).into(),
                 ConstKind::Unit => self.vals.unit.into(),
             },
-            mir::Operand::Ref(lvalue) => {
-                let var = self.vars[lvalue.id];
+            &mir::Operand::Ref(lvalue) => {
+                let var = self.codegen_lvalue(lvalue);
                 self.build_load(var.ptr, "load").into()
             }
             mir::Operand::Item(def_id) => {
@@ -114,7 +136,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue) -> BasicValueEnum<'tcx> {
+    fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Bin(op, l, r) => {
@@ -193,7 +215,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn codegen_terminator(&mut self, terminator: &mir::Terminator) {
+    fn codegen_terminator(&mut self, terminator: &mir::Terminator<'tcx>) {
         match &terminator.kind {
             mir::TerminatorKind::Return => {
                 let var = self.vars[VarId::new(mir::RETURN)];
@@ -222,8 +244,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_switch(
         &mut self,
-        discr: &mir::Rvalue,
-        arms: &[(mir::Rvalue, BlockId)],
+        discr: &mir::Rvalue<'tcx>,
+        arms: &[(mir::Rvalue<'tcx>, BlockId)],
         default: BlockId,
     ) {
         let discr = self.codegen_rvalue(discr).into_int_value();

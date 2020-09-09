@@ -2,7 +2,7 @@
 
 use crate::ast::BinOp;
 use crate::mir::{self, BasicBlock, Body, VarId};
-use crate::util;
+use crate::{ty::Projection, util};
 use std::fmt;
 use std::fmt::Write;
 
@@ -115,7 +115,23 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
 
 impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
-        self.id.mir_fmt(f)
+        self.id.mir_fmt(f)?;
+        for p in self.projs {
+            match p {
+                Projection::Field(field, _) => write!(f, ".{:?}", field)?,
+            }
+        }
+        if !self.projs.is_empty() {
+            write!(f, " (")?;
+            self.id.mir_fmt(f)?;
+            for p in self.projs {
+                match p {
+                    Projection::Field(_, ty) => write!(f, "->{}", ty)?,
+                }
+            }
+            write!(f, ")")?;
+        }
+        Ok(())
     }
 }
 

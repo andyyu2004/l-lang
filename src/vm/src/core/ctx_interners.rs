@@ -1,5 +1,5 @@
 use crate::core::Arena;
-use crate::ty::{Const, List, SubstsRef, Ty, TyKind, TyS};
+use crate::ty::{Const, List, Projection, SubstsRef, Ty, TyKind, TyS};
 use rustc_hash::{FxHashMap, FxHasher};
 use std::borrow::Borrow;
 use std::cell::RefCell;
@@ -15,6 +15,7 @@ pub struct CtxInterners<'tcx> {
     /// this uses the fact the default slice equality is implemented by
     /// length + element wise comparison
     substs: RefCell<FxHashMap<&'tcx [Ty<'tcx>], SubstsRef<'tcx>>>,
+    lvalue_projs: RefCell<FxHashMap<&'tcx [Projection<'tcx>], &'tcx List<Projection<'tcx>>>>,
     // need a hashmap for the raw_entry api
     consts: RefCell<FxHashMap<&'tcx Const<'tcx>, ()>>,
 }
@@ -26,10 +27,11 @@ impl<'tcx> CtxInterners<'tcx> {
             types: Default::default(),
             substs: Default::default(),
             consts: Default::default(),
+            lvalue_projs: Default::default(),
         }
     }
 
-    pub(crate) fn intern_ty(&self, kind: TyKind<'tcx>) -> Ty<'tcx> {
+    pub fn intern_ty(&self, kind: TyKind<'tcx>) -> Ty<'tcx> {
         let mut types = self.types.borrow_mut();
         match types.get(&kind) {
             Some(ty) => *ty,
@@ -41,7 +43,22 @@ impl<'tcx> CtxInterners<'tcx> {
         }
     }
 
-    pub(crate) fn intern_const(&self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
+    pub fn intern_lvalue_projections(
+        &self,
+        projs: &[Projection<'tcx>],
+    ) -> &'tcx List<Projection<'tcx>> {
+        let mut projections = self.lvalue_projs.borrow_mut();
+        match projections.get(projs) {
+            Some(&projs) => projs,
+            None => {
+                let projs = List::from_arena(self.arena, projs);
+                projections.insert(&projs, projs);
+                projs
+            }
+        }
+    }
+
+    pub fn intern_const(&self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
         // this method avoids needing to clone `c`
         let mut consts = self.consts.borrow_mut();
         let hash = fx_hash(&c);
@@ -56,7 +73,7 @@ impl<'tcx> CtxInterners<'tcx> {
         }
     }
 
-    pub(crate) fn intern_substs(&self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
+    pub fn intern_substs(&self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
         let mut substs = self.substs.borrow_mut();
         match substs.get(slice) {
             Some(&substs_ref) => substs_ref,

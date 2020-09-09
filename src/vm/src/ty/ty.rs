@@ -1,5 +1,6 @@
 use crate::ast::{Ident, Visibility};
 use crate::ir::{DefId, ParamIdx};
+use crate::tir::Field;
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
 use crate::{span::Span, util};
@@ -90,6 +91,11 @@ pub enum TyKind<'tcx> {
 }
 
 newtype_index!(VariantIdx);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Projection<'tcx> {
+    Field(Field, Ty<'tcx>),
+}
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct AdtTy<'tcx> {

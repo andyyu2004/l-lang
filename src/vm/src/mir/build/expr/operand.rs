@@ -23,7 +23,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
             tir::ExprKind::Bin(..) | tir::ExprKind::Call(..) => {
                 // create temporary var to hold the result
-                let lvalue = set!(block = self.as_tmp(block, expr));
+                let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Ref(lvalue))
             }
             tir::ExprKind::Unary(_, _) => todo!(),

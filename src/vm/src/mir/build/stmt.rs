@@ -7,13 +7,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
         let info = self.span_info(stmt.span);
         match stmt.kind {
-            tir::StmtKind::Let(tir::Let { id, pat, init }) => {
-                let lvalue = set!(block = self.declare_pat(block, pat)).into();
-                match init {
-                    Some(expr) => self.write_expr(block, lvalue, expr),
-                    None => todo!(),
+            tir::StmtKind::Let(tir::Let { id, pat, init }) => match init {
+                Some(expr) => {
+                    let rvalue = set!(block = self.as_lvalue(block, expr));
+                    self.bind_pat_to_lvalue(block, pat, rvalue)
                 }
-            }
+                None => todo!(),
+            },
             tir::StmtKind::Expr(expr) => self.build_expr_stmt(block, expr),
         }
     }

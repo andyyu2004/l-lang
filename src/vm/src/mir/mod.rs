@@ -8,7 +8,8 @@ pub use fmt::MirFmt;
 
 use crate::ir::{self, DefId};
 use crate::span::Span;
-use crate::ty::{Const, Ty};
+use crate::tir::Field;
+use crate::ty::{Const, List, Projection, Ty};
 use crate::{ast, mir};
 use ast::{Ident, Visibility};
 pub use build::build_fn;
@@ -118,15 +119,27 @@ const RET_VAR: VarId = VarId(0);
 
 newtype_index!(VarId);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Lvalue<'tcx> {
     pub id: VarId,
-    pd: PhantomData<&'tcx ()>,
+    pub projs: &'tcx List<Projection<'tcx>>,
+}
+
+impl<'tcx> Ord for Lvalue<'tcx> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.id.cmp(&other.id)
+    }
+}
+
+impl<'tcx> PartialOrd for Lvalue<'tcx> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.id.partial_cmp(&other.id)
+    }
 }
 
 impl<'tcx> Lvalue<'tcx> {
     pub fn new(var: VarId) -> Self {
-        Self { id: var, pd: PhantomData }
+        Self { id: var, projs: List::empty() }
     }
 
     /// `VarId` 0 is reserved for return lvalues
