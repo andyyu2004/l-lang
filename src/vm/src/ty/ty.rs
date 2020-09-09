@@ -38,6 +38,13 @@ impl<'tcx> TyS<'tcx> {
         }
     }
 
+    pub fn expect_tuple(&self) -> SubstsRef<'tcx> {
+        match self.kind {
+            TyKind::Tuple(tys) => tys,
+            _ => panic!("expected TyKind::Tuple, found {}", self),
+        }
+    }
+
     pub fn expect_fn(&self) -> (SubstsRef<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Fn(params, ret) => (params, ret),

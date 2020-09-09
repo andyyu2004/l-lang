@@ -6,6 +6,8 @@ use crate::span::Span;
 use crate::tir;
 use itertools::Itertools;
 
+pub use lvalue::LvalueBuilder;
+
 mod constant;
 mod lvalue;
 mod operand;

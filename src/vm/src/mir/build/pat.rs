@@ -1,4 +1,4 @@
-use super::{BlockAnd, BlockAndExt, Builder};
+use super::{BlockAnd, BlockAndExt, Builder, LvalueBuilder};
 use crate::mir::{BlockId, Lvalue, Operand, Rvalue, VarId, VarKind};
 use crate::set;
 use crate::tir;
@@ -35,18 +35,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.unit()
             }
             tir::PatternKind::Lit(_) => panic!("refutable binding"),
-        }
-    }
-
-    crate fn declare_pat(&mut self, block: BlockId, pat: &tir::Pattern<'tcx>) {
-        let info = self.span_info(pat.span);
-        match pat.kind {
-            tir::PatternKind::Wildcard => todo!(),
-            tir::PatternKind::Binding(ident, _) => {
-                self.alloc_local(pat);
-            }
-            tir::PatternKind::Field(_) => todo!(),
-            tir::PatternKind::Lit(_) => unreachable!(),
         }
     }
 }

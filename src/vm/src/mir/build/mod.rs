@@ -8,6 +8,7 @@ use crate::mir::{self, *};
 use crate::tir::{self, IrLoweringCtx};
 use crate::typeck::TyCtx;
 use cfg::Cfg;
+use expr::LvalueBuilder;
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 
@@ -68,7 +69,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
         let info = self.span_info(body.expr.span.hi());
         for param in body.params {
-            self.declare_pat(block, param.pat);
+            let lvalue = self.alloc_arg(param.pat).into();
+            set!(block = self.bind_pat_to_lvalue(block, param.pat, lvalue));
         }
         set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
         self.terminate(info, block, TerminatorKind::Return);
@@ -98,12 +100,20 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.alloc_var(info, VarKind::Tmp, ty)
     }
 
-    fn alloc_local(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
+    /// create variable that has a corresponding var in the `ir`
+    fn alloc_ir_var(&mut self, pat: &tir::Pattern<'tcx>, kind: VarKind) -> VarId {
         let info = self.span_info(pat.span);
-        let var = Var { info, kind: VarKind::Local, ty: pat.ty };
-        let idx = self.vars.push(var);
+        let idx = self.alloc_var(info, kind, pat.ty);
         self.var_ir_map.insert(pat.id, idx);
         idx
+    }
+
+    fn alloc_arg(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
+        self.alloc_ir_var(pat, VarKind::Arg)
+    }
+
+    fn alloc_local(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
+        self.alloc_ir_var(pat, VarKind::Arg)
     }
 
     fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {

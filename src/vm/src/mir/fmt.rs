@@ -52,7 +52,7 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         writeln!(self, "MIR")?;
 
         for (id, var) in self.mir.vars.iter_enumerated() {
-            writeln!(self, "%{:?}:{} ({:?})", id, var.ty, var.kind)?;
+            writeln!(self, "%{:?} {}:{} ({:?})", id, var.to_string(), var.ty, var.kind,)?;
         }
 
         writeln!(self)?;
@@ -138,12 +138,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
 impl<'tcx> MirFmt<'tcx> for mir::VarId {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         let var = f.mir.vars[*self];
-        match var.kind {
-            mir::VarKind::Tmp => write!(f, "tmp{:?}", self),
-            mir::VarKind::Local => write!(f, "{}", var.info.span.to_string()),
-            mir::VarKind::Arg => todo!(),
-            mir::VarKind::Ret => write!(f, "retvar"),
-        }
+        write!(f, "{}", var)
     }
 }
 
@@ -153,7 +148,7 @@ impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
         match self.kind {
             mir::VarKind::Tmp => write!(f, "tmp"),
             mir::VarKind::Local => write!(f, "{}", self.info.span.to_string()),
-            mir::VarKind::Arg => todo!(),
+            mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
             mir::VarKind::Ret => write!(f, "retvar"),
         }
     }
@@ -203,7 +198,8 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
             mir::TerminatorKind::Unreachable => writeln!(fmt, "unreachable"),
             mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
                 lvalue.mir_fmt(fmt)?;
-                write!(fmt, " <- (")?;
+                let ty = fmt.mir.vars[lvalue.id].ty;
+                write!(fmt, ":{} ← (", ty)?;
                 f.mir_fmt(fmt)?;
                 for arg in args {
                     write!(fmt, " ")?;

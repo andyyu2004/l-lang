@@ -33,15 +33,19 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(Rvalue::Use(operand))
             }
             tir::ExprKind::Tuple(xs) => block.and(Rvalue::Tuple(
-                xs.iter().map(|expr| set!(block = self.as_operand(block, expr))).collect(),
+                xs.iter().map(|x| set!(block = self.as_operand(block, x))).collect(),
             )),
+            // forward the implementation to operand if the expr is in some sense "atomic"
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
             tir::ExprKind::Call(_, _) => todo!(),
             tir::ExprKind::Match(_, _) => todo!(),
-            tir::ExprKind::Ret(_) => todo!(),
+            tir::ExprKind::Ret(_) => {
+                let operand = set!(block = self.as_operand(block, expr));
+                block.and(Rvalue::Use(operand))
+            }
         }
     }
 
