@@ -5,7 +5,7 @@ use crate::ty::{ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use mir::Lvalue;
+use mir::{Lvalue, Rvalue};
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
@@ -17,9 +17,6 @@ pub(super) struct FnCtx<'a, 'tcx> {
     /// map from mir block to llvm block
     blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
 }
-
-// TODO
-struct BlockCtx {}
 
 #[derive(Debug, Clone, Copy)]
 struct LLVMVar<'tcx> {
@@ -84,16 +81,29 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_stmt(&mut self, stmt: &mir::Stmt<'tcx>) {
         match &stmt.kind {
-            mir::StmtKind::Assign(lvalue, rvalue) => {
-                let val = self.codegen_rvalue(rvalue);
-                let var = self.codegen_lvalue(*lvalue);
-                self.build_store(var.ptr, val);
-            }
+            mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
             mir::StmtKind::Nop => {}
         }
     }
 
-    fn codegen_lvalue(&mut self, lvalue: Lvalue<'tcx>) -> LLVMVar<'tcx> {
+    fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &mir::Rvalue<'tcx>) {
+        let var = self.codegen_lvalue(lvalue);
+        // certain aggregate rvalues require special treatment as llvm doesn't seem to like recursively building these values
+        match rvalue {
+            mir::Rvalue::Tuple(xs) =>
+                for (i, x) in xs.iter().enumerate() {
+                    let operand = self.codegen_operand(x);
+                    let field_ptr = self.build_struct_gep(var.ptr, i as u32, "tuple_gep").unwrap();
+                    self.build_store(field_ptr, operand);
+                },
+            _ => {
+                let value = self.codegen_rvalue(rvalue);
+                self.build_store(var.ptr, value);
+            }
+        }
+    }
+
+    fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LLVMVar<'tcx> {
         self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
     }
 
@@ -124,7 +134,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             },
             &mir::Operand::Ref(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
-                self.build_load(var.ptr, "load").into()
+                self.build_load(var.ptr, "ld").into()
             }
             mir::Operand::Item(def_id) => {
                 // TODO assume item is fn for now
@@ -150,10 +160,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
-            mir::Rvalue::Tuple(xs) => {
-                let operands = xs.iter().map(|x| self.codegen_operand(x)).collect_vec();
-                self.llctx.const_struct(&operands, false).into()
-            }
+            // handle these cases in `codegen_assignment`
+            mir::Rvalue::Tuple(xs) => unreachable!(),
         }
     }
 

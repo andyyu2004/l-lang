@@ -1,4 +1,5 @@
-mod output;
+mod output_tests;
+mod pattern_tests;
 
 use crate::llvm_exec;
 

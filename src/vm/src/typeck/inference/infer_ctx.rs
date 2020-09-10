@@ -74,10 +74,11 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
 
     pub fn emit_err(&self, err: DiagnosticBuilder) -> Ty<'tcx> {
         err.emit();
-        self.report_ty_err()
+        self.set_ty_err()
     }
 
-    pub fn report_ty_err(&self) -> Ty<'tcx> {
+    /// creates a type error and sets the error flag
+    pub fn set_ty_err(&self) -> Ty<'tcx> {
         self.has_error.set(true);
         self.tcx.mk_ty_err()
     }
