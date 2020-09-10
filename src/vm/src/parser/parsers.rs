@@ -226,7 +226,7 @@ impl Parse for StructExprParser {
             };
             Ok(Field { ident, expr, span, id: parser.mk_id() })
         };
-        let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Comma }
+        let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Semi }
             .spanned(false)
             .parse(parser)?;
         parser.expect(TokenType::CloseBrace)?;

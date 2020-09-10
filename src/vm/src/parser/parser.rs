@@ -1,23 +1,25 @@
 use super::*;
 use crate::ast::*;
+use crate::driver::Session;
 use crate::error::*;
 use crate::lexer::*;
 use crate::span::{self, Span};
 use indexed_vec::Idx;
 use std::cell::Cell;
 
-pub struct Parser {
+pub struct Parser<'a> {
+    sess: &'a Session,
     tokens: Vec<Tok>,
     idx: usize,
     id_counter: Cell<usize>,
 }
 
-impl Parser {
-    pub fn new<I>(tokens: I) -> Self
+impl<'a> Parser<'a> {
+    pub fn new<I>(sess: &'a Session, tokens: I) -> Self
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0) }
+        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0), sess }
     }
 
     /// runs some parser and returns the result and the span that it consumed
@@ -46,8 +48,9 @@ impl Parser {
         Span { lo: idx, hi: idx }
     }
 
-    pub fn parse(&mut self) -> ParseResult<P<Prog>> {
-        ProgParser.parse(self)
+    /// entry point to parsing
+    pub fn parse(&mut self) -> LResult<P<Prog>> {
+        ProgParser.parse(self).or_else(|err| Err(self.sess.emit_error(err.span, err)))
     }
 
     pub fn parse_item(&mut self) -> ParseResult<P<Item>> {
