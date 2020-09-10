@@ -7,7 +7,7 @@ use crate::lexer::symbol;
 use crate::mir::{self, *};
 use crate::span::Span;
 use crate::tir;
-use crate::ty::{Const, ConstKind, SubstsRef, Ty, TyKind};
+use crate::ty::{AdtKind, Const, ConstKind, SubstsRef, Ty, TyKind};
 use crate::typeck::TyCtx;
 use ast::Ident;
 use inkwell::types::*;
@@ -150,7 +150,15 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Scheme(_, _) => todo!(),
             TyKind::Never => todo!(),
             TyKind::Error | TyKind::Infer(_) => unreachable!(),
-            TyKind::Adt(..) => todo!(),
+            TyKind::Adt(adt, substs) => match adt.kind {
+                AdtKind::Struct => {
+                    let variant = adt.single_variant();
+                    // note we preserve the field declaration order of the struct
+                    let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty)).collect_vec();
+                    self.llctx.struct_type(&tys, false).into()
+                }
+                AdtKind::Enum => todo!(),
+            },
         }
     }
 }

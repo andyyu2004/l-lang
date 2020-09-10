@@ -21,6 +21,8 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(expr, arms) => self.compile_match(expr, arms),
             tir::ExprKind::Assign(l, r) => self.compile_assign(l, r),
+            tir::ExprKind::Adt { .. } => todo!(),
+            tir::ExprKind::Field(_, _) => todo!(),
         };
     }
 

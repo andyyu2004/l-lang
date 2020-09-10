@@ -1,3 +1,4 @@
+use crate::ast::Ident;
 use crate::ir;
 use crate::span::Span;
 use crate::ty::Ty;
@@ -13,6 +14,10 @@ pub enum TypeError<'tcx> {
     Mismatch(Ty<'tcx>, Ty<'tcx>),
     #[error("expected `{0}-tuple`, found `{1}-tuple`")]
     TupleSizeMismatch(usize, usize),
+    #[error("unknown field `{1}` on `{0}`")]
+    UnknownField(Ty<'tcx>, Ident),
+    #[error("attempted to index `.{0}` into a {1}-tuple")]
+    TupleOutOfBounds(usize, usize),
     #[error("{0}")]
     Msg(String),
     #[error("type annotations required")]

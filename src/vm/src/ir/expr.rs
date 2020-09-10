@@ -2,6 +2,7 @@ use super::Block;
 use crate::ast;
 use crate::ir;
 use crate::span::Span;
+use ast::Ident;
 use std::fmt::Display;
 
 #[derive(Debug)]
@@ -44,4 +45,6 @@ pub enum ExprKind<'ir> {
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
     Struct(&'ir ir::Path<'ir>, &'ir [ir::Field<'ir>]),
+    /// named field access `foo.x` or `tuple.1`
+    Field(&'ir ir::Expr<'ir>, Ident),
 }

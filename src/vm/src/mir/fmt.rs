@@ -169,6 +169,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 xs[n].mir_fmt(f)?;
                 write!(f, ")")
             }
+            mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
         }
     }
 }

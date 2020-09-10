@@ -1,6 +1,6 @@
-use crate::ir::DefId;
+use crate::ir::{DefId, FieldIdx, VariantIdx};
 use crate::span::Span;
-use crate::ty::{AdtTy, Const, Ty};
+use crate::ty::{AdtTy, Const, SubstsRef, Ty};
 use crate::{ast, ir, tir, util};
 use ast::Ident;
 use fmt::Display;
@@ -29,7 +29,14 @@ pub enum ExprKind<'tcx> {
     Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
     Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
     Assign(&'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
+    Field(&'tcx tir::Expr<'tcx>, FieldIdx),
     Ret(Option<&'tcx tir::Expr<'tcx>>),
+    Adt {
+        adt: &'tcx AdtTy<'tcx>,
+        variant_idx: VariantIdx,
+        substs: SubstsRef<'tcx>,
+        fields: &'tcx [tir::Field<'tcx>],
+    },
 }
 
 impl<'tcx> Display for Expr<'tcx> {

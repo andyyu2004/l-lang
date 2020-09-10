@@ -3,8 +3,9 @@ use crate::arena::DroplessArena;
 use crate::ast::{self, P};
 use crate::compiler::{Compiler, Executable, GlobalCompilerCtx};
 use crate::core::Arena;
-use crate::error::{DiagnosticBuilder, LError, LResult};
+use crate::error::{DiagnosticBuilder, LError, LResult, ParseResult};
 use crate::llvm::CodegenCtx;
+use crate::pluralize;
 use crate::resolve::{Resolver, ResolverOutputs};
 use crate::typeck::{GlobalCtx, TyCtx};
 use crate::{exec, ir, lexer, mir, parser, span, tir};
@@ -25,15 +26,18 @@ pub struct Driver<'tcx> {
     session: Session,
 }
 
+#[macro_export]
+macro_rules! pluralize {
+    ($x:expr) => {
+        if $x != 1 { "s" } else { "" }
+    };
+}
+
 /// exits if any errors have been reported
 macro check_errors($self:expr, $ret:expr) {{
     if $self.session.has_errors() {
         let errc = $self.session.err_count();
-        if errc == 1 {
-            e_red_ln!("{} error emitted", errc)
-        } else {
-            e_red_ln!("{} errors emitted", errc)
-        }
+        e_red_ln!("{} error{} emitted", errc, pluralize!(errc));
         Err(LError::ErrorReported)
     } else {
         Ok($ret)
@@ -59,16 +63,16 @@ impl<'tcx> Driver<'tcx> {
     }
 
     /// used for testing parsing
-    pub fn parse_expr(&self) -> LResult<P<ast::Expr>> {
-        let tokens = self.lex()?;
-        let mut parser = Parser::new(tokens);
+    pub fn parse_expr(&self) -> ParseResult<P<ast::Expr>> {
+        let tokens = self.lex().unwrap();
+        let mut parser = Parser::new(&self.session, tokens);
         let expr = parser.parse_expr()?;
         Ok(expr)
     }
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         let tokens = self.lex()?;
-        let mut parser = Parser::new(tokens);
+        let mut parser = Parser::new(&self.session, tokens);
         let ast = parser.parse()?;
         Ok(ast)
     }

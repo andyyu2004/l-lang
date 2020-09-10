@@ -1,13 +1,21 @@
 use crate::lexer::{Tok, TokenType};
 use crate::span::Span;
+use std::fmt::{self, Display, Formatter};
 use thiserror::Error;
 
 pub type ParseResult<T> = Result<T, ParseError>;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub struct ParseError {
     pub span: Span,
+    #[source]
     pub kind: ParseErrorKind,
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.kind)
+    }
 }
 
 impl ParseError {
@@ -15,27 +23,27 @@ impl ParseError {
         Self { span, kind }
     }
 
-    pub fn  unexpected_eof(span: Span) -> Self {
+    pub fn unexpected_eof(span: Span) -> Self {
         Self { span, kind: ParseErrorKind::Eof }
     }
 
-    pub fn  expected_semi(span: Span) -> Self {
+    pub fn expected_semi(span: Span) -> Self {
         Self { span, kind: ParseErrorKind::MissingSemi }
     }
 
-    pub fn  expected(ttype: TokenType, found: Tok) -> Self {
+    pub fn expected(ttype: TokenType, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::Expected(ttype, found.ttype))
     }
 
-    pub fn  require_type_annotations(span: Span) -> Self {
+    pub fn require_type_annotations(span: Span) -> Self {
         Self::new(span, ParseErrorKind::RequireTypeAnnotations)
     }
 
-    pub fn  expected_one_of(ttypes: Vec<TokenType>, found: Tok) -> Self {
+    pub fn expected_one_of(ttypes: Vec<TokenType>, found: Tok) -> Self {
         Self::new(found.span, ParseErrorKind::ExpectedOneOf(ttypes, found.ttype))
     }
 
-    pub fn  unimpl() -> Self {
+    pub fn unimpl() -> Self {
         Self::new(Span { lo: 0, hi: 0 }, ParseErrorKind::Unimpl)
     }
 }

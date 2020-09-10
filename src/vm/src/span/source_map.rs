@@ -28,8 +28,12 @@ impl SourceMap {
         Self { files: vec![SourceFile::new(src)] }
     }
 
+    pub fn span_to_slice(&self, span: Span) -> &str {
+        &self.files[0].src[span.lo..span.hi]
+    }
+
     pub fn span_to_string(&self, span: Span) -> String {
-        self.files[0].src[span.lo..span.hi].to_owned()
+        self.span_to_slice(span).to_owned()
     }
 }
 

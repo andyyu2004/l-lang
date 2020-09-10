@@ -15,7 +15,7 @@ pub use fmt::Formatter;
 pub use ir_lowering::IrLoweringCtx;
 pub use item::{Item, ItemKind};
 pub use map::Map;
-pub use pattern::{Field, FieldPat, Pattern, PatternKind};
+pub use pattern::{FieldPat, Pattern, PatternKind};
 pub use prog::Prog;
 pub use stmt::{Stmt, StmtKind};
 pub use tir::*;

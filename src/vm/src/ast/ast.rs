@@ -55,6 +55,12 @@ pub struct Ident {
     pub symbol: Symbol,
 }
 
+impl From<Span> for Ident {
+    fn from(span: Span) -> Self {
+        Self { symbol: span.intern(), span }
+    }
+}
+
 impl Deref for Ident {
     type Target = Symbol;
 
@@ -69,6 +75,7 @@ impl Hash for Ident {
     }
 }
 
+/// ignore span in equality checks
 impl PartialEq for Ident {
     fn eq(&self, other: &Self) -> bool {
         self.symbol == other.symbol

@@ -137,6 +137,10 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(l);
             v.visit_expr(r);
         }
+        ir::ExprKind::Field(expr, ident) => {
+            v.visit_expr(expr);
+            v.visit_ident(*ident);
+        }
     }
 }
 

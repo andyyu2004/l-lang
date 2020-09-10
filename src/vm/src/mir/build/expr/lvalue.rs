@@ -15,7 +15,17 @@ impl<'tcx> LvalueBuilder<'tcx> {
     pub fn lvalue(self, tcx: TyCtx<'tcx>) -> Lvalue<'tcx> {
         Lvalue { id: self.id, projs: tcx.intern_lvalue_projections(&self.projs) }
     }
+
+    pub fn project(mut self, proj: Projection<'tcx>) -> Self {
+        self.projs.push(proj);
+        self
+    }
+
+    pub fn project_field(self, field: FieldIdx, ty: Ty<'tcx>) -> Self {
+        self.project(Projection::Field(field, ty))
+    }
 }
+
 impl<'tcx> From<VarId> for LvalueBuilder<'tcx> {
     fn from(id: VarId) -> Self {
         Self { id, projs: vec![] }
@@ -39,8 +49,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> BlockAnd<LvalueBuilder<'tcx>> {
         match expr.kind {
             tir::ExprKind::VarRef(id) => block.and(LvalueBuilder::from(self.var_ir_map[&id])),
+            tir::ExprKind::Field(base, idx) => {
+                let builder = set!(block = self.as_lvalue_builder(block, base));
+                block.and(builder.project_field(idx, expr.ty))
+            }
             tir::ExprKind::Const(_)
             | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
@@ -50,7 +65,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Ret(..) => {
-                // if the expr is not an lvalue, create a temporary
+                // if the expr is not an lvalue, create a temporary and return that as an lvalue
                 let var = set!(block = self.as_tmp(block, expr));
                 block.and(var.into())
             }

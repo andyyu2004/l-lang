@@ -1,6 +1,8 @@
 //! escape analysis of variables
 //! (to decide whether they can safely live on the stack or if we must allocate on the heap)
 
+// https://segment.com/blog/allocation-efficiency-in-high-performance-go-services/
+
 use super::inference::FnCtx;
 use crate::ir::{self, DefId, Visitor};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -87,6 +89,7 @@ impl<'ir> BodyReturnAnalyzer<'ir> {
                 arms.iter().for_each(|arm| self.analyze_expr(arm.body)),
             ir::ExprKind::Struct(_, fields) =>
                 fields.iter().for_each(|f| self.analyze_expr(f.expr)),
+            ir::ExprKind::Field(_, _) => todo!(),
         }
     }
 

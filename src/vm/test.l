@@ -1,24 +1,12 @@
 
 struct S {
     x: int,
+    y: bool,
 }
 
 fn main() -> int {
-    // S { x: 5 }
-    let (x, y) = (1, 2);
-    x
+    let s = S { x: 5, y: false };
+    s.x;
+    (1, false).2
 }
-
-// fn f() -> S {
-//     S { x: 5 }
-// }
-
-// fn fib(n: int) -> int {
-//    return if n < 2 { return n; } else { return fib(n - 1) + fib(n - 2); };
-//}
-
-
-
-
-
 

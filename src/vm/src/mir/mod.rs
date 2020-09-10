@@ -6,10 +6,10 @@ mod traversal;
 
 pub use fmt::MirFmt;
 
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, FieldIdx, VariantIdx};
 use crate::span::Span;
-use crate::tir::Field;
-use crate::ty::{Const, List, Projection, Ty};
+use crate::tir;
+use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
 use crate::{ast, mir};
 use ast::{Ident, Visibility};
 pub use build::build_fn;
@@ -179,6 +179,12 @@ pub enum Rvalue<'tcx> {
     Use(Operand<'tcx>),
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
     Tuple(Vec<Operand<'tcx>>),
+    Adt {
+        adt: &'tcx AdtTy<'tcx>,
+        variant_idx: VariantIdx,
+        substs: SubstsRef<'tcx>,
+        fields: Vec<Operand<'tcx>>,
+    },
 }
 
 // this design flattens out recursive expressions into a series of temporaries

@@ -34,6 +34,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::ItemRef(_) => todo!(),
             tir::ExprKind::Lambda(_) => todo!(),
             tir::ExprKind::VarRef(..)
+            | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Field(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Unary(..)

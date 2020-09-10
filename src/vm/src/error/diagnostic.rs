@@ -30,6 +30,11 @@ impl Diagnostics {
         self.inc_err_count();
         DiagnosticBuilder::from_err(span, err)
     }
+
+    pub fn emit_error(&self, span: Span, err: impl Error) -> LError {
+        self.build_error(span, err).emit();
+        LError::ErrorReported
+    }
 }
 
 /// a single diagnostic error message

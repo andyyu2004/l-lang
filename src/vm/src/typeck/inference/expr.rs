@@ -24,8 +24,39 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
             ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
             ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
+            ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {
+        let base_ty = self.check_expr(base);
+        match base_ty.kind {
+            Adt(adt, substs) if adt.kind != AdtKind::Enum => {
+                let variant = adt.single_variant();
+                if let Some((idx, field)) =
+                    variant.fields.iter().find_position(|f| f.ident == ident)
+                {
+                    // note the id belongs is the id of the entire field expression not just the identifier or base
+                    self.write_field_index(expr.id, idx);
+                    field.ty.subst(self.tcx, substs)
+                } else {
+                    self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
+                }
+            }
+            Tuple(tys) => {
+                // tuple.i literally means the i'th element of tuple
+                // so we can weirdly parse the ident as a literal index
+                let idx = ident.as_str().parse::<usize>().unwrap();
+                self.write_field_index(expr.id, idx);
+                match tys.get(idx) {
+                    Some(ty) => ty,
+                    None =>
+                        self.emit_ty_err(expr.span, TypeError::TupleOutOfBounds(idx, tys.len())),
+                }
+            }
+            _ => panic!("bad field access, todo proper error msg"),
+        }
     }
 
     /// return expressions have the type of the expression that follows the return
@@ -73,7 +104,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ty = self.check_expr_path(path);
         let variant = match path.res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
-                Adt(adt, _substs) => Some((adt.only_variant(), ty)),
+                Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
             ir::Res::Local(_) => None,
@@ -112,21 +143,29 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         variant: &VariantTy<'tcx>,
         fields: &[ir::Field],
     ) -> bool {
-        let mut remaining_fields =
-            variant.fields.iter().map(|f| (f.ident, f)).collect::<FxHashMap<Ident, &FieldTy>>();
+        // note we preserve the field declaration order of the struct
+        let mut remaining_fields = variant
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (f.ident, (i, f)))
+            .collect::<FxHashMap<Ident, (usize, &FieldTy)>>();
         let mut seen_fields = FxHashMap::default();
         let mut has_error = false;
         for field in fields {
             // handle unknown field or setting field twice
+            let ty = self.check_expr(field.expr);
             match remaining_fields.remove(&field.ident) {
-                Some(f) => {
-                    seen_fields.insert(field.ident, field.span);
-                    let ty = self.check_expr(field.expr);
+                Some((idx, f)) => {
+                    seen_fields.insert(field.ident, idx);
+                    self.write_field_index(field.id, idx);
                     self.unify(field.span, f.ty, ty);
                 }
                 None => {
                     has_error = true;
-                    if seen_fields.contains_key(&field.ident) {
+                    if let Some(&idx) = seen_fields.get(&field.ident) {
+                        // write the index even on error to avoid missing entries in table later (may be unnecessary)
+                        self.write_field_index(field.id, idx);
                         self.emit_ty_err(
                             field.span,
                             TypeError::Msg(format!("field `{}` set more than once", field.ident)),

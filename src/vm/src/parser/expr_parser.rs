@@ -100,7 +100,23 @@ impl Parse for PostfixExprParser {
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
                     expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
-                TokenType::Dot => todo!(),
+                TokenType::Dot => {
+                    // TODO refactor to its own parser FieldAccessParser
+                    let ident = if let Some(ident) = parser.accept_ident() {
+                        ident
+                    } else if let Some((kind, span)) = parser.accept_literal() {
+                        // tuple field access can have integer after the dot
+                        // `tuple.0`
+                        match kind {
+                            LiteralKind::Int { .. } => Ident::from(span),
+                            _ => panic!(),
+                        }
+                    } else {
+                        panic!()
+                    };
+                    let span = expr.span.merge(ident.span);
+                    expr = parser.mk_expr(span, ExprKind::Field(expr, ident));
+                }
                 TokenType::OpenSqBracket => todo!(),
                 _ => unreachable!(),
             }

@@ -52,7 +52,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::ItemRef(_)
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Lambda(_)
+            | tir::ExprKind::Field(..)
             | tir::ExprKind::Call(_, _)
+            | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Match(_, _) => {
                 // write the expr stmt into some (unused) tmp var
                 set!(block = self.as_tmp(block, expr));

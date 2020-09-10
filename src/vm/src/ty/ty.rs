@@ -1,6 +1,5 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir::{DefId, ParamIdx};
-use crate::tir::Field;
+use crate::ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
 use crate::{span::Span, util};
@@ -97,22 +96,31 @@ pub enum TyKind<'tcx> {
     Scheme(Forall<'tcx>, Ty<'tcx>),
 }
 
-newtype_index!(VariantIdx);
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Projection<'tcx> {
-    Field(Field, Ty<'tcx>),
+    /// the type is the type of the entire expression after projection
+    /// struct S { x: int }
+    /// S.x :: int
+    /// so the projection from `S` would be `Projection::Field(0, int)`
+    Field(FieldIdx, Ty<'tcx>),
+}
+
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+pub enum AdtKind {
+    Struct,
+    Enum,
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
+    pub kind: AdtKind,
     pub ident: Ident,
     pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
 }
 
 impl<'tcx> AdtTy<'tcx> {
-    pub fn only_variant(&self) -> &VariantTy<'tcx> {
+    pub fn single_variant(&self) -> &VariantTy<'tcx> {
         assert_eq!(self.variants.len(), 1);
         &self.variants[VariantIdx::new(0)]
     }

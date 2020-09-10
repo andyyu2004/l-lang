@@ -1,15 +1,14 @@
-use crate::ir;
+use crate::ast::Ident;
+use crate::ir::{self, FieldIdx};
 use crate::span::Span;
+use crate::tir;
 use crate::ty::{Const, Ty};
 use crate::util;
-use crate::{ast::Ident, tir};
 use std::fmt::{self, Display, Formatter};
-
-newtype_index!(Field);
 
 #[derive(Debug)]
 pub struct FieldPat<'tcx> {
-    pub field: Field,
+    pub field: FieldIdx,
     pub pat: &'tcx Pattern<'tcx>,
 }
 

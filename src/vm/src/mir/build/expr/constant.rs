@@ -15,6 +15,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Const(c) => block.and(c),
             tir::ExprKind::Unary(_, _)
             | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Field(..)
             | tir::ExprKind::Block(_)
             | tir::ExprKind::VarRef(_)
             | tir::ExprKind::ItemRef(_)
@@ -23,6 +24,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Call(_, _)
             | tir::ExprKind::Match(_, _)
             | tir::ExprKind::Ret(..)
+            | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Assign(_, _) => panic!("not a constant"),
         }
     }

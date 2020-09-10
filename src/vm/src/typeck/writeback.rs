@@ -32,7 +32,8 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
         let def_id = body.expr.id.def;
         let substs = fcx.inference_substs();
         let subst_folder = InferenceVarSubstFolder::new(fcx.tcx, substs);
-        Self { fcx, tables: TypeckOutputs::new(def_id), body, subst_folder }
+        let tables = TypeckOutputs::new(def_id);
+        Self { fcx, tables, body, subst_folder }
     }
 
     fn write_ty(&mut self, id: ir::Id, ty: Ty<'tcx>) {
@@ -43,6 +44,22 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
 impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx ir::Expr<'tcx>) {
         self.write_node_ty(expr.span, expr.id);
+        match expr.kind {
+            ir::ExprKind::Lit(_)
+            | ir::ExprKind::Bin(..)
+            | ir::ExprKind::Unary(..)
+            | ir::ExprKind::Ret(_)
+            | ir::ExprKind::Block(_)
+            | ir::ExprKind::Path(_)
+            | ir::ExprKind::Tuple(_)
+            | ir::ExprKind::Closure(..)
+            | ir::ExprKind::Assign(..)
+            | ir::ExprKind::Call(..)
+            | ir::ExprKind::Match(..) => {}
+            ir::ExprKind::Field(..) => self.visit_field_id(expr.id),
+            ir::ExprKind::Struct(_, fields) =>
+                fields.iter().for_each(|f| self.visit_field_id(f.id)),
+        }
         ir::walk_expr(self, expr);
     }
 
@@ -53,10 +70,15 @@ impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
+    fn visit_field_id(&mut self, id: ir::Id) {
+        if let Some(idx) = self.fcx.tables.borrow_mut().field_indices_mut().remove(id) {
+            self.tables.field_indices_mut().insert(id, idx);
+        }
+    }
+
     fn write_node_ty(&mut self, span: Span, id: ir::Id) {
         let unresolved_ty = self.fcx.node_ty(id);
         let ty = self.resolve_ty(unresolved_ty, span);
-        info!("writeback {:?}: {}", id, ty);
         self.write_ty(id, ty)
     }
 

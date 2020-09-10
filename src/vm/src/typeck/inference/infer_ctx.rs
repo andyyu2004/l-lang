@@ -1,10 +1,11 @@
 use super::*;
 use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
-use crate::ir::DefId;
+use crate::ir::{DefId, FieldIdx};
 use crate::span::Span;
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckOutputs};
 use crate::{ast, ir, tir};
+use indexed_vec::Idx;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::ops::Deref;
@@ -41,7 +42,7 @@ impl<'tcx> InferCtxInner<'tcx> {
 pub struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
-    tables: &'a RefCell<TypeckOutputs<'tcx>>,
+    crate tables: &'a RefCell<TypeckOutputs<'tcx>>,
     has_error: Cell<bool>,
 }
 
@@ -129,5 +130,10 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         info!("fcx write ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
+    }
+
+    pub fn write_field_index(&self, id: ir::Id, idx: usize) {
+        info!("fcx write field_index {:?} : {}", id, idx);
+        self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));
     }
 }

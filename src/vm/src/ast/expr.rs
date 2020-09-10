@@ -32,6 +32,7 @@ impl Expr {
             | ExprKind::Closure(..)
             | ExprKind::Call(..)
             | ExprKind::If(..)
+            | ExprKind::Field(..)
             | ExprKind::Struct(..) => false,
         }
     }
@@ -64,6 +65,7 @@ pub enum ExprKind {
     Call(P<Expr>, Vec<P<Expr>>),
     If(P<Expr>, P<Block>, Option<P<Expr>>),
     Struct(Path, Vec<Field>),
+    Field(P<Expr>, Ident),
 }
 
 impl Display for ExprKind {
@@ -79,6 +81,7 @@ impl Display for ExprKind {
             Self::Tuple(xs) => write!(fmt, "({})", util::join(xs, ",")),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
             Self::Struct(path, fields) => todo!(),
+            Self::Field(expr, ident) => write!(fmt, "{}.{}", expr, ident),
             Self::Closure(name, sig, body) => match name {
                 Some(name) => write!(fmt, "fn {} ({}) => {}", name, sig, body),
                 None => write!(fmt, "fn ({}) => {}", sig, body),

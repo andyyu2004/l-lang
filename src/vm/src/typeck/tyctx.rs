@@ -3,10 +3,10 @@ use crate::ast::Ident;
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::TypeResult;
-use crate::ir::{self, DefId, Definitions, ParamIdx};
+use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
 use crate::mir;
 use crate::span::Span;
-use crate::tir::{self, Field, IrLoweringCtx};
+use crate::tir::{self, IrLoweringCtx};
 use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
@@ -55,13 +55,23 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_tir_iter(iter)
     }
 
-    pub fn mk_adt(
+    pub fn mk_struct(
         self,
         def_id: DefId,
         ident: Ident,
         variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
     ) -> &'tcx AdtTy<'tcx> {
-        self.arena.alloc(AdtTy { ident, def_id, variants })
+        self.mk_adt(def_id, AdtKind::Struct, ident, variants)
+    }
+
+    pub fn mk_adt(
+        self,
+        def_id: DefId,
+        kind: AdtKind,
+        ident: Ident,
+        variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+    ) -> &'tcx AdtTy<'tcx> {
+        self.arena.alloc(AdtTy { ident, def_id, kind, variants })
     }
 
     pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
@@ -108,7 +118,7 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn lvalue_project_field(
         self,
         lvalue: mir::Lvalue<'tcx>,
-        field: Field,
+        field: FieldIdx,
         ty: Ty<'tcx>,
     ) -> mir::Lvalue<'tcx> {
         self.project_lvalue(lvalue, Projection::Field(field, ty))

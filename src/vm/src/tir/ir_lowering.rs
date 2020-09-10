@@ -1,9 +1,10 @@
 use crate::ast::Lit;
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, VariantIdx};
 use crate::mir;
 use crate::tir;
-use crate::ty::{Const, ConstKind, InferenceVarSubstFolder, Subst, Ty};
-use crate::typeck::{inference::InferCtx, TyCtx, TypeckOutputs};
+use crate::ty::*;
+use crate::typeck::inference::InferCtx;
+use crate::typeck::{TyCtx, TypeckOutputs};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -55,7 +56,7 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
     fn lower_tuple_subpats(&mut self, pats: &[ir::Pattern<'tcx>]) -> &'tcx [tir::FieldPat<'tcx>] {
         let tcx = self.tcx;
         let pats = pats.iter().enumerate().map(|(i, pat)| tir::FieldPat {
-            field: tir::Field::new(i),
+            field: ir::FieldIdx::new(i),
             pat: pat.to_tir_alloc(self),
         });
         tcx.alloc_tir_iter(pats)
@@ -70,6 +71,18 @@ pub trait Tir<'tcx> {
     fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
         let tir = self.to_tir(ctx);
         ctx.tcx.alloc_tir(tir)
+    }
+}
+
+impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
+    type Output = tir::Field<'tcx>;
+
+    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+        tir::Field {
+            index: ctx.tables.field_index(self.id),
+            expr: self.expr.to_tir_alloc(ctx),
+            ident: self.ident,
+        }
     }
 }
 
@@ -208,6 +221,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
         let &Self { span, id, ref kind } = self;
+        let ty = ctx.node_type(self.id);
         let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
                 tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
@@ -230,15 +244,24 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
             ir::ExprKind::Match(expr, arms, _) =>
                 tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
-            ir::ExprKind::Struct(_, _) => {
-                // => tir::ExprKind::Adt,
-                todo!()
-            }
+            ir::ExprKind::Struct(path, fields) => match ty.kind {
+                TyKind::Adt(adt, substs) => match adt.kind {
+                    AdtKind::Struct => tir::ExprKind::Adt {
+                        adt,
+                        variant_idx: VariantIdx::new(0),
+                        substs,
+                        fields: fields.to_tir(ctx),
+                    },
+                    AdtKind::Enum => todo!(),
+                },
+                _ => unreachable!(),
+            },
             ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| expr.to_tir_alloc(ctx))),
             ir::ExprKind::Assign(l, r) =>
                 tir::ExprKind::Assign(l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
+            ir::ExprKind::Field(expr, _) =>
+                tir::ExprKind::Field(expr.to_tir_alloc(ctx), ctx.tables.field_index(self.id)),
         };
-        let ty = ctx.node_type(self.id);
         tir::Expr { span, id, kind, ty }
     }
 }

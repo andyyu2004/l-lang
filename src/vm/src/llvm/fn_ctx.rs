@@ -1,7 +1,7 @@
 use super::CodegenCtx;
 use crate::ast;
 use crate::mir::{self, BlockId, VarId};
-use crate::ty::{ConstKind, Projection};
+use crate::ty::{AdtKind, ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
 use itertools::Itertools;
@@ -149,6 +149,17 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
+            mir::Rvalue::Adt { adt, substs, fields, variant_idx } => {
+                let ty = self.tcx.mk_adt_ty(adt, substs);
+                match adt.kind {
+                    AdtKind::Struct => {
+                        let llty = self.llvm_ty(ty).into_struct_type();
+                        let fields = fields.iter().map(|op| self.codegen_operand(op)).collect_vec();
+                        llty.const_named_struct(&fields).into()
+                    }
+                    AdtKind::Enum => todo!(),
+                }
+            }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);
                 let rhs = self.codegen_operand(r);
@@ -161,7 +172,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 }
             }
             // handle these cases in `codegen_assignment`
-            mir::Rvalue::Tuple(xs) => unreachable!(),
+            mir::Rvalue::Tuple(..) => unreachable!(),
         }
     }
 

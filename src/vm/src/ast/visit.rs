@@ -152,6 +152,10 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(l);
             visitor.visit_expr(r);
         }
+        ExprKind::Field(expr, ident) => {
+            visitor.visit_expr(expr);
+            visitor.visit_ident(*ident);
+        }
     }
 }
 

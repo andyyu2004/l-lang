@@ -99,6 +99,7 @@ where
             tir::ExprKind::Unary(op, expr) => indent!(self, "({} {})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
+            tir::ExprKind::Field(expr, field_idx) => indent!(self, "{}->{:?}", expr, field_idx),
             tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Ret(expr) => match expr {
@@ -110,8 +111,22 @@ where
                 indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
             tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
+            tir::ExprKind::Adt { adt, fields, .. } => {
+                indentln!(self, "{} {{", adt.ident)?;
+                self.with_indent(4, |fmt| {
+                    for field in fields {
+                        fmt.fmt_field(field)?;
+                    }
+                    Ok(())
+                })?;
+                indent!(self, "}}")
+            }
         }?;
         write!(self.writer, ":{}", expr.ty)
+    }
+
+    pub fn fmt_field(&mut self, field: &tir::Field) -> fmt::Result {
+        indentln!(self, "{} = {};", field.ident, field.expr)
     }
 
     fn fmt_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> fmt::Result {

@@ -20,12 +20,9 @@ pub use vm_error::{VMError, VMResult};
 pub type LResult<T> = Result<T, LError>;
 
 impl_from_inner!(VMError, LError, VMError);
-impl_from_inner!(ParseError, LError, ParseError);
 
 #[derive(Debug)]
 pub enum LError {
     VMError(VMError),
-    ParseError(ParseError),
-    Error(String),
     ErrorReported,
 }

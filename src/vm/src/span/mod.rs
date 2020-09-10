@@ -1,7 +1,7 @@
 mod ctx;
 mod source_map;
 
-use crate::lexer::symbol;
+use crate::lexer::symbol::{self, Symbol};
 use crate::span;
 pub use ctx::Ctx;
 pub use source_map::SourceMap;
@@ -52,5 +52,9 @@ impl Span {
 
     pub fn to_string(self) -> String {
         with_source_map(|map| map.span_to_string(self))
+    }
+
+    pub fn intern(self) -> Symbol {
+        with_source_map(|map| with_interner(|interner| interner.intern(map.span_to_slice(self))))
     }
 }

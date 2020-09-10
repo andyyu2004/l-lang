@@ -26,6 +26,9 @@ pub use visit::*;
 
 newtype_index!(DefId);
 newtype_index!(LocalId);
+newtype_index!(ParamIdx);
+newtype_index!(VariantIdx);
+newtype_index!(FieldIdx);
 
 impl Display for LocalId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

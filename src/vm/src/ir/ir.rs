@@ -1,11 +1,9 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir;
+use crate::ir::{self, ParamIdx};
 use crate::{lexer::Symbol, span::Span};
 use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
-
-newtype_index!(ParamIdx);
 
 #[derive(Debug)]
 pub enum VariantKind<'ir> {

@@ -1,8 +1,8 @@
-use crate::ir;
+use crate::ast::Ident;
+use crate::ir::{self, FieldIdx, Id, Res};
+use crate::span::Span;
 use crate::tir;
 use crate::ty::{List, SubstsRef, Ty};
-use crate::{ast::Ident, span::Span};
-use ir::{Id, Res};
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
@@ -14,6 +14,13 @@ pub struct Generics<'tcx> {
     /// just to make it not a ZST
     pub data: usize,
     pub pd: PhantomData<&'tcx ()>,
+}
+
+#[derive(Debug)]
+pub struct Field<'tcx> {
+    pub index: FieldIdx,
+    pub ident: Ident,
+    pub expr: &'tcx tir::Expr<'tcx>,
 }
 
 #[derive(Debug)]

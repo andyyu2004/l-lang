@@ -17,7 +17,7 @@ impl<'tcx> TyCtx<'tcx> {
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = self.variant_ty(item.ident, variant_kind);
                 let variant_tys = std::iter::once(variant_ty).collect();
-                let adt_ty = self.mk_adt(item.id.def, item.ident, variant_tys);
+                let adt_ty = self.mk_struct(item.id.def, item.ident, variant_tys);
                 let ty = self.mk_empty_adt_ty(adt_ty);
                 self.generalize(generics, ty)
             }
