@@ -88,7 +88,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &mir::Rvalue<'tcx>) {
         let var = self.codegen_lvalue(lvalue);
-        // certain aggregate rvalues require special treatment as llvm doesn't seem to like recursively building these values
+        // certain aggregate rvalues require special treatment as llvm doesn't like recursively building these values
+        // instead, we use geps to set the fields directly
         match rvalue {
             mir::Rvalue::Tuple(xs) =>
                 for (i, x) in xs.iter().enumerate() {
@@ -96,6 +97,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     let field_ptr = self.build_struct_gep(var.ptr, i as u32, "tuple_gep").unwrap();
                     self.build_store(field_ptr, operand);
                 },
+            mir::Rvalue::Adt { adt, substs, fields, variant_idx } => {
+                let ty = self.tcx.mk_adt_ty(adt, substs);
+                match adt.kind {
+                    // basically identical code to tuple but has potential substs to deal with
+                    AdtKind::Struct =>
+                        for (i, f) in fields.iter().enumerate() {
+                            let operand = self.codegen_operand(f);
+                            let field_ptr =
+                                self.build_struct_gep(var.ptr, i as u32, "struct_gep").unwrap();
+                            self.build_store(field_ptr, operand);
+                        },
+                    AdtKind::Enum => todo!(),
+                }
+            }
             _ => {
                 let value = self.codegen_rvalue(rvalue);
                 self.build_store(var.ptr, value);
@@ -103,6 +118,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
+    /// returns a pointer to where the lvalue points to
     fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LLVMVar<'tcx> {
         self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
     }
@@ -121,6 +137,25 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     }
                 }
             }
+        }
+    }
+
+    fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
+        match rvalue {
+            mir::Rvalue::Use(operand) => self.codegen_operand(operand),
+            mir::Rvalue::Bin(op, l, r) => {
+                let lhs = self.codegen_operand(l);
+                let rhs = self.codegen_operand(r);
+                match (lhs, rhs) {
+                    (BasicValueEnum::FloatValue(l), BasicValueEnum::FloatValue(r)) =>
+                        self.codegen_float_op(*op, l, r),
+                    (BasicValueEnum::IntValue(l), BasicValueEnum::IntValue(r)) =>
+                        self.codegen_int_op(*op, l, r),
+                    _ => unreachable!(),
+                }
+            }
+            // handle these cases in `codegen_assignment`
+            mir::Rvalue::Tuple(..) | mir::Rvalue::Adt { .. } => unreachable!(),
         }
     }
 
@@ -143,36 +178,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 // probably not the `correct` way to do this :)
                 unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into()
             }
-        }
-    }
-
-    fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
-        match rvalue {
-            mir::Rvalue::Use(operand) => self.codegen_operand(operand),
-            mir::Rvalue::Adt { adt, substs, fields, variant_idx } => {
-                let ty = self.tcx.mk_adt_ty(adt, substs);
-                match adt.kind {
-                    AdtKind::Struct => {
-                        let llty = self.llvm_ty(ty).into_struct_type();
-                        let fields = fields.iter().map(|op| self.codegen_operand(op)).collect_vec();
-                        llty.const_named_struct(&fields).into()
-                    }
-                    AdtKind::Enum => todo!(),
-                }
-            }
-            mir::Rvalue::Bin(op, l, r) => {
-                let lhs = self.codegen_operand(l);
-                let rhs = self.codegen_operand(r);
-                match (lhs, rhs) {
-                    (BasicValueEnum::FloatValue(l), BasicValueEnum::FloatValue(r)) =>
-                        self.codegen_float_op(*op, l, r),
-                    (BasicValueEnum::IntValue(l), BasicValueEnum::IntValue(r)) =>
-                        self.codegen_int_op(*op, l, r),
-                    _ => unreachable!(),
-                }
-            }
-            // handle these cases in `codegen_assignment`
-            mir::Rvalue::Tuple(..) => unreachable!(),
         }
     }
 
