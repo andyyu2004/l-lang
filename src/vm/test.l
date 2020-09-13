@@ -5,8 +5,10 @@ struct S {
 }
 
 fn main() -> int {
-    let s = S { x: 5, y: false };
-    s.x;
-    (1, false).2
+    let s = box S { x: 5, y: false };
+    let x = box 5;
+    *x
+    /* (*s).x */
+    /* (1, false).1 */
 }
 

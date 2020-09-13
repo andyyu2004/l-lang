@@ -16,8 +16,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Ref(lvalue))
             }
-            tir::ExprKind::Adt { .. } => todo!(),
-            tir::ExprKind::Box(..) => todo!(),
             tir::ExprKind::Const(c) => {
                 let constant = set!(block = self.as_const(block, expr));
                 block.and(Operand::Const(constant))
@@ -28,6 +26,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
             tir::ExprKind::Unary(..)
+            | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Block(_)
+            | tir::ExprKind::Box(..)
+            | tir::ExprKind::Lambda(..)
+            | tir::ExprKind::Match(..)
+            | tir::ExprKind::Assign(..)
+            | tir::ExprKind::Ret(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Tuple(..) => {
@@ -35,11 +40,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let lvalue = set!(block = self.as_tmp(block, expr)).into();
                 block.and(Operand::Ref(lvalue))
             }
-            tir::ExprKind::Block(_) => todo!(),
-            tir::ExprKind::Lambda(_) => todo!(),
-            tir::ExprKind::Match(_, _) => todo!(),
-            tir::ExprKind::Assign(_, _) => todo!(),
-            tir::ExprKind::Ret(_) => todo!(),
         }
     }
 }

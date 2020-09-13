@@ -152,6 +152,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let operand = self.codegen_operand(operand);
                 let ty = operand.get_type();
                 let ptr = self.build_malloc(ty, "box").unwrap();
+                self.build_store(ptr, operand);
                 ptr.into()
             }
             mir::Rvalue::Bin(op, l, r) => {
