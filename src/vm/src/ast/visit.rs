@@ -198,6 +198,7 @@ pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
             ret.as_ref().map(|ty| visitor.visit_ty(ty));
         }
         TyKind::Infer => {}
+        TyKind::Ptr(_, ty) => visitor.visit_ty(ty),
     }
 }
 

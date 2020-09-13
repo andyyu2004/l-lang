@@ -1,8 +1,7 @@
 use super::Block;
-use crate::ast;
+use crate::ast::{self, Ident, UnaryOp};
 use crate::ir;
 use crate::span::Span;
-use ast::Ident;
 use std::fmt::Display;
 
 #[derive(Debug)]
@@ -20,13 +19,14 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
 }
 
 impl<'ir> Expr<'ir> {
-    pub fn lvalue(&self) -> Option<ir::Lvalue> {
+    pub fn is_lvalue(&self) -> bool {
         match self.kind {
             ExprKind::Path(p) => match p.res {
-                ir::Res::Local(id) => Some(ir::Lvalue::Local(id)),
-                _ => None,
+                ir::Res::Local(id) => true,
+                _ => false,
             },
-            _ => None,
+            ExprKind::Unary(UnaryOp::Deref, _) => true,
+            _ => false,
         }
     }
 }

@@ -22,6 +22,10 @@ impl Parse for TyParser {
                 let (span, tys) = tuple_parser.parse(parser)?;
                 Ok(parser.mk_ty(span, TyKind::Tuple(tys)))
             }
+        } else if let Some(amp) = parser.accept(TokenType::And) {
+            let m = parser.parse_mutability();
+            let ty = self.parse(parser)?;
+            Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Ptr(m, ty)))
         } else if let Some(lsq) = parser.accept(TokenType::OpenSqBracket) {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;

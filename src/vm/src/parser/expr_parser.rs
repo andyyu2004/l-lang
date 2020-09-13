@@ -47,7 +47,7 @@ impl Parse for AssnExprParser {
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
         let mut expr = CmpExprParser.parse(parser)?;
         while let Some(eq) = parser.accept(TokenType::Eq) {
-            let right = Self.parse(parser)?;
+            let right = self.parse(parser)?;
             expr = parser.mk_expr(expr.span.merge(right.span), ExprKind::Assign(expr, right));
         }
         Ok(expr)

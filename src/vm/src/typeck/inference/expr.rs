@@ -90,29 +90,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     /// checks the expressions is a lvalue and mutable, hence assignable
-    // maybe this can move to mir analysis?
+    // TODO mutability checks
     fn check_lvalue(&mut self, l: &ir::Expr) {
-        match l.lvalue() {
-            Some(lvalue) => match lvalue {
-                ir::Lvalue::Local(id) => {
-                    let local_ty = self.local_ty(id);
-                    match local_ty.mtbl {
-                        Mutability::Mut => local_ty.ty,
-                        Mutability::Imm => self.emit_ty_err(
-                            l.span,
-                            TypeError::Msg(format!(
-                                "cannot assign to immutable binding `{}`",
-                                l.span.to_string()
-                            )),
-                        ),
-                    }
-                }
-            },
-            None => self.emit_ty_err(
+        if !l.is_lvalue() {
+            self.emit_ty_err(
                 l.span,
                 TypeError::Msg(format!("expected lvalue as target of assignment")),
-            ),
-        };
+            );
+        }
     }
 
     fn check_assign_expr(&mut self, expr: &ir::Expr, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {

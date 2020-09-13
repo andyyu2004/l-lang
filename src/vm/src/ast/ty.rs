@@ -1,4 +1,4 @@
-use super::{NodeId, Path, P};
+use super::{Mutability, NodeId, Path, P};
 use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
@@ -16,6 +16,9 @@ pub enum TyKind {
     Tuple(Vec<P<Ty>>),
     Paren(P<Ty>),
     Path(Path),
+    /// &mut <ty>
+    /// &<ty>
+    Ptr(Mutability, P<Ty>),
     /// fn(<ty>...) (-> <ty>)?
     Fn(Vec<P<Ty>>, Option<P<Ty>>),
     Infer,

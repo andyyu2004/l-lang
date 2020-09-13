@@ -182,7 +182,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             },
             &mir::Operand::Ref(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
-                self.build_load(var.ptr, "ld").into()
+                self.build_load(var.ptr, "load").into()
             }
             mir::Operand::Item(def_id) => {
                 // TODO assume item is fn for now

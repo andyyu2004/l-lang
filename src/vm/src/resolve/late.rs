@@ -92,7 +92,18 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     fn resolve_ty_path(&mut self, path: &'ast Path) -> ResolutionResult<Res<NodeId>> {
-        let segment = &path.segments[0];
+        match path.segments.as_slice() {
+            [] => panic!("empty path"),
+            [segment] => self.resolve_ty_path_segment(path, segment),
+            [xs @ .., segment] => todo!(),
+        }
+    }
+
+    fn resolve_ty_path_segment(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+    ) -> ResolutionResult<Res<NodeId>> {
         if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
             Ok(res)
         } else if let Some(res) = self.resolver.resolve_item(segment.ident) {
@@ -161,7 +172,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_ty(&mut self, ty: &'ast Ty) {
         match &ty.kind {
-            TyKind::Path(path) => return self.resolve_path(path, NS::Type).unwrap(),
+            TyKind::Path(path) => self.resolve_path(path, NS::Type).unwrap(),
             _ => {}
         };
         ast::walk_ty(self, ty);

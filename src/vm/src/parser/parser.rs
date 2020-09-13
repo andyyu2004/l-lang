@@ -22,6 +22,13 @@ impl<'a> Parser<'a> {
         Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0), sess }
     }
 
+    pub fn parse_mutability(&mut self) -> Mutability {
+        match self.accept(TokenType::Mut) {
+            Some(_) => Mutability::Mut,
+            None => Mutability::Imm,
+        }
+    }
+
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
     pub(super) fn with_span<R>(

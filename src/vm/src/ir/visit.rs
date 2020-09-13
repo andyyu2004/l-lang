@@ -171,7 +171,7 @@ pub fn walk_block<'ir, V: Visitor<'ir>>(v: &mut V, block: &'ir ir::Block<'ir>) {
 pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
     match &ty.kind {
         ir::TyKind::Path(path) => v.visit_path(path),
-        ir::TyKind::Array(ty) => v.visit_ty(ty),
+        ir::TyKind::Ptr(_, ty) | ir::TyKind::Array(ty) => v.visit_ty(ty),
         ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
         ir::TyKind::Fn(params, ret) => {
             params.iter().for_each(|ty| v.visit_ty(ty));

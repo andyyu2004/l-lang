@@ -25,9 +25,15 @@ fn test_box_deref() {
 fn test_box_deref_assign() {
     let src = r#"
     fn main() -> int {
-        let x = box 5;
-        x;
-        5
-    }"#;
-    llvm_exec!(src);
+        let ptr = box 5;
+        mutate(ptr);
+        *ptr
+    }
+
+    fn mutate(ptr: &mut int) {
+        *ptr = 99;
+    }
+    "#;
+
+    assert_eq!(llvm_exec!(src), 99);
 }
