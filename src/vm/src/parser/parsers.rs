@@ -26,16 +26,17 @@ impl Parse for FieldAccessParser {
                 // which is lexed as [tuple . 1.1]
                 LiteralKind::Float { .. } => {
                     let (x, y) = parser.split_float();
+                    // replace the expression once, and then let the remainder of the code handle `y`
                     self.expr = parser.mk_expr(
                         self.expr.span.merge(x.span),
                         ExprKind::Field(std::mem::take(&mut self.expr), x),
                     );
                     y
                 }
-                _ => panic!(),
+                _ => panic!("bad field access literal"),
             }
         } else {
-            panic!()
+            panic!("expected literal or identifier for field access")
         };
         Ok(parser.mk_expr(
             self.expr.span.merge(ident.span),
