@@ -31,6 +31,7 @@ pub enum ExprKind<'tcx> {
     Assign(&'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Field(&'tcx tir::Expr<'tcx>, FieldIdx),
     Ret(Option<&'tcx tir::Expr<'tcx>>),
+    Box(&'tcx tir::Expr<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,

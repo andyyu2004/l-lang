@@ -5,7 +5,7 @@ use crate::ty::{AdtKind, ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use mir::{Lvalue, Rvalue};
+use mir::Lvalue;
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
@@ -143,6 +143,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
+            mir::Rvalue::Box(operand) => {
+                let operand = self.codegen_operand(operand);
+                let ty = operand.get_type();
+                let ptr = self.build_malloc(ty, "box").unwrap();
+                ptr.into()
+            }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);
                 let rhs = self.codegen_operand(r);

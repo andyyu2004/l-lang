@@ -1,5 +1,5 @@
 use super::inference::{FnCtx, InferCtx, InferCtxBuilder, Inherited};
-use crate::ast::Ident;
+use crate::ast::{Ident, Mutability};
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::TypeResult;
@@ -84,6 +84,10 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
+    }
+
+    pub fn mk_ptr_ty(self, m: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Ptr(m, ty))
     }
 
     pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx) -> Ty<'tcx> {

@@ -102,6 +102,7 @@ where
             tir::ExprKind::Field(expr, field_idx) => indent!(self, "{}->{:?}", expr, field_idx),
             tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
+            tir::ExprKind::Box(expr) => indent!(self, "box {}", expr),
             tir::ExprKind::Ret(expr) => match expr {
                 Some(expr) => indent!(self, "return {}", expr),
                 None => indent!(self, "return"),

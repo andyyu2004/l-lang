@@ -131,6 +131,7 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::Path(path) => visitor.visit_path(path),
         ExprKind::Tuple(xs) => xs.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Closure(name, sig, expr) => visitor.visit_closure(*name, sig, expr),
+        ExprKind::Box(expr) => visitor.visit_expr(expr),
         ExprKind::Assign(l, r) => {
             visitor.visit_expr(l);
             visitor.visit_expr(r);

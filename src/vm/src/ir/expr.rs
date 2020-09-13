@@ -45,6 +45,7 @@ pub enum ExprKind<'ir> {
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
     Struct(&'ir ir::Path<'ir>, &'ir [ir::Field<'ir>]),
+    Box(&'ir ir::Expr<'ir>),
     /// named field access `foo.x` or `tuple.1`
     Field(&'ir ir::Expr<'ir>, Ident),
 }

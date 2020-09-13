@@ -55,6 +55,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Call(_, _)
             | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Box(..)
             | tir::ExprKind::Match(_, _) => {
                 // write the expr stmt into some (unused) tmp var
                 set!(block = self.as_tmp(block, expr));

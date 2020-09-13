@@ -25,8 +25,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
             ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
             ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
+            ir::ExprKind::Box(expr) => self.check_box_expr(expr),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_box_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
+        let ty = self.check_expr(expr);
+        // TODO unsure how to treat mutability, just setting to mutable for now
+        self.mk_ptr_ty(Mutability::Mut, ty)
     }
 
     fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {

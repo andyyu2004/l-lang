@@ -1,5 +1,4 @@
 mod collect;
-mod escape;
 pub mod inference;
 mod item_ctx;
 mod relate;

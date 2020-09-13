@@ -159,6 +159,10 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
         match self {
             mir::Rvalue::Use(operand) => operand.mir_fmt(f),
             mir::Rvalue::Bin(op, lhs, rhs) => f.fmt_bin(*op, lhs, rhs),
+            mir::Rvalue::Box(operand) => {
+                write!(f, "box ")?;
+                operand.mir_fmt(f)
+            }
             mir::Rvalue::Tuple(xs) => {
                 write!(f, "(")?;
                 let n = xs.len() - 1;

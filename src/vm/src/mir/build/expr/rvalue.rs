@@ -46,6 +46,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Tuple(xs) => block.and(Rvalue::Tuple(
                 xs.iter().map(|x| set!(block = self.as_operand(block, x))).collect(),
             )),
+            tir::ExprKind::Box(expr) => {
+                let operand = set!(block = self.as_operand(block, expr));
+                block.and(Rvalue::Box(operand))
+            }
             tir::ExprKind::Unary(_, _) => todo!(),
             tir::ExprKind::Block(_) => todo!(),
             tir::ExprKind::ItemRef(_) => todo!(),

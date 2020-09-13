@@ -60,6 +60,6 @@ pub enum ParseErrorKind {
     RequireTypeAnnotations,
     #[error("expected semicolon after expression statement")]
     MissingSemi,
-    #[error("unimplemented")]
+    #[error("unimplemented in parser")]
     Unimpl,
 }

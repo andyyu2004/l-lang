@@ -1,4 +1,4 @@
-use crate::ast::{Ident, Visibility};
+use crate::ast::{Ident, Mutability, Visibility};
 use crate::ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
@@ -94,6 +94,12 @@ pub enum TyKind<'tcx> {
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
     Scheme(Forall<'tcx>, Ty<'tcx>),
+    /// pointer to a type
+    /// created by box expressions
+    /// mutability inherited by the pointee?
+    /// x: T -> box x: &T
+    /// mut x: T -> box x: &mut T
+    Ptr(Mutability, Ty<'tcx>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -185,10 +191,9 @@ impl<'tcx> TyS<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::Array(ty) => ty.kind.ty_flags(),
-            TyKind::Tuple(tys) => tys.ty_flags(),
+            TyKind::Array(ty) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
-            TyKind::Scheme(_, ty) => ty.ty_flags(),
+            TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(_) => TyFlags::HAS_INFER,
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
@@ -216,6 +221,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Float => write!(f, "float"),
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
+            TyKind::Ptr(m, ty) => write!(f, "&{}{}", m, ty),
         }
     }
 }

@@ -19,7 +19,22 @@ impl Parse for ExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        AssnExprParser.parse(parser)
+        BoxExprParser.parse(parser)
+    }
+}
+
+struct BoxExprParser;
+
+impl Parse for BoxExprParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        if let Some(kw) = parser.accept(TokenType::Box) {
+            let expr = parser.parse_expr()?;
+            Ok(parser.mk_expr(kw.span.merge(expr.span), ExprKind::Box(expr)))
+        } else {
+            AssnExprParser.parse(parser)
+        }
     }
 }
 

@@ -15,6 +15,15 @@ pub enum Mutability {
     Imm,
 }
 
+impl Display for Mutability {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Mutability::Mut => write!(f, "mut "),
+            Mutability::Imm => Ok(()),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum PatternKind {
     /// _

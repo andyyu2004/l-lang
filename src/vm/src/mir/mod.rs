@@ -178,6 +178,7 @@ pub enum Rvalue<'tcx> {
     /// usage of some variable
     Use(Operand<'tcx>),
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
+    Box(Operand<'tcx>),
     Tuple(Vec<Operand<'tcx>>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,

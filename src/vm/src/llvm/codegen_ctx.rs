@@ -131,6 +131,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
+    /// converts a L type into a llvm representation
     pub fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
         match ty.kind {
             TyKind::Bool => self.types.boolean.into(),
@@ -159,6 +160,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
                 AdtKind::Enum => todo!(),
             },
+            TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
         }
     }
 }

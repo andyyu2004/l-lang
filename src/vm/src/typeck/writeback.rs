@@ -55,6 +55,7 @@ impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
             | ir::ExprKind::Closure(..)
             | ir::ExprKind::Assign(..)
             | ir::ExprKind::Call(..)
+            | ir::ExprKind::Box(..)
             | ir::ExprKind::Match(..) => {}
             ir::ExprKind::Field(..) => self.visit_field_id(expr.id),
             ir::ExprKind::Struct(_, fields) =>

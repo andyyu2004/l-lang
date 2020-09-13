@@ -22,6 +22,7 @@ lazy_static! {
         "return" => TokenType::Return,
         "mut" => TokenType::Mut,
         "type" => TokenType::Type,
+        "box" => TokenType::Box,
     };
 }
 
@@ -138,6 +139,7 @@ impl Lexer {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Box,
     Type,
     /// ->
     RArrow,

@@ -13,6 +13,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> BlockAnd<Operand<'tcx>> {
         match expr.kind {
             tir::ExprKind::Adt { .. } => todo!(),
+            tir::ExprKind::Box(..) => todo!(),
             tir::ExprKind::Const(c) => {
                 let constant = set!(block = self.as_const(block, expr));
                 block.and(Operand::Const(constant))

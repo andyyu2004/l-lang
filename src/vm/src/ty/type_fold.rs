@@ -39,6 +39,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
             TyKind::Scheme(forall, ty) => TyKind::Scheme(forall, ty.fold_with(folder)),
             TyKind::Adt(adt, substs) => TyKind::Adt(adt, substs.fold_with(folder)),
+            TyKind::Ptr(m, ty) => TyKind::Ptr(m, ty.fold_with(folder)),
             TyKind::Param(_)
             | TyKind::Infer(_)
             | TyKind::Char
@@ -68,7 +69,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         match self.kind {
             TyKind::Fn(inputs, ret) => inputs.visit_with(visitor) || ret.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
-            TyKind::Array(ty) => ty.visit_with(visitor),
+            TyKind::Ptr(_, ty) | TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Scheme(_, ty) => ty.visit_with(visitor),
             TyKind::Infer(_) => false,
             TyKind::Adt(_, _) => todo!(),

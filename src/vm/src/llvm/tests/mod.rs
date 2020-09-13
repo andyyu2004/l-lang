@@ -1,3 +1,4 @@
+mod heap_alloc;
 mod output_tests;
 mod pattern_tests;
 mod struct_tests;
