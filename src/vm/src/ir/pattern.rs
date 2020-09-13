@@ -9,7 +9,7 @@ pub struct Pattern<'ir> {
     pub kind: ir::PatternKind<'ir>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum PatternKind<'ir> {
     Wildcard,
     Lit(&'ir ir::Expr<'ir>),

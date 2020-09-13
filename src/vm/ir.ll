@@ -4,55 +4,35 @@ source_filename = "main"
 define i64 @main() {
 basic_block0:
   %retvar = alloca i64
-  %tmp = alloca { i64, i1 }*
-  %tmp1 = alloca { i64, i1 }
-  %s = alloca { i64, i1 }*
-  %tmp2 = alloca i64*
-  %x = alloca i64*
-  %tmp3 = alloca {}
-  %struct_gep = getelementptr inbounds { i64, i1 }, { i64, i1 }* %tmp1, i32 0, i32 0
-  store i64 5, i64* %struct_gep
-  %struct_gep4 = getelementptr inbounds { i64, i1 }, { i64, i1 }* %tmp1, i32 0, i32 1
-  store i1 false, i1* %struct_gep4
-  %load = load { i64, i1 }, { i64, i1 }* %tmp1
-  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ i64, i1 }* getelementptr ({ i64, i1 }, { i64, i1 }* null, i32 1) to i32))
-  %box = bitcast i8* %malloccall to { i64, i1 }*
-  store { i64, i1 } %load, { i64, i1 }* %box
-  store { i64, i1 }* %box, { i64, i1 }** %tmp
-  %load5 = load { i64, i1 }*, { i64, i1 }** %tmp
-  store { i64, i1 }* %load5, { i64, i1 }** %s
-  %malloccall6 = tail call i8* @malloc(i32 ptrtoint (i64* getelementptr (i64, i64* null, i32 1) to i32))
-  %box7 = bitcast i8* %malloccall6 to i64*
-  store i64 5, i64* %box7
-  store i64* %box7, i64** %tmp2
-  %load8 = load i64*, i64** %tmp2
-  store i64* %load8, i64** %x
-  %load9 = load i64*, i64** %x
-  %fcall = call {} @mutate(i64* %load9)
-  store {} %fcall, {}* %tmp3
-  br label %basic_block1
-
-basic_block1:                                     ; preds = %basic_block0
-  %deref_load = load i64*, i64** %x
-  %load10 = load i64, i64* %deref_load
-  store i64 %load10, i64* %retvar
+  %tmp = alloca { i64, { i64, { i64, { i64, i64 } } } }
+  %tmp1 = alloca { i64, { i64, { i64, i64 } } }
+  %tmp2 = alloca { i64, { i64, i64 } }
+  %tmp3 = alloca { i64, i64 }
+  %tuple_gep = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp3, i32 0, i32 0
+  store i64 4, i64* %tuple_gep
+  %tuple_gep4 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp3, i32 0, i32 1
+  store i64 5, i64* %tuple_gep4
+  %tuple_gep5 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2, i32 0, i32 0
+  store i64 3, i64* %tuple_gep5
+  %load = load { i64, i64 }, { i64, i64 }* %tmp3
+  %tuple_gep6 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2, i32 0, i32 1
+  store { i64, i64 } %load, { i64, i64 }* %tuple_gep6
+  %tuple_gep7 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1, i32 0, i32 0
+  store i64 2, i64* %tuple_gep7
+  %load8 = load { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2
+  %tuple_gep9 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1, i32 0, i32 1
+  store { i64, { i64, i64 } } %load8, { i64, { i64, i64 } }* %tuple_gep9
+  %tuple_gep10 = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 0
+  store i64 1, i64* %tuple_gep10
+  %load11 = load { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1
+  %tuple_gep12 = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 1
+  store { i64, { i64, { i64, i64 } } } %load11, { i64, { i64, { i64, i64 } } }* %tuple_gep12
+  %struct_gep = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 1
+  %struct_gep13 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %struct_gep, i32 0, i32 1
+  %struct_gep14 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %struct_gep13, i32 0, i32 1
+  %struct_gep15 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %struct_gep14, i32 0, i32 1
+  %load16 = load i64, i64* %struct_gep15
+  store i64 %load16, i64* %retvar
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 }
-
-define {} @mutate(i64* %0) {
-basic_block0:
-  %retvar = alloca {}
-  %ptr = alloca i64*
-  store i64* %0, i64** %ptr
-  %ptr1 = alloca i64*
-  %load = load i64*, i64** %ptr
-  store i64* %load, i64** %ptr1
-  %deref_load = load i64*, i64** %ptr1
-  store i64 9, i64* %deref_load
-  store {} undef, {}* %retvar
-  %load_ret = load {}, {}* %retvar
-  ret {} %load_ret
-}
-
-declare noalias i8* @malloc(i32)

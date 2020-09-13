@@ -135,7 +135,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> BlockAnd<Rvalue<'tcx>> {
         match pat.kind {
             tir::PatternKind::Wildcard => block.and(cmp_rval.clone()),
-            tir::PatternKind::Binding(ident, _) => {
+            tir::PatternKind::Binding(m, ident, _) => {
                 self.alloc_local(pat);
                 block.and(cmp_rval.clone())
             }

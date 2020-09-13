@@ -23,9 +23,15 @@ impl<'ir> Expr<'ir> {
         match self.kind {
             ExprKind::Path(p) => match p.res {
                 ir::Res::Local(id) => true,
-                _ => false,
+                ir::Res::Def(_, def_kind) => match def_kind {
+                    ir::DefKind::Fn => false,
+                    ir::DefKind::Enum => false,
+                    ir::DefKind::Struct => false,
+                    ir::DefKind::TyParam(_) => false,
+                },
+                ir::Res::PrimTy(_) => unreachable!(),
             },
-            ExprKind::Unary(UnaryOp::Deref, _) => true,
+            ExprKind::Field(..) | ExprKind::Unary(UnaryOp::Deref, _) => true,
             _ => false,
         }
     }

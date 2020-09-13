@@ -6,12 +6,12 @@ mod traversal;
 
 pub use fmt::MirFmt;
 
+use crate::ast::{self, Ident, Mutability, Visibility};
 use crate::ir::{self, DefId, FieldIdx, VariantIdx};
+use crate::mir;
 use crate::span::Span;
 use crate::tir;
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
-use crate::{ast, mir};
-use ast::{Ident, Visibility};
 pub use build::build_fn;
 use indexed_vec::{Idx, IndexVec};
 use std::collections::BTreeMap;
@@ -159,6 +159,7 @@ pub struct Var<'tcx> {
     pub info: SpanInfo,
     pub kind: VarKind,
     pub ty: Ty<'tcx>,
+    pub mtbl: Mutability,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]

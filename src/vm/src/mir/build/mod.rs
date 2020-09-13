@@ -113,11 +113,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn alloc_local(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
-        self.alloc_ir_var(pat, VarKind::Arg)
+        self.alloc_ir_var(pat, VarKind::Local)
     }
 
     fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {
-        let var = Var { info, kind, ty };
+        // make it mutable by default, this can be unset later
+        let var = Var { mtbl: Mutability::Mut, info, kind, ty };
         self.vars.push(var)
     }
 }

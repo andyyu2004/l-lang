@@ -1,4 +1,4 @@
-use crate::ast::Ident;
+use crate::ast::{Ident, Mutability};
 use crate::ir::{self, FieldIdx};
 use crate::span::Span;
 use crate::tir;
@@ -42,7 +42,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             // we print out the `local_id` instead of the ident symbol number
             // as the identifier is referred to by id instead of name in the tir
             // in particular ExprKind::VarRef does not have access to the symbol only the `ir::Id`
-            PatternKind::Binding(ident, _) => write!(f, "{}", ident),
+            PatternKind::Binding(m, ident, _) => write!(f, "{}{}", m, ident),
             PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
             PatternKind::Lit(expr) => {
                 // don't double print the type as expr will already do so
@@ -58,7 +58,7 @@ impl<'tcx> Display for Pattern<'tcx> {
 #[derive(Debug)]
 pub enum PatternKind<'tcx> {
     Wildcard,
-    Binding(Ident, Option<&'tcx tir::Pattern<'tcx>>),
+    Binding(Mutability, Ident, Option<&'tcx tir::Pattern<'tcx>>),
     /// generalization of tuple patterns
     /// used to match tuples, and single variant adts (i.e. structs)
     Field(&'tcx [tir::FieldPat<'tcx>]),

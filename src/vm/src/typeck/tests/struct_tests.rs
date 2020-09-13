@@ -7,6 +7,17 @@ fn check_tuple_out_of_bounds() {
 }
 
 #[test]
+fn check_struct_field_assign() {
+    let src = r#"
+    struct S { x: int }
+    fn main() -> int {
+        let s: S = S { x: 4 };
+        s.x = 5
+    }"#;
+    typeck!(src);
+}
+
+#[test]
 fn check_struct_badly_typed() {
     expect_error!("struct S { x: int } fn main() -> int { S { x: false }; 5 }");
 }

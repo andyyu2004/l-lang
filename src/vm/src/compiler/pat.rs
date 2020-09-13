@@ -18,7 +18,7 @@ impl<'tcx> Compiler<'tcx> {
                 // this pattern would work for any irrefutable pattern
                 self.emit_op(Op::dup);
             }
-            tir::PatternKind::Binding(ident, _) => {
+            tir::PatternKind::Binding(m, ident, _) => {
                 self.mk_local(pat.id);
                 self.emit_op(Op::dup);
             }
@@ -31,7 +31,7 @@ impl<'tcx> Compiler<'tcx> {
         match pat.kind {
             // if its a wildcard, we don't bind anything so just pop the expression off
             tir::PatternKind::Wildcard => self.pop(),
-            tir::PatternKind::Binding(ident, _) => self.mk_local(pat.id),
+            tir::PatternKind::Binding(m, ident, _) => self.mk_local(pat.id),
             tir::PatternKind::Field(fields) => match pat.ty.kind {
                 TyKind::Tuple(tys) => {
                     // need to unpack the tuple

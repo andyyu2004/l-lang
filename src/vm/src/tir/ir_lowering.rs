@@ -115,12 +115,12 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     type Output = tir::Pattern<'tcx>;
 
     fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
-        let &Self { id, span, ref kind } = self;
+        let &Self { id, span, kind } = self;
         let kind = match kind {
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
-            ir::PatternKind::Binding(ident, sub, _) => {
+            ir::PatternKind::Binding(ident, sub, m) => {
                 let subpat = sub.map(|pat| pat.to_tir_alloc(ctx));
-                tir::PatternKind::Binding(*ident, subpat)
+                tir::PatternKind::Binding(m, ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(expr.to_tir_alloc(ctx)),
