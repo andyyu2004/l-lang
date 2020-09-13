@@ -20,6 +20,8 @@ pub trait TypeRelation<'tcx>: Sized {
     fn relate_inner(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>> {
         let tcx = self.tcx();
         match (&a.kind, &b.kind) {
+            // ignore mutability for now
+            (Ptr(m, t), Ptr(n, u)) => self.relate(t, u),
             (Param(t), Param(u)) if t == u => Ok(a),
             (Infer(_), _) | (_, Infer(_)) => panic!(),
             (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),

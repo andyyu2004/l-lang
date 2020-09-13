@@ -252,7 +252,7 @@ impl From<Tok> for BinOp {
             TokenType::Slash => Self::Div,
             TokenType::Gt => Self::Gt,
             TokenType::Lt => Self::Lt,
-            k => panic!("Invalid binary operator `{:?}`", k),
+            k => panic!("invalid binary operator `{:?}`", k),
         }
     }
 }
@@ -261,6 +261,7 @@ impl From<Tok> for BinOp {
 pub enum UnaryOp {
     Neg,
     Not,
+    Deref,
 }
 
 impl Display for UnaryOp {
@@ -268,6 +269,7 @@ impl Display for UnaryOp {
         match self {
             Self::Neg => write!(f, "-"),
             Self::Not => write!(f, "!"),
+            Self::Deref => write!(f, "*"),
         }
     }
 }
@@ -277,7 +279,8 @@ impl From<Tok> for UnaryOp {
         match t.ttype {
             TokenType::Minus => Self::Neg,
             TokenType::Not => Self::Not,
-            k => panic!("Invalid unary operator `{:?}`", k),
+            TokenType::Star => Self::Deref,
+            k => panic!("invalid unary operator `{:?}`", k),
         }
     }
 }

@@ -21,6 +21,10 @@ impl<'tcx> LvalueBuilder<'tcx> {
         self
     }
 
+    pub fn project_deref(self) -> Self {
+        self.project(Projection::Deref)
+    }
+
     pub fn project_field(self, field: FieldIdx, ty: Ty<'tcx>) -> Self {
         self.project(Projection::Field(field, ty))
     }
@@ -52,6 +56,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Field(base, idx) => {
                 let builder = set!(block = self.as_lvalue_builder(block, base));
                 block.and(builder.project_field(idx, expr.ty))
+            }
+            tir::ExprKind::Deref(expr) => {
+                let builder = set!(block = self.as_lvalue_builder(block, expr));
+                block.and(builder.project_deref())
             }
             tir::ExprKind::Const(_)
             | tir::ExprKind::Bin(..)

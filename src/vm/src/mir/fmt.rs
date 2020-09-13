@@ -119,6 +119,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
         for p in self.projs {
             match p {
                 Projection::Field(field, _) => write!(f, ".{:?}", field)?,
+                Projection::Deref => write!(f, ".*")?,
             }
         }
         if !self.projs.is_empty() {
@@ -127,7 +128,8 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
             for p in self.projs {
                 match p {
                     Projection::Field(_, ty) => write!(f, "->{}", ty)?,
-                }
+                    Projection::Deref => {}
+                };
             }
             write!(f, ")")?;
         }
@@ -174,6 +176,10 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 write!(f, ")")
             }
             mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
+            mir::Rvalue::Unary(op, operand) => {
+                write!(f, "{}", op)?;
+                operand.mir_fmt(f)
+            }
         }
     }
 }

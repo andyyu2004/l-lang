@@ -4,7 +4,7 @@ use crate::error::*;
 use crate::lexer::*;
 use crate::span::{with_source_map, Span};
 
-const UNARY_OPS: [TokenType; 2] = [TokenType::Not, TokenType::Minus];
+const UNARY_OPS: [TokenType; 3] = [TokenType::Not, TokenType::Minus, TokenType::Star];
 const POSTFIX_OPS: [TokenType; 3] =
     [TokenType::Dot, TokenType::OpenSqBracket, TokenType::OpenParen];
 const CMP_OPS: [TokenType; 2] = [TokenType::Lt, TokenType::Gt];
@@ -23,6 +23,7 @@ impl Parse for ExprParser {
     }
 }
 
+// TODO maybe this low precedence for box is dumb?
 struct BoxExprParser;
 
 impl Parse for BoxExprParser {

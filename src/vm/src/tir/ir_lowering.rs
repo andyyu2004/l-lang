@@ -1,4 +1,4 @@
-use crate::ast::Lit;
+use crate::ast::{Lit, UnaryOp};
 use crate::ir::{self, DefId, VariantIdx};
 use crate::mir;
 use crate::tir;
@@ -225,6 +225,8 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
         let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
                 tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
+            ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
+                tir::ExprKind::Deref(expr.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => match path.res {

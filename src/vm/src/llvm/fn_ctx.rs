@@ -135,6 +135,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
                         LLVMVar { ptr }
                     }
+                    Projection::Deref => {
+                        let operand = self.build_load(var.ptr, "deref_load");
+                        let ptr = operand.into_pointer_value();
+                        LLVMVar { ptr }
+                    }
                 }
             }
         }
@@ -160,6 +165,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
+            mir::Rvalue::Unary(_, _) => todo!(),
             // handle these cases in `codegen_assignment`
             mir::Rvalue::Tuple(..) | mir::Rvalue::Adt { .. } => unreachable!(),
         }

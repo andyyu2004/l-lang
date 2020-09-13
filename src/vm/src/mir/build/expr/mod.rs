@@ -41,6 +41,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Deref(..)
             | tir::ExprKind::Const(..) => {
                 let rvalue = set!(block = self.as_rvalue(block, expr));
                 self.push_assignment(info, block, lvalue, rvalue);

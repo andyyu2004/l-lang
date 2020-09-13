@@ -7,7 +7,8 @@ use crate::ty::Ty;
 use itertools::Itertools;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    /// expr is handled in this function if there is a `Rvalue` variant corresponding to that expression
+    /// expr is handled in this function if there is a
+    /// `Rvalue` variant corresponding directly to that expression
     pub fn as_rvalue(
         &mut self,
         mut block: BlockId,
@@ -16,7 +17,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         match expr.kind {
             tir::ExprKind::Adt { adt, variant_idx, substs, fields } => {
-                // the fields passed to `Rvalue::Adt` must be in order of `FieldIdx` specified in `adt.variants`
+                // the fields passed to `Rvalue::Adt` must be in order of
+                // `FieldIdx` specified in `adt.variants`
                 // however, we evaluate the fields in the order specified by the user in `fields`
                 let index_field_map: FxHashMap<FieldIdx, Operand<'tcx>> = fields
                     .iter()
@@ -37,6 +39,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let rhs = set!(block = self.as_operand(block, r));
                 self.build_binary_op(block, expr.span, expr.ty, op, lhs, rhs)
             }
+            tir::ExprKind::Unary(op, expr) => {
+                let operand = set!(block = self.as_operand(block, expr));
+                block.and(Rvalue::Unary(op, operand))
+            }
+            // assign is a bit out of place here,
+            // as there is no direct rvalue variant for it
+            // but it feels better than the other options so..
             tir::ExprKind::Assign(l, r) => {
                 let lhs = set!(block = self.as_lvalue(block, l));
                 let rhs = set!(block = self.as_rvalue(block, r));
@@ -50,14 +59,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Box(operand))
             }
-            tir::ExprKind::Unary(_, _) => todo!(),
-            tir::ExprKind::Block(_) => todo!(),
-            tir::ExprKind::ItemRef(_) => todo!(),
-            tir::ExprKind::Lambda(_) => todo!(),
-            tir::ExprKind::Call(_, _) => todo!(),
-            tir::ExprKind::Match(_, _) => todo!(),
-            // forward the implementation to `as_operand` if the expr is in some sense "atomic"
-            tir::ExprKind::Field(..)
+            tir::ExprKind::Block(..)
+            | tir::ExprKind::ItemRef(..)
+            | tir::ExprKind::Lambda(..)
+            | tir::ExprKind::Call(..)
+            | tir::ExprKind::Match(..)
+            | tir::ExprKind::Field(..)
+            | tir::ExprKind::Deref(_)
             | tir::ExprKind::Const(..)
             | tir::ExprKind::VarRef(..)
             | tir::ExprKind::Ret(..) => {

@@ -104,6 +104,7 @@ pub enum TyKind<'tcx> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Projection<'tcx> {
+    Deref,
     /// the type is the type of the entire expression after projection
     /// struct S { x: int }
     /// S.x :: int

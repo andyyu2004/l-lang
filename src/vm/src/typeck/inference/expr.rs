@@ -5,7 +5,7 @@ use crate::span::Span;
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckOutputs};
 use crate::{ast, ir, tir};
-use ast::{Ident, Mutability};
+use ast::{Ident, Mutability, UnaryOp};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
@@ -14,7 +14,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ty = match &expr.kind {
             ir::ExprKind::Lit(lit) => self.check_lit(lit),
             ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
-            ir::ExprKind::Unary(_, _) => todo!(),
+            ir::ExprKind::Unary(op, operand) => self.check_unary_expr(expr, *op, operand),
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(path) => self.check_expr_path(path),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
@@ -28,6 +28,22 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Box(expr) => self.check_box_expr(expr),
         };
         self.write_ty(expr.id, ty)
+    }
+
+    fn check_unary_expr(&mut self, expr: &ir::Expr, op: UnaryOp, operand: &ir::Expr) -> Ty<'tcx> {
+        let operand_ty = self.check_expr(operand);
+        match op {
+            UnaryOp::Neg => todo!(),
+            UnaryOp::Not => {
+                self.unify(expr.span, self.types.boolean, operand_ty);
+                self.types.boolean
+            }
+            UnaryOp::Deref => {
+                let ty = self.new_infer_var(expr.span);
+                self.unify(expr.span, operand_ty, self.mk_ptr_ty(Mutability::Mut, ty));
+                ty
+            }
+        }
     }
 
     fn check_box_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {

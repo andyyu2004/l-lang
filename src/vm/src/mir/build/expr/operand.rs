@@ -12,6 +12,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<Operand<'tcx>> {
         match expr.kind {
+            tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) => {
+                let lvalue = set!(block = self.as_lvalue(block, expr));
+                block.and(Operand::Ref(lvalue))
+            }
             tir::ExprKind::Adt { .. } => todo!(),
             tir::ExprKind::Box(..) => todo!(),
             tir::ExprKind::Const(c) => {
@@ -23,10 +27,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(Operand::Ref(Lvalue::from(var)))
             }
             tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
-            tir::ExprKind::Field(..) => {
-                let lvalue = set!(block = self.as_lvalue(block, expr));
-                block.and(Operand::Ref(lvalue))
-            }
             tir::ExprKind::Unary(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Call(..)
