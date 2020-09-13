@@ -118,7 +118,7 @@ impl<'tcx> Driver<'tcx> {
     pub fn llvm_exec(&'tcx self) -> LResult<i64> {
         let (ctx, main_fn) = self.llvm_compile()?;
         // execution
-        let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::Default).unwrap();
+        let jit = ctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
         let val = unsafe { jit.run_function(main_fn, &[]) };
         Ok(val.as_int(true) as i64)
     }

@@ -18,8 +18,13 @@ fn check_struct_missing_fields() {
 
 #[test]
 fn check_struct_set_field_multiple() {
-    simple_logging::log_to_file("log.txt", log::LevelFilter::Info).unwrap();
     expect_error!("struct S { x: int } fn main() { S { x: 4, x: 5 }; 5 }");
+}
+
+#[test]
+fn check_struct_with_type_annotation() {
+    let src = "struct S { x: int } fn main() -> int { let s: S = S { x: 4 }; s.x }";
+    typeck!(src);
 }
 
 #[test]

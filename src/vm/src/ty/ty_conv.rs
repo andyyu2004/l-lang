@@ -1,6 +1,6 @@
 //! conversion of ir::Ty to ty::Ty
 
-use crate::ir;
+use crate::ir::{self, Res};
 use crate::span::Span;
 use crate::ty::{Ty, TyKind};
 use crate::typeck::TyCtx;
@@ -16,20 +16,32 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
         let tcx = self.tcx();
         match &ir_ty.kind {
             ir::TyKind::Array(ty) => tcx.mk_ty(TyKind::Array(self.ir_ty_to_ty(ty))),
-            ir::TyKind::Path(path) => match path.res {
-                ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
-                ir::Res::Def(def_id, def_kind) => match def_kind {
-                    ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
-                    ir::DefKind::Fn | ir::DefKind::Enum | ir::DefKind::Struct => unreachable!(),
-                },
-                ir::Res::Local(_) => panic!("unexpected resolution"),
-            },
+            ir::TyKind::Path(path) => self.res_to_ty(path.res),
             ir::TyKind::Tuple(tys) => tcx.mk_tup(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
             ir::TyKind::Fn(params, ret) => tcx.mk_ty(TyKind::Fn(
                 tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
                 ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
             )),
+        }
+    }
+
+    pub fn res_to_ty(&self, res: Res) -> Ty<'tcx> {
+        let tcx = self.tcx();
+        match res {
+            ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
+            ir::Res::Def(def_id, def_kind) => match def_kind {
+                ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
+                ir::DefKind::Struct => {
+                    // TODO unsure how to deal with the forall currently
+                    // instantiation requires an inferctx which may not be available if we are only
+                    // performing type collection
+                    let (_forall, ty) = tcx.item_ty(def_id).expect_scheme();
+                    ty
+                }
+                ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
+            },
+            ir::Res::Local(_) => panic!("unexpected resolution"),
         }
     }
 

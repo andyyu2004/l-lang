@@ -19,12 +19,25 @@ impl Parse for ItemParser {
                 TokenType::Fn => FnParser { fn_kw: kw }.parse(parser),
                 TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
+                TokenType::Type => TypeAliasParser { type_kw: kw }.parse(parser),
                 _ => unreachable!(),
             },
             false,
         )?;
 
         Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
+    }
+}
+
+pub struct TypeAliasParser {
+    type_kw: Tok,
+}
+
+impl Parse for TypeAliasParser {
+    type Output = ItemKind;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        todo!()
     }
 }
 

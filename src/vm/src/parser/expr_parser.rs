@@ -109,6 +109,8 @@ impl Parse for PostfixExprParser {
                         // `tuple.0`
                         match kind {
                             LiteralKind::Int { .. } => Ident::from(span),
+                            // have to deal with lexing/parsing ambiguities like tuple.1.1
+                            LiteralKind::Float { .. } => todo!(),
                             _ => panic!(),
                         }
                     } else {

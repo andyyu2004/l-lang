@@ -63,7 +63,7 @@ impl Resolver {
     }
 
     pub fn resolve_item(&mut self, ident: Ident) -> Option<Res<NodeId>> {
-        self.items.get(&ident).cloned()
+        self.items.get(&ident).copied()
     }
 
     /// top level function to run the resolver on the given prog

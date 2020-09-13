@@ -126,9 +126,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_lvalue_inner(&mut self, var_id: VarId, projs: &[Projection<'tcx>]) -> LLVMVar<'tcx> {
         match projs {
             [] => self.vars[var_id],
-            [base @ .., proj] => {
+            [projs @ .., proj] => {
                 // recursively process all the projections to the left
-                let var = self.codegen_lvalue_inner(var_id, base);
+                let var = self.codegen_lvalue_inner(var_id, projs);
                 match proj {
                     Projection::Field(f, ty) => {
                         let index = f.index() as u32;

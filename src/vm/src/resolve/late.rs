@@ -68,7 +68,11 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     fn resolve_adt(&mut self, generics: &'ast Generics, item: &'ast Item) {
-        self.with_generics(generics, |this| ast::walk_item(this, item))
+        self.with_generics(generics, |this| {
+            // let res = Res::Def(item.id.def, DefKind::Struct);
+            // this.scopes[NS::Type].def(item.ident, res);
+            ast::walk_item(this, item);
+        })
     }
 
     fn resolve_path(&mut self, path: &'ast Path, ns: NS) -> ResolutionResult<()> {
@@ -90,6 +94,8 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     fn resolve_ty_path(&mut self, path: &'ast Path) -> ResolutionResult<Res<NodeId>> {
         let segment = &path.segments[0];
         if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
+            Ok(res)
+        } else if let Some(res) = self.resolver.resolve_item(segment.ident) {
             Ok(res)
         } else if let Some(&ty) = self.resolver.primitive_types.get(&segment.ident.symbol) {
             Ok(Res::PrimTy(ty))
