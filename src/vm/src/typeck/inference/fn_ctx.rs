@@ -1,6 +1,6 @@
 use super::{InferCtx, InferCtxBuilder};
 use crate::ast::Mutability;
-use crate::error::{DiagnosticBuilder, TypeResult};
+use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
 use crate::ir::{self, DefId};
 use crate::span::Span;
 use crate::tir;
@@ -113,6 +113,10 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
         debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
+        // check main has the expected type
+        if ty != self.types.main {
+            self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
+        }
         let (param_tys, ret_ty) = ty.expect_fn();
         self.check_fn(ty, body)
     }

@@ -20,6 +20,8 @@ pub enum TypeError<'tcx> {
     TupleOutOfBounds(usize, usize),
     #[error("{0}")]
     Msg(String),
+    #[error("`main` has type `{0}` but should be of type `fn() -> int`")]
+    IncorrectMainType(Ty<'tcx>),
     #[error("type annotations required")]
     InferenceFailure,
 }
