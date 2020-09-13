@@ -35,6 +35,26 @@ impl<'a> Parser<'a> {
         Ok((Span::new(lo, self.prev_span_end()), p))
     }
 
+    /// separates float x.y into x . y
+    /// assumes the float has been accepted already
+    /// returns a pair of the components (x, y) to avoid modifying the token stream
+    pub fn split_float(&mut self) -> (Ident, Ident) {
+        let token = self.prev();
+        let span = token.span;
+
+        let s = match token.ttype {
+            TokenType::Literal { kind: LiteralKind::Float { .. }, suffix_start } =>
+                span.to_string(),
+            _ => unreachable!(),
+        };
+        let idx = s.find('.').unwrap();
+        let x = Symbol::intern(&s[..idx]);
+        let xspan = Span::new(span.lo, span.lo + idx);
+        let y = Symbol::intern(&s[idx + 1..]);
+        let yspan = Span::new(span.lo + idx + 1, span.hi);
+        (Ident::new(xspan, x), Ident::new(yspan, y))
+    }
+
     pub fn prev_span_end(&self) -> usize {
         self.tokens[self.idx - 1].span.hi
     }
@@ -134,6 +154,10 @@ impl<'a> Parser<'a> {
 
     pub(super) fn peek(&self) -> Tok {
         self.safe_peek().unwrap()
+    }
+
+    pub(super) fn prev(&self) -> Tok {
+        self.tokens[self.idx - 1]
     }
 
     pub(super) fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {

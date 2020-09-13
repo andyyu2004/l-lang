@@ -55,6 +55,12 @@ pub struct Ident {
     pub symbol: Symbol,
 }
 
+impl Ident {
+    pub fn new(span: Span, symbol: Symbol) -> Ident {
+        Self { span, symbol }
+    }
+}
+
 impl From<Span> for Ident {
     fn from(span: Span) -> Self {
         Self { symbol: span.intern(), span }

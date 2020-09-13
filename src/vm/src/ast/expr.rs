@@ -1,6 +1,7 @@
 use super::{BinOp, Block, Field, FnSig, Ident, Lit, NodeId, Path, UnaryOp, P};
 use crate::span::Span;
 use crate::util;
+use indexed_vec::Idx;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -8,6 +9,13 @@ pub struct Expr {
     pub span: Span,
     pub id: NodeId,
     pub kind: ExprKind,
+}
+
+/// this is only used to make expr `takeable`
+impl Default for Expr {
+    fn default() -> Self {
+        Self { span: Span::empty(), id: NodeId::new(0), kind: ExprKind::Lit(Lit::Int(0)) }
+    }
 }
 
 impl Expr {

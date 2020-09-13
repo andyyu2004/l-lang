@@ -100,25 +100,7 @@ impl Parse for PostfixExprParser {
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
                     expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
-                TokenType::Dot => {
-                    // TODO refactor to its own parser FieldAccessParser
-                    let ident = if let Some(ident) = parser.accept_ident() {
-                        ident
-                    } else if let Some((kind, span)) = parser.accept_literal() {
-                        // tuple field access can have integer after the dot
-                        // `tuple.0`
-                        match kind {
-                            LiteralKind::Int { .. } => Ident::from(span),
-                            // have to deal with lexing/parsing ambiguities like tuple.1.1
-                            LiteralKind::Float { .. } => todo!(),
-                            _ => panic!(),
-                        }
-                    } else {
-                        panic!()
-                    };
-                    let span = expr.span.merge(ident.span);
-                    expr = parser.mk_expr(span, ExprKind::Field(expr, ident));
-                }
+                TokenType::Dot => expr = FieldAccessParser { expr }.parse(parser)?,
                 TokenType::OpenSqBracket => todo!(),
                 _ => unreachable!(),
             }
@@ -232,6 +214,13 @@ mod test {
         let expr = parse_expr!($src);
         format!("{}", expr)
     }}
+
+    #[test]
+    fn parse_chained_tuple_accesses() {
+        // parse_expr!("x.1.1");
+        // parse_expr!("x.1.1.1");
+        parse_expr!("x.0.1.2.3.4.5.6");
+    }
 
     #[test]
     fn parse_assign() {

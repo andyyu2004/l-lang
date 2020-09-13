@@ -59,7 +59,6 @@ fn llvm_nested_struct() {
 
 #[test]
 fn llvm_multi_nested_tuples() {
-    // the extra parens are there for issues in the parser
-    let src = "fn main() -> int { ((((1, (2, (3, (4, 5)))).1).1).1).1 }";
+    let src = "fn main() -> int { (1, (2, (3, (4, 5)))).1.1.1.1 }";
     assert_eq!(llvm_exec!(src), 5)
 }

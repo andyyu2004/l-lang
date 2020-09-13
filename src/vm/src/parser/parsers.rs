@@ -3,8 +3,46 @@
 use super::*;
 use crate::ast::*;
 use crate::error::{ParseError, ParseResult};
-use crate::lexer::{Tok, TokenType};
+use crate::lexer::{LiteralKind, Tok, TokenType};
 use crate::span::Span;
+
+/// parses an ident for a field access
+pub struct FieldAccessParser {
+    pub expr: P<Expr>,
+}
+
+impl Parse for FieldAccessParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+        let ident = if let Some(ident) = parser.accept_ident() {
+            ident
+        } else if let Some((kind, span)) = parser.accept_literal() {
+            // tuple field access can have integer after the dot
+            // `tuple.0`
+            match kind {
+                LiteralKind::Int { .. } => Ident::from(span),
+                // have to deal with lexing/parsing ambiguities like tuple.1.1
+                // which is lexed as [tuple . 1.1]
+                LiteralKind::Float { .. } => {
+                    let (x, y) = parser.split_float();
+                    self.expr = parser.mk_expr(
+                        self.expr.span.merge(x.span),
+                        ExprKind::Field(std::mem::take(&mut self.expr), x),
+                    );
+                    y
+                }
+                _ => panic!(),
+            }
+        } else {
+            panic!()
+        };
+        Ok(parser.mk_expr(
+            self.expr.span.merge(ident.span),
+            ExprKind::Field(std::mem::take(&mut self.expr), ident),
+        ))
+    }
+}
 
 pub struct RetParser {
     pub ret_kw: Tok,
