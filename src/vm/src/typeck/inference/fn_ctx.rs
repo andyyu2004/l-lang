@@ -1,15 +1,16 @@
 use super::{InferCtx, InferCtxBuilder};
 use crate::ast::Mutability;
 use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, FnSig};
+use crate::lexer::symbol;
 use crate::span::Span;
 use crate::tir;
 use crate::ty::{SubstsRef, Ty, TyConv, TyKind};
 use crate::typeck::{TyCtx, TypeckOutputs};
-use ir::FnSig;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
-use std::{cell::RefCell, ops::Deref};
+use std::cell::RefCell;
+use std::ops::Deref;
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a Inherited<'a, 'tcx>,
@@ -113,8 +114,8 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
         debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
-        // check main has the expected type
-        if ty != self.types.main {
+        // check main function has the expected type fn() -> int
+        if item.ident.symbol == symbol::MAIN && ty != self.types.main {
             self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
         }
         let (param_tys, ret_ty) = ty.expect_fn();

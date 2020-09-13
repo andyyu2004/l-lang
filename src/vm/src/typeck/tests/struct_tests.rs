@@ -31,11 +31,13 @@ fn check_struct_with_type_annotation() {
 fn check_struct_differing_orders() {
     let src = r#"
     struct S { x: int, y: bool }
-    fn main() {
+
+    fn main() -> int {
         S {
             y: false,
             x: 4,
         };
+        5
     }
     "#;
     typeck!(src);
