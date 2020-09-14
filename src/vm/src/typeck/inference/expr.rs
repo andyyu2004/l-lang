@@ -288,6 +288,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match path.res {
             ir::Res::Local(id) => self.local_ty(id).ty,
             ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
+            ir::Res::Err => self.set_ty_err(),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
         }
     }

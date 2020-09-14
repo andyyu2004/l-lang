@@ -1,12 +1,16 @@
 use crate::ast::{Ident, NodeId, Prog};
+use crate::driver::Session;
 use crate::ir::{DefId, DefKind, Definitions, ParamIdx, PrimTy, Res};
 use crate::lexer::{symbol, Symbol};
+use crate::span::Span;
 use indexed_vec::IndexVec;
 use rustc_hash::FxHashMap;
+use std::error::Error;
 use std::marker::PhantomData;
 
-pub struct Resolver {
+pub struct Resolver<'a> {
     defs: Definitions,
+    sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
     items: FxHashMap<Ident, Res<NodeId>>,
@@ -20,19 +24,23 @@ pub struct ResolverOutputs {
     pub defs: Definitions,
 }
 
-impl Resolver {
-    /// construct a resolver and run resolution
-    pub fn resolve(prog: &Prog) -> Self {
-        let mut resolver = Self {
+impl<'a> Resolver<'a> {
+    pub fn new(sess: &'a Session) -> Self {
+        Self {
+            sess,
             items: Default::default(),
             res_map: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
             primitive_types: Default::default(),
             ty_param_id_to_idx: Default::default(),
-        };
-        resolver.resolve_prog(prog);
-        resolver
+        }
+    }
+
+    /// top level function to run the resolver on the given prog
+    pub fn resolve(&mut self, prog: &Prog) {
+        self.resolve_items(prog);
+        self.late_resolve_prog(prog);
     }
 
     pub fn complete(self) -> ResolverOutputs {
@@ -53,6 +61,11 @@ impl Resolver {
         def_id
     }
 
+    pub fn emit_error(&self, span: Span, err: impl Error) -> Res<NodeId> {
+        self.sess.emit_error(span, err);
+        Res::Err
+    }
+
     pub fn def_ty_param(&mut self, id: NodeId, idx: ParamIdx) -> Res<NodeId> {
         self.ty_param_id_to_idx.insert(id, idx);
         Res::Def(self.def_id(id), DefKind::TyParam(idx))
@@ -64,12 +77,6 @@ impl Resolver {
 
     pub fn resolve_item(&mut self, ident: Ident) -> Option<Res<NodeId>> {
         self.items.get(&ident).copied()
-    }
-
-    /// top level function to run the resolver on the given prog
-    pub fn resolve_prog(&mut self, prog: &Prog) {
-        self.resolve_items(prog);
-        self.late_resolve_prog(prog);
     }
 
     /// node_id -> def_id

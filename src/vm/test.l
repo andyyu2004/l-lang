@@ -7,6 +7,7 @@ struct S {
 fn main() -> int {
     let s = box S { x: 5, y: false };
     let x = box 5;
+    y;
     mutate(x);
     *x
     /* (*s).x */

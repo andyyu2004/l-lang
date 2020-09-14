@@ -69,7 +69,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     pub fn emit_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
-        let diag = self.tcx.session.build_error(span, err);
+        let diag = self.tcx.sess.build_error(span, err);
         self.emit_err(diag)
     }
 

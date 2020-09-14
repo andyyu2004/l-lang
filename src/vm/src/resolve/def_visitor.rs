@@ -3,17 +3,17 @@ use crate::ast::{self, *};
 use crate::ir::DefKind;
 
 /// collects all `DefId`s
-pub struct DefVisitor<'a> {
-    resolver: &'a mut Resolver,
+pub struct DefVisitor<'a, 'r> {
+    resolver: &'a mut Resolver<'r>,
 }
 
-impl<'a> DefVisitor<'a> {
-    pub fn new(resolver: &'a mut Resolver) -> Self {
+impl<'a, 'r> DefVisitor<'a, 'r> {
+    pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self { resolver }
     }
 }
 
-impl<'ast> Visitor<'ast> for DefVisitor<'ast> {
+impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(item.ident, item.id, item.kind.def_kind());
         ast::walk_item(self, item);
@@ -24,7 +24,7 @@ impl<'ast> Visitor<'ast> for DefVisitor<'ast> {
     }
 }
 
-impl Resolver {
+impl<'a> Resolver<'a> {
     pub fn resolve_items(&mut self, prog: &Prog) {
         let mut visitor = DefVisitor::new(self);
         visitor.visit_prog(prog);

@@ -23,7 +23,7 @@ pub struct Driver<'tcx> {
     arena: Arena<'tcx>,
     ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
-    session: Session,
+    sess: Session,
 }
 
 #[macro_export]
@@ -35,8 +35,8 @@ macro_rules! pluralize {
 
 /// exits if any errors have been reported
 macro check_errors($self:expr, $ret:expr) {{
-    if $self.session.has_errors() {
-        let errc = $self.session.err_count();
+    if $self.sess.has_errors() {
+        let errc = $self.sess.err_count();
         e_red_ln!("{} error{} emitted", errc, pluralize!(errc));
         Err(LError::ErrorReported)
     } else {
@@ -52,7 +52,7 @@ impl<'tcx> Driver<'tcx> {
             arena: Default::default(),
             ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
-            session: Default::default(),
+            sess: Default::default(),
         }
     }
 
@@ -65,21 +65,22 @@ impl<'tcx> Driver<'tcx> {
     /// used for testing parsing
     pub fn parse_expr(&self) -> ParseResult<P<ast::Expr>> {
         let tokens = self.lex().unwrap();
-        let mut parser = Parser::new(&self.session, tokens);
+        let mut parser = Parser::new(&self.sess, tokens);
         let expr = parser.parse_expr()?;
         Ok(expr)
     }
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         let tokens = self.lex()?;
-        let mut parser = Parser::new(&self.session, tokens);
+        let mut parser = Parser::new(&self.sess, tokens);
         let ast = parser.parse()?;
         Ok(ast)
     }
 
     pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {
         let ast = self.parse()?;
-        let mut resolver = Resolver::resolve(&ast);
+        let mut resolver = Resolver::new(&self.sess);
+        resolver.resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
         let ir = lctx.lower_prog(&ast);
         info!("{:#?}", ir);
@@ -93,7 +94,7 @@ impl<'tcx> Driver<'tcx> {
     ) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
-        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.session));
+        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.sess));
         let ret = gcx.enter_tcx(|tcx| f(tcx, &ir));
         check_errors!(self, ret)
     }

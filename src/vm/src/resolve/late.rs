@@ -1,18 +1,18 @@
 use super::{Resolver, Scope, Scopes};
 use crate::ast::{self, *};
-use crate::error::{ResolutionError, ResolutionResult};
+use crate::error::ResolutionError;
 use crate::ir::{DefKind, ParamIdx, PerNS, Res, NS};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
 struct LateResolutionVisitor<'a, 'r, 'ast> {
-    resolver: &'r mut Resolver,
+    resolver: &'a mut Resolver<'r>,
     scopes: PerNS<Scopes<Res<NodeId>>>,
-    pd: &'a PhantomData<&'ast ()>,
+    pd: &'ast PhantomData<()>,
 }
 
 impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
-    pub fn new(resolver: &'r mut Resolver) -> Self {
+    pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self { resolver, pd: &PhantomData, scopes: Default::default() }
     }
 
@@ -75,25 +75,29 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         })
     }
 
-    fn resolve_path(&mut self, path: &'ast Path, ns: NS) -> ResolutionResult<()> {
-        if path.segments.len() > 1 {
-            unimplemented!()
-        }
+    fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
         let segment = &path.segments[0];
         let res = match ns {
-            NS::Value => self
-                .resolve_var(segment.ident)
-                .ok_or_else(|| ResolutionError::unbound_variable(path.clone()))?,
-            // just lookup primitive type for now as there are no other potential types
-            NS::Type => self.resolve_ty_path(path)?,
+            NS::Value => self.resolve_val_path(path),
+            NS::Type => self.resolve_ty_path(path),
         };
         self.resolver.resolve_node(segment.id, res);
-        Ok(())
     }
 
-    fn resolve_ty_path(&mut self, path: &'ast Path) -> ResolutionResult<Res<NodeId>> {
+    fn resolve_val_path(&mut self, path: &'ast Path) -> Res<NodeId> {
         match path.segments.as_slice() {
-            [] => panic!("empty path"),
+            [] => panic!("empty val path"),
+            [segment] => self.resolve_var(segment.ident).unwrap_or_else(|| {
+                let err = ResolutionError::UnresolvedPath(path.clone());
+                self.resolver.emit_error(path.span, err)
+            }),
+            [xs @ .., segment] => todo!(),
+        }
+    }
+
+    fn resolve_ty_path(&mut self, path: &'ast Path) -> Res<NodeId> {
+        match path.segments.as_slice() {
+            [] => panic!("empty ty path"),
             [segment] => self.resolve_ty_path_segment(path, segment),
             [xs @ .., segment] => todo!(),
         }
@@ -103,15 +107,15 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         &mut self,
         path: &'ast Path,
         segment: &'ast PathSegment,
-    ) -> ResolutionResult<Res<NodeId>> {
+    ) -> Res<NodeId> {
         if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
-            Ok(res)
+            res
         } else if let Some(res) = self.resolver.resolve_item(segment.ident) {
-            Ok(res)
+            res
         } else if let Some(&ty) = self.resolver.primitive_types.get(&segment.ident.symbol) {
-            Ok(Res::PrimTy(ty))
+            Res::PrimTy(ty)
         } else {
-            Err(ResolutionError::unknown_type(path.clone()))
+            self.resolver.emit_error(path.span, ResolutionError::UnresolvedType(path.clone()))
         }
     }
 
@@ -159,8 +163,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
             // TODO better error handling
-            ExprKind::Struct(path, _) | ExprKind::Path(path) =>
-                self.resolve_path(path, NS::Value).unwrap(),
+            ExprKind::Struct(path, _) | ExprKind::Path(path) => self.resolve_path(path, NS::Value),
             ExprKind::Closure(name, sig, body) =>
                 if let Some(ident) = name {
                     self.def_val(*ident, Res::Local(expr.id))
@@ -172,14 +175,14 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_ty(&mut self, ty: &'ast Ty) {
         match &ty.kind {
-            TyKind::Path(path) => self.resolve_path(path, NS::Type).unwrap(),
+            TyKind::Path(path) => self.resolve_path(path, NS::Type),
             _ => {}
         };
         ast::walk_ty(self, ty);
     }
 }
 
-impl Resolver {
+impl<'a> Resolver<'a> {
     pub fn late_resolve_prog(&mut self, prog: &Prog) {
         let mut visitor = LateResolutionVisitor::new(self);
         visitor.visit_prog(prog);

@@ -8,6 +8,7 @@ pub enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
     Def(DefId, DefKind),
     Local(Id),
+    Err,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -29,6 +30,7 @@ impl<Id> Res<Id> {
             Res::PrimTy(ty) => Res::PrimTy(ty),
             Res::Local(id) => Res::Local(f(id)),
             Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind),
+            Res::Err => Res::Err,
         }
     }
 }

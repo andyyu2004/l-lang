@@ -237,7 +237,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                     ir::DefKind::Enum => todo!(),
                     ir::DefKind::Struct => todo!(),
                 },
-                ir::Res::PrimTy(_) => unreachable!(),
+                ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
             },
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
             ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),

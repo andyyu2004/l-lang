@@ -9,7 +9,7 @@ use std::{cell::Cell, collections::BTreeMap};
 
 pub struct AstLoweringCtx<'a, 'ir> {
     pub(super) arena: &'ir Arena,
-    pub(super) resolver: &'a mut Resolver,
+    pub(super) resolver: &'a mut Resolver<'ir>,
     pub(super) node_id_to_id: FxHashMap<NodeId, ir::Id>,
     pub(super) item_stack: Vec<(DefId, usize)>,
     /// this counter counts backwards as to be sure not to not
@@ -59,7 +59,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 }
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
-    pub fn new(arena: &'ir Arena, resolver: &'a mut Resolver) -> Self {
+    pub fn new(arena: &'ir Arena, resolver: &'a mut Resolver<'ir>) -> Self {
         Self {
             arena,
             item_stack: Default::default(),

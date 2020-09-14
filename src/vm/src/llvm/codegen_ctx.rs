@@ -111,7 +111,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
         self.module.get_function(symbol::MAIN.as_str()).or_else(|| {
-            self.tcx.session.build_error(Span::empty(), LLVMError::MissingMain).emit();
+            self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
             None
         })
     }

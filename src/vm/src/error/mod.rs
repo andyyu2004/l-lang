@@ -13,7 +13,7 @@ pub use diagnostic_builder::DiagnosticBuilder;
 pub use emitter::{Emitter, TextEmitter};
 pub use llvm_error::LLVMError;
 pub use parse_error::{ParseError, ParseResult};
-pub use resolution_error::{ResolutionError, ResolutionResult};
+pub use resolution_error::ResolutionError;
 pub use type_error::{TypeError, TypeResult};
 pub use vm_error::{VMError, VMResult};
 

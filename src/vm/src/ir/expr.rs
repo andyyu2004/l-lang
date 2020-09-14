@@ -29,6 +29,7 @@ impl<'ir> Expr<'ir> {
                     ir::DefKind::Struct => false,
                     ir::DefKind::TyParam(_) => false,
                 },
+                ir::Res::Err => false,
                 ir::Res::PrimTy(_) => unreachable!(),
             },
             ExprKind::Field(..) | ExprKind::Unary(UnaryOp::Deref, _) => true,

@@ -168,7 +168,7 @@ impl<'tcx> TyCtx<'tcx> {
 pub struct GlobalCtx<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
-    pub session: &'tcx Session,
+    pub sess: &'tcx Session,
     interners: CtxInterners<'tcx>,
     defs: &'tcx Definitions,
     /// where the results of type collection are stored
@@ -183,7 +183,7 @@ impl<'tcx> GlobalCtx<'tcx> {
             arena,
             interners,
             defs,
-            session,
+            sess: session,
             item_tys: Default::default(),
         }
     }
@@ -209,6 +209,12 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
         panic!("tyctx can't lower types with inference variables")
     }
 }
+
+macro check_for_errors($tcx:expr) {{
+    if $tcx.sess.has_errors() {
+        return None;
+    }
+}}
 
 impl<'tcx> TyCtx<'tcx> {
     /// top level entrace to typechecking and lowering to mir
@@ -242,6 +248,9 @@ impl<'tcx> TyCtx<'tcx> {
             ir::ItemKind::Fn(sig, generics, body) =>
                 Inherited::build(self, item.id.def).enter(|inherited| {
                     let fcx = inherited.check_fn_item(item, sig, generics, body);
+                    // don't bother continuing if typeck failed
+                    // note that the failure to typeck could also come from resolution errors
+                    check_for_errors!(self);
                     let tables = fcx.resolve_inference_variables(body);
                     let lctx = IrLoweringCtx::new(&inherited, tables);
                     Some(f(lctx))
