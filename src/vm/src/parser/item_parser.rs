@@ -25,6 +25,8 @@ impl Parse for ItemParser {
             false,
         )?;
 
+        parser.accept(TokenType::Semi);
+
         Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
     }
 }

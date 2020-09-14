@@ -5,7 +5,7 @@ mod stmt;
 
 use crate::ir;
 use crate::mir::{self, *};
-use crate::tir::{self, IrLoweringCtx};
+use crate::tir::{self, TirCtx};
 use crate::typeck::TyCtx;
 use cfg::Cfg;
 use expr::LvalueBuilder;
@@ -32,19 +32,20 @@ macro_rules! set {
 
 /// lowers `tir::Body` into `mir::Body`
 pub fn build_fn<'a, 'tcx>(
-    ctx: IrLoweringCtx<'a, 'tcx>,
+    ctx: &'a TirCtx<'a, 'tcx>,
     body: &'tcx tir::Body<'tcx>,
 ) -> mir::Body<'tcx> {
     let mut builder = Builder::new(ctx, body);
     let entry_block = BlockId::new(ENTRY_BLOCK_ID);
     let _ = builder.build_body(entry_block, body);
     let mir = builder.complete();
+    mir::validate(&mir, &ctx);
     println!("{}", mir);
     mir
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    fn new(ctx: IrLoweringCtx<'a, 'tcx>, body: &tir::Body<'tcx>) -> Self {
+    fn new(ctx: &'a TirCtx<'a, 'tcx>, body: &tir::Body<'tcx>) -> Self {
         let mut cfg = Cfg::default();
         let tcx = ctx.tcx;
         assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
@@ -80,7 +81,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
 struct Builder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
-    ctx: IrLoweringCtx<'a, 'tcx>,
+    ctx: &'a TirCtx<'a, 'tcx>,
     cfg: Cfg<'tcx>,
     var_ir_map: FxHashMap<ir::Id, VarId>,
     vars: IndexVec<VarId, Var<'tcx>>,

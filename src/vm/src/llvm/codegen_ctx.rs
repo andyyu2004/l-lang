@@ -34,6 +34,7 @@ pub struct CodegenCtx<'tcx> {
     /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
     /// this api is a bit awkward, but its what inkwell has so..
     pub items: RefCell<FxHashMap<DefId, Ident>>,
+    pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
     curr_fn: Option<FunctionValue<'tcx>>,
 }
 
@@ -84,6 +85,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             types,
             curr_fn: None,
             items: Default::default(),
+            lltypes: Default::default(),
         }
     }
 
@@ -127,13 +129,16 @@ impl<'tcx> CodegenCtx<'tcx> {
         llfn
     }
 
-    pub fn llvm_fn_ty(&self, params: SubstsRef, ret: Ty) -> FunctionType<'tcx> {
+    pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {
         self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
     /// converts a L type into a llvm representation
-    pub fn llvm_ty(&self, ty: Ty) -> BasicTypeEnum<'tcx> {
-        match ty.kind {
+    pub fn llvm_ty(&self, ty: Ty<'tcx>) -> BasicTypeEnum<'tcx> {
+        if let Some(&llty) = self.lltypes.borrow().get(ty) {
+            return llty;
+        }
+        let llty = match ty.kind {
             TyKind::Bool => self.types.boolean.into(),
             TyKind::Int => self.types.int.into(),
             TyKind::Float => self.types.float.into(),
@@ -161,7 +166,9 @@ impl<'tcx> CodegenCtx<'tcx> {
                 AdtKind::Enum => todo!(),
             },
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
-        }
+        };
+        self.lltypes.borrow_mut().insert(ty, llty);
+        llty
     }
 }
 

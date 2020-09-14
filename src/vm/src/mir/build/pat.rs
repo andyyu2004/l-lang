@@ -23,8 +23,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
                 let rvalue = Rvalue::Use(Operand::Ref(lvalue));
-                let lvalue = self.alloc_local(irref_pat).into();
-                self.push_assignment(info, block, lvalue, rvalue);
+                let local = self.alloc_local(irref_pat);
+                self.vars[local].mtbl = m;
+                self.push_assignment(info, block, local.into(), rvalue);
                 block.unit()
             }
             tir::PatternKind::Field(fs) => {
@@ -32,8 +33,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 // let pair = (1,2);
                 // let (x, y) = pair;
                 // implemented as
-                // x <- pair.0;
-                // y <- pair.1;
+                // pair <- (1,2);
+                // x    <- pair.0;
+                // y    <- pair.1;
+                //
                 for f in fs {
                     let lvalue = self.tcx.lvalue_project_field(lvalue, f.field, f.pat.ty);
                     set!(block = self.bind_pat_to_lvalue(block, f.pat, lvalue));

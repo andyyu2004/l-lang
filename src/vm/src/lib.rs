@@ -49,6 +49,7 @@ pub mod arena;
 pub mod ast;
 pub mod compiler;
 pub mod core;
+pub mod dataflow;
 pub mod driver;
 pub mod error;
 pub mod exec;

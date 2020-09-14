@@ -2,15 +2,16 @@
 
 mod build;
 mod fmt;
-mod traversal;
+pub mod traversal;
 
 pub use fmt::MirFmt;
 
 use crate::ast::{self, Ident, Mutability, Visibility};
+use crate::dataflow;
 use crate::ir::{self, DefId, FieldIdx, VariantIdx};
 use crate::mir;
 use crate::span::Span;
-use crate::tir;
+use crate::tir::{self, TirCtx};
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
 pub use build::build_fn;
 use indexed_vec::{Idx, IndexVec};
@@ -24,6 +25,12 @@ pub const RETURN: usize = 0;
 #[derive(Debug)]
 pub struct Prog<'tcx> {
     pub items: BTreeMap<ir::Id, Item<'tcx>>,
+}
+
+/// mir analyses go here
+/// dataflow etc...
+pub fn validate<'a, 'tcx>(mir: &mir::Body<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
+    dataflow::check_assignments(mir, ctx);
 }
 
 impl<'tcx> std::fmt::Display for Prog<'tcx> {

@@ -1,13 +1,15 @@
 use crate::ast::{Ident, Mutability, Visibility};
 use crate::ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
+use crate::span::Span;
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
-use crate::{span::Span, util};
+use crate::util;
 use bitflags::bitflags;
 use indexed_vec::{Idx, IndexVec};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::{marker::PhantomData, ptr};
+use std::marker::PhantomData;
+use std::ptr;
 
 pub type Ty<'tcx> = &'tcx TyS<'tcx>;
 

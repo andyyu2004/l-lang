@@ -1,7 +1,9 @@
 use super::TyCtx;
 use crate::ast::Ident;
+use crate::error::TypeError;
 use crate::ir;
 use crate::ty::{AdtTy, FieldTy, TyConv, TyKind, VariantTy};
+use rustc_hash::FxHashMap;
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn collect(self, prog: &ir::Prog<'tcx>) {
@@ -27,11 +29,17 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn variant_ty(self, ident: Ident, variant_kind: &ir::VariantKind) -> VariantTy<'tcx> {
-        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| FieldTy {
-            def_id: f.id.def,
-            ident: f.ident,
-            vis: f.vis,
-            ty: TyConv::ir_ty_to_ty(&self, f.ty),
+        let mut seen = FxHashMap::default();
+        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
+            if let Some(span) = seen.insert(f.ident, f.span) {
+                self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
+            }
+            FieldTy {
+                def_id: f.id.def,
+                ident: f.ident,
+                vis: f.vis,
+                ty: TyConv::ir_ty_to_ty(&self, f.ty),
+            }
         }));
         VariantTy { ident, fields }
     }

@@ -7,6 +7,12 @@ fn check_tuple_out_of_bounds() {
 }
 
 #[test]
+fn check_struct_duplicate_fields() {
+    let src = r#"struct S { x:int, x: int }"#;
+    expect_error!(src);
+}
+
+#[test]
 fn check_struct_field_assign() {
     let src = r#"
     struct S { x: int }

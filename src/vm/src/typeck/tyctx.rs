@@ -6,7 +6,7 @@ use crate::error::TypeResult;
 use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
 use crate::mir;
 use crate::span::Span;
-use crate::tir::{self, IrLoweringCtx};
+use crate::tir::{self, TirCtx};
 use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
@@ -239,7 +239,7 @@ impl<'tcx> TyCtx<'tcx> {
     fn with_ir_lctx<R>(
         self,
         item: &ir::Item<'tcx>,
-        f: impl for<'a> FnOnce(IrLoweringCtx<'a, 'tcx>) -> R,
+        f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
     ) -> Option<R> {
         let &ir::Item { id, span, vis, ident, ref kind } = item;
         // only functions compile down to any runtime representation
@@ -252,7 +252,7 @@ impl<'tcx> TyCtx<'tcx> {
                     // note that the failure to typeck could also come from resolution errors
                     check_for_errors!(self);
                     let tables = fcx.resolve_inference_variables(body);
-                    let lctx = IrLoweringCtx::new(&inherited, tables);
+                    let lctx = TirCtx::new(&inherited, tables);
                     Some(f(lctx))
                 }),
             ir::ItemKind::Struct(..) => None,
@@ -274,7 +274,7 @@ impl<'tcx> TyCtx<'tcx> {
         let mut items = BTreeMap::new();
 
         for (&id, &item) in &prog.items {
-            self.with_ir_lctx(item, |lctx| items.insert(id, lctx.lower_item(item)));
+            self.with_ir_lctx(item, |mut lctx| items.insert(id, lctx.lower_item(item)));
         }
         mir::Prog { items }
     }

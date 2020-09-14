@@ -10,13 +10,13 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 
 /// ir -> tir -> mir
-pub struct IrLoweringCtx<'a, 'tcx> {
+pub struct TirCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
     tables: &'a TypeckOutputs<'tcx>,
 }
 
-impl<'a, 'tcx> Deref for IrLoweringCtx<'a, 'tcx> {
+impl<'a, 'tcx> Deref for TirCtx<'a, 'tcx> {
     type Target = &'a InferCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
@@ -24,7 +24,7 @@ impl<'a, 'tcx> Deref for IrLoweringCtx<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
+impl<'a, 'tcx> TirCtx<'a, 'tcx> {
     pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckOutputs<'tcx>) -> Self {
         Self { infcx, tcx: infcx.tcx, tables }
     }
@@ -36,7 +36,7 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
     }
 
     /// ir -> tir -> mir
-    pub fn lower_item(mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
+    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
         let &ir::Item { id, span, vis, ident, ref kind } = item;
         let tir = self.lower_item_tir(item);
         println!("{}", tir);
@@ -66,9 +66,9 @@ impl<'a, 'tcx> IrLoweringCtx<'a, 'tcx> {
 /// trait for conversion to tir
 pub trait Tir<'tcx> {
     type Output;
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output;
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output;
 
-    fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
+    fn to_tir_alloc(&self, ctx: &mut TirCtx<'_, 'tcx>) -> &'tcx Self::Output {
         let tir = self.to_tir(ctx);
         ctx.tcx.alloc_tir(tir)
     }
@@ -77,7 +77,7 @@ pub trait Tir<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
     type Output = tir::Field<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         tir::Field {
             index: ctx.tables.field_index(self.id),
             expr: self.expr.to_tir_alloc(ctx),
@@ -89,7 +89,7 @@ impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
     type Output = tir::Item<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { span, id, ident, vis, ref kind } = self;
         let kind = match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
@@ -105,7 +105,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
     type Output = tir::Param<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { id, span, ref pat } = self;
         tir::Param { id, span, pat: pat.to_tir_alloc(ctx) }
     }
@@ -114,7 +114,7 @@ impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     type Output = tir::Pattern<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { id, span, kind } = self;
         let kind = match kind {
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
@@ -133,7 +133,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
     type Output = &'tcx tir::Body<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         let params = self.params.to_tir(ctx);
         let body = tir::Body { params, expr: self.expr.to_tir_alloc(ctx) };
@@ -144,7 +144,7 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
     type Output = &'tcx tir::Generics<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         ctx.tcx.alloc_tir(tir::Generics { data: 0, pd: PhantomData })
     }
 }
@@ -152,7 +152,7 @@ impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
     type Output = tir::Let<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         tir::Let {
             id: self.id,
@@ -165,7 +165,7 @@ impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
     type Output = tir::Stmt<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { id, span, ref kind } = self;
         let kind = match kind {
             ir::StmtKind::Let(l) => tir::StmtKind::Let(l.to_tir_alloc(ctx)),
@@ -181,7 +181,7 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
     type Output = tir::Block<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         let stmts = tcx.alloc_tir_iter(self.stmts.iter().map(|stmt| stmt.to_tir(ctx)));
         let expr = self.expr.map(|expr| expr.to_tir_alloc(ctx));
@@ -195,7 +195,7 @@ where
 {
     type Output = Option<T::Output>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         self.as_ref().map(|t| t.to_tir(ctx))
     }
 }
@@ -206,12 +206,12 @@ where
 {
     type Output = &'tcx [T::Output];
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let tcx = ctx.tcx;
         tcx.alloc_tir_iter(self.iter().map(|t| t.to_tir(ctx)))
     }
 
-    fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
+    fn to_tir_alloc(&self, ctx: &mut TirCtx<'_, 'tcx>) -> &'tcx Self::Output {
         panic!("use `to_tir` for slices")
     }
 }
@@ -219,7 +219,7 @@ where
 impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { span, id, ref kind } = self;
         let ty = ctx.node_type(self.id);
         let kind = match kind {
@@ -272,7 +272,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
 impl<'tcx> Tir<'tcx> for Lit {
     type Output = Const<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         match *self {
             Lit::Float(n) => Const::new(ConstKind::Float(n)),
             Lit::Bool(b) => Const::new(ConstKind::Bool(b)),
@@ -280,7 +280,7 @@ impl<'tcx> Tir<'tcx> for Lit {
         }
     }
 
-    fn to_tir_alloc(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> &'tcx Self::Output {
+    fn to_tir_alloc(&self, ctx: &mut TirCtx<'_, 'tcx>) -> &'tcx Self::Output {
         let c = self.to_tir(ctx);
         ctx.tcx.intern_const(c)
     }
@@ -289,7 +289,7 @@ impl<'tcx> Tir<'tcx> for Lit {
 impl<'tcx> Tir<'tcx> for ir::Arm<'tcx> {
     type Output = tir::Arm<'tcx>;
 
-    fn to_tir(&self, ctx: &mut IrLoweringCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &ir::Arm { id, span, ref pat, ref body, ref guard } = self;
         tir::Arm {
             id,

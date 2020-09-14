@@ -1,7 +1,7 @@
 use super::*;
 use rustc_hash::FxHashSet;
 
-struct Preorder<'a, 'tcx> {
+pub struct Preorder<'a, 'tcx> {
     body: &'a Body<'tcx>,
     stack: Vec<BlockId>,
     visited: FxHashSet<BlockId>,
