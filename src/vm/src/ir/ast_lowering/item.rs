@@ -34,12 +34,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn lower_variant(&mut self, variant: &Variant) -> ir::Variant<'ir> {
-        ir::Variant {
-            id: self.lower_node_id(variant.id),
+        self.with_owner(variant.id, |lctx| ir::Variant {
+            id: lctx.lower_node_id(variant.id),
             ident: variant.ident,
             span: variant.span,
-            kind: self.lower_variant_kind(&variant.kind),
-        }
+            kind: lctx.lower_variant_kind(&variant.kind),
+        })
     }
 
     fn lower_field_decl(&mut self, (i, field): (usize, &FieldDecl)) -> ir::FieldDecl<'ir> {

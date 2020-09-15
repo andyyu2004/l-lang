@@ -4,10 +4,10 @@
 //     next: Node,
 // }
 
-struct S {
-    x: int,
-    y: bool,
-}
+/* struct S { */
+/*     x: int, */
+/*     y: bool, */
+/* } */
 
 enum K {
     T,
@@ -16,13 +16,9 @@ enum K {
 
 
 fn main() -> int {
-    let s = box S { x: 5, y: false };
-    let k = K::T;
+    let k = K::F;
     5
 }
 
 
-fn mutate(ptr: &mut int) {
-    *ptr = 9;
-}
 

@@ -187,7 +187,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
     fn visit_let(&mut self, l @ Let { init, .. }: &'ast Let) {
         if let Some(expr) = init {
             if expr.is_named_closure() {
-                panic!("let binding to named closure")
+                self.resolver.emit_error(l.span, ResolutionError::BindingToNamedClosure);
             }
         }
         ast::walk_let(self, l)
@@ -200,7 +200,6 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
-            // TODO better error handling
             ExprKind::Struct(path, _) | ExprKind::Path(path) =>
                 self.resolve_path(expr.id, path, NS::Value),
             ExprKind::Closure(name, sig, body) =>

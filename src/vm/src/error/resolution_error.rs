@@ -5,8 +5,10 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ResolutionError {
-    #[error("Unresolved path `{0}` in `{1}`")]
+    #[error("unresolved path `{0}` in `{1}`")]
     UnresolvedPath(PathSegment, Path),
-    #[error("Unresolved type `{0}`")]
+    #[error("unresolved type `{0}`")]
     UnresolvedType(Path),
+    #[error("let binding to named closure")]
+    BindingToNamedClosure,
 }

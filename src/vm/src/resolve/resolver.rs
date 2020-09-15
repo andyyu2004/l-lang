@@ -19,8 +19,6 @@ pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
     root: ModuleTree<'a>,
     modules: IndexVec<ModuleId, &'a Module<'a>>,
-    module_names: FxHashMap<Ident, ModuleId>,
-
     defs: Definitions,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
@@ -41,7 +39,6 @@ impl<'a> Resolver<'a> {
             sess,
             arenas,
             modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::default()), 1),
-            module_names: Default::default(),
             root: Default::default(),
             res_map: Default::default(),
             defs: Default::default(),
@@ -74,7 +71,6 @@ impl<'a> Resolver<'a> {
     pub fn new_module(&mut self, par: ModuleId, name: Ident) -> ModuleId {
         let module = self.arenas.modules.alloc(Module::default());
         let id = self.modules.push(module);
-        self.module_names.insert(name, id);
         self.modules[par].submodules.borrow_mut().insert(name, id);
         id
     }
@@ -108,7 +104,6 @@ impl<'a> Resolver<'a> {
         def_kind: DefKind,
     ) -> DefId {
         let def_id = self.def(name, node_id);
-        // TODO just using root mod for now
         self.modules[module].items.borrow_mut().insert(name, Res::Def(def_id, def_kind));
         def_id
     }
