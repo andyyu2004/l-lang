@@ -166,6 +166,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                 AdtKind::Enum => todo!(),
             },
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
+            TyKind::Opaque(_, _) => todo!(),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty

@@ -11,12 +11,13 @@ pub struct Stmt {
 impl Stmt {
     /// if the stmt is diverging e.g. return, break, continue,
     /// then change `Semi` to `Expr` for easier typechecking
-    crate fn upgrade_diverging_to_expr(&mut self) {
-        match &mut self.kind {
+    crate fn upgrade_diverging_to_expr(self) -> Self {
+        let kind = match self.kind {
             // don't think there is a way to avoid cloning without unsafe
-            StmtKind::Semi(expr) if expr.is_diverging() => self.kind = StmtKind::Expr(expr.clone()),
-            _ => {}
-        }
+            StmtKind::Semi(expr) if expr.is_diverging() => StmtKind::Expr(expr),
+            kind => kind,
+        };
+        Self { span: self.span, id: self.id, kind }
     }
 }
 

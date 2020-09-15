@@ -372,7 +372,8 @@ impl<'a> Parse<'a> for BlockParser {
                 }
             }
             // for easier typechecking when the final statement is diverging
-            stmts[len].upgrade_diverging_to_expr();
+            let expr = box stmts.pop().unwrap().upgrade_diverging_to_expr();
+            stmts.push(expr);
         }
 
         Ok(box Block { span, id: parser.mk_id(), stmts })

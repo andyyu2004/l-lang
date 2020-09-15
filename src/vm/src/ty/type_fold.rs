@@ -39,6 +39,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
             TyKind::Scheme(forall, ty) => TyKind::Scheme(forall, ty.fold_with(folder)),
             TyKind::Adt(adt, substs) => TyKind::Adt(adt, substs.fold_with(folder)),
+            TyKind::Opaque(def, substs) => TyKind::Opaque(def, substs.fold_with(folder)),
             TyKind::Ptr(m, ty) => TyKind::Ptr(m, ty.fold_with(folder)),
             TyKind::Param(_)
             | TyKind::Infer(_)
@@ -71,6 +72,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Ptr(_, ty) | TyKind::Array(ty) => ty.visit_with(visitor),
             TyKind::Scheme(_, ty) => ty.visit_with(visitor),
+            TyKind::Opaque(_, substs) => substs.visit_with(visitor),
             TyKind::Infer(_) => false,
             TyKind::Adt(_, _) => todo!(),
             TyKind::Param(_)
@@ -81,6 +83,13 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             | TyKind::Float
             | TyKind::Bool => false,
         }
+    }
+
+    fn visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        visitor.visit_ty(self)
     }
 }
 

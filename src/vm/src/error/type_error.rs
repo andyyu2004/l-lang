@@ -2,6 +2,7 @@ use crate::ast::Ident;
 use crate::ir;
 use crate::span::Span;
 use crate::ty::Ty;
+use crate::typeck::inference::TyVid;
 use thiserror::Error;
 
 pub type TypeResult<'tcx, T> = Result<T, TypeError<'tcx>>;
@@ -24,6 +25,8 @@ pub enum TypeError<'tcx> {
     IncorrectMainType(Ty<'tcx>),
     #[error("field `{0}` already declared in `{1}`")]
     FieldAlreadyDeclared(Ident, Ident),
+    #[error("occurs check failed: type variable `{0}` occurs in type `{1}`")]
+    OccursCheck(TyVid, Ty<'tcx>),
     #[error("type annotations required")]
     InferenceFailure,
 }

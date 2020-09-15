@@ -28,10 +28,25 @@ impl<'tcx> TyS<'tcx> {
     }
 }
 
-/// visitor that searches for inference variables
-struct InferenceVarVisitor;
+/// visitor that searches for a specific type variables (for the occurs check)
+struct TyVidVisitor {
+    tyvid: TyVid,
+}
+
+impl<'tcx> TypeVisitor<'tcx> for TyVidVisitor {
+    fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool {
+        match ty.kind {
+            TyKind::Infer(InferTy::TyVar(v)) => v == self.tyvid,
+            _ => ty.inner_visit_with(self),
+        }
+    }
+}
 
 impl<'tcx> TyS<'tcx> {
+    pub fn contains_tyvid(&self, tyvid: TyVid) -> bool {
+        self.visit_with(&mut TyVidVisitor { tyvid })
+    }
+
     pub fn expect_scheme(&self) -> (Forall<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Scheme(forall, ty) => (forall, ty),
@@ -102,6 +117,8 @@ pub enum TyKind<'tcx> {
     /// x: T -> box x: &T
     /// mut x: T -> box x: &mut T
     Ptr(Mutability, Ty<'tcx>),
+    /// currently used to resolve recursive structs
+    Opaque(DefId, SubstsRef<'tcx>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -196,7 +213,7 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
         match self {
             TyKind::Array(ty) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
-            TyKind::Tuple(tys) => tys.ty_flags(),
+            TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(_) => TyFlags::HAS_INFER,
             TyKind::Param(_) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
@@ -225,6 +242,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
             TyKind::Ptr(m, ty) => write!(f, "&{}{}", m, ty),
+            TyKind::Opaque(_, _) => write!(f, "opaque"),
         }
     }
 }
@@ -263,7 +281,7 @@ pub enum InferTy {
 impl Display for InferTy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TyVar(vid) => write!(f, "?{}", vid),
+            Self::TyVar(vid) => write!(f, "{}", vid),
         }
     }
 }

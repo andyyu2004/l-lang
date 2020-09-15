@@ -16,7 +16,7 @@ pub struct TyVid {
 
 impl Display for TyVid {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.index)
+        write!(f, "?{}", self.index)
     }
 }
 
@@ -91,9 +91,15 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     }
 
     /// assumption that `vid` has not been instantiated before
-    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) {
+    /// returns an error if the occurs check fails
+    pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> TypeResult<'tcx, ()> {
         let root = self.root_var(vid);
-        self.eq_relations().union_value(root, TyVarValue::Known(ty))
+        // there maybe a way to check this without searching the type
+        if ty.contains_tyvid(root) {
+            Err(TypeError::OccursCheck(root, ty))
+        } else {
+            Ok(self.eq_relations().union_value(root, TyVarValue::Known(ty)))
+        }
     }
 
     fn root_var(&mut self, vid: TyVid) -> TyVid {

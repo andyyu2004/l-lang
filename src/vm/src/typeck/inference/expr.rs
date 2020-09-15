@@ -249,14 +249,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         sig: &ir::FnSig,
         body: &ir::Body,
     ) -> Ty<'tcx> {
-        let infer = self.new_infer_var(closure.span);
         // the resolver resolved the closure name to the closure id
-        // so we define a local variable for it with a type to infer
-        self.def_local(closure.id, infer, Mutability::Imm);
+        // so we define an immutable local variable for it with the closure's type
         let clsr_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
+        self.def_local(closure.id, clsr_ty, Mutability::Imm);
         let _fcx = self.check_fn(clsr_ty, body);
-        // we then unify the types and hope it works out
-        self.unify(closure.span, infer, clsr_ty);
         clsr_ty
     }
 
@@ -269,7 +266,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let body_ty = self.check_expr(body.expr);
         self.unify(body.expr.span, self.ret_ty, body_ty);
         // explicitly overwrite the type of body with the return type of the function
-        // in case it is !
+        // in case it is `!`
         // this is a special case due to return statements in the top level block expr
         self.write_ty(body.id(), self.ret_ty);
     }

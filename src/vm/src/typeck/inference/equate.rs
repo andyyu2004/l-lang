@@ -24,8 +24,8 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
         match (&a.kind, &b.kind) {
             _ if a == b => {}
             (&Infer(TyVar(a_id)), &Infer(TyVar(b_id))) => type_vars.equate(a_id, b_id),
-            (&Infer(TyVar(vid)), _) => type_vars.instantiate(vid, b),
-            (_, &Infer(TyVar(vid))) => type_vars.instantiate(vid, a),
+            (&Infer(TyVar(vid)), _) => type_vars.instantiate(vid, b)?,
+            (_, &Infer(TyVar(vid))) => type_vars.instantiate(vid, a)?,
             (Error, _) | (_, Error) => return Ok(self.infcx.set_ty_err()),
             _ => {
                 // drop the refcell borrow so the recursive call doesn't panic
