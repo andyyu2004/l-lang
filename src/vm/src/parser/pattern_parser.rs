@@ -5,10 +5,10 @@ use crate::lexer::TokenType;
 
 pub struct PatParser;
 
-impl Parse for PatParser {
+impl<'a> Parse<'a> for PatParser {
     type Output = P<Pattern>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(token) = parser.accept(TokenType::Underscore) {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
         } else if let Some(ident) = parser.accept_ident() {
@@ -28,7 +28,7 @@ impl Parse for PatParser {
                 Ok(parser.mk_pat(span, PatternKind::Tuple(patterns)))
             }
         } else {
-            Err(ParseError::unimpl())
+            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }

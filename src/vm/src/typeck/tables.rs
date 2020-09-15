@@ -18,11 +18,13 @@ impl<'tcx> TypeckOutputs<'tcx> {
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
-        self.node_type_opt(id).expect(&format!("no entry for node `{}` in `node_types`", id))
+        self.node_type_opt(id)
+            .unwrap_or_else(|| panic!("no entry for node `{}` in `node_types`", id))
     }
 
     pub fn field_index(&self, id: ir::Id) -> FieldIdx {
-        self.field_index_opt(id).expect(&format!("no entry for `{}` in `field_indices`", id))
+        self.field_index_opt(id)
+            .unwrap_or_else(|| panic!("no entry for `{}` in `field_indices`", id))
     }
 
     pub fn field_index_opt(&self, id: ir::Id) -> Option<FieldIdx> {

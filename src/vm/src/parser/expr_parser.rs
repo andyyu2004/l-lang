@@ -4,7 +4,8 @@ use crate::error::*;
 use crate::lexer::*;
 use crate::span::{with_source_map, Span};
 
-const UNARY_OPS: [TokenType; 3] = [TokenType::Not, TokenType::Minus, TokenType::Star];
+const UNARY_OPS: [TokenType; 4] =
+    [TokenType::Not, TokenType::Minus, TokenType::Star, TokenType::And];
 const POSTFIX_OPS: [TokenType; 3] =
     [TokenType::Dot, TokenType::OpenSqBracket, TokenType::OpenParen];
 const CMP_OPS: [TokenType; 2] = [TokenType::Lt, TokenType::Gt];
@@ -15,10 +16,10 @@ const FACTOR_OPS: [TokenType; 2] = [TokenType::Star, TokenType::Slash];
 
 pub(super) struct ExprParser;
 
-impl Parse for ExprParser {
+impl<'a> Parse<'a> for ExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         BoxExprParser.parse(parser)
     }
 }
@@ -26,10 +27,10 @@ impl Parse for ExprParser {
 // TODO maybe this low precedence for box is dumb?
 struct BoxExprParser;
 
-impl Parse for BoxExprParser {
+impl<'a> Parse<'a> for BoxExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(kw) = parser.accept(TokenType::Box) {
             let expr = parser.parse_expr()?;
             Ok(parser.mk_expr(kw.span.merge(expr.span), ExprKind::Box(expr)))
@@ -41,10 +42,10 @@ impl Parse for BoxExprParser {
 
 struct AssnExprParser;
 
-impl Parse for AssnExprParser {
+impl<'a> Parse<'a> for AssnExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = CmpExprParser.parse(parser)?;
         while let Some(eq) = parser.accept(TokenType::Eq) {
             let right = self.parse(parser)?;
@@ -56,44 +57,48 @@ impl Parse for AssnExprParser {
 
 struct CmpExprParser;
 
-impl Parse for CmpExprParser {
+impl<'a> Parse<'a> for CmpExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         LBinaryExprParser { ops: &CMP_OPS, inner: TermExprParser }.parse(parser)
     }
 }
 
 struct TermExprParser;
 
-impl Parse for TermExprParser {
+impl<'a> Parse<'a> for TermExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         LBinaryExprParser { ops: &TERM_OPS, inner: FactorExprParser }.parse(parser)
     }
 }
 
 struct FactorExprParser;
 
-impl Parse for FactorExprParser {
+impl<'a> Parse<'a> for FactorExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         LBinaryExprParser { ops: &FACTOR_OPS, inner: UnaryExprParser }.parse(parser)
     }
 }
 
 pub(super) struct UnaryExprParser;
 
-impl Parse for UnaryExprParser {
+impl<'a> Parse<'a> for UnaryExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(t) = parser.accept_one_of(&UNARY_OPS) {
             let unary_op = UnaryOp::from(t);
             let expr = self.parse(parser)?;
-            Ok(parser.mk_expr(t.span.merge(expr.span), ExprKind::Unary(unary_op, expr)))
+            let span = t.span.merge(expr.span);
+            if unary_op == UnaryOp::Ref && !parser.in_unsafe_ctx() {
+                parser.sess.emit_error(span, ParseError::RequireUnsafeCtx);
+            }
+            Ok(parser.mk_expr(span, ExprKind::Unary(unary_op, expr)))
         } else {
             PostfixExprParser.parse(parser)
         }
@@ -104,10 +109,10 @@ impl Parse for UnaryExprParser {
 /// these are all left associative
 struct PostfixExprParser;
 
-impl Parse for PostfixExprParser {
+impl<'a> Parse<'a> for PostfixExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = PrimaryExprParser.parse(parser)?;
         while let Some(t) = parser.accept_one_of(&POSTFIX_OPS) {
             match t.ttype {
@@ -127,10 +132,10 @@ impl Parse for PostfixExprParser {
 
 struct PrimaryExprParser;
 
-impl Parse for PrimaryExprParser {
+impl<'a> Parse<'a> for PrimaryExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
             // we first try to parse as a parenthesization, if there is a comma then it will fail
             // and we will backtrack and parse it as a tuple instead
@@ -159,8 +164,12 @@ impl Parse for PrimaryExprParser {
             ClosureParser { fn_kw }.parse(parser)
         } else if let Some(if_kw) = parser.accept(TokenType::If) {
             IfParser { if_kw }.parse(parser)
+        } else if let Some(unsafe_kw) = parser.accept(TokenType::Unsafe) {
+            let open_brace = parser.expect(TokenType::OpenBrace)?;
+            let blk = parser.enter_unsafe_ctx(|parser| BlockParser { open_brace }.parse(parser))?;
+            Ok(parser.mk_expr(unsafe_kw.span.merge(blk.span), ExprKind::Block(blk)))
         } else {
-            Err(ParseError::unimpl())
+            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }
@@ -170,10 +179,10 @@ struct LiteralExprParser {
     span: Span,
 }
 
-impl Parse for LiteralExprParser {
+impl<'a> Parse<'a> for LiteralExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let slice = with_source_map(|map| map.main_file()[self.span].to_owned());
         let literal = match self.kind {
             LiteralKind::Float { base, .. } => {
@@ -196,14 +205,14 @@ pub(super) struct LBinaryExprParser<'i, Q, I> {
     inner: Q,
 }
 
-impl<'i, Q, I> Parse for LBinaryExprParser<'i, Q, I>
+impl<'a, 'i, Q, I> Parse<'a> for LBinaryExprParser<'i, Q, I>
 where
     &'i I: IntoIterator<Item = &'i TokenType>,
-    Q: Parse<Output = P<Expr>>,
+    Q: Parse<'a, Output = P<Expr>>,
 {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = self.inner.parse(parser)?;
         while let Some(t) = parser.accept_one_of(self.ops) {
             let binop = BinOp::from(t);
@@ -230,6 +239,16 @@ mod test {
         let expr = parse_expr!($src);
         format!("{}", expr)
     }}
+
+    #[test]
+    fn parse_deref() {
+        parse_expr!("*x");
+    }
+
+    #[test]
+    fn parse_ref() {
+        parse_expr!("&x");
+    }
 
     #[test]
     fn parse_chained_tuple_accesses() {

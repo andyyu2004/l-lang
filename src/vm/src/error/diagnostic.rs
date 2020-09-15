@@ -10,7 +10,7 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
-    fn inc_err_count(&self) {
+    pub(super) fn inc_err_count(&self) {
         self.err_count.set(1 + self.err_count.get());
     }
 
@@ -26,9 +26,8 @@ impl Diagnostics {
         if self.has_errors() { Err(LError::ErrorReported) } else { Ok(()) }
     }
 
-    pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder {
-        self.inc_err_count();
-        DiagnosticBuilder::from_err(span, err)
+    pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'_> {
+        DiagnosticBuilder::new(self, span, err)
     }
 
     pub fn emit_error(&self, span: Span, err: impl Error) -> LError {

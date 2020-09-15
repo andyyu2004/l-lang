@@ -4,10 +4,10 @@ use crate::error::ParseResult;
 
 pub struct ProgParser;
 
-impl Parse for ProgParser {
+impl<'a> Parse<'a> for ProgParser {
     type Output = P<Prog>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut items = vec![];
         while !parser.reached_eof() {
             items.push(ItemParser.parse(parser)?);

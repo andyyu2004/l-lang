@@ -23,6 +23,7 @@ lazy_static! {
         "mut" => TokenType::Mut,
         "type" => TokenType::Type,
         "box" => TokenType::Box,
+        "unsafe" => TokenType::Unsafe,
     };
 }
 
@@ -139,6 +140,7 @@ impl Lexer {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Unsafe,
     Box,
     Type,
     /// ->

@@ -1,21 +1,16 @@
-use super::{Diagnostic, Emitter, TextEmitter};
+use super::{Diagnostic, Diagnostics, Emitter, TextEmitter};
 use crate::span::Span;
 use std::cell::RefCell;
 use std::error::Error;
 use std::ops::Deref;
 
-pub struct DiagnosticBuilder {
+pub struct DiagnosticBuilder<'a> {
+    diagnostics: &'a Diagnostics,
     diagnostic: Diagnostic,
     emitter: RefCell<Box<dyn Emitter>>,
 }
 
-impl Default for DiagnosticBuilder {
-    fn default() -> Self {
-        Self { diagnostic: Diagnostic::default(), emitter: Self::default_emitter() }
-    }
-}
-
-impl Deref for DiagnosticBuilder {
+impl Deref for DiagnosticBuilder<'_> {
     type Target = Diagnostic;
 
     fn deref(&self) -> &Self::Target {
@@ -23,21 +18,18 @@ impl Deref for DiagnosticBuilder {
     }
 }
 
-impl DiagnosticBuilder {
+impl<'a> DiagnosticBuilder<'a> {
     fn default_emitter() -> RefCell<Box<dyn Emitter>> {
         RefCell::new(box TextEmitter::default())
     }
 
     pub fn emit(&self) {
+        self.diagnostics.inc_err_count();
         self.emitter.borrow_mut().emit(self)
     }
 
-    pub fn new_diagnostic(diagnostic: Diagnostic) -> Self {
-        Self { diagnostic, emitter: Self::default_emitter() }
-    }
-
-    pub fn from_err(span: Span, err: impl Error) -> Self {
+    pub(super) fn new(diagnostics: &'a Diagnostics, span: Span, err: impl Error) -> Self {
         let diagnostic = Diagnostic::from_err(span, err);
-        Self::new_diagnostic(diagnostic)
+        Self { diagnostics, diagnostic, emitter: Self::default_emitter() }
     }
 }

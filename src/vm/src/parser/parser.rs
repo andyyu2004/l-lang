@@ -6,12 +6,14 @@ use crate::lexer::*;
 use crate::span::{self, Span};
 use indexed_vec::Idx;
 use std::cell::Cell;
+use std::error::Error;
 
 pub struct Parser<'a> {
-    sess: &'a Session,
+    pub sess: &'a Session,
     tokens: Vec<Tok>,
     idx: usize,
     id_counter: Cell<usize>,
+    allow_unsafe: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -19,7 +21,17 @@ impl<'a> Parser<'a> {
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0), sess }
+        Self {
+            tokens: tokens.into_iter().collect(),
+            idx: 0,
+            id_counter: Cell::new(0),
+            allow_unsafe: false,
+            sess,
+        }
+    }
+
+    pub fn err(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
+        self.sess.build_error(span, err)
     }
 
     pub fn parse_mutability(&mut self) -> Mutability {
@@ -29,13 +41,24 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn in_unsafe_ctx(&self) -> bool {
+        self.allow_unsafe
+    }
+
+    pub fn enter_unsafe_ctx<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.allow_unsafe = true;
+        let ret = f(self);
+        self.allow_unsafe = false;
+        ret
+    }
+
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
     pub(super) fn with_span<R>(
         &mut self,
-        parser: &mut impl Parse<Output = R>,
+        parser: &mut impl Parse<'a, Output = R>,
         include_prev: bool,
-    ) -> ParseResult<(Span, R)> {
+    ) -> ParseResult<'a, (Span, R)> {
         let lo =
             if include_prev { self.tokens[self.idx - 1].span.lo } else { self.curr_span_start() };
         let p = parser.parse(self)?;
@@ -76,15 +99,19 @@ impl<'a> Parser<'a> {
     }
 
     /// entry point to parsing
-    pub fn parse(&mut self) -> LResult<P<Prog>> {
-        ProgParser.parse(self).or_else(|err| Err(self.sess.emit_error(err.span, err)))
+    pub fn parse(&mut self) -> Option<P<Prog>> {
+        ProgParser.parse(self).map_err(|err| err.emit()).ok()
     }
 
-    pub fn parse_item(&mut self) -> ParseResult<P<Item>> {
+    pub fn parse_stmt(&mut self) -> ParseResult<'a, P<Stmt>> {
+        StmtParser.parse(self)
+    }
+
+    pub fn parse_item(&mut self) -> ParseResult<'a, P<Item>> {
         ItemParser.parse(self)
     }
 
-    pub fn parse_expr(&mut self) -> ParseResult<P<Expr>> {
+    pub fn parse_expr(&mut self) -> ParseResult<'a, P<Expr>> {
         ExprParser.parse(self)
     }
 
@@ -96,7 +123,7 @@ impl<'a> Parser<'a> {
 
     pub(super) fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
     where
-        P: Parse<Output = R>,
+        P: Parse<'a, Output = R>,
     {
         let backtrack_idx = self.idx;
         let backtrack_id = self.id_counter.get();
@@ -147,20 +174,20 @@ impl<'a> Parser<'a> {
         self.tokens[self.idx].ttype == TokenType::Eof
     }
 
-    pub(super) fn safe_peek(&self) -> ParseResult<Tok> {
+    pub(super) fn safe_peek(&self) -> ParseResult<'a, Tok> {
         if !self.reached_eof() {
             Ok(self.tokens[self.idx])
         } else {
-            Err(ParseError::unexpected_eof(self.empty_span()))
+            Err(self.err(self.empty_span(), ParseError::Eof))
         }
     }
 
-    pub(super) fn safe_peek_ttype(&self) -> ParseResult<TokenType> {
+    pub(super) fn safe_peek_ttype(&self) -> ParseResult<'a, TokenType> {
         self.safe_peek().map(|t| t.ttype)
     }
 
     pub(super) fn peek(&self) -> Tok {
-        self.safe_peek().unwrap()
+        self.safe_peek().ok().unwrap()
     }
 
     pub(super) fn prev(&self) -> Tok {
@@ -178,8 +205,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(super) fn expect_ident(&mut self) -> ParseResult<Ident> {
-        let err_ident = TokenType::Ident(Symbol(0));
+    pub(super) fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
         let tok = self.safe_peek()?;
         let Tok { span, ttype } = tok;
         match ttype {
@@ -187,7 +213,7 @@ impl<'a> Parser<'a> {
                 self.idx += 1;
                 Ok(Ident { span, symbol })
             }
-            _ => Err(ParseError::expected(err_ident, tok)),
+            _ => Err(self.err(tok.span, ParseError::Expected(TokenType::Ident(Symbol(0)), tok))),
         }
     }
 
@@ -206,22 +232,24 @@ impl<'a> Parser<'a> {
         ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
     }
 
-    pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<Tok> {
+    pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Tok> {
         let t = self.safe_peek()?;
         if t.ttype == ttype {
             self.idx += 1;
             Ok(t)
         } else {
-            Err(ParseError::expected(ttype, t))
+            Err(self.err(t.span, ParseError::Expected(ttype, t)))
         }
     }
 
-    pub(super) fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<Tok>
+    pub(super) fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Tok>
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
         self.accept_one_of(ttypes).ok_or_else(|| {
-            ParseError::expected_one_of(ttypes.into_iter().cloned().collect(), self.peek())
+            let tok = self.peek();
+            let err = ParseError::ExpectedOneOf(ttypes.into_iter().cloned().collect(), tok);
+            self.err(tok.span, err)
         })
     }
 }

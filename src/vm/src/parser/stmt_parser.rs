@@ -5,10 +5,10 @@ use crate::lexer::{Tok, TokenType};
 
 pub struct StmtParser;
 
-impl Parse for StmtParser {
+impl<'a> Parse<'a> for StmtParser {
     type Output = P<Stmt>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(let_kw) = parser.accept(TokenType::Let) {
             LetParser { let_kw }.parse(parser)
         } else {
@@ -27,10 +27,10 @@ pub struct LetParser {
     let_kw: Tok,
 }
 
-impl Parse for LetParser {
+impl<'a> Parse<'a> for LetParser {
     type Output = P<Stmt>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = PatParser.parse(parser)?;
         let ty = parser.accept(TokenType::Colon).map(|_| TyParser.parse(parser)).transpose()?;
         let init = parser.accept(TokenType::Eq).map(|_| ExprParser.parse(parser)).transpose()?;

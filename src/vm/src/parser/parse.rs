@@ -1,13 +1,14 @@
 use super::Parser;
-use crate::{error::ParseResult, span::Span};
+use crate::error::ParseResult;
+use crate::span::Span;
 
-pub trait Parse: Sized {
+pub trait Parse<'a>: Sized {
     type Output;
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output>;
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output>;
 
     fn or<P>(self, other: P) -> OrParser<Self, P>
     where
-        P: Parse<Output = Self::Output>,
+        P: Parse<'a, Output = Self::Output>,
     {
         OrParser { fst: self, snd: other }
     }
@@ -18,13 +19,13 @@ pub trait Parse: Sized {
 }
 
 // implement Parser for all `parser-like` functions
-impl<F, R> Parse for F
+impl<'a, F, R> Parse<'a> for F
 where
-    F: FnMut(&mut Parser) -> ParseResult<R>,
+    F: FnMut(&mut Parser<'a>) -> ParseResult<'a, R>,
 {
     type Output = R;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         self(parser)
     }
 }
@@ -34,10 +35,10 @@ pub struct SpannedParser<P> {
     include_prev: bool,
 }
 
-impl<P: Parse> Parse for SpannedParser<P> {
+impl<'a, P: Parse<'a>> Parse<'a> for SpannedParser<P> {
     type Output = (Span, P::Output);
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         parser.with_span(&mut self.inner, self.include_prev)
     }
 }
@@ -47,14 +48,14 @@ pub struct OrParser<P, Q> {
     snd: Q,
 }
 
-impl<P, Q, R> Parse for OrParser<P, Q>
+impl<'a, P, Q, R> Parse<'a> for OrParser<P, Q>
 where
-    P: Parse<Output = R>,
-    Q: Parse<Output = R>,
+    P: Parse<'a, Output = R>,
+    Q: Parse<'a, Output = R>,
 {
     type Output = R;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         match parser.try_parse(&mut self.fst) {
             Some(p) => Ok(p),
             None => self.snd.parse(parser),

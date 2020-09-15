@@ -7,15 +7,15 @@ const ITEM_KEYWORDS: [TokenType; 3] = [TokenType::Fn, TokenType::Struct, TokenTy
 
 pub struct ItemParser;
 
-impl Parse for ItemParser {
+impl<'a> Parse<'a> for ItemParser {
     type Output = P<Item>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
-            &mut |parser: &mut Parser| match kw.ttype {
+            &mut |parser: &mut Parser<'a>| match kw.ttype {
                 TokenType::Fn => FnParser { fn_kw: kw }.parse(parser),
                 TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
@@ -35,10 +35,10 @@ pub struct TypeAliasParser {
     type_kw: Tok,
 }
 
-impl Parse for TypeAliasParser {
+impl<'a> Parse<'a> for TypeAliasParser {
     type Output = ItemKind;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         todo!()
     }
 }
@@ -52,10 +52,10 @@ pub struct FieldDeclParser {
     form: FieldForm,
 }
 
-impl Parse for FieldDeclParser {
+impl<'a> Parse<'a> for FieldDeclParser {
     type Output = FieldDecl;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
         let ident = match self.form {
             FieldForm::Struct => {
@@ -73,10 +73,10 @@ impl Parse for FieldDeclParser {
 
 pub struct VariantKindParser;
 
-impl Parse for VariantKindParser {
+impl<'a> Parse<'a> for VariantKindParser {
     type Output = VariantKind;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if parser.accept(TokenType::Semi).is_some() {
             Ok(VariantKind::Unit)
         } else if parser.accept(TokenType::OpenParen).is_some() {
@@ -92,7 +92,7 @@ impl Parse for VariantKindParser {
             parser.expect(TokenType::CloseBrace)?;
             Ok(VariantKind::Struct(fields))
         } else {
-            Err(ParseError::unimpl())
+            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }
@@ -101,10 +101,10 @@ pub struct StructDeclParser {
     struct_kw: Tok,
 }
 
-impl Parse for StructDeclParser {
+impl<'a> Parse<'a> for StructDeclParser {
     type Output = ItemKind;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = GenericsParser.parse(parser)?;
         let kind = VariantKindParser.parse(parser)?;
         Ok(ItemKind::Struct(generics, kind))
@@ -115,10 +115,10 @@ pub struct EnumParser {
     enum_kw: Tok,
 }
 
-impl Parse for EnumParser {
+impl<'a> Parse<'a> for EnumParser {
     type Output = ItemKind;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         todo!()
     }
 }
@@ -127,11 +127,11 @@ pub struct FnParser {
     fn_kw: Tok,
 }
 
-impl Parse for FnParser {
+impl<'a> Parse<'a> for FnParser {
     type Output = ItemKind;
 
     /// assumes that { <vis> fn <ident> } has already been parsed
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = GenericsParser.parse(parser)?;
         let sig = FnSigParser { require_type_annotations: true }.parse(parser)?;
         let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {

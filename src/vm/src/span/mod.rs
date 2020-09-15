@@ -6,6 +6,7 @@ use crate::span;
 pub use ctx::Ctx;
 pub use source_map::SourceMap;
 use std::cell::RefCell;
+use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 
 #[derive(Default, Debug)]
@@ -32,6 +33,12 @@ pub struct Span {
     pub hi: usize,
 }
 
+impl Display for Span {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", with_source_map(|map| map.span_to_string(*self)))
+    }
+}
+
 impl Span {
     pub const fn new(lo: usize, hi: usize) -> Self {
         assert!(lo <= hi);
@@ -46,12 +53,9 @@ impl Span {
         Self::new(self.hi, self.hi)
     }
 
+    /// assumes `self.lo <= with.lo && with.hi >= self.hi`
     pub fn merge(self, with: Span) -> Self {
         Self { lo: self.lo, hi: with.hi }
-    }
-
-    pub fn to_string(self) -> String {
-        with_source_map(|map| map.span_to_string(self))
     }
 
     pub fn intern(self) -> Symbol {

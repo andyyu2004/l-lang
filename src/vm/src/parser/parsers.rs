@@ -11,10 +11,10 @@ pub struct FieldAccessParser {
     pub expr: P<Expr>,
 }
 
-impl Parse for FieldAccessParser {
+impl<'a> Parse<'a> for FieldAccessParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = if let Some(ident) = parser.accept_ident() {
             ident
         } else if let Some((kind, span)) = parser.accept_literal() {
@@ -49,10 +49,10 @@ pub struct RetParser {
     pub ret_kw: Tok,
 }
 
-impl Parse for RetParser {
+impl<'a> Parse<'a> for RetParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let expr = parser.try_parse(&mut ExprParser);
         let span = self
             .ret_kw
@@ -66,10 +66,10 @@ pub struct FnSigParser {
     pub require_type_annotations: bool,
 }
 
-impl Parse for FnSigParser {
+impl<'a> Parse<'a> for FnSigParser {
     type Output = FnSig;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let require_type_annotations = self.require_type_annotations;
         parser.expect(TokenType::OpenParen)?;
         let mut param_parser = PunctuatedParser {
@@ -94,15 +94,15 @@ pub struct ParamParser {
     pub require_type_annotations: bool,
 }
 
-impl Parse for ParamParser {
+impl<'a> Parse<'a> for ParamParser {
     type Output = Param;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pattern = PatParser.parse(parser)?;
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
             TyParser.parse(parser)
         } else if self.require_type_annotations {
-            Err(ParseError::require_type_annotations(pattern.span))
+            Err(parser.err(pattern.span, ParseError::RequireTypeAnnotations))
         } else {
             Ok(parser.mk_infer_ty())
         }?;
@@ -112,10 +112,10 @@ impl Parse for ParamParser {
 
 pub struct VisibilityParser;
 
-impl Parse for VisibilityParser {
+impl<'a> Parse<'a> for VisibilityParser {
     type Output = Visibility;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(pub_keyword) = parser.accept(TokenType::Pub) {
             Ok(Visibility { span: pub_keyword.span, node: VisibilityKind::Public })
         } else {
@@ -125,10 +125,10 @@ impl Parse for VisibilityParser {
 }
 
 /// implement Parser for TokenType to be used as a separator
-impl Parse for TokenType {
+impl<'a> Parse<'a> for TokenType {
     type Output = Tok;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         parser.expect(*self)
     }
 }
@@ -142,14 +142,14 @@ pub struct PunctuatedParser<P, S> {
     pub separator: S,
 }
 
-impl<P, S> Parse for PunctuatedParser<P, S>
+impl<'a, P, S> Parse<'a> for PunctuatedParser<P, S>
 where
-    P: Parse,
-    S: Parse,
+    P: Parse<'a>,
+    S: Parse<'a>,
 {
     type Output = Vec<P::Output>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut vec = vec![];
         // if the first parse already fails then just return empty vector
         let p = match self.inner.parse(parser) {
@@ -176,14 +176,14 @@ pub struct Punctuated1Parser<P, S> {
     pub separator: S,
 }
 
-impl<P, S> Parse for Punctuated1Parser<P, S>
+impl<'a, P, S> Parse<'a> for Punctuated1Parser<P, S>
 where
-    P: Parse,
-    S: Parse,
+    P: Parse<'a>,
+    S: Parse<'a>,
 {
     type Output = Vec<P::Output>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut vec = vec![self.inner.parse(parser)?];
         while self.separator.parse(parser).is_ok() {
             vec.push(self.inner.parse(parser)?);
@@ -200,14 +200,14 @@ pub struct TupleParser<P> {
     pub inner: P,
 }
 
-impl<P> Parse for TupleParser<P>
+impl<'a, P> Parse<'a> for TupleParser<P>
 where
-    P: Parse,
+    P: Parse<'a>,
     P::Output: std::fmt::Debug,
 {
     type Output = Vec<P::Output>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut vec = vec![];
 
         if parser.accept(TokenType::CloseParen).is_some() {
@@ -230,13 +230,13 @@ pub struct ParenParser<P> {
     pub inner: P,
 }
 
-impl<P> Parse for ParenParser<P>
+impl<'a, P> Parse<'a> for ParenParser<P>
 where
-    P: Parse,
+    P: Parse<'a>,
 {
     type Output = P::Output;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let p = self.inner.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
         Ok(p)
@@ -247,11 +247,11 @@ pub struct StructExprParser {
     path: Path,
 }
 
-impl Parse for StructExprParser {
+impl<'a> Parse<'a> for StructExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let field_parser = |parser: &mut Parser| {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let field_parser = |parser: &mut Parser<'a>| {
             let ident = parser.expect_ident()?;
             let expr = if parser.accept(TokenType::Colon).is_some() {
                 ExprParser.parse(parser)?
@@ -278,10 +278,10 @@ impl Parse for StructExprParser {
 
 pub struct PathExprParser;
 
-impl Parse for PathExprParser {
+impl<'a> Parse<'a> for PathExprParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let (span, path) = PathParser.spanned(false).parse(parser)?;
         // if the path is immediately followed by an open brace, it is a struct expr
         // SomeStruct {
@@ -299,11 +299,11 @@ impl Parse for PathExprParser {
 /// parses a path a::b::c
 pub struct PathParser;
 
-impl Parse for PathParser {
+impl<'a> Parse<'a> for PathParser {
     type Output = Path;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
-        let separator = |parser: &mut Parser| {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let separator = |parser: &mut Parser<'a>| {
             parser.expect(TokenType::Colon)?;
             parser.expect(TokenType::Colon)
         };
@@ -317,10 +317,10 @@ impl Parse for PathParser {
 
 pub struct PathSegmentParser;
 
-impl Parse for PathSegmentParser {
+impl<'a> Parse<'a> for PathSegmentParser {
     type Output = PathSegment;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
         // with the generics of the initial ident
         Ok(PathSegment { ident, id: parser.mk_id(), args: None })
@@ -331,29 +331,46 @@ pub struct BlockParser {
     pub open_brace: Tok,
 }
 
-impl Parse for BlockParser {
+impl<'a> Parse<'a> for BlockParser {
     type Output = P<Block>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut stmts = vec![];
         let close_brace = loop {
             if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
                 break close_brace;
             }
-            stmts.push(StmtParser.parse(parser)?);
+            match parser.parse_stmt() {
+                Ok(stmt) => stmts.push(stmt),
+                Err(err) => loop {
+                    err.emit();
+                    // recover as much as possible
+                    // find the next semicolon/brace, consume and continue
+                    match parser.peek().ttype {
+                        TokenType::Eof | TokenType::CloseBrace => break,
+                        TokenType::Semi => {
+                            parser.next();
+                            break;
+                        }
+                        _ => continue,
+                    }
+                },
+            }
         };
+
         let span = self.open_brace.span.merge(close_brace.span);
         if !stmts.is_empty() {
             let len = stmts.len() - 1;
             // check there are no missing semicolons in expression statements
             for stmt in &stmts[..len] {
                 if let StmtKind::Expr(_) = stmt.kind {
-                    return Err(ParseError::expected_semi(stmt.span));
+                    return Err(parser.err(stmt.span, ParseError::MissingSemi));
                 }
             }
             // for easier typechecking when the final statement is diverging
             stmts[len].upgrade_diverging_to_expr();
         }
+
         Ok(box Block { span, id: parser.mk_id(), stmts })
     }
 }
@@ -365,10 +382,10 @@ pub struct ClosureParser {
     pub fn_kw: Tok,
 }
 
-impl Parse for ClosureParser {
+impl<'a> Parse<'a> for ClosureParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let name = parser.accept_ident();
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
         let body = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
@@ -387,10 +404,10 @@ pub struct IfParser {
     pub if_kw: Tok,
 }
 
-impl Parse for IfParser {
+impl<'a> Parse<'a> for IfParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let cond = ExprParser.parse(parser)?;
         let open_brace = parser.expect(TokenType::OpenBrace)?;
         let thn = BlockParser { open_brace }.parse(parser)?;
@@ -408,27 +425,27 @@ pub struct ElseParser {
     pub else_kw: Tok,
 }
 
-impl Parse for ElseParser {
+impl<'a> Parse<'a> for ElseParser {
     type Output = P<Expr>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(if_kw) = parser.accept(TokenType::If) {
             IfParser { if_kw }.parse(parser)
         } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
             let (span, block) = BlockParser { open_brace }.spanned(true).parse(parser)?;
             Ok(parser.mk_expr(span, ExprKind::Block(block)))
         } else {
-            Err(ParseError::unimpl())
+            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }
 
 pub struct GenericsParser;
 
-impl Parse for GenericsParser {
+impl<'a> Parse<'a> for GenericsParser {
     type Output = Generics;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut span = parser.empty_span();
         let params = if parser.accept(TokenType::Lt).is_some() {
             let params = PunctuatedParser { inner: TyParamParser, separator: TokenType::Comma }
@@ -445,10 +462,10 @@ impl Parse for GenericsParser {
 
 pub struct TyParamParser;
 
-impl Parse for TyParamParser {
+impl<'a> Parse<'a> for TyParamParser {
     type Output = TyParam;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
         let default = parser.accept(TokenType::Eq).map(|_| TyParser.parse(parser)).transpose()?;
         // eventually parse bounds here

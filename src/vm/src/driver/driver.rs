@@ -63,18 +63,17 @@ impl<'tcx> Driver<'tcx> {
     }
 
     /// used for testing parsing
-    pub fn parse_expr(&self) -> ParseResult<P<ast::Expr>> {
+    pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
         let tokens = self.lex().unwrap();
         let mut parser = Parser::new(&self.sess, tokens);
-        let expr = parser.parse_expr()?;
-        Ok(expr)
+        parser.parse_expr().map_err(|err| err.emit()).ok()
     }
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         let tokens = self.lex()?;
         let mut parser = Parser::new(&self.sess, tokens);
-        let ast = parser.parse()?;
-        Ok(ast)
+        let ast = parser.parse();
+        check_errors!(self, ast.unwrap())
     }
 
     pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {

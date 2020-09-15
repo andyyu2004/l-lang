@@ -6,10 +6,10 @@ use crate::lexer::{Tok, TokenType};
 
 pub struct TyParser;
 
-impl Parse for TyParser {
+impl<'a> Parse<'a> for TyParser {
     type Output = P<Ty>;
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(fn_kw) = parser.accept(TokenType::Fn) {
             let (span, (inputs, output)) = FnTyParser.spanned(true).parse(parser)?;
             Ok(parser.mk_ty(span, TyKind::Fn(inputs, output)))
@@ -34,7 +34,7 @@ impl Parse for TyParser {
             let path = PathParser.parse(parser)?;
             Ok(parser.mk_ty(path.span, TyKind::Path(path)))
         } else {
-            Err(ParseError::unimpl())
+            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }
@@ -42,10 +42,10 @@ impl Parse for TyParser {
 /// fn (<ty>...) (-> <ty>)?
 pub struct FnTyParser;
 
-impl Parse for FnTyParser {
+impl<'a> Parse<'a> for FnTyParser {
     type Output = (Vec<P<Ty>>, Option<P<Ty>>);
 
-    fn parse(&mut self, parser: &mut Parser) -> ParseResult<Self::Output> {
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         parser.expect(TokenType::OpenParen)?;
         let inputs = TupleParser { inner: TyParser }.parse(parser)?;
         let output =

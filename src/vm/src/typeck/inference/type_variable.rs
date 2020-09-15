@@ -121,10 +121,7 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
 
 impl<'tcx> TyVarValue<'tcx> {
     pub fn is_unknown(&self) -> bool {
-        match self {
-            Self::Unknown => true,
-            _ => false,
-        }
+        matches!(self, Self::Unknown)
     }
 }
 

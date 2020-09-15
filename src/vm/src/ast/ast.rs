@@ -259,9 +259,14 @@ impl From<Tok> for BinOp {
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum UnaryOp {
+    /// -x
     Neg,
+    /// !x
     Not,
+    /// *x
     Deref,
+    /// &x
+    Ref,
 }
 
 impl Display for UnaryOp {
@@ -270,6 +275,7 @@ impl Display for UnaryOp {
             Self::Neg => write!(f, "-"),
             Self::Not => write!(f, "!"),
             Self::Deref => write!(f, "*"),
+            Self::Ref => write!(f, "&"),
         }
     }
 }
@@ -280,6 +286,7 @@ impl From<Tok> for UnaryOp {
             TokenType::Minus => Self::Neg,
             TokenType::Not => Self::Not,
             TokenType::Star => Self::Deref,
+            TokenType::And => Self::Ref,
             k => panic!("invalid unary operator `{:?}`", k),
         }
     }

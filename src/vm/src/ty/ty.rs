@@ -293,7 +293,7 @@ impl<'tcx> std::ops::Add for Const<'tcx> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum ConstKind {
     Float(f64),
     Int(i64),
@@ -303,6 +303,19 @@ pub enum ConstKind {
 
 // maybe this is a bad idea due to the presence of an f64?
 impl Eq for ConstKind {
+}
+
+impl PartialEq for ConstKind {
+    fn eq(&self, other: &Self) -> bool {
+        use ConstKind::*;
+        match (self, other) {
+            (Float(a), Float(b)) => a.to_bits() == b.to_bits(),
+            (Int(i), Int(j)) => i == j,
+            (Bool(b), Bool(c)) => b == c,
+            (Unit, Unit) => true,
+            _ => false,
+        }
+    }
 }
 
 impl std::hash::Hash for ConstKind {
