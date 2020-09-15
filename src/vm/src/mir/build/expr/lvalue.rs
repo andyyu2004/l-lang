@@ -63,6 +63,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Const(_)
             | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Ref(..)
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Unary(..)

@@ -227,6 +227,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
                 tir::ExprKind::Deref(expr.to_tir_alloc(ctx)),
+            ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(expr.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => match path.res {

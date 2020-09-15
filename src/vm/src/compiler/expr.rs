@@ -25,6 +25,7 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::Adt { .. } => todo!(),
             tir::ExprKind::Field(_, _) => todo!(),
             tir::ExprKind::Deref(_) => todo!(),
+            tir::ExprKind::Ref(_) => todo!(),
         };
     }
 

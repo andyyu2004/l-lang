@@ -52,6 +52,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::ItemRef(_)
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Lambda(_)
+            | tir::ExprKind::Ref(..)
             | tir::ExprKind::Deref(_)
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Call(_, _)

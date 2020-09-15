@@ -96,13 +96,14 @@ where
         match expr.kind {
             tir::ExprKind::Const(c) => indent!(self, "{}", c),
             tir::ExprKind::Bin(op, l, r) => indent!(self, "({} {} {})", op, l, r),
-            tir::ExprKind::Unary(op, expr) => indent!(self, "({} {})", op, expr),
+            tir::ExprKind::Unary(op, expr) => indent!(self, "({}{})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Field(expr, field_idx) => indent!(self, "{}->{:?}", expr, field_idx),
             tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),
+            tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),
             tir::ExprKind::Deref(expr) => indent!(self, "(*{})", expr),
             tir::ExprKind::Ret(expr) => match expr {
                 Some(expr) => indent!(self, "return {}", expr),

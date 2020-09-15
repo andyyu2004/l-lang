@@ -59,6 +59,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Box(operand))
             }
+            tir::ExprKind::Ref(expr) => {
+                let lvalue = set!(block = self.as_lvalue(block, expr));
+                block.and(Rvalue::Ref(lvalue))
+            }
             tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Lambda(..)

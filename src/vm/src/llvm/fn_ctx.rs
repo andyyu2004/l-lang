@@ -155,6 +155,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_store(ptr, operand);
                 ptr.into()
             }
+            mir::Rvalue::Ref(lvalue) => self.codegen_lvalue(*lvalue).ptr.into(),
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);
                 let rhs = self.codegen_operand(r);

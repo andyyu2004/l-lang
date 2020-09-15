@@ -1,6 +1,6 @@
-mod heap_alloc;
 mod output_tests;
 mod pattern_tests;
+mod ptr_tests;
 mod struct_tests;
 
 use crate::llvm_exec;

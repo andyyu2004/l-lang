@@ -15,6 +15,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Const(c) => block.and(c),
             tir::ExprKind::Unary(_, _)
             | tir::ExprKind::Deref(..)
+            | tir::ExprKind::Ref(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Field(..)

@@ -161,6 +161,11 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
         match self {
             mir::Rvalue::Use(operand) => operand.mir_fmt(f),
             mir::Rvalue::Bin(op, lhs, rhs) => f.fmt_bin(*op, lhs, rhs),
+            mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
+            mir::Rvalue::Ref(lvalue) => {
+                write!(f, "&")?;
+                lvalue.mir_fmt(f)
+            }
             mir::Rvalue::Box(operand) => {
                 write!(f, "box ")?;
                 operand.mir_fmt(f)
@@ -175,7 +180,6 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 xs[n].mir_fmt(f)?;
                 write!(f, ")")
             }
-            mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
             mir::Rvalue::Unary(op, operand) => {
                 write!(f, "{}", op)?;
                 operand.mir_fmt(f)

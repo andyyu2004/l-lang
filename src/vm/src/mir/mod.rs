@@ -183,11 +183,17 @@ pub enum VarKind {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
-    /// usage of some variable
+    /// x
     Use(Operand<'tcx>),
+    /// - x
     Unary(ast::UnaryOp, Operand<'tcx>),
+    /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
+    /// box x
     Box(Operand<'tcx>),
+    /// &x
+    Ref(Lvalue<'tcx>),
+    /// (x,y)
     Tuple(Vec<Operand<'tcx>>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,

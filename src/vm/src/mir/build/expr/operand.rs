@@ -31,6 +31,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Lambda(..)
             | tir::ExprKind::Match(..)
+            | tir::ExprKind::Ref(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Ret(..)
             | tir::ExprKind::Bin(..)
