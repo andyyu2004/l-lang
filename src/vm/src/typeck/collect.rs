@@ -2,7 +2,7 @@ use super::TyCtx;
 use crate::ast::Ident;
 use crate::error::TypeError;
 use crate::ir;
-use crate::ty::{AdtTy, FieldTy, TyConv, TyKind, VariantTy};
+use crate::ty::{AdtTy, FieldTy, List, TyConv, TyKind, VariantTy};
 use rustc_hash::FxHashMap;
 
 impl<'tcx> TyCtx<'tcx> {
@@ -17,6 +17,12 @@ impl<'tcx> TyCtx<'tcx> {
                 self.generalize(generics, fn_ty)
             }
             ir::ItemKind::Struct(generics, variant_kind) => {
+                // TODO
+                // let opaque_ty = self.mk_opaque_ty(item.id.def, List::empty());
+                // self.item_tys
+                //     .borrow_mut()
+                //     .insert(item.id.def, self.generalize(generics, opaque_ty));
+
                 let variant_ty = self.variant_ty(item.ident, variant_kind);
                 let variant_tys = std::iter::once(variant_ty).collect();
                 let adt_ty = self.mk_struct(item.id.def, item.ident, variant_tys);

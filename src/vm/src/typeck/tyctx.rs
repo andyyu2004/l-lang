@@ -82,6 +82,10 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_adt_ty(adt_ty, self.intern_substs(&[]))
     }
 
+    pub fn mk_opaque_ty(self, def: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Opaque(def, substs))
+    }
+
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
     }

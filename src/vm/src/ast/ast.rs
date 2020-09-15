@@ -10,7 +10,6 @@ use std::ops::Deref;
 pub struct Variant {
     pub id: NodeId,
     pub span: Span,
-    pub vis: Visibility,
     pub ident: Ident,
     pub kind: VariantKind,
 }

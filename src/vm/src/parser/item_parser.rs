@@ -71,15 +71,26 @@ impl<'a> Parse<'a> for FieldDeclParser {
     }
 }
 
+pub struct VariantParser;
+
+impl<'a> Parse<'a> for VariantParser {
+    type Output = Variant;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let ident = parser.expect_ident()?;
+        let kind = VariantKindParser.parse(parser)?;
+        let span = ident.span.merge(parser.empty_span());
+        Ok(Variant { id: parser.mk_id(), span, kind, ident })
+    }
+}
+
 pub struct VariantKindParser;
 
 impl<'a> Parse<'a> for VariantKindParser {
     type Output = VariantKind;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if parser.accept(TokenType::Semi).is_some() {
-            Ok(VariantKind::Unit)
-        } else if parser.accept(TokenType::OpenParen).is_some() {
+        if parser.accept(TokenType::OpenParen).is_some() {
             let form = FieldForm::Tuple;
             let fields = TupleParser { inner: FieldDeclParser { form } }.parse(parser)?;
             Ok(VariantKind::Tuple(fields))
@@ -92,7 +103,7 @@ impl<'a> Parse<'a> for VariantKindParser {
             parser.expect(TokenType::CloseBrace)?;
             Ok(VariantKind::Struct(fields))
         } else {
-            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
+            Ok(VariantKind::Unit)
         }
     }
 }
@@ -100,13 +111,15 @@ impl<'a> Parse<'a> for VariantKindParser {
 pub struct StructDeclParser {
     struct_kw: Tok,
 }
-
 impl<'a> Parse<'a> for StructDeclParser {
     type Output = ItemKind;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = GenericsParser.parse(parser)?;
         let kind = VariantKindParser.parse(parser)?;
+        if let VariantKind::Tuple(_) | VariantKind::Unit = kind {
+            parser.expect(TokenType::Semi)?;
+        }
         Ok(ItemKind::Struct(generics, kind))
     }
 }
@@ -119,7 +132,12 @@ impl<'a> Parse<'a> for EnumParser {
     type Output = ItemKind;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        todo!()
+        let generics = GenericsParser.parse(parser)?;
+        parser.expect(TokenType::OpenBrace)?;
+        let variants =
+            PunctuatedParser { inner: VariantParser, separator: TokenType::Comma }.parse(parser)?;
+        parser.expect(TokenType::CloseBrace)?;
+        Ok(ItemKind::Enum(generics, variants))
     }
 }
 
@@ -167,6 +185,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_enum() {
+        let _prog = parse!("enum B { T, F, }");
+        let _prog = parse!("enum B { T(bool), F }");
+        let _prog = parse!("enum B { T(bool), F { x: bool, y: &int } }");
+    }
+
+    #[test]
     fn parse_struct() {
         let _prog = parse!("struct S { x: int }");
         let _prog = parse!("struct S { x: int, y: bool }");
@@ -174,7 +199,7 @@ mod tests {
 
     #[test]
     fn parse_tuple_struct() {
-        let _prog = parse!("struct S(number)");
-        let _prog = parse!("struct S(number, bool)");
+        let _prog = parse!("struct S(number);");
+        let _prog = parse!("struct S(number, bool);");
     }
 }
