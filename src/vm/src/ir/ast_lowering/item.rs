@@ -17,7 +17,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let generics = lctx.lower_generics(generics);
                     ir::ItemKind::Fn(lowered_sig, generics, body)
                 }
-                ItemKind::Enum(_, _) => todo!(),
+                ItemKind::Enum(generics, variants) => {
+                    let generics = lctx.lower_generics(generics);
+                    let variants =
+                        lctx.arena.alloc_from_iter(variants.iter().map(|v| lctx.lower_variant(v)));
+                    ir::ItemKind::Enum(generics, variants)
+                }
                 ItemKind::Struct(generics, variant_kind) => {
                     let generics = lctx.lower_generics(generics);
                     let kind = lctx.lower_variant_kind(variant_kind);
@@ -28,6 +33,15 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
+    fn lower_variant(&mut self, variant: &Variant) -> ir::Variant<'ir> {
+        ir::Variant {
+            id: self.lower_node_id(variant.id),
+            ident: variant.ident,
+            span: variant.span,
+            kind: self.lower_variant_kind(&variant.kind),
+        }
+    }
+
     fn lower_field_decl(&mut self, (i, field): (usize, &FieldDecl)) -> ir::FieldDecl<'ir> {
         let &FieldDecl { span, ident, vis, id, ref ty } = field;
         let ident = ident
@@ -35,8 +49,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         ir::FieldDecl { span, ident, vis, id: self.lower_node_id(id), ty: self.lower_ty(ty) }
     }
 
-    fn lower_variant_kind(&mut self, variant_kind: &VariantKind) -> &'ir ir::VariantKind<'ir> {
-        let kind = match variant_kind {
+    fn lower_variant_kind(&mut self, variant_kind: &VariantKind) -> ir::VariantKind<'ir> {
+        match variant_kind {
             VariantKind::Tuple(fields) => ir::VariantKind::Tuple(
                 self.arena
                     .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
@@ -46,8 +60,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
             ),
             VariantKind::Unit => ir::VariantKind::Unit,
-        };
-        self.arena.alloc(kind)
+        }
     }
 
     fn lower_generics(&mut self, generics: &Generics) -> &'ir ir::Generics<'ir> {

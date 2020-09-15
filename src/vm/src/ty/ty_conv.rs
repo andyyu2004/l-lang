@@ -40,6 +40,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                     let (_forall, ty) = tcx.item_ty(def_id).expect_scheme();
                     ty
                 }
+                ir::DefKind::Ctor => todo!(),
                 ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
             },
             ir::Res::Err => tcx.mk_ty_err(),

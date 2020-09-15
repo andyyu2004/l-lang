@@ -11,6 +11,10 @@ pub trait Visitor<'ast>: Sized {
         prog.items.iter().for_each(|item| self.visit_item(item));
     }
 
+    fn visit_variant(&mut self, variant: &'ast Variant) {
+        walk_variant(self, variant);
+    }
+
     fn visit_variant_kind(&mut self, kind: &'ast VariantKind) {
         walk_variant_kind(self, kind);
     }
@@ -213,6 +217,11 @@ pub fn walk_field_decl<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast Fiel
     visitor.visit_ty(&field.ty);
 }
 
+pub fn walk_variant<'ast>(visitor: &mut impl Visitor<'ast>, variant: &'ast Variant) {
+    visitor.visit_ident(variant.ident);
+    visitor.visit_variant_kind(&variant.kind);
+}
+
 pub fn walk_variant_kind<'ast>(visitor: &mut impl Visitor<'ast>, kind: &'ast VariantKind) {
     match kind {
         VariantKind::Struct(fields) | VariantKind::Tuple(fields) =>
@@ -230,7 +239,10 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             visitor.visit_fn(sig, body.as_deref())
         }
-        ItemKind::Enum(_, _) => todo!(),
+        ItemKind::Enum(generics, variants) => {
+            visitor.visit_generics(generics);
+            variants.iter().for_each(|variant| visitor.visit_variant(variant));
+        }
         ItemKind::Struct(generics, variant_kind) => {
             visitor.visit_generics(generics);
             visitor.visit_variant_kind(variant_kind);

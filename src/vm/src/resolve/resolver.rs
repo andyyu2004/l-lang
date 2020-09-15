@@ -13,6 +13,8 @@ pub struct Resolver<'a> {
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
+    /// contains all hoisted resolutions
+    /// such as items and enum constructors
     items: FxHashMap<Ident, Res<NodeId>>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
     ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,

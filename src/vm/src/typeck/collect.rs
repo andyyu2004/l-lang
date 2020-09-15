@@ -11,7 +11,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn collect_item(self, item: &ir::Item<'tcx>) {
-        let ty = match item.kind {
+        let ty = match &item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
                 let fn_ty = TyConv::fn_sig_to_ty(&self, sig);
                 self.generalize(generics, fn_ty)
@@ -26,7 +26,17 @@ impl<'tcx> TyCtx<'tcx> {
                 let variant_ty = self.variant_ty(item.ident, variant_kind);
                 let variant_tys = std::iter::once(variant_ty).collect();
                 let adt_ty = self.mk_struct(item.id.def, item.ident, variant_tys);
-                let ty = self.mk_empty_adt_ty(adt_ty);
+                let ty = self.mk_adt_ty(adt_ty, List::empty());
+                self.generalize(generics, ty)
+            }
+            ir::ItemKind::Enum(generics, variants) => {
+                let variant_tys = variants
+                    .iter()
+                    .map(|variant| self.variant_ty(variant.ident, &variant.kind))
+                    .collect();
+
+                let adt_ty = self.mk_struct(item.id.def, item.ident, variant_tys);
+                let ty = self.mk_adt_ty(adt_ty, List::empty());
                 self.generalize(generics, ty)
             }
         };

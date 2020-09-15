@@ -16,6 +16,8 @@ pub enum DefKind {
     Fn,
     Enum,
     Struct,
+    /// constructor of enum variant
+    Ctor,
     /// contains the index of the `TyParam` in its scope
     /// impl<T, U> Foo<T, U> {
     ///     fn bar<V> () { .. }

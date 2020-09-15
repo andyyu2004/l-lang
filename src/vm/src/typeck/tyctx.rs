@@ -78,10 +78,6 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Adt(adt_ty, self.intern_substs(&[])))
     }
 
-    pub fn mk_empty_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>) -> Ty<'tcx> {
-        self.mk_adt_ty(adt_ty, self.intern_substs(&[]))
-    }
-
     pub fn mk_opaque_ty(self, def: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Opaque(def, substs))
     }
@@ -259,7 +255,7 @@ impl<'tcx> TyCtx<'tcx> {
                     let lctx = TirCtx::new(&inherited, tables);
                     Some(f(lctx))
                 }),
-            ir::ItemKind::Struct(..) => None,
+            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => None,
         }
     }
 

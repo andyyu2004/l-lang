@@ -3,6 +3,7 @@ use crate::ast::{self, *};
 use crate::ir::DefKind;
 
 /// collects all `DefId`s
+/// this forward declares all "hoisted" things such as items & constructors
 pub struct DefVisitor<'a, 'r> {
     resolver: &'a mut Resolver<'r>,
 }
@@ -17,6 +18,10 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(item.ident, item.id, item.kind.def_kind());
         ast::walk_item(self, item);
+    }
+
+    fn visit_variant(&mut self, variant: &'ast Variant) {
+        self.resolver.def_item(variant.ident, variant.id, DefKind::Ctor);
     }
 
     fn visit_ty_param(&mut self, ty_param: &'ast TyParam) {

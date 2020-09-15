@@ -1,8 +1,8 @@
 
-struct Node {
-    x: int,
-    next: Node,
-}
+// struct Node {
+//     x: int,
+//     next: Node,
+// }
 
 struct S {
     x: int,
@@ -17,7 +17,7 @@ enum K {
 
 fn main() -> int {
     let s = box S { x: 5, y: false };
-    let node = Node { x: 5, next: node };
+    let k = T;
     5
 }
 

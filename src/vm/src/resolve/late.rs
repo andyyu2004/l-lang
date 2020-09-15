@@ -69,8 +69,6 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_adt(&mut self, generics: &'ast Generics, item: &'ast Item) {
         self.with_generics(generics, |this| {
-            // let res = Res::Def(item.id.def, DefKind::Struct);
-            // this.scopes[NS::Type].def(item.ident, res);
             ast::walk_item(this, item);
         })
     }

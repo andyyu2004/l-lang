@@ -15,5 +15,6 @@ pub struct Item<'ir> {
 #[derive(Debug)]
 pub enum ItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),
-    Struct(&'ir ir::Generics<'ir>, &'ir ir::VariantKind<'ir>),
+    Struct(&'ir ir::Generics<'ir>, ir::VariantKind<'ir>),
+    Enum(&'ir ir::Generics<'ir>, &'ir [ir::Variant<'ir>]),
 }

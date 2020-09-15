@@ -28,6 +28,7 @@ impl<'ir> Expr<'ir> {
                     ir::DefKind::Enum => false,
                     ir::DefKind::Struct => false,
                     ir::DefKind::TyParam(_) => false,
+                    ir::DefKind::Ctor => false,
                 },
                 ir::Res::Err => false,
                 ir::Res::PrimTy(_) => unreachable!(),

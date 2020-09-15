@@ -1,9 +1,17 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir::{self, ParamIdx};
-use crate::{lexer::Symbol, span::Span};
-use ir::{Id, Res};
+use crate::ir::{self, ParamIdx, Res};
+use crate::lexer::Symbol;
+use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
+
+#[derive(Debug)]
+pub struct Variant<'ir> {
+    pub id: ir::Id,
+    pub ident: Ident,
+    pub span: Span,
+    pub kind: ir::VariantKind<'ir>,
+}
 
 #[derive(Debug)]
 pub enum VariantKind<'ir> {
@@ -117,7 +125,7 @@ pub struct PathSegment<'ir> {
 
 #[derive(Debug)]
 pub struct Block<'ir> {
-    pub id: Id,
+    pub id: ir::Id,
     pub span: Span,
     pub stmts: &'ir [ir::Stmt<'ir>],
     pub expr: Option<&'ir ir::Expr<'ir>>,
@@ -129,7 +137,7 @@ pub enum Lvalue {
 
 #[derive(Debug)]
 pub struct Let<'ir> {
-    pub id: Id,
+    pub id: ir::Id,
     pub span: Span,
     pub pat: &'ir ir::Pattern<'ir>,
     pub ty: Option<&'ir ir::Ty<'ir>>,

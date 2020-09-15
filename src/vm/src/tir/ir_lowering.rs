@@ -96,7 +96,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let ty = ctx.tcx.item_ty(self.id.def);
                 tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
             }
-            ir::ItemKind::Struct(_, _) => unreachable!(),
+            ir::ItemKind::Struct(..) | ir::ItemKind::Enum(..) => unreachable!(),
         };
         tir::Item { kind, span, id, ident, vis }
     }
@@ -237,6 +237,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                     ir::DefKind::TyParam(_) => todo!(),
                     ir::DefKind::Enum => todo!(),
                     ir::DefKind::Struct => todo!(),
+                    ir::DefKind::Ctor => todo!(),
                 },
                 ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
             },

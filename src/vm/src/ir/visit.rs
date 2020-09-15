@@ -67,6 +67,45 @@ pub trait Visitor<'ir>: Sized {
     fn visit_field(&mut self, field: &'ir ir::Field<'ir>) {
         walk_field(self, field)
     }
+
+    fn visit_generics(&mut self, generics: &'ir ir::Generics<'ir>) {
+        walk_generics(self, generics)
+    }
+
+    fn visit_variant_kind(&mut self, kind: &'ir ir::VariantKind<'ir>) {
+        walk_variant_kind(self, kind)
+    }
+
+    fn visit_field_decl(&mut self, decl: &'ir ir::FieldDecl<'ir>) {
+        walk_field_decl(self, decl)
+    }
+
+    fn visit_variant(&mut self, variant: &'ir ir::Variant<'ir>) {
+        walk_variant(self, variant)
+    }
+}
+
+pub fn walk_variant<'ir>(v: &mut impl Visitor<'ir>, variant: &'ir ir::Variant<'ir>) {
+    v.visit_ident(variant.ident);
+    v.visit_variant_kind(&variant.kind);
+}
+
+pub fn walk_field_decl<'ir>(v: &mut impl Visitor<'ir>, decl: &'ir ir::FieldDecl<'ir>) {
+    v.visit_ident(decl.ident);
+    v.visit_vis(decl.vis);
+    v.visit_ty(decl.ty);
+}
+
+pub fn walk_variant_kind<'ir>(v: &mut impl Visitor<'ir>, kind: &'ir ir::VariantKind<'ir>) {
+    match kind {
+        ir::VariantKind::Struct(fields) | ir::VariantKind::Tuple(fields) =>
+            fields.iter().for_each(|f| v.visit_field_decl(f)),
+        ir::VariantKind::Unit => {}
+    }
+}
+
+pub fn walk_generics<'ir>(v: &mut impl Visitor<'ir>, generics: &'ir ir::Generics<'ir>) {
+    // TODO
 }
 
 pub fn walk_prog<'ir, V: Visitor<'ir>>(v: &mut V, prog: &'ir ir::Prog<'ir>) {
@@ -86,7 +125,14 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_fn_sig(sig);
             v.visit_body(body);
         }
-        ir::ItemKind::Struct(_, _) => {}
+        ir::ItemKind::Enum(generics, variants) => {
+            v.visit_generics(generics);
+            variants.iter().for_each(|variant| v.visit_variant(variant));
+        }
+        ir::ItemKind::Struct(generics, kind) => {
+            v.visit_generics(generics);
+            v.visit_variant_kind(kind);
+        }
     }
 }
 
