@@ -17,7 +17,7 @@ enum K {
 
 fn main() -> int {
     let s = box S { x: 5, y: false };
-    let k = T;
+    let k = K::T;
     5
 }
 

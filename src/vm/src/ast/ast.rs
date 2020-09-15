@@ -189,7 +189,7 @@ impl Display for Path {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, Copy, PartialEq, Clone, Eq, Hash)]
 pub struct PathSegment {
     pub ident: Ident,
     pub id: NodeId,

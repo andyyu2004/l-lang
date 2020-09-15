@@ -1,6 +1,8 @@
+use super::{Module, ModuleTree};
+use crate::arena::TypedArena;
 use crate::ast::{Ident, NodeId, Prog};
 use crate::driver::Session;
-use crate::ir::{DefId, DefKind, Definitions, ParamIdx, PrimTy, Res};
+use crate::ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use crate::lexer::{symbol, Symbol};
 use crate::span::Span;
 use indexed_vec::IndexVec;
@@ -8,14 +10,21 @@ use rustc_hash::FxHashMap;
 use std::error::Error;
 use std::marker::PhantomData;
 
+#[derive(Default)]
+pub struct ResolverArenas<'a> {
+    modules: TypedArena<Module<'a>>,
+}
+
 pub struct Resolver<'a> {
+    arenas: &'a ResolverArenas<'a>,
+    root: ModuleTree<'a>,
+    modules: IndexVec<ModuleId, &'a Module<'a>>,
+    module_names: FxHashMap<Ident, ModuleId>,
+
     defs: Definitions,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
-    /// contains all hoisted resolutions
-    /// such as items and enum constructors
-    items: FxHashMap<Ident, Res<NodeId>>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
     ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,
     pub(super) primitive_types: PrimitiveTypes,
@@ -27,10 +36,13 @@ pub struct ResolverOutputs {
 }
 
 impl<'a> Resolver<'a> {
-    pub fn new(sess: &'a Session) -> Self {
+    pub fn new(sess: &'a Session, arenas: &'a ResolverArenas<'a>) -> Self {
         Self {
             sess,
-            items: Default::default(),
+            arenas,
+            modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::default()), 1),
+            module_names: Default::default(),
+            root: Default::default(),
             res_map: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
@@ -50,10 +62,21 @@ impl<'a> Resolver<'a> {
         ResolverOutputs { defs }
     }
 
-    pub fn def_item(&mut self, name: Ident, node_id: NodeId, def_kind: DefKind) -> DefId {
-        let def_id = self.def(name, node_id);
-        self.items.insert(name, Res::Def(def_id, def_kind));
-        def_id
+    pub fn find_module(&mut self, par: ModuleId, ident: Ident) -> Option<ModuleId> {
+        let par = self.modules[par];
+        par.submodules.borrow().get(&ident).copied()
+    }
+
+    pub fn root_module(&mut self) -> &Module<'a> {
+        self.modules[ROOT_MODULE]
+    }
+
+    pub fn new_module(&mut self, par: ModuleId, name: Ident) -> ModuleId {
+        let module = self.arenas.modules.alloc(Module::default());
+        let id = self.modules.push(module);
+        self.module_names.insert(name, id);
+        self.modules[par].submodules.borrow_mut().insert(name, id);
+        id
     }
 
     /// allocates a `DefId` for some given `NodeId`
@@ -77,8 +100,21 @@ impl<'a> Resolver<'a> {
         *self.ty_param_id_to_idx.get(&id).unwrap()
     }
 
-    pub fn resolve_item(&mut self, ident: Ident) -> Option<Res<NodeId>> {
-        self.items.get(&ident).copied()
+    pub fn def_item(
+        &mut self,
+        module: ModuleId,
+        name: Ident,
+        node_id: NodeId,
+        def_kind: DefKind,
+    ) -> DefId {
+        let def_id = self.def(name, node_id);
+        // TODO just using root mod for now
+        self.modules[module].items.borrow_mut().insert(name, Res::Def(def_id, def_kind));
+        def_id
+    }
+
+    pub fn resolve_item(&self, module: ModuleId, ident: Ident) -> Option<Res<NodeId>> {
+        self.modules[module].items.borrow().get(&ident).copied()
     }
 
     /// node_id -> def_id

@@ -1,11 +1,13 @@
 mod def_visitor;
 mod late;
+mod module;
 mod resolver;
 mod scope;
 
 use crate::span::Span;
 use def_visitor::DefVisitor;
-pub use resolver::{Resolver, ResolverOutputs};
+use module::{Module, ModuleTree};
+pub use resolver::{Resolver, ResolverArenas, ResolverOutputs};
 pub use scope::{Scope, Scopes};
 
 #[cfg(test)]

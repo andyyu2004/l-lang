@@ -6,7 +6,7 @@ use crate::core::Arena;
 use crate::error::{DiagnosticBuilder, LError, LResult, ParseResult};
 use crate::llvm::CodegenCtx;
 use crate::pluralize;
-use crate::resolve::{Resolver, ResolverOutputs};
+use crate::resolve::{Resolver, ResolverArenas, ResolverOutputs};
 use crate::typeck::{GlobalCtx, TyCtx};
 use crate::{exec, ir, lexer, mir, parser, span, tir};
 use exec::VM;
@@ -21,6 +21,7 @@ use std::rc::Rc;
 
 pub struct Driver<'tcx> {
     arena: Arena<'tcx>,
+    resolver_arenas: ResolverArenas<'tcx>,
     ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
     sess: Session,
@@ -49,6 +50,7 @@ impl<'tcx> Driver<'tcx> {
         span::GLOBALS
             .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(src))));
         Self {
+            resolver_arenas: Default::default(),
             arena: Default::default(),
             ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
@@ -76,9 +78,9 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn gen_ir<'ir>(&'ir self) -> LResult<(ir::Prog<'ir>, ResolverOutputs)> {
+    pub fn gen_ir(&'tcx self) -> LResult<(ir::Prog<'tcx>, ResolverOutputs)> {
         let ast = self.parse()?;
-        let mut resolver = Resolver::new(&self.sess);
+        let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
         let ir = lctx.lower_prog(&ast);

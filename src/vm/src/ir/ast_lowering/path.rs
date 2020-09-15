@@ -4,18 +4,18 @@ use crate::ir;
 use std::marker::PhantomData;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
-    pub(super) fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
-        // just handle the local variable case for now
-        assert!(path.segments.len() == 1);
-        let seg = &path.segments[0];
-        let segments = vec![ir::PathSegment {
-            ident: seg.ident,
-            id: self.lower_node_id(seg.id),
-            pd: PhantomData,
-        }];
-        let segments = self.arena.alloc_from_iter(segments);
-        let res = self.lower_res(self.resolver.get_res(seg.id));
+    /// the id belongs to the `Expr` or the `Ty`
+    pub(super) fn lower_path(&mut self, id: NodeId, path: &Path) -> &'ir ir::Path<'ir> {
+        let segments = self
+            .arena
+            .alloc_from_iter(path.segments.iter().map(|seg| self.lower_path_segment(seg)));
+        let res = self.lower_res(self.resolver.get_res(id));
         let path = ir::Path { span: path.span, segments, res };
         self.arena.alloc(path)
+    }
+
+    pub fn lower_path_segment(&mut self, segment: &PathSegment) -> ir::PathSegment<'ir> {
+        let &PathSegment { id, ident, args } = segment;
+        ir::PathSegment { ident, id: self.lower_node_id(id), pd: PhantomData }
     }
 }
