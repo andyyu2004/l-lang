@@ -164,6 +164,10 @@ impl<'a> Parser<'a> {
         box Item { span, id: self.mk_id(), ident, vis, kind }
     }
 
+    pub(super) fn bump(&mut self) {
+        self.next();
+    }
+
     pub(super) fn next(&mut self) -> Tok {
         let tok = self.peek();
         self.idx += 1;

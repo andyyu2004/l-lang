@@ -12,6 +12,7 @@ fn main() -> int {
     *ref
 }
 
+
 fn mutate(ptr: &mut int) {
     *ptr = 9;
 }

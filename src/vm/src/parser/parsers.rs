@@ -342,19 +342,23 @@ impl<'a> Parse<'a> for BlockParser {
             }
             match parser.parse_stmt() {
                 Ok(stmt) => stmts.push(stmt),
-                Err(err) => loop {
+                // recover as much as possible
+                // find the next semicolon/brace
+                Err(err) => {
                     err.emit();
-                    // recover as much as possible
-                    // find the next semicolon/brace, consume and continue
-                    match parser.peek().ttype {
-                        TokenType::Eof | TokenType::CloseBrace => break,
-                        TokenType::Semi => {
-                            parser.next();
-                            break;
+                    loop {
+                        match parser.peek().ttype {
+                            TokenType::Eof =>
+                                return Err(parser.err(parser.empty_span(), ParseError::Eof)),
+                            TokenType::CloseBrace => break,
+                            TokenType::Semi => {
+                                parser.bump();
+                                break;
+                            }
+                            _ => parser.bump(),
                         }
-                        _ => continue,
                     }
-                },
+                }
             }
         };
 
