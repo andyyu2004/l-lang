@@ -30,6 +30,18 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn dump_stream(&self) {
+        for token in &self.tokens[self.idx..] {
+            eprintln!("{:?}", token.ttype);
+        }
+    }
+
+    /// directly moves the parser's cursor backwards by `u` steps
+    /// avoid using this unless necessary
+    pub fn backtrack(&mut self, u: usize) {
+        self.idx -= u;
+    }
+
     pub fn err(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
         self.sess.build_error(span, err)
     }

@@ -282,13 +282,22 @@ impl<'a> Parse<'a> for PathExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let (span, path) = PathParser.spanned(false).parse(parser)?;
-        // if the path is immediately followed by an open brace, it is a struct expr
+        // if the path is immediately followed by an open brace, it may be a struct expr
         // SomeStruct {
         //    x: int,
         //    y: bool,
         // }
+        // however, it could also be an identifier followed by a block
         if let Some(_) = parser.accept(TokenType::OpenBrace) {
-            StructExprParser { path }.parse(parser)
+            let mut struct_parser = StructExprParser { path };
+            match struct_parser.try_parse(parser) {
+                Some(struct_expr) => Ok(struct_expr),
+                None => {
+                    // need to backtrack past the open brace
+                    parser.backtrack(1);
+                    Ok(parser.mk_expr(span, ExprKind::Path(struct_parser.path)))
+                }
+            }
         } else {
             Ok(parser.mk_expr(span, ExprKind::Path(path)))
         }
@@ -412,6 +421,7 @@ impl<'a> Parse<'a> for ArmParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = parser.parse_pattern()?;
         let guard = parser.accept(TokenType::If).map(|if_kw| parser.parse_expr()).transpose()?;
+        let guard = None;
         parser.expect(TokenType::RFArrow)?;
         let body = parser.parse_expr()?;
         let span = pat.span.merge(body.span);
@@ -428,12 +438,13 @@ impl<'a> Parse<'a> for MatchParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let scrutinee = parser.parse_expr()?;
+        dbg!("post scrut");
+        parser.dump_stream();
         parser.expect(TokenType::OpenBrace)?;
-        let (span, arms) = PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }
-            .spanned(false)
-            .parse(parser)?;
-        parser.expect(TokenType::CloseBrace)?;
-        Ok(parser.mk_expr(scrutinee.span.merge(span), ExprKind::Match(scrutinee, arms)))
+        let arms =
+            PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }.parse(parser)?;
+        let brace = parser.expect(TokenType::CloseBrace)?;
+        Ok(parser.mk_expr(self.match_kw.span.merge(brace.span), ExprKind::Match(scrutinee, arms)))
     }
 }
 

@@ -22,9 +22,9 @@ enum Option2 {
 
 fn main() -> int {
     let opt = Option::None;
-    match 5 {
-	x => 5,
-	y => 6,
+    match opt {
+	Option::Some(x) => x,
+	Option::None => 99,
     }
 }
 
