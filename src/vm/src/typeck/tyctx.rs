@@ -55,13 +55,22 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_tir_iter(iter)
     }
 
-    pub fn mk_struct(
+    pub fn mk_struct_ty(
+        self,
+        def_id: DefId,
+        ident: Ident,
+        variant: VariantTy<'tcx>,
+    ) -> &'tcx AdtTy<'tcx> {
+        self.mk_adt(def_id, AdtKind::Struct, ident, std::iter::once(variant).collect())
+    }
+
+    pub fn mk_enum_ty(
         self,
         def_id: DefId,
         ident: Ident,
         variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
     ) -> &'tcx AdtTy<'tcx> {
-        self.mk_adt(def_id, AdtKind::Struct, ident, variants)
+        self.mk_adt(def_id, AdtKind::Enum, ident, variants)
     }
 
     pub fn mk_adt(
@@ -82,8 +91,16 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Opaque(def, substs))
     }
 
+    pub fn mk_array_ty(self, ty: Ty<'tcx>, n: usize) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Array(ty, n))
+    }
+
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
+    }
+
+    pub fn mk_fn_ty(self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Fn(params, ret))
     }
 
     pub fn mk_ptr_ty(self, m: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -104,8 +121,8 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     /// finds the type of an item that was obtained during the collection phase
-    pub fn item_ty(self, def_id: DefId) -> Ty<'tcx> {
-        self.item_tys.borrow().get(&def_id).expect("no type entry for item")
+    pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
+        self.collected_tys.borrow().get(&def_id).expect("no type entry for item")
     }
 
     pub fn mk_tup<I>(self, iter: I) -> Ty<'tcx>
@@ -172,7 +189,7 @@ pub struct GlobalCtx<'tcx> {
     interners: CtxInterners<'tcx>,
     defs: &'tcx Definitions,
     /// where the results of type collection are stored
-    pub(super) item_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
+    pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -184,7 +201,7 @@ impl<'tcx> GlobalCtx<'tcx> {
             interners,
             defs,
             sess: session,
-            item_tys: Default::default(),
+            collected_tys: Default::default(),
         }
     }
 

@@ -1,8 +1,10 @@
+use super::{Subst, TyConv};
 use crate::ast::{Ident, Mutability, Visibility};
-use crate::ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
+use crate::ir::{self, DefId, FieldIdx, ParamIdx, VariantIdx};
 use crate::span::Span;
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
+use crate::typeck::TyCtx;
 use crate::util;
 use bitflags::bitflags;
 use indexed_vec::{Idx, IndexVec};
@@ -68,9 +70,9 @@ impl<'tcx> TyS<'tcx> {
         }
     }
 
-    pub fn expect_adt(&self) -> &'tcx AdtTy<'tcx> {
+    pub fn expect_adt(&self) -> (&'tcx AdtTy<'tcx>, SubstsRef<'tcx>) {
         match self.kind {
-            TyKind::Adt(adt, _) => adt,
+            TyKind::Adt(adt, substs) => (adt, substs),
             _ => panic!("expected TyKind::Adt, found {}", self),
         }
     }
@@ -102,8 +104,8 @@ pub enum TyKind<'tcx> {
     Int,
     Error,
     Never,
-    /// [<ty>]
-    Array(Ty<'tcx>),
+    /// [<ty>; n]
+    Array(Ty<'tcx>, usize),
     /// fn(<ty>...) -> <ty>
     Fn(SubstsRef<'tcx>, Ty<'tcx>),
     Tuple(SubstsRef<'tcx>),
@@ -117,7 +119,6 @@ pub enum TyKind<'tcx> {
     /// x: T -> box x: &T
     /// mut x: T -> box x: &mut T
     Ptr(Mutability, Ty<'tcx>),
-    /// currently used to resolve recursive structs
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
@@ -150,11 +151,22 @@ impl<'tcx> AdtTy<'tcx> {
         assert_eq!(self.variants.len(), 1);
         &self.variants[VariantIdx::new(0)]
     }
+
+    pub fn variant_idx_with_ctor(&self, ctor_id: DefId) -> VariantIdx {
+        self.variants.iter_enumerated().find(|(i, v)| v.ctor == Some(ctor_id)).unwrap().0
+    }
+
+    // find the variant who has the constructor that matches the `ctor_id`
+    pub fn variant_with_ctor(&self, ctor_id: DefId) -> &VariantTy<'tcx> {
+        self.variants.iter().find(|v| v.ctor == Some(ctor_id)).unwrap()
+    }
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct VariantTy<'tcx> {
     pub ident: Ident,
+    /// None for struct variants
+    pub ctor: Option<DefId>,
     pub fields: &'tcx [FieldTy<'tcx>],
 }
 
@@ -163,7 +175,19 @@ pub struct FieldTy<'tcx> {
     pub def_id: DefId,
     pub ident: Ident,
     pub vis: Visibility,
-    pub ty: Ty<'tcx>,
+    pub ir_ty: &'tcx ir::Ty<'tcx>,
+}
+
+impl<'tcx> FieldTy<'tcx> {
+    /// return type of the field
+    // we require this indirection instead of storing `ty: Ty` directly as a field
+    // because fields may refer to the the struct/enum that it is declared in
+    // therefore, the lowering must be done post type collection
+    pub fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        // TODO cache this result somewhere
+        let ty = TyConv::ir_ty_to_ty(&tcx, &self.ir_ty);
+        ty.subst(tcx, substs)
+    }
 }
 
 bitflags! {
@@ -211,7 +235,7 @@ impl<'tcx> TyS<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::Array(ty) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
+            TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(_) => TyFlags::HAS_INFER,
@@ -230,7 +254,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
-            TyKind::Array(ty) => write!(f, "[{}]", ty),
+            TyKind::Array(ty, n) => write!(f, "[{};n]", ty),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),

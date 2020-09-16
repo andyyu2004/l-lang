@@ -4,19 +4,20 @@
 //     next: Node,
 // }
 
-/* struct S { */
-/*     x: int, */
-/*     y: bool, */
-/* } */
+// struct S {
+//     x: int,
+//     y: bool,
+// }
 
-enum K {
-    T,
-    F,
+enum Option {
+    Some(int),
+    None,
 }
 
 
 fn main() -> int {
-    let k = K::F;
+    let none = Option::None;
+    /* let some = Option::Some(5); */
     5
 }
 

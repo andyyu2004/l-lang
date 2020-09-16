@@ -32,6 +32,11 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.mk_pat(span, ir::PatternKind::Lit(expr))
     }
 
+    pub(super) fn mk_ty(&mut self, span: Span, kind: ir::TyKind<'ir>) -> &'ir ir::Ty<'ir> {
+        let ty = ir::Ty { id: self.new_id(), span, kind };
+        self.arena.alloc(ty)
+    }
+
     pub(super) fn mk_pat(
         &mut self,
         span: Span,

@@ -6,18 +6,26 @@ use std::cell::Cell;
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
-    Def(DefId, DefKind),
+    Def(DefId, DefKind<Id>),
     Local(Id),
     Err,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub enum DefKind {
+pub enum CtorKind {
+    /// i.e. for tuples
+    Fn,
+    Unit,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum DefKind<Id = ir::Id> {
     Fn,
     Enum,
     Struct,
     /// constructor of enum variant
-    Ctor,
+    /// `DefId` is the parent of the adt itself
+    Ctor(CtorKind, Id),
     /// contains the index of the `TyParam` in its scope
     /// impl<T, U> Foo<T, U> {
     ///     fn bar<V> () { .. }
@@ -26,12 +34,24 @@ pub enum DefKind {
     TyParam(ParamIdx),
 }
 
+impl<Id> DefKind<Id> {
+    pub fn map_id<R>(self, f: impl FnOnce(Id) -> R) -> DefKind<R> {
+        match self {
+            DefKind::Ctor(kind, id) => DefKind::Ctor(kind, f(id)),
+            DefKind::Fn => DefKind::Fn,
+            DefKind::TyParam(idx) => DefKind::TyParam(idx),
+            DefKind::Enum => DefKind::Enum,
+            DefKind::Struct => DefKind::Struct,
+        }
+    }
+}
+
 impl<Id> Res<Id> {
     pub fn map_id<R>(self, f: impl FnOnce(Id) -> R) -> Res<R> {
         match self {
             Res::PrimTy(ty) => Res::PrimTy(ty),
             Res::Local(id) => Res::Local(f(id)),
-            Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind),
+            Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind.map_id(f)),
             Res::Err => Res::Err,
         }
     }

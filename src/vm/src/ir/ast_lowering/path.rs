@@ -1,6 +1,7 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
-use crate::ir;
+use crate::ir::{self, Res};
+use crate::span::Span;
 use std::marker::PhantomData;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {

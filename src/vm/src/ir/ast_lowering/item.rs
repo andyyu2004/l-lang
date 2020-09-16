@@ -1,6 +1,6 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
-use crate::ir;
+use crate::ir::{self, DefKind, Res};
 use crate::lexer::Symbol;
 use std::marker::PhantomData;
 
@@ -19,8 +19,9 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 }
                 ItemKind::Enum(generics, variants) => {
                     let generics = lctx.lower_generics(generics);
-                    let variants =
-                        lctx.arena.alloc_from_iter(variants.iter().map(|v| lctx.lower_variant(v)));
+                    let variants = lctx
+                        .arena
+                        .alloc_from_iter(variants.iter().map(|v| lctx.lower_variant(item, v)));
                     ir::ItemKind::Enum(generics, variants)
                 }
                 ItemKind::Struct(generics, variant_kind) => {
@@ -33,7 +34,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    fn lower_variant(&mut self, variant: &Variant) -> ir::Variant<'ir> {
+    fn lower_variant(&mut self, item: &Item, variant: &Variant) -> ir::Variant<'ir> {
         self.with_owner(variant.id, |lctx| ir::Variant {
             id: lctx.lower_node_id(variant.id),
             ident: variant.ident,

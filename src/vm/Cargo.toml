@@ -17,9 +17,9 @@ path = "src/bin.rs"
 [dependencies]
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm10-0" }
+llvm-sys = "100"
 vm-derive = { path = "../vm-derive" }
 indexed_vec = "1.2.1"
-llvm-sys = "100"
 colour = "0.5.0"
 log = "0.4.8"
 simple-logging = "2.0.2"

@@ -109,7 +109,7 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         generics: &ir::Generics,
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
-        let fn_ty = self.tcx.item_ty(item.id.def);
+        let fn_ty = self.tcx.collected_ty(item.id.def);
         // don't instantiate anything and typeck the body using the param tys
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();

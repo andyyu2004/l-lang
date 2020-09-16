@@ -1,5 +1,5 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir::{self, ParamIdx, Res};
+use crate::ir::{self, DefId, ParamIdx, Res};
 use crate::lexer::Symbol;
 use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
@@ -101,7 +101,7 @@ pub struct FnSig<'ir> {
     pub output: Option<&'ir ir::Ty<'ir>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct Path<'ir> {
     pub span: Span,
     pub res: Res,
@@ -116,7 +116,7 @@ pub struct Param<'ir> {
     pub pat: &'ir ir::Pattern<'ir>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct PathSegment<'ir> {
     pub ident: Ident,
     pub id: ir::Id,

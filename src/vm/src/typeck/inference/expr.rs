@@ -1,6 +1,6 @@
 use super::FnCtx;
 use crate::error::{TypeError, TypeResult};
-use crate::ir::{DefId, DefKind};
+use crate::ir::{CtorKind, DefId, DefKind};
 use crate::span::Span;
 use crate::ty::*;
 use crate::typeck::{TyCtx, TypeckOutputs};
@@ -64,7 +64,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 {
                     // note the id belongs is the id of the entire field expression not just the identifier or base
                     self.write_field_index(expr.id, idx);
-                    field.ty.subst(self.tcx, substs)
+                    field.ty(self.tcx, substs)
                 } else {
                     self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
                 }
@@ -141,8 +141,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Some(variant_ty) => variant_ty,
             None => return self.tcx.mk_ty_err(),
         };
-        let adt_ty = ty.expect_adt();
-        self.check_struct_expr_fields(expr, adt_ty, variant_ty, fields);
+        let (adt_ty, substs) = ty.expect_adt();
+        self.check_struct_expr_fields(expr, adt_ty, substs, variant_ty, fields);
         ty
     }
 
@@ -150,6 +150,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &mut self,
         expr: &ir::Expr,
         adt_ty: &AdtTy,
+        substs: SubstsRef<'tcx>,
         variant: &VariantTy<'tcx>,
         fields: &[ir::Field],
     ) -> bool {
@@ -169,7 +170,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 Some((idx, f)) => {
                     seen_fields.insert(field.ident, idx);
                     self.write_field_index(field.id, idx);
-                    self.unify(field.span, f.ty, ty);
+                    self.unify(field.span, f.ty(self.tcx, substs), ty);
                 }
                 None => {
                     has_error = true;
@@ -287,8 +288,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match path.res {
             ir::Res::Local(id) => self.local_ty(id).ty,
             ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
-            ir::Res::Err => self.set_ty_err(),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
+            ir::Res::Err => self.set_ty_err(),
         }
     }
 
@@ -296,8 +297,29 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match def_kind {
             // instantiate ty params
             DefKind::Fn | DefKind::Enum | DefKind::Struct =>
-                self.instantiate(span, self.tcx.item_ty(def_id)),
-            DefKind::Ctor => todo!(),
+                self.instantiate(span, self.collected_ty(def_id)),
+            DefKind::Ctor(ctor_kind, adt_id) => {
+                let ty = self.collected_ty(adt_id.def);
+                let ty = self.instantiate(span, ty);
+                let (adt_ty, substs) = ty.expect_adt();
+                match ctor_kind {
+                    // represent enum tuples as injection functions
+                    // enum Option<T> {
+                    //     Some(T),
+                    //     None
+                    // }
+                    //
+                    // None: Option<T>
+                    // Some: T -> Option<T>
+                    CtorKind::Fn => {
+                        let variant = adt_ty.variant_with_ctor(def_id);
+                        let tys =
+                            self.mk_substs(variant.fields.iter().map(|f| f.ty(self.tcx, substs)));
+                        self.mk_fn_ty(tys, ty)
+                    }
+                    CtorKind::Unit => ty,
+                }
+            }
             DefKind::TyParam(_) => unreachable!(),
         }
     }

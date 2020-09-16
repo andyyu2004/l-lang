@@ -1,5 +1,5 @@
 use crate::ast::{Lit, UnaryOp};
-use crate::ir::{self, DefId, VariantIdx};
+use crate::ir::{self, CtorKind, DefId, VariantIdx};
 use crate::mir;
 use crate::tir;
 use crate::ty::*;
@@ -93,10 +93,10 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         let &Self { span, id, ident, vis, ref kind } = self;
         let kind = match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
-                let ty = ctx.tcx.item_ty(self.id.def);
+                let ty = ctx.tcx.collected_ty(self.id.def);
                 tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
             }
-            ir::ItemKind::Struct(..) | ir::ItemKind::Enum(..) => unreachable!(),
+            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => unreachable!(),
         };
         tir::Item { kind, span, id, ident, vis }
     }
@@ -216,6 +216,30 @@ where
     }
 }
 
+impl<'tcx> TirCtx<'_, 'tcx> {
+    fn lower_path(&self, expr: &ir::Expr<'tcx>, path: &ir::Path<'tcx>) -> tir::ExprKind<'tcx> {
+        match path.res {
+            ir::Res::Local(id) => tir::ExprKind::VarRef(id),
+            ir::Res::Def(def_id, def_kind) => match def_kind {
+                ir::DefKind::Ctor(CtorKind::Unit, _) => {
+                    let (adt, substs) = self.node_type(expr.id).expect_adt();
+                    tir::ExprKind::Adt {
+                        adt,
+                        substs,
+                        fields: &[],
+                        variant_idx: adt.variant_idx_with_ctor(def_id),
+                    }
+                }
+                ir::DefKind::Fn | ir::DefKind::Ctor(..) => tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::TyParam(_) => todo!(),
+                ir::DefKind::Enum => todo!(),
+                ir::DefKind::Struct => todo!(),
+            },
+            ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
+        }
+    }
+}
+
 impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
@@ -230,17 +254,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(expr.to_tir_alloc(ctx)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
-            ir::ExprKind::Path(path) => match path.res {
-                ir::Res::Local(id) => tir::ExprKind::VarRef(id),
-                ir::Res::Def(def_id, def_kind) => match def_kind {
-                    ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
-                    ir::DefKind::TyParam(_) => todo!(),
-                    ir::DefKind::Enum => todo!(),
-                    ir::DefKind::Struct => todo!(),
-                    ir::DefKind::Ctor => todo!(),
-                },
-                ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
-            },
+            ir::ExprKind::Path(path) => ctx.lower_path(self, path),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
             ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>

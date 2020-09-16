@@ -3,7 +3,7 @@ use crate::ast;
 use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
-use inkwell::{basic_block::BasicBlock, values::*, FloatPredicate, IntPredicate};
+use inkwell::{basic_block::BasicBlock, values::*, AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use mir::Lvalue;
 use rustc_hash::FxHashMap;
@@ -88,7 +88,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &mir::Rvalue<'tcx>) {
         let var = self.codegen_lvalue(lvalue);
-        // certain aggregate rvalues require special treatment as llvm doesn't like recursively building these values
+        // certain aggregate rvalues require special treatment as
+        // llvm doesn't like recursively building these values (with temporaries)
         // instead, we use geps to set the fields directly
         match rvalue {
             mir::Rvalue::Tuple(xs) =>
@@ -101,14 +102,35 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let ty = self.tcx.mk_adt_ty(adt, substs);
                 match adt.kind {
                     // basically identical code to tuple but has potential substs to deal with
-                    AdtKind::Struct =>
+                    AdtKind::Struct => {
+                        assert_eq!(variant_idx.index(), 0);
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
                             let field_ptr =
                                 self.build_struct_gep(var.ptr, i as u32, "struct_gep").unwrap();
                             self.build_store(field_ptr, operand);
-                        },
-                    AdtKind::Enum => todo!(),
+                        }
+                    }
+                    AdtKind::Enum => {
+                        let idx = variant_idx.index() as u64;
+                        let discr_ptr = self.build_struct_gep(var.ptr, 0, "discr_gep").unwrap();
+                        self.build_store(discr_ptr, self.types.discr.const_int(idx, false));
+                        let content_ptr = self.build_struct_gep(var.ptr, 1, "enum_gep").unwrap();
+                        let llty = self.variant_ty_to_llvm_ty(&adt.variants[*variant_idx], substs);
+                        let content_ptr = self.build_pointer_cast(
+                            content_ptr,
+                            llty.ptr_type(AddressSpace::Generic),
+                            "enum_ptr_cast",
+                        );
+                        for (i, f) in fields.iter().enumerate() {
+                            let operand = self.codegen_operand(f);
+                            let ty = operand.get_type();
+                            let field_ptr = self
+                                .build_struct_gep(content_ptr, i as u32, "enum_content_gep")
+                                .unwrap();
+                            self.build_store(field_ptr, operand);
+                        }
+                    }
                 }
             }
             _ => {

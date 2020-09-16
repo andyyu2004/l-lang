@@ -101,7 +101,7 @@ impl<'a> Resolver<'a> {
         module: ModuleId,
         name: Ident,
         node_id: NodeId,
-        def_kind: DefKind,
+        def_kind: DefKind<NodeId>,
     ) -> DefId {
         let def_id = self.def(name, node_id);
         self.modules[module].items.borrow_mut().insert(name, Res::Def(def_id, def_kind));

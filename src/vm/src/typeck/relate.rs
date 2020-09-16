@@ -25,13 +25,13 @@ pub trait TypeRelation<'tcx>: Sized {
             (Param(t), Param(u)) if t == u => Ok(a),
             (Infer(_), _) | (_, Infer(_)) => panic!(),
             (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),
-            (Array(t), Array(u)) => self.relate(t, u),
+            (Array(t, m), Array(u, n)) if m == n => self.relate(t, u),
             (Never, _) => Ok(b),
             (_, Never) => Ok(a),
             (&Fn(a, b), &Fn(t, u)) => {
                 let s = self.relate(a, t)?;
                 let r = self.relate(b, u)?;
-                Ok(tcx.mk_ty(TyKind::Fn(s, r)))
+                Ok(tcx.mk_fn_ty(s, r))
             }
             _ => Err(TypeError::Mismatch(a, b)),
         }

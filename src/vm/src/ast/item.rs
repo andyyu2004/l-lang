@@ -21,7 +21,7 @@ pub enum ItemKind {
 }
 
 impl ItemKind {
-    pub fn def_kind(&self) -> DefKind {
+    pub fn def_kind(&self) -> DefKind<NodeId> {
         match self {
             ItemKind::Fn(..) => DefKind::Fn,
             ItemKind::Enum(..) => DefKind::Enum,

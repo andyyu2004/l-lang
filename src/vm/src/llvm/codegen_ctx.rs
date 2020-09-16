@@ -1,15 +1,14 @@
-use super::util::LLVMAsPtrVal;
+use super::util::{LLVMAsPtrVal, LLVMTypeExt};
 use super::FnCtx;
-use crate::ast;
+use crate::ast::{self, Ident};
 use crate::error::{LLVMError, LResult};
 use crate::ir::{self, DefId};
 use crate::lexer::symbol;
 use crate::mir::{self, *};
 use crate::span::Span;
 use crate::tir;
-use crate::ty::{AdtKind, Const, ConstKind, SubstsRef, Ty, TyKind};
+use crate::ty::*;
 use crate::typeck::TyCtx;
-use ast::Ident;
 use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::{
@@ -35,7 +34,6 @@ pub struct CodegenCtx<'tcx> {
     /// this api is a bit awkward, but its what inkwell has so..
     pub items: RefCell<FxHashMap<DefId, Ident>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
-    curr_fn: Option<FunctionValue<'tcx>>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -48,6 +46,8 @@ pub struct CommonTypes<'tcx> {
     pub int: IntType<'tcx>,
     pub float: FloatType<'tcx>,
     pub boolean: IntType<'tcx>,
+    // using a fix sized discriminant for ease for now
+    pub discr: IntType<'tcx>,
 }
 
 impl<'tcx> CodegenCtx<'tcx> {
@@ -68,22 +68,19 @@ impl<'tcx> CodegenCtx<'tcx> {
             int: llctx.i64_type(),
             float: llctx.f64_type(),
             boolean: llctx.bool_type(),
+            discr: llctx.i8_type(),
         };
         let vals =
             CommonValues { zero: llctx.i64_type().const_zero(), unit: types.unit.get_undef() };
-
-        // assert `unit` is indeed a zst
-        assert_eq!(vals.unit.get_type().size_of().unwrap().print_to_string().to_string(), "i64 0");
 
         Self {
             tcx,
             llctx,
             module,
             fpm,
-            builder: llctx.create_builder(),
             vals,
             types,
-            curr_fn: None,
+            builder: llctx.create_builder(),
             items: Default::default(),
             lltypes: Default::default(),
         }
@@ -97,7 +94,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             self.items.borrow_mut().insert(id.def, item.ident);
             match &item.kind {
                 ItemKind::Fn(body) => {
-                    let (_, ty) = self.tcx.item_ty(id.def).expect_scheme();
+                    let (_, ty) = self.tcx.collected_ty(id.def).expect_scheme();
                     let (params, ret) = ty.expect_fn();
                     let llty = self.llvm_fn_ty(params, ret);
                     let llfn = self.module.add_function(item.ident.as_str(), llty, None);
@@ -144,7 +141,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Float => self.types.float.into(),
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Char => todo!(),
-            TyKind::Array(ty) => todo!(),
+            TyKind::Array(ty, n) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
             TyKind::Tuple(tys) => {
@@ -159,17 +156,66 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Adt(adt, substs) => match adt.kind {
                 AdtKind::Struct => {
                     let variant = adt.single_variant();
-                    // note we preserve the field declaration order of the struct
-                    let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty)).collect_vec();
-                    self.llctx.struct_type(&tys, false).into()
+                    self.variant_ty_to_llvm_ty(variant, substs).into()
                 }
-                AdtKind::Enum => todo!(),
+                AdtKind::Enum => {
+                    // it is fine to unwrap here as if the enum has no variants it is not
+                    // constructable and this will never be called
+                    let largest_variant = adt.variants.iter().max_by(|s, t| {
+                        self.variant_size(s, substs).cmp(&self.variant_size(t, substs))
+                    });
+                    let llvariant =
+                        self.variant_ty_to_llvm_ty(largest_variant.unwrap(), substs).into();
+                    assert!(adt.variants.len() < 256, "too many variants");
+                    self.llctx.struct_type(&[self.types.discr.into(), llvariant], false).into()
+                }
             },
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Opaque(_, _) => todo!(),
+            TyKind::Opaque(..) => unreachable!(),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty
+    }
+
+    fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
+        variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.ty_size(ty)).sum()
+    }
+
+    // there is probably all sorts of problems with this
+    // as it does not account for padding etc
+    // however, this does not need to be exact
+    // as this is only used to decide the largest variant in an enum
+    // so hopefully its accurate enough for that
+    fn ty_size(&self, ty: Ty<'tcx>) -> usize {
+        let size = match ty.kind {
+            Bool | Char => 1,
+            Float | Int => 8,
+            // assuming 64bit :P
+            Ptr(..) => 8,
+            Never => 0,
+            Array(ty, n) => n * self.ty_size(ty),
+            Fn(_, _) => todo!(),
+            Param(_) => todo!(),
+            Adt(_, _) => todo!(),
+            Scheme(_, _) => todo!(),
+            Opaque(_, _) => todo!(),
+            Error => unreachable!(),
+            Infer(_) => unreachable!(),
+            Tuple(tys) => tys.iter().map(|ty| self.ty_size(ty)).sum(),
+        };
+        info!("sizeof({}) = {}", ty, size);
+        size
+    }
+
+    pub fn variant_ty_to_llvm_ty(
+        &self,
+        variant: &VariantTy<'tcx>,
+        substs: SubstsRef<'tcx>,
+    ) -> StructType<'tcx> {
+        // TODO cache results
+        // note we preserve the field declaration order of the struct
+        let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty(self.tcx, substs))).collect_vec();
+        self.llctx.struct_type(&tys, false)
     }
 }
 

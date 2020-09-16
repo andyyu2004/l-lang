@@ -15,15 +15,15 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
     pub fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
-            ir::TyKind::Array(ty) => tcx.mk_ty(TyKind::Array(self.ir_ty_to_ty(ty))),
+            ir::TyKind::Array(ty) => tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
             ir::TyKind::Path(path) => self.res_to_ty(path.res),
             ir::TyKind::Tuple(tys) => tcx.mk_tup(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
             ir::TyKind::Ptr(m, ty) => tcx.mk_ptr_ty(*m, self.ir_ty_to_ty(ty)),
-            ir::TyKind::Fn(params, ret) => tcx.mk_ty(TyKind::Fn(
+            ir::TyKind::Fn(params, ret) => tcx.mk_fn_ty(
                 tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
                 ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
-            )),
+            ),
         }
     }
 
@@ -37,10 +37,10 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                     // TODO unsure how to deal with the forall currently
                     // instantiation requires an inferctx which may not be available if we are only
                     // performing type collection
-                    let (_forall, ty) = tcx.item_ty(def_id).expect_scheme();
+                    let (_forall, ty) = tcx.collected_ty(def_id).expect_scheme();
                     ty
                 }
-                ir::DefKind::Ctor => todo!(),
+                ir::DefKind::Ctor(..) => todo!(),
                 ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
             },
             ir::Res::Err => tcx.mk_ty_err(),
@@ -54,6 +54,6 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
         let ret_ty = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);
         let inputs = sig.inputs.iter().map(|ty| self.ir_ty_to_ty(ty));
         let input_tys = tcx.mk_substs(inputs);
-        tcx.mk_ty(TyKind::Fn(input_tys, ret_ty))
+        tcx.mk_fn_ty(input_tys, ret_ty)
     }
 }
