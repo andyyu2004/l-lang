@@ -104,28 +104,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 smallvec![tir::Item { kind, span, id, ident, vis }]
             }
             ir::ItemKind::Struct(..) => unreachable!(),
-            ir::ItemKind::Enum(_, variants) =>
-                variants.iter().map(|v| ctx.mk_enum_variant_ctor(self, v)).collect(),
-        }
-    }
-}
-
-impl<'tcx> TirCtx<'_, 'tcx> {
-    /// manually constructs the tir for an enum constructor function
-    fn mk_enum_variant_ctor(
-        &mut self,
-        item: &ir::Item<'tcx>,
-        variant: &ir::Variant<'tcx>,
-    ) -> tir::Item<'tcx> {
-        let ctor_ty = self.ctor_ty(variant.id.def);
-        let body = todo!();
-        let kind = tir::ItemKind::Fn(ctor_ty, item.generics().to_tir(self), body);
-        tir::Item {
-            span: variant.span,
-            id: variant.id,
-            vis: item.vis,
-            ident: item.ident.concat_as_path(variant.ident),
-            kind,
+            ir::ItemKind::Enum(_, variants) => unreachable!(),
         }
     }
 }

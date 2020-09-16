@@ -1,3 +1,4 @@
+mod enum_tests;
 mod output_tests;
 mod pattern_tests;
 mod ptr_tests;

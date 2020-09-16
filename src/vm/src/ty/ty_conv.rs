@@ -15,7 +15,10 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
     pub fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
-            ir::TyKind::Array(ty) => tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
+            ir::TyKind::Array(ty) => {
+                // tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
+                todo!();
+            }
             ir::TyKind::Path(path) => self.res_to_ty(path.res),
             ir::TyKind::Tuple(tys) => tcx.mk_tup(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
