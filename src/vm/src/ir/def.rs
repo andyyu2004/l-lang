@@ -1,4 +1,4 @@
-use crate::ir::{self, DefId, ParamIdx};
+use crate::ir::{self, DefId, ParamIdx, VariantIdx};
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
@@ -13,8 +13,11 @@ pub enum Res<Id = ir::Id> {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum CtorKind {
-    /// i.e. for tuples
+    /// Option::Some(x)
     Fn,
+    /// Option::Some { x }
+    Struct,
+    /// Option::None
     Unit,
 }
 
@@ -25,7 +28,7 @@ pub enum DefKind<Id = ir::Id> {
     Struct,
     /// constructor of enum variant
     /// `DefId` is the parent of the adt itself
-    Ctor(CtorKind, Id),
+    Ctor(CtorKind, VariantIdx, Id),
     /// contains the index of the `TyParam` in its scope
     /// impl<T, U> Foo<T, U> {
     ///     fn bar<V> () { .. }
@@ -37,7 +40,7 @@ pub enum DefKind<Id = ir::Id> {
 impl<Id> DefKind<Id> {
     pub fn map_id<R>(self, f: impl FnOnce(Id) -> R) -> DefKind<R> {
         match self {
-            DefKind::Ctor(kind, id) => DefKind::Ctor(kind, f(id)),
+            DefKind::Ctor(kind, idx, id) => DefKind::Ctor(kind, idx, f(id)),
             DefKind::Fn => DefKind::Fn,
             DefKind::TyParam(idx) => DefKind::TyParam(idx),
             DefKind::Enum => DefKind::Enum,

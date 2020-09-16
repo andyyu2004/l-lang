@@ -58,6 +58,18 @@ impl Ident {
     pub fn new(span: Span, symbol: Symbol) -> Ident {
         Self { span, symbol }
     }
+
+    /// joins two identifiers `a` and `b`
+    /// a::b
+    pub fn concat_as_path(self, ident: Ident) -> Ident {
+        let mut concatenated = self.as_str().to_owned();
+        concatenated.push_str("::");
+        concatenated.push_str(ident.as_str());
+        let sym = Symbol::intern(&concatenated);
+        // it doesn't really make sense to merge the spans
+        // so we just take the latter for now
+        Ident::new(ident.span, sym)
+    }
 }
 
 impl From<Span> for Ident {

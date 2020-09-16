@@ -1,4 +1,4 @@
-use crate::ast::{Lit, UnaryOp};
+use crate::ast::{Lit, UnaryOp, Visibility};
 use crate::ir::{self, CtorKind, DefId, VariantIdx};
 use crate::mir;
 use crate::tir;
@@ -6,6 +6,8 @@ use crate::ty::*;
 use crate::typeck::inference::InferCtx;
 use crate::typeck::{TyCtx, TypeckOutputs};
 use indexed_vec::Idx;
+use ir::DefKind;
+use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -30,22 +32,26 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
     }
 
     /// ir -> mir
-    pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
+    pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> SmallVec<[tir::Item<'tcx>; 1]> {
         // this `tir` may still have unsubstituted inference variables in it
         item.to_tir(self)
     }
 
     /// ir -> tir -> mir
-    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
+    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> SmallVec<[mir::Item<'tcx>; 1]> {
         let &ir::Item { id, span, vis, ident, ref kind } = item;
         let tir = self.lower_item_tir(item);
-        println!("{}", tir);
-        match tir.kind {
-            tir::ItemKind::Fn(_, _, body) => {
-                let mir_body = mir::build_fn(self, body);
-                mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) }
-            }
-        }
+        tir.iter()
+            .map(|item| {
+                println!("{}", item);
+                match item.kind {
+                    tir::ItemKind::Fn(_, _, body) => {
+                        let mir_body = mir::build_fn(self, body);
+                        mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) }
+                    }
+                }
+            })
+            .collect()
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
@@ -87,18 +93,40 @@ impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
 }
 
 impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
-    type Output = tir::Item<'tcx>;
+    type Output = SmallVec<[tir::Item<'tcx>; 1]>;
 
     fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { span, id, ident, vis, ref kind } = self;
-        let kind = match kind {
+        match kind {
             ir::ItemKind::Fn(sig, generics, body) => {
                 let ty = ctx.tcx.collected_ty(self.id.def);
-                tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx))
+                let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx));
+                smallvec![tir::Item { kind, span, id, ident, vis }]
             }
-            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => unreachable!(),
-        };
-        tir::Item { kind, span, id, ident, vis }
+            ir::ItemKind::Struct(..) => unreachable!(),
+            ir::ItemKind::Enum(_, variants) =>
+                variants.iter().map(|v| ctx.mk_enum_variant_ctor(self, v)).collect(),
+        }
+    }
+}
+
+impl<'tcx> TirCtx<'_, 'tcx> {
+    /// manually constructs the tir for an enum constructor function
+    fn mk_enum_variant_ctor(
+        &mut self,
+        item: &ir::Item<'tcx>,
+        variant: &ir::Variant<'tcx>,
+    ) -> tir::Item<'tcx> {
+        let ctor_ty = self.ctor_ty(variant.id.def);
+        let body = todo!();
+        let kind = tir::ItemKind::Fn(ctor_ty, item.generics().to_tir(self), body);
+        tir::Item {
+            span: variant.span,
+            id: variant.id,
+            vis: item.vis,
+            ident: item.ident.concat_as_path(variant.ident),
+            kind,
+        }
     }
 }
 
@@ -221,7 +249,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
         match path.res {
             ir::Res::Local(id) => tir::ExprKind::VarRef(id),
             ir::Res::Def(def_id, def_kind) => match def_kind {
-                ir::DefKind::Ctor(CtorKind::Unit, _) => {
+                ir::DefKind::Ctor(CtorKind::Unit, ..) => {
                     let (adt, substs) = self.node_type(expr.id).expect_adt();
                     tir::ExprKind::Adt {
                         adt,
@@ -230,7 +258,8 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                         variant_idx: adt.variant_idx_with_ctor(def_id),
                     }
                 }
-                ir::DefKind::Fn | ir::DefKind::Ctor(..) => tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::Fn | ir::DefKind::Ctor(CtorKind::Fn | CtorKind::Struct, ..) =>
+                    tir::ExprKind::ItemRef(def_id),
                 ir::DefKind::TyParam(_) => todo!(),
                 ir::DefKind::Enum => todo!(),
                 ir::DefKind::Struct => todo!(),
@@ -266,11 +295,17 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 TyKind::Adt(adt, substs) => match adt.kind {
                     AdtKind::Struct => tir::ExprKind::Adt {
                         adt,
-                        variant_idx: VariantIdx::new(0),
                         substs,
+                        variant_idx: VariantIdx::new(0),
                         fields: fields.to_tir(ctx),
                     },
-                    AdtKind::Enum => todo!(),
+                    AdtKind::Enum => {
+                        let variant_idx = match path.res {
+                            ir::Res::Def(_, DefKind::Ctor(CtorKind::Struct, idx, _)) => idx,
+                            _ => panic!("unexpected resolution"),
+                        };
+                        tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(ctx) }
+                    }
                 },
                 _ => unreachable!(),
             },

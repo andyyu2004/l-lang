@@ -1,4 +1,5 @@
 #![feature(type_name_of_val)]
+#![feature(or_patterns)]
 #![feature(box_syntax, box_patterns)]
 #![feature(is_sorted)]
 #![feature(bindings_after_at)]

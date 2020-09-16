@@ -1,6 +1,6 @@
 use super::Resolver;
 use crate::ast::{self, *};
-use crate::ir::{CtorKind, DefKind, ModuleId, ROOT_MODULE};
+use crate::ir::{CtorKind, DefKind, ModuleId, VariantIdx, ROOT_MODULE};
 
 /// collects all `DefId`s
 /// this forward declares all "hoisted" things such as items & constructors
@@ -34,6 +34,10 @@ impl<'a, 'r> DefVisitor<'a, 'r> {
     pub fn new_module(&mut self, name: Ident) -> ModuleId {
         self.resolver.new_module(self.curr_mod, name)
     }
+
+    fn curr_adt_id(&mut self) -> NodeId {
+        self.curr_adt_id.unwrap()
+    }
 }
 
 impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
@@ -50,23 +54,15 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     }
 
     /// define the variant constructor
-    fn visit_variant(&mut self, variant: &'ast Variant) {
-        if let VariantKind::Unit = variant.kind {
-            self.resolver.def_item(
-                self.curr_mod,
-                variant.ident,
-                variant.id,
-                DefKind::Ctor(CtorKind::Unit, self.curr_adt_id.unwrap()),
-            );
-        } else if let VariantKind::Tuple(_) = variant.kind {
-            self.resolver.def_item(
-                self.curr_mod,
-                variant.ident,
-                variant.id,
-                DefKind::Ctor(CtorKind::Fn, self.curr_adt_id.unwrap()),
-            );
-        }
-        ast::walk_variant(self, variant);
+    fn visit_variant(&mut self, idx: VariantIdx, variant: &'ast Variant) {
+        let ctor_kind = match variant.kind {
+            VariantKind::Struct(..) => CtorKind::Struct,
+            VariantKind::Tuple(..) => CtorKind::Fn,
+            VariantKind::Unit => CtorKind::Unit,
+        };
+        let def_kind = DefKind::Ctor(ctor_kind, idx, self.curr_adt_id());
+        self.resolver.def_item(self.curr_mod, variant.ident, variant.id, def_kind);
+        ast::walk_variant(self, idx, variant);
     }
 
     fn visit_ty_param(&mut self, ty_param: &'ast TyParam) {

@@ -280,8 +280,12 @@ impl<'tcx> TyCtx<'tcx> {
     fn build_tir_inner(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
-        for (&id, &item) in &prog.items {
-            self.with_ir_lctx(item, |mut lctx| items.insert(id, lctx.lower_item_tir(item)));
+        for &item in prog.items.values() {
+            self.with_ir_lctx(item, |mut lctx| {
+                for tir in lctx.lower_item_tir(item) {
+                    items.insert(tir.id, tir);
+                }
+            });
         }
         tir::Prog { items }
     }
@@ -290,8 +294,12 @@ impl<'tcx> TyCtx<'tcx> {
     fn build_mir_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
-        for (&id, &item) in &prog.items {
-            self.with_ir_lctx(item, |mut lctx| items.insert(id, lctx.lower_item(item)));
+        for &item in prog.items.values() {
+            self.with_ir_lctx(item, |mut lctx| {
+                for mir in lctx.lower_item(item) {
+                    items.insert(mir.id, mir);
+                }
+            });
         }
         mir::Prog { items }
     }

@@ -12,6 +12,14 @@ pub struct Item<'ir> {
     pub kind: ir::ItemKind<'ir>,
 }
 
+impl<'ir> Item<'ir> {
+    pub fn generics(&self) -> &'ir ir::Generics<'ir> {
+        match self.kind {
+            ItemKind::Fn(_, g, _) | ItemKind::Struct(g, _) | ItemKind::Enum(g, _) => g,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),

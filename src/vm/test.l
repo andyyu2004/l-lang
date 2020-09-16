@@ -10,15 +10,15 @@
 // }
 
 enum Option {
-    Some(int),
+    Some { x: int },
     None,
 }
 
 
 fn main() -> int {
     let none = Option::None;
-    /* let some = Option::Some(5); */
-    5
+    let some = Option::Some { x: 9 };
+	9
 }
 
 

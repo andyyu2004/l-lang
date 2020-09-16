@@ -112,14 +112,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_struct_path(&mut self, path: &ir::Path) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
         let ty = self.check_expr_path(path);
+        // TODO deal with substs
         let variant = match path.res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
+            ir::Res::Def(_, DefKind::Ctor(CtorKind::Struct, idx, _)) => match ty.kind {
+                Adt(adt, _substs) => Some((&adt.variants[idx], ty)),
+                _ => unreachable!(),
+            },
             ir::Res::Local(_) => None,
             ir::Res::PrimTy(_) => unreachable!(),
-            _ => unimplemented!(),
+            _ => unimplemented!("{} (res: {:?})", path, path.res),
         };
 
         variant.or_else(|| {
@@ -138,7 +143,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         fields: &[ir::Field],
     ) -> Ty<'tcx> {
         let (variant_ty, ty) = match self.check_struct_path(path) {
-            Some(variant_ty) => variant_ty,
+            Some(tys) => tys,
             None => return self.tcx.mk_ty_err(),
         };
         let (adt_ty, substs) = ty.expect_adt();
@@ -298,11 +303,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             // instantiate ty params
             DefKind::Fn | DefKind::Enum | DefKind::Struct =>
                 self.instantiate(span, self.collected_ty(def_id)),
-            DefKind::Ctor(ctor_kind, adt_id) => {
+            DefKind::Ctor(ctor_kind, variant_idx, adt_id) => {
+                if let Some(ty) = self.ctor_ty_opt(def_id) {
+                    return ty;
+                }
                 let ty = self.collected_ty(adt_id.def);
                 let ty = self.instantiate(span, ty);
                 let (adt_ty, substs) = ty.expect_adt();
-                match ctor_kind {
+                let ctor_ty = match ctor_kind {
+                    // these two constructor kinds are already of the enum type
+                    CtorKind::Struct | CtorKind::Unit => ty,
                     // represent enum tuples as injection functions
                     // enum Option<T> {
                     //     Some(T),
@@ -312,13 +322,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     // None: Option<T>
                     // Some: T -> Option<T>
                     CtorKind::Fn => {
-                        let variant = adt_ty.variant_with_ctor(def_id);
+                        let variant = &adt_ty.variants[variant_idx];
                         let tys =
                             self.mk_substs(variant.fields.iter().map(|f| f.ty(self.tcx, substs)));
                         self.mk_fn_ty(tys, ty)
                     }
-                    CtorKind::Unit => ty,
-                }
+                };
+                self.write_ctor_ty(def_id, ctor_ty)
             }
             DefKind::TyParam(_) => unreachable!(),
         }

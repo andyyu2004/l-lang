@@ -2,6 +2,7 @@ use crate::ast::{Ident, Visibility};
 use crate::ir::{self, DefId, ParamIdx, Res};
 use crate::lexer::Symbol;
 use crate::span::Span;
+use crate::util;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
@@ -106,6 +107,12 @@ pub struct Path<'ir> {
     pub span: Span,
     pub res: Res,
     pub segments: &'ir [PathSegment<'ir>],
+}
+
+impl<'ir> Display for Path<'ir> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", util::join2(self.segments.iter().map(|s| s.ident), "::"))
+    }
 }
 
 #[derive(Debug)]

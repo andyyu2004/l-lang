@@ -209,7 +209,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Operand::Item(def_id) => {
                 // TODO assume item is fn for now
-                let ident = self.items.borrow()[def_id];
+                let ident = self
+                    .items
+                    .borrow()
+                    .get(def_id)
+                    .copied()
+                    .unwrap_or_else(|| panic!("no entry in items with def_id `{}`", def_id));
                 let llfn = self.module.get_function(ident.as_str()).unwrap();
                 // probably not the `correct` way to do this :)
                 unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into()
