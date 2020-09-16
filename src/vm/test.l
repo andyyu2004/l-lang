@@ -14,11 +14,17 @@ enum Option {
     None,
 }
 
+enum Option2 {
+    Some(int),
+    None,
+}
+
 
 fn main() -> int {
     let none = Option::None;
     let some = Option::Some { x: 9 };
-	9
+    let some2 = Option2::Some(5);
+    9
 }
 
 

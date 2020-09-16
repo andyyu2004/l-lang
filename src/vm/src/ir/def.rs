@@ -14,7 +14,7 @@ pub enum Res<Id = ir::Id> {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum CtorKind {
     /// Option::Some(x)
-    Fn,
+    Tuple,
     /// Option::Some { x }
     Struct,
     /// Option::None

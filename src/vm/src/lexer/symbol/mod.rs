@@ -25,8 +25,12 @@ impl Symbol {
         with_interner(|interner| interner.get_str(self))
     }
 
-    pub fn intern(string: &str) -> Self {
+    pub fn intern_str(string: &str) -> Self {
         with_interner(|interner| interner.intern(string))
+    }
+
+    pub fn intern(disp: impl Display) -> Self {
+        Self::intern_str(&disp.to_string())
     }
 }
 

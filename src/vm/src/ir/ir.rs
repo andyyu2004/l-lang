@@ -1,5 +1,5 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir::{self, DefId, ParamIdx, Res};
+use crate::ir::{self, DefId, DefKind, ParamIdx, Res};
 use crate::lexer::Symbol;
 use crate::span::Span;
 use crate::util;
@@ -107,6 +107,15 @@ pub struct Path<'ir> {
     pub span: Span,
     pub res: Res,
     pub segments: &'ir [PathSegment<'ir>],
+}
+
+impl<'ir> Path<'ir> {
+    pub fn is_enum_ctor(&self) -> bool {
+        match self.res {
+            Res::Def(_, DefKind::Ctor(..)) => true,
+            _ => false,
+        }
+    }
 }
 
 impl<'ir> Display for Path<'ir> {

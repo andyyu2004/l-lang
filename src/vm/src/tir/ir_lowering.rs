@@ -1,12 +1,12 @@
-use crate::ast::{Lit, UnaryOp, Visibility};
-use crate::ir::{self, CtorKind, DefId, VariantIdx};
+use crate::ast::{Ident, Lit, UnaryOp, Visibility};
+use crate::ir::{self, CtorKind, DefId, DefKind, FieldIdx, VariantIdx};
+use crate::lexer::Symbol;
 use crate::mir;
 use crate::tir;
 use crate::ty::*;
 use crate::typeck::inference::InferCtx;
 use crate::typeck::{TyCtx, TypeckOutputs};
 use indexed_vec::Idx;
-use ir::DefKind;
 use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -258,14 +258,43 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                         variant_idx: adt.variant_idx_with_ctor(def_id),
                     }
                 }
-                ir::DefKind::Fn | ir::DefKind::Ctor(CtorKind::Fn | CtorKind::Struct, ..) =>
-                    tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
+                // this case should be handled either under struct expressions or the special tuple case
+                ir::DefKind::Ctor(_, ..) => unreachable!(),
                 ir::DefKind::TyParam(_) => todo!(),
                 ir::DefKind::Enum => todo!(),
                 ir::DefKind::Struct => todo!(),
             },
             ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
         }
+    }
+
+    fn lower_enum_tuple_ctor(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        path: &ir::Path<'tcx>,
+        args: &[ir::Expr<'tcx>],
+    ) -> tir::ExprKind<'tcx> {
+        let variant_idx = match path.res {
+            ir::Res::Def(_, DefKind::Ctor(CtorKind::Tuple, idx, _)) => idx,
+            _ => panic!("unexpected res"),
+        };
+        let ty = self.node_type(expr.id);
+        let (adt, substs) = match ty.kind {
+            Adt(adt, substs) => match adt.kind {
+                AdtKind::Enum => (adt, substs),
+                AdtKind::Struct => todo!(),
+            },
+            _ => unreachable!(),
+        };
+        let tcx = self.tcx;
+        let fields = args.iter().enumerate().map(|(i, expr)| tir::Field {
+            index: FieldIdx::new(i),
+            ident: Ident::new(expr.span, Symbol::intern(i)),
+            expr: expr.to_tir_alloc(self),
+        });
+        let fields = tcx.alloc_tir_iter(fields);
+        tir::ExprKind::Adt { adt, substs, variant_idx, fields }
     }
 }
 
@@ -284,6 +313,12 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => ctx.lower_path(self, path),
+            // special case of enum variant tuple constructor
+            // we don't want to lower this into a function
+            // instead, we can lower it into an tir::Adt expression
+            ir::ExprKind::Call(ir::Expr { kind: ir::ExprKind::Path(path), .. }, args)
+                if path.is_enum_ctor() =>
+                ctx.lower_enum_tuple_ctor(self, path, args),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
             ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>

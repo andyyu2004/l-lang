@@ -321,7 +321,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     //
                     // None: Option<T>
                     // Some: T -> Option<T>
-                    CtorKind::Fn => {
+                    CtorKind::Tuple => {
                         let variant = &adt_ty.variants[variant_idx];
                         let tys =
                             self.mk_substs(variant.fields.iter().map(|f| f.ty(self.tcx, substs)));

@@ -57,7 +57,7 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     fn visit_variant(&mut self, idx: VariantIdx, variant: &'ast Variant) {
         let ctor_kind = match variant.kind {
             VariantKind::Struct(..) => CtorKind::Struct,
-            VariantKind::Tuple(..) => CtorKind::Fn,
+            VariantKind::Tuple(..) => CtorKind::Tuple,
             VariantKind::Unit => CtorKind::Unit,
         };
         let def_kind = DefKind::Ctor(ctor_kind, idx, self.curr_adt_id());

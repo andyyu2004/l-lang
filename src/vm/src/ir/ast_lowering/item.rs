@@ -45,8 +45,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_field_decl(&mut self, (i, field): (usize, &FieldDecl)) -> ir::FieldDecl<'ir> {
         let &FieldDecl { span, ident, vis, id, ref ty } = field;
-        let ident = ident
-            .unwrap_or_else(|| Ident { span: field.span, symbol: Symbol::intern(&i.to_string()) });
+        let ident = ident.unwrap_or_else(|| Ident { span: field.span, symbol: Symbol::intern(i) });
         ir::FieldDecl { span, ident, vis, id: self.lower_node_id(id), ty: self.lower_ty(ty) }
     }
 
