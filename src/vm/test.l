@@ -21,7 +21,11 @@ enum Option2 {
 
 
 fn main() -> int {
-    let none = Option::None;
+    let opt = Option::None;
+    match 5 {
+	x => 5,
+	y => 6,
+    }
 }
 
 

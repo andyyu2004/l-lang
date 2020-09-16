@@ -1,4 +1,4 @@
-use super::{Ident, NodeId, P};
+use super::{Ident, NodeId, Path, P};
 use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
 
@@ -32,4 +32,10 @@ pub enum PatternKind {
     Ident(Ident, Option<P<Pattern>>, Mutability),
     Paren(P<Pattern>),
     Tuple(Vec<P<Pattern>>),
+    /// Adt::Variant(..)
+    /// also matches tuple structs
+    Variant(Path, Vec<P<Pattern>>),
+    /// can refer to unit variants and structs
+    Path(Path),
+    // Struct(Path, FieldPat),
 }

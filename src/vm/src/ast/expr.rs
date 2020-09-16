@@ -1,4 +1,4 @@
-use super::{BinOp, Block, Field, FnSig, Ident, Lit, NodeId, Path, UnaryOp, P};
+use super::*;
 use crate::span::Span;
 use crate::util;
 use indexed_vec::Idx;
@@ -26,6 +26,35 @@ impl Expr {
         }
     }
 
+    /// takes a predicate and returns whether any subpattern satisfies it
+    pub fn any(&self, p: fn(&Self) -> bool) -> bool {
+        match &self.kind {
+            ExprKind::Lit(..) => false,
+            ExprKind::Assign(l, r) | ExprKind::Bin(_, l, r) => l.any(p) || r.any(p),
+            ExprKind::Box(expr)
+            | ExprKind::Field(expr, _)
+            | ExprKind::Closure(_, _, expr)
+            | ExprKind::Unary(_, expr)
+            | ExprKind::Paren(expr) => expr.any(p),
+            ExprKind::Block(block) => block.any_expr(p),
+            ExprKind::Path(_) => false,
+            ExprKind::Tuple(xs) => xs.iter().any(|expr| expr.any(p)),
+            ExprKind::Ret(expr) => expr.as_ref().map(|expr| expr.any(p)).unwrap_or(false),
+            ExprKind::Call(expr, args) => expr.any(p) || args.iter().any(|expr| expr.any(p)),
+            ExprKind::If(c, l, r) =>
+                c.any(p) || l.any_expr(p) || r.as_ref().map(|expr| expr.any(p)).unwrap_or(false),
+            ExprKind::Struct(_, fields) => fields.iter().any(|f| f.expr.any(p)),
+            ExprKind::Match(expr, arms) =>
+                expr.any(p)
+                    || arms.iter().any(|arm| {
+                        arm.body.any(p)
+                            || arm.guard.as_ref().map(|expr| expr.any(p)).unwrap_or(false)
+                    }),
+        }
+    }
+
+    // maybe this can move to the ir
+    // the code that depends on it can probably also move
     pub fn is_diverging(&self) -> bool {
         match self.kind {
             ExprKind::Ret(_) => true,
@@ -42,7 +71,8 @@ impl Expr {
             | ExprKind::If(..)
             | ExprKind::Field(..)
             | ExprKind::Box(..)
-            | ExprKind::Struct(..) => false,
+            | ExprKind::Match(_, _)
+            | ExprKind::Struct(..) => self.any(Self::is_diverging),
         }
     }
 }
@@ -76,6 +106,7 @@ pub enum ExprKind {
     Struct(Path, Vec<Field>),
     Field(P<Expr>, Ident),
     Box(P<Expr>),
+    Match(P<Expr>, Vec<Arm>),
 }
 
 impl Display for ExprKind {
@@ -105,6 +136,7 @@ impl Display for ExprKind {
                 Some(r) => write!(fmt, "if {} {} {}", c, l, r),
                 None => write!(fmt, "if {} {}", c, l),
             },
+            ExprKind::Match(_, _) => todo!(),
         }
     }
 }

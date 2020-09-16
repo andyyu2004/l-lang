@@ -41,9 +41,28 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ),
             ExprKind::Assign(l, r) => ir::ExprKind::Assign(self.lower_expr(l), self.lower_expr(r)),
             ExprKind::Field(expr, ident) => ir::ExprKind::Field(self.lower_expr(expr), *ident),
+            ExprKind::Match(expr, arms) => ir::ExprKind::Match(
+                self.lower_expr(expr),
+                self.lower_arms(arms),
+                ir::MatchSource::Match,
+            ),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }
+    }
+
+    fn lower_arms(&mut self, arms: &[Arm]) -> &'ir [ir::Arm<'ir>] {
+        self.arena.alloc_from_iter(arms.iter().map(|arm| self.lower_arm(arm)))
+    }
+
+    fn lower_arm(&mut self, arm: &Arm) -> ir::Arm<'ir> {
+        ir::Arm {
+            id: self.lower_node_id(arm.id),
+            span: arm.span,
+            pat: self.lower_pattern(&arm.pat),
+            guard: arm.guard.as_ref().map(|guard| self.lower_expr(guard)),
+            body: self.lower_expr(&arm.body),
+        }
     }
 
     fn lower_field(&mut self, field: &Field) -> ir::Field<'ir> {

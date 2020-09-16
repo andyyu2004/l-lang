@@ -31,7 +31,7 @@ impl<'a> Parse<'a> for LetParser {
     type Output = P<Stmt>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let pat = PatParser.parse(parser)?;
+        let pat = parser.parse_pattern()?;
         let ty = parser.accept(TokenType::Colon).map(|_| TyParser.parse(parser)).transpose()?;
         let init = parser.accept(TokenType::Eq).map(|_| ExprParser.parse(parser)).transpose()?;
         let semi = parser.expect(TokenType::Semi)?;
@@ -45,7 +45,8 @@ mod tests {
     use crate::parse;
 
     #[test]
-    fn parse_mut_binding() {
+    fn parse_binding() {
+        let _prog = parse("fn main() { let x = 5; }").unwrap();
         let _prog = parse("fn main() { let mut x = 5; x }").unwrap();
     }
 }

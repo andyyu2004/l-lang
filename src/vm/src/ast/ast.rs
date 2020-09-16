@@ -1,10 +1,19 @@
-use super::{Expr, NodeId, Pattern, Stmt, Ty, P};
+use super::{Expr, NodeId, Pattern, Stmt, StmtKind, Ty, P};
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Arm {
+    pub id: NodeId,
+    pub span: Span,
+    pub pat: P<Pattern>,
+    pub body: P<Expr>,
+    pub guard: Option<P<Expr>>,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Variant {
@@ -110,6 +119,15 @@ pub struct Block {
     pub span: Span,
     pub id: NodeId,
     pub stmts: Vec<P<Stmt>>,
+}
+
+impl Block {
+    pub fn any_expr(&self, f: fn(&Expr) -> bool) -> bool {
+        self.stmts.iter().any(|stmt| match &stmt.kind {
+            StmtKind::Let(l) => l.init.as_ref().map(|expr| expr.any(f)).unwrap_or(false),
+            StmtKind::Expr(expr) | StmtKind::Semi(expr) => expr.any(f),
+        })
+    }
 }
 
 impl Display for Block {

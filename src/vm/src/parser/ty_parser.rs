@@ -30,8 +30,8 @@ impl<'a> Parse<'a> for TyParser {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;
             Ok(parser.mk_ty(lsq.span.merge(rsq.span), TyKind::Array(ty)))
-        } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
-            let path = PathParser.parse(parser)?;
+        } else if parser.on_ident()? {
+            let path = parser.parse_path()?;
             Ok(parser.mk_ty(path.span, TyKind::Path(path)))
         } else {
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))

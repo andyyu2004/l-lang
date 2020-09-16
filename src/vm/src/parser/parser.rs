@@ -65,6 +65,12 @@ impl<'a> Parser<'a> {
         Ok((Span::new(lo, self.prev_span_end()), p))
     }
 
+    /// returns true if the current token is an ident
+    /// similar to accept ident except the token stream is not advanced
+    pub fn on_ident(&self) -> ParseResult<'a, bool> {
+        Ok(if let TokenType::Ident(_) = self.safe_peek()?.ttype { true } else { false })
+    }
+
     /// separates float x.y into x . y
     /// assumes the float has been accepted already
     /// returns a pair of the components (x, y) to avoid modifying the token stream
@@ -113,6 +119,14 @@ impl<'a> Parser<'a> {
 
     pub fn parse_expr(&mut self) -> ParseResult<'a, P<Expr>> {
         ExprParser.parse(self)
+    }
+
+    pub fn parse_pattern(&mut self) -> ParseResult<'a, P<Pattern>> {
+        PatParser.parse(self)
+    }
+
+    pub fn parse_path(&mut self) -> ParseResult<'a, Path> {
+        PathParser.parse(self)
     }
 
     pub(super) fn mk_id(&self) -> NodeId {

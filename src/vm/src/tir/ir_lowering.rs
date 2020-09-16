@@ -239,7 +239,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                 }
                 ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
                 // this case should be handled either under struct expressions or the special tuple case
-                ir::DefKind::Ctor(_, ..) => unreachable!(),
+                ir::DefKind::Ctor(..) => unreachable!(),
                 ir::DefKind::TyParam(_) => todo!(),
                 ir::DefKind::Enum => todo!(),
                 ir::DefKind::Struct => todo!(),
@@ -295,6 +295,9 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             // special case of enum variant tuple constructor
             // we don't want to lower this into a function
             // instead, we can lower it into an tir::Adt expression
+            // this pattern matches expressions such as:
+            // Option::Some(x)
+            // where the lhs is syntactically a function (and even type checked as such)
             ir::ExprKind::Call(ir::Expr { kind: ir::ExprKind::Path(path), .. }, args)
                 if path.is_enum_ctor() =>
                 ctx.lower_enum_tuple_ctor(self, path, args),

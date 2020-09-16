@@ -13,6 +13,10 @@ pub trait Parse<'a>: Sized {
         OrParser { fst: self, snd: other }
     }
 
+    fn try_parse(&mut self, parser: &mut Parser<'a>) -> Option<Self::Output> {
+        parser.try_parse(self)
+    }
+
     fn spanned(self, include_prev: bool) -> SpannedParser<Self> {
         SpannedParser { inner: self, include_prev }
     }

@@ -168,6 +168,8 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             let open_brace = parser.expect(TokenType::OpenBrace)?;
             let blk = parser.enter_unsafe_ctx(|parser| BlockParser { open_brace }.parse(parser))?;
             Ok(parser.mk_expr(unsafe_kw.span.merge(blk.span), ExprKind::Block(blk)))
+        } else if let Some(match_kw) = parser.accept(TokenType::Match) {
+            MatchParser { match_kw }.parse(parser)
         } else {
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }

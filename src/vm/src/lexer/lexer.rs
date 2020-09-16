@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
+        "match" => TokenType::Match,
         "false" => TokenType::False,
         "true" => TokenType::True,
         "fn" => TokenType::Fn,
@@ -141,6 +142,7 @@ impl Lexer {
 pub enum TokenType {
     Ident(Symbol),
     Unsafe,
+    Match,
     Box,
     Type,
     /// ->

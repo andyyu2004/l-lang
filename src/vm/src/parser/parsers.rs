@@ -170,7 +170,7 @@ where
 }
 
 /// similar to `PunctuatedParser` except parses one or more occurences of `inner`
-/// accepts trailing separator
+/// does not accept trailing separator
 pub struct Punctuated1Parser<P, S> {
     pub inner: P,
     pub separator: S,
@@ -185,10 +185,9 @@ where
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut vec = vec![self.inner.parse(parser)?];
-        while self.separator.parse(parser).is_ok() {
+        while self.separator.try_parse(parser).is_some() {
             vec.push(self.inner.parse(parser)?);
         }
-        let _ = self.separator.parse(parser);
         Ok(vec)
     }
 }
@@ -398,10 +397,43 @@ impl<'a> Parse<'a> for ClosureParser {
             parser.mk_expr(block.span, ExprKind::Block(block))
         } else {
             parser.expect(TokenType::RFArrow)?;
-            ExprParser.parse(parser)?
+            parser.parse_expr()?
         };
         let span = self.fn_kw.span.merge(body.span);
         Ok(parser.mk_expr(span, ExprKind::Closure(name, sig, body)))
+    }
+}
+
+pub struct ArmParser;
+
+impl<'a> Parse<'a> for ArmParser {
+    type Output = Arm;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let pat = parser.parse_pattern()?;
+        let guard = parser.accept(TokenType::If).map(|if_kw| parser.parse_expr()).transpose()?;
+        parser.expect(TokenType::RFArrow)?;
+        let body = parser.parse_expr()?;
+        let span = pat.span.merge(body.span);
+        Ok(Arm { id: parser.mk_id(), span, pat, body, guard })
+    }
+}
+
+pub struct MatchParser {
+    pub match_kw: Tok,
+}
+
+impl<'a> Parse<'a> for MatchParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let scrutinee = parser.parse_expr()?;
+        parser.expect(TokenType::OpenBrace)?;
+        let (span, arms) = PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }
+            .spanned(false)
+            .parse(parser)?;
+        parser.expect(TokenType::CloseBrace)?;
+        Ok(parser.mk_expr(scrutinee.span.merge(span), ExprKind::Match(scrutinee, arms)))
     }
 }
 

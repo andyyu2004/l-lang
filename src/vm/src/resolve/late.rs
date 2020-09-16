@@ -59,9 +59,14 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
+        // don't recurse here as the visitor will handle that
         match pat.kind {
             PatternKind::Ident(ident, ..) => self.def_val(ident, Res::Local(pat.id)),
-            PatternKind::Wildcard | PatternKind::Tuple(_) | PatternKind::Paren(_) => {}
+            PatternKind::Path(..)
+            | PatternKind::Wildcard
+            | PatternKind::Variant(..)
+            | PatternKind::Tuple(..)
+            | PatternKind::Paren(..) => {}
         }
     }
 
@@ -155,14 +160,6 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         } else {
             self.resolver.emit_error(path.span, ResolutionError::UnresolvedType(path.clone()))
         }
-    }
-
-    /// bring each parameter into scope
-    fn resolve_params(&mut self, params: &'ast [Param]) {
-        params.iter().for_each(|param| {
-            self.resolve_pattern(&param.pattern);
-            self.visit_ty(&param.ty);
-        })
     }
 }
 

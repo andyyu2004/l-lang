@@ -98,6 +98,10 @@ pub trait Visitor<'ast>: Sized {
 
     fn visit_ident(&mut self, _ident: Ident) {
     }
+
+    fn visit_arm(&mut self, arm: &'ast Arm) {
+        walk_arm(self, arm);
+    }
 }
 
 pub fn walk_fn<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, body: Option<&'ast Expr>) {
@@ -125,6 +129,12 @@ pub fn walk_let<'ast>(visitor: &mut impl Visitor<'ast>, Let { pat, ty, init, .. 
     init.as_ref().map(|expr| visitor.visit_expr(expr));
     visitor.visit_pattern(pat);
     ty.as_ref().map(|ty| visitor.visit_ty(ty));
+}
+
+pub fn walk_arm<'ast>(visitor: &mut impl Visitor<'ast>, arm: &'ast Arm) {
+    visitor.visit_pattern(&arm.pat);
+    visitor.visit_expr(&arm.body);
+    arm.guard.as_ref().map(|expr| visitor.visit_expr(expr));
 }
 
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
@@ -163,6 +173,10 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(expr);
             visitor.visit_ident(*ident);
         }
+        ExprKind::Match(expr, arms) => {
+            visitor.visit_expr(expr);
+            arms.iter().for_each(|arm| visitor.visit_arm(arm));
+        }
     }
 }
 
@@ -184,12 +198,17 @@ pub fn walk_closure<'ast>(
 pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
     match &pat.kind {
         PatternKind::Wildcard => {}
+        PatternKind::Paren(pat) => visitor.visit_pattern(pat),
+        PatternKind::Path(path) => visitor.visit_path(path),
+        PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
         PatternKind::Ident(ident, pat, _) => {
             visitor.visit_ident(*ident);
             pat.as_ref().map(|p| visitor.visit_pattern(p));
         }
-        PatternKind::Paren(pat) => visitor.visit_pattern(pat),
-        PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
+        PatternKind::Variant(path, pats) => {
+            visitor.visit_path(path);
+            pats.iter().for_each(|p| visitor.visit_pattern(p));
+        }
     }
 }
 
