@@ -3,7 +3,7 @@ stages:
 
 before_script:
   - apt-get update -yq
-  - apt install lsb-release wget software-properties-common
+  - apt install lsb-release wget software-properties-common -y
   - bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
   # - apt-get update -yq && apt-get install llvm llvm-10 llvm-10-dev -y
 
