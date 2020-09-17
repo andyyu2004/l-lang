@@ -2,7 +2,7 @@ stages:
   - build
 
 before_script:
-  - apt-get install llvm -y
+  - apt-get update -yq && apt-get install llvm -y
 
 rust-nightly:
   stage: build
