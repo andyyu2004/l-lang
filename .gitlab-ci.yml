@@ -2,7 +2,8 @@ stages:
   - build
 
 before_script:
-  - apt-get update -yq && apt-get install llvm llvm-10 llvm-10-dev -y
+  - bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+  # - apt-get update -yq && apt-get install llvm llvm-10 llvm-10-dev -y
 
 rust-nightly:
   stage: build
