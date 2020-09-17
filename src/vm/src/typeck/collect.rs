@@ -19,11 +19,6 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 tcx.generalize(generics, fn_ty)
             }
             ir::ItemKind::Struct(generics, variant_kind) => {
-                // TODO
-                // let opaque_ty = self.mk_opaque_ty(item.id.def, List::empty());
-                // self.item_tys
-                //     .borrow_mut()
-                //     .insert(item.id.def, self.generalize(generics, opaque_ty));
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
                 let ty = tcx.mk_adt_ty(adt_ty, List::empty());
@@ -60,8 +55,7 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
         let (adt_ty, substs) = ty.expect_adt();
         let ctor_ty = match variant.kind {
             // these two constructor kinds are already of the enum type
-            // and should already be handled by the previous collection pass
-            ir::VariantKind::Struct(..) | ir::VariantKind::Unit => unreachable!(),
+            ir::VariantKind::Struct(..) | ir::VariantKind::Unit => ty,
             // represent enum tuples as injection functions
             // enum Option<T> {
             //     Some(T),
@@ -106,6 +100,6 @@ impl<'tcx> TyCtx<'tcx> {
             }
             FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
         }));
-        VariantTy { ctor, ident, fields }
+        VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
     }
 }

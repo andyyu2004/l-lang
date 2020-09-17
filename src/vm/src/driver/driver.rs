@@ -111,7 +111,6 @@ impl<'tcx> Driver<'tcx> {
         let gcx = self.global_ctx.get().unwrap();
         let llvm_ctx = LLVMCtx::create();
         let mut cctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
-        gcx.enter_tcx(|tcx| tcx.dump_collected_tys());
         let main_fn = cctx.codegen(&mir);
         check_errors!(self, (cctx, main_fn.unwrap()))
     }

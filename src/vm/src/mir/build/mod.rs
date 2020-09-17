@@ -56,26 +56,37 @@ pub fn build_enum_ctors<'tcx>(tcx: TyCtx<'tcx>, item: &ir::Item) -> SmallVec<[mi
     let mut vec = smallvec![];
     for (idx, variant) in adt_ty.variants.iter_enumerated() {
         let body = build_variant_ctor(tcx, ty, idx, variant);
-        eprintln!("{}", body);
-        let kind = mir::ItemKind::Fn(body);
-        let item = mir::Item {
-            span: item.span,
-            vis: item.vis,
-            ident: variant.ident,
-            id: variant.ctor.unwrap(),
-            kind,
-        };
-        vec.push(item);
+        match body {
+            None => continue,
+            Some(body) => {
+                eprintln!("{}", body);
+                let kind = mir::ItemKind::Fn(body);
+                let item = mir::Item {
+                    span: item.span,
+                    vis: item.vis,
+                    ident: variant.ident,
+                    id: variant.ctor.unwrap(),
+                    kind,
+                };
+                vec.push(item);
+            }
+        }
     }
     vec
 }
 
+/// constructs the mir for a single variant constructor (if it is a function)
 fn build_variant_ctor<'tcx>(
     tcx: TyCtx<'tcx>,
     ty: Ty<'tcx>,
     variant_idx: VariantIdx,
     variant: &VariantTy<'tcx>,
-) -> mir::Body<'tcx> {
+) -> Option<mir::Body<'tcx>> {
+    // don't construct any mir for a constructor that is not a function
+    if !variant.ctor_kind.is_function() {
+        return None;
+    }
+
     let ctor = variant.ctor.unwrap();
 
     // TODO get a proper span
@@ -103,7 +114,7 @@ fn build_variant_ctor<'tcx>(
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
     cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
     cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
-    mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() }
+    Some(mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() })
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {

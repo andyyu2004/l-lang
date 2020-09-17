@@ -15,9 +15,9 @@ fn llvm_construct_enums() {
 
     fn main() -> int {
         Option::Some(5);
-        Option::None;
-        WeirdEither::Left { left: 8 };
-        WeirdEither::Right(false);
+        // Option::None;
+        // WeirdEither::Left { left: 8 };
+        // WeirdEither::Right(false);
         0
     }"#;
 

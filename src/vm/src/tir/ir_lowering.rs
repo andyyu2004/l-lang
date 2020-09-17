@@ -33,8 +33,9 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
 
     /// ir -> tir
     pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
-        // this `tir` may still have unsubstituted inference variables in it
-        item.to_tir(self)
+        let tir = item.to_tir(self);
+        eprintln!("{}", tir);
+        tir
     }
 
     /// ir -> tir -> mir

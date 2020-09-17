@@ -118,7 +118,6 @@ impl<'a, 'tcx> Inherited<'a, 'tcx> {
         if item.ident.symbol == symbol::MAIN && ty != self.types.main {
             self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
         }
-        let (param_tys, ret_ty) = ty.expect_fn();
         self.check_fn(ty, body)
     }
 

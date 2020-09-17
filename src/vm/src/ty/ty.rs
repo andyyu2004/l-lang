@@ -1,6 +1,6 @@
 use super::{Subst, TyConv};
 use crate::ast::{Ident, Mutability, Visibility};
-use crate::ir::{self, DefId, FieldIdx, ParamIdx, Res, VariantIdx};
+use crate::ir::{self, CtorKind, DefId, DefKind, FieldIdx, ParamIdx, Res, VariantIdx};
 use crate::span::Span;
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
@@ -8,7 +8,6 @@ use crate::typeck::TyCtx;
 use crate::util;
 use bitflags::bitflags;
 use indexed_vec::{Idx, IndexVec};
-use ir::DefKind;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -175,6 +174,7 @@ pub struct VariantTy<'tcx> {
     pub ident: Ident,
     /// None for struct variants
     pub ctor: Option<DefId>,
+    pub ctor_kind: CtorKind,
     pub fields: &'tcx [FieldTy<'tcx>],
 }
 

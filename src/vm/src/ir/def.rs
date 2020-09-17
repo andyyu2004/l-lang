@@ -21,6 +21,15 @@ pub enum CtorKind {
     Unit,
 }
 
+impl CtorKind {
+    pub fn is_function(self) -> bool {
+        match self {
+            CtorKind::Tuple => true,
+            CtorKind::Struct | CtorKind::Unit => false,
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum DefKind {
     Fn,

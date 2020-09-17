@@ -25,6 +25,16 @@ pub enum VariantKind<'ir> {
     Unit,
 }
 
+impl<'ir> From<&VariantKind<'ir>> for ir::CtorKind {
+    fn from(kind: &VariantKind<'ir>) -> Self {
+        match kind {
+            VariantKind::Struct(..) => Self::Struct,
+            VariantKind::Tuple(..) => Self::Tuple,
+            VariantKind::Unit => Self::Unit,
+        }
+    }
+}
+
 impl<'ir> VariantKind<'ir> {
     pub fn fields(&self) -> &'ir [ir::FieldDecl<'ir>] {
         match self {
