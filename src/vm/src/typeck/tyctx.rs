@@ -2,7 +2,7 @@ use super::inference::{FnCtx, InferCtx, InferCtxBuilder, Inherited};
 use crate::ast::{Ident, Mutability};
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
-use crate::error::TypeResult;
+use crate::error::{LError, LResult, TypeResult};
 use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
 use crate::mir;
 use crate::span::Span;
@@ -95,6 +95,10 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Array(ty, n))
     }
 
+    pub fn mk_ty_scheme(self, forall: Forall<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Scheme(forall, ty))
+    }
+
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
     }
@@ -122,14 +126,23 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// finds the type of an item that was obtained during the collection phase
     pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
-        self.collected_tys.borrow().get(&def_id).expect("no type entry for item")
+        self.collected_ty_opt(def_id)
+            .unwrap_or_else(|| panic!("no collected type found for `{}`", def_id))
     }
 
-    pub fn mk_tup<I>(self, iter: I) -> Ty<'tcx>
+    pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
+        self.collected_tys.borrow().get(&def_id).copied()
+    }
+
+    pub fn mk_tup(self, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Tuple(substs))
+    }
+
+    pub fn mk_tup_iter<I>(self, iter: I) -> Ty<'tcx>
     where
         I: Iterator<Item = Ty<'tcx>>,
     {
-        self.mk_ty(TyKind::Tuple(self.mk_substs(iter)))
+        self.mk_tup(self.mk_substs(iter))
     }
 
     pub fn mk_ty_err(self) -> Ty<'tcx> {
@@ -227,21 +240,21 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
     }
 }
 
-macro check_for_errors($tcx:expr) {{
+macro halt_on_error($tcx:expr) {{
     if $tcx.sess.has_errors() {
-        return None;
+        return Err(LError::ErrorReported);
     }
 }}
 
 impl<'tcx> TyCtx<'tcx> {
     /// top level entrace to typechecking and lowering to mir
-    pub fn build_mir(self, ir: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
+    pub fn build_mir(self, ir: &'tcx ir::Prog<'tcx>) -> mir::Prog<'tcx> {
         self.collect(ir);
         self.build_mir_inner(ir)
     }
 
     /// top level entrace to typechecking and lowering to tir
-    pub fn build_tir(self, ir: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
+    pub fn build_tir(self, ir: &'tcx ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         self.collect(ir);
         self.build_tir_inner(ir)
     }
@@ -250,42 +263,47 @@ impl<'tcx> TyCtx<'tcx> {
     pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let forall = Forall { binders };
-        self.mk_ty(TyKind::Scheme(forall, ty))
+        self.mk_ty_scheme(forall, ty)
     }
 
-    fn with_ir_lctx<R>(
+    fn lower_fn<R>(
         self,
         item: &ir::Item<'tcx>,
+        sig: &ir::FnSig<'tcx>,
+        generics: &ir::Generics<'tcx>,
+        body: &'tcx ir::Body<'tcx>,
         f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
-    ) -> Option<R> {
-        let &ir::Item { id, span, vis, ident, ref kind } = item;
-        // only functions compile down to any runtime representation
-        // data definitions such as structs and enums are purely a compile time concept
-        match kind {
-            ir::ItemKind::Fn(sig, generics, body) =>
-                Inherited::build(self, item.id.def).enter(|inherited| {
-                    let fcx = inherited.check_fn_item(item, sig, generics, body);
-                    // don't bother continuing if typeck failed
-                    // note that the failure to typeck could also come from resolution errors
-                    check_for_errors!(self);
-                    let tables = fcx.resolve_inference_variables(body);
-                    let lctx = TirCtx::new(&inherited, tables);
-                    Some(f(lctx))
-                }),
-            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => None,
-        }
+    ) -> LResult<R> {
+        Inherited::build(self, item.id.def).enter(|inherited| {
+            let fcx = inherited.check_fn_item(item, sig, generics, body);
+            // don't bother continuing if typeck failed
+            // note that the failure to typeck could also come from resolution errors
+            halt_on_error!(self);
+            let tables = fcx.resolve_inference_variables(body);
+            let lctx = TirCtx::new(&inherited, tables);
+            Ok(f(lctx))
+        })
     }
 
     /// ir -> tir
+    /// this isn't actually used in the compiler pipeline, its mostly for testing and debugging
     fn build_tir_inner(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
         for &item in prog.items.values() {
-            self.with_ir_lctx(item, |mut lctx| {
-                for tir in lctx.lower_item_tir(item) {
-                    items.insert(tir.id, tir);
+            match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) => {
+                    if let Ok(tir) = self
+                        .lower_fn(item, sig, generics, body, |mut lctx| lctx.lower_item_tir(item))
+                    {
+                        items.insert(item.id, tir);
+                    }
                 }
-            });
+                ir::ItemKind::Struct(..) => {}
+                // note that no tir is generated for enum constructors
+                // the constructor code is generated at mir level only
+                ir::ItemKind::Enum(..) => {}
+            }
         }
         tir::Prog { items }
     }
@@ -295,13 +313,32 @@ impl<'tcx> TyCtx<'tcx> {
         let mut items = BTreeMap::new();
 
         for &item in prog.items.values() {
-            self.with_ir_lctx(item, |mut lctx| {
-                for mir in lctx.lower_item(item) {
-                    items.insert(mir.id, mir);
+            match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) =>
+                    if let Ok(mir) =
+                        self.lower_fn(item, sig, generics, body, |mut lctx| lctx.lower_item(item))
+                    {
+                        items.insert(item.id.def, mir);
+                    },
+                ir::ItemKind::Struct(_, _) => {}
+                // enum constructors are lowered into functions in the mir
+                ir::ItemKind::Enum(generics, variants) => {
+                    let lowered_items = mir::build_enum_ctors(self, item);
+                    for item in lowered_items {
+                        items.insert(item.id, item);
+                    }
                 }
-            });
+            }
         }
         mir::Prog { items }
+    }
+}
+
+/// debug
+impl<'tcx> TyCtx<'tcx> {
+    pub fn dump_collected_tys(self) {
+        println!("type collection results");
+        self.collected_tys.borrow().iter().for_each(|(k, v)| println!("{:?}: {}", k, v));
     }
 }
 

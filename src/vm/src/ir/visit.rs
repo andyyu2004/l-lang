@@ -2,6 +2,10 @@ use crate::ast::{Ident, Visibility};
 use crate::ir;
 
 pub trait Visitor<'ir>: Sized {
+    fn visit_prog(&mut self, prog: &'ir ir::Prog<'ir>) {
+        walk_prog(self, prog)
+    }
+
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
         walk_item(self, item)
     }
@@ -85,6 +89,10 @@ pub trait Visitor<'ir>: Sized {
     }
 }
 
+pub fn walk_prog<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::Prog<'ir>) {
+    prog.items.values().for_each(|item| v.visit_item(item))
+}
+
 pub fn walk_variant<'ir>(v: &mut impl Visitor<'ir>, variant: &'ir ir::Variant<'ir>) {
     v.visit_ident(variant.ident);
     v.visit_variant_kind(&variant.kind);
@@ -106,10 +114,6 @@ pub fn walk_variant_kind<'ir>(v: &mut impl Visitor<'ir>, kind: &'ir ir::VariantK
 
 pub fn walk_generics<'ir>(v: &mut impl Visitor<'ir>, generics: &'ir ir::Generics<'ir>) {
     // TODO
-}
-
-pub fn walk_prog<'ir, V: Visitor<'ir>>(v: &mut V, prog: &'ir ir::Prog<'ir>) {
-    prog.items.values().for_each(|item| v.visit_item(item))
 }
 
 pub fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
@@ -250,5 +254,10 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
             v.visit_ident(*ident);
             subpat.map(|p| v.visit_pat(p));
         }
+        ir::PatternKind::Variant(path, pats) => {
+            v.visit_path(path);
+            pats.iter().for_each(|pat| v.visit_pat(pat));
+        }
+        ir::PatternKind::Path(path) => v.visit_path(path),
     }
 }

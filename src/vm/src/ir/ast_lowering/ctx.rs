@@ -1,14 +1,15 @@
-use crate::arena::DroplessArena as Arena;
 use crate::ast::*;
+use crate::core::Arena;
 use crate::ir::{self, DefId, Id, LocalId, Res};
 use crate::resolve::Resolver;
 use crate::span::Span;
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
-use std::{cell::Cell, collections::BTreeMap};
+use std::cell::Cell;
+use std::collections::BTreeMap;
 
 pub struct AstLoweringCtx<'a, 'ir> {
-    pub(super) arena: &'ir Arena,
+    pub(super) arena: &'ir Arena<'ir>,
     pub(super) resolver: &'a mut Resolver<'ir>,
     pub(super) node_id_to_id: FxHashMap<NodeId, ir::Id>,
     pub(super) item_stack: Vec<(DefId, usize)>,
@@ -64,7 +65,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 }
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
-    pub fn new(arena: &'ir Arena, resolver: &'a mut Resolver<'ir>) -> Self {
+    pub fn new(arena: &'ir Arena<'ir>, resolver: &'a mut Resolver<'ir>) -> Self {
         Self {
             arena,
             item_stack: Default::default(),
@@ -74,14 +75,25 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         }
     }
 
-    pub fn lower_prog(mut self, prog: &Prog) -> ir::Prog<'ir> {
+    pub(super) fn alloc<T>(&self, t: T) -> &'ir T {
+        self.arena.ir.alloc(t)
+    }
+
+    pub(super) fn alloc_from_iter<I>(&self, iter: I) -> &'ir [I::Item]
+    where
+        I: IntoIterator,
+    {
+        self.arena.ir.alloc_from_iter(iter)
+    }
+
+    pub fn lower_prog(mut self, prog: &Prog) -> &'ir ir::Prog<'ir> {
         let items = prog
             .items
             .iter()
             .map(|item| self.lower_item(item))
             .map(|item| (item.id, item))
             .collect();
-        ir::Prog { items }
+        self.arena.alloc(ir::Prog { items })
     }
 
     pub(super) fn with_owner<T>(&mut self, owner: NodeId, f: impl FnOnce(&mut Self) -> T) -> T {
@@ -91,6 +103,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let (popped_def_id, popped_counter) = self.item_stack.pop().unwrap();
         debug_assert_eq!(popped_def_id, def_id);
         ret
+    }
+
+    pub(super) fn curr_owner(&self) -> DefId {
+        self.item_stack.last().unwrap().0
     }
 
     fn mk_node_id(&self) -> NodeId {
@@ -117,11 +133,11 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let params = self.lower_params(&sig.params);
         let sig = self.lower_fn_sig(sig);
         let expr = self.lower_expr(expr);
-        self.arena.alloc(ir::Body { params, expr })
+        self.alloc(ir::Body { params, expr })
     }
 
     pub(super) fn lower_params(&mut self, params: &[Param]) -> &'ir [ir::Param<'ir>] {
-        self.arena.alloc_from_iter(params.iter().map(|p| self.lower_param(p)))
+        self.arena.ir.alloc_from_iter(params.iter().map(|p| self.lower_param(p)))
     }
 
     pub(super) fn lower_param(&mut self, param: &Param) -> ir::Param<'ir> {

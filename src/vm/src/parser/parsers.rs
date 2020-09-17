@@ -169,31 +169,9 @@ where
     }
 }
 
-/// similar to `PunctuatedParser` except parses one or more occurences of `inner`
-/// does not accept trailing separator
-pub struct Punctuated1Parser<P, S> {
-    pub inner: P,
-    pub separator: S,
-}
-
-impl<'a, P, S> Parse<'a> for Punctuated1Parser<P, S>
-where
-    P: Parse<'a>,
-    S: Parse<'a>,
-{
-    type Output = Vec<P::Output>;
-
-    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let mut vec = vec![self.inner.parse(parser)?];
-        while self.separator.try_parse(parser).is_some() {
-            vec.push(self.inner.parse(parser)?);
-        }
-        Ok(vec)
-    }
-}
-
 /// similar to `PunctuatedParser` except a single element tuple must have a trailing comma (to
 /// differentiate it from a parenthesization)
+/// tbh, I'm not even sure what the real difference is now..
 /// <tuple> = () | '(' ( <inner> , )+ <inner>? ')'
 pub struct TupleParser<P> {
     pub inner: P,
@@ -219,6 +197,29 @@ where
                 parser.expect(TokenType::CloseParen)?;
                 break;
             }
+        }
+        Ok(vec)
+    }
+}
+
+/// similar to `PunctuatedParser` except parses one or more occurences of `inner`
+/// does not accept trailing separator
+pub struct Punctuated1Parser<P, S> {
+    pub inner: P,
+    pub separator: S,
+}
+
+impl<'a, P, S> Parse<'a> for Punctuated1Parser<P, S>
+where
+    P: Parse<'a>,
+    S: Parse<'a>,
+{
+    type Output = Vec<P::Output>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let mut vec = vec![self.inner.parse(parser)?];
+        while self.separator.try_parse(parser).is_some() {
+            vec.push(self.inner.parse(parser)?);
         }
         Ok(vec)
     }
@@ -438,8 +439,6 @@ impl<'a> Parse<'a> for MatchParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let scrutinee = parser.parse_expr()?;
-        dbg!("post scrut");
-        parser.dump_stream();
         parser.expect(TokenType::OpenBrace)?;
         let arms =
             PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }.parse(parser)?;

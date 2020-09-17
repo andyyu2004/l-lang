@@ -4,11 +4,11 @@ use crate::ir;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_stmts(&mut self, stmts: &[Box<Stmt>]) -> &'ir [ir::Stmt<'ir>] {
-        self.arena.alloc_from_iter(stmts.iter().map(|x| self.lower_stmt_inner(x)))
+        self.arena.ir.alloc_from_iter(stmts.iter().map(|x| self.lower_stmt_inner(x)))
     }
 
     pub fn lower_stmt(&mut self, stmt: &Stmt) -> &'ir ir::Stmt<'ir> {
-        self.arena.alloc(self.lower_stmt_inner(stmt))
+        self.arena.ir.alloc(self.lower_stmt_inner(stmt))
     }
 
     pub fn lower_stmt_inner(&mut self, stmt: &Stmt) -> ir::Stmt<'ir> {

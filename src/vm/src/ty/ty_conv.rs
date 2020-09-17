@@ -20,7 +20,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                 todo!();
             }
             ir::TyKind::Path(path) => self.res_to_ty(path.res),
-            ir::TyKind::Tuple(tys) => tcx.mk_tup(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
+            ir::TyKind::Tuple(tys) => tcx.mk_tup_iter(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
             ir::TyKind::Ptr(m, ty) => tcx.mk_ptr_ty(*m, self.ir_ty_to_ty(ty)),
             ir::TyKind::Fn(params, ret) => tcx.mk_fn_ty(

@@ -1,5 +1,5 @@
 use crate::ast::{Ident, Visibility};
-use crate::ir::{self, DefId, DefKind, ParamIdx, Res};
+use crate::ir::{self, DefId, DefKind, ParamIdx, Res, VariantIdx};
 use crate::lexer::Symbol;
 use crate::span::Span;
 use crate::util;
@@ -11,6 +11,10 @@ pub struct Variant<'ir> {
     pub id: ir::Id,
     pub ident: Ident,
     pub span: Span,
+    /// `DefId` of the enum that this variant belongs to
+    pub adt_def: DefId,
+    /// index of the variant in the enum
+    pub idx: VariantIdx,
     pub kind: ir::VariantKind<'ir>,
 }
 

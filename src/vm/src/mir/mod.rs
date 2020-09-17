@@ -13,7 +13,7 @@ use crate::mir;
 use crate::span::Span;
 use crate::tir::{self, TirCtx};
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
-pub use build::build_fn;
+pub use build::{build_enum_ctors, build_fn};
 use indexed_vec::{Idx, IndexVec};
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
@@ -24,7 +24,7 @@ pub const RETURN: usize = 0;
 
 #[derive(Debug)]
 pub struct Prog<'tcx> {
-    pub items: BTreeMap<ir::Id, Item<'tcx>>,
+    pub items: BTreeMap<DefId, Item<'tcx>>,
 }
 
 /// mir analyses go here
@@ -53,7 +53,7 @@ impl<'tcx> std::fmt::Display for Item<'tcx> {
 #[derive(Debug)]
 pub struct Item<'tcx> {
     pub span: Span,
-    pub id: ir::Id,
+    pub id: DefId,
     pub vis: Visibility,
     pub ident: Ident,
     pub kind: mir::ItemKind<'tcx>,

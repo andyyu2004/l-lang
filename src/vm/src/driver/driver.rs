@@ -22,7 +22,6 @@ use std::rc::Rc;
 pub struct Driver<'tcx> {
     arena: Arena<'tcx>,
     resolver_arenas: ResolverArenas<'tcx>,
-    ir_arena: DroplessArena,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
     sess: Session,
 }
@@ -52,7 +51,6 @@ impl<'tcx> Driver<'tcx> {
         Self {
             resolver_arenas: Default::default(),
             arena: Default::default(),
-            ir_arena: Default::default(),
             global_ctx: OnceCell::new(),
             sess: Default::default(),
         }
@@ -78,11 +76,11 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn gen_ir(&'tcx self) -> LResult<(ir::Prog<'tcx>, ResolverOutputs)> {
+    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Prog<'tcx>, ResolverOutputs)> {
         let ast = self.parse()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
-        let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
+        let lctx = AstLoweringCtx::new(&self.arena, &mut resolver);
         let ir = lctx.lower_prog(&ast);
         info!("{:#?}", ir);
         let resolutions = resolver.complete();
@@ -91,7 +89,7 @@ impl<'tcx> Driver<'tcx> {
 
     fn with_tcx_and_ir<R>(
         &'tcx self,
-        f: impl for<'ir> FnOnce(TyCtx<'tcx>, &'ir ir::Prog<'tcx>) -> R,
+        f: impl FnOnce(TyCtx<'tcx>, &'tcx ir::Prog<'tcx>) -> R,
     ) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
@@ -113,6 +111,7 @@ impl<'tcx> Driver<'tcx> {
         let gcx = self.global_ctx.get().unwrap();
         let llvm_ctx = LLVMCtx::create();
         let mut cctx = gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)));
+        gcx.enter_tcx(|tcx| tcx.dump_collected_tys());
         let main_fn = cctx.codegen(&mir);
         check_errors!(self, (cctx, main_fn.unwrap()))
     }

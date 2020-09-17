@@ -1,8 +1,8 @@
 use crate::ast::{Ident, Mutability};
-use crate::ir::{self, FieldIdx};
+use crate::ir::{self, FieldIdx, VariantIdx};
 use crate::span::Span;
 use crate::tir;
-use crate::ty::{Const, Ty};
+use crate::ty::{AdtTy, Const, Ty};
 use crate::util;
 use std::fmt::{self, Display, Formatter};
 
@@ -32,6 +32,7 @@ impl<'tcx> Pattern<'tcx> {
             PatternKind::Wildcard | PatternKind::Binding(..) => false,
             PatternKind::Field(fs) => fs.iter().any(|f| f.pat.is_refutable()),
             PatternKind::Lit(..) => true,
+            PatternKind::Variant(_, _, pats) => pats.iter().any(|p| p.is_refutable()),
         }
     }
 }
@@ -50,6 +51,13 @@ impl<'tcx> Display for Pattern<'tcx> {
                 return write!(f, "{}", expr);
             }
             PatternKind::Wildcard => write!(f, "_"),
+            PatternKind::Variant(adt_ty, variant_idx, pats) => write!(
+                f,
+                "{}::{}({})",
+                adt_ty.ident,
+                adt_ty.variants[variant_idx].ident,
+                util::join2(pats.iter(), ","),
+            ),
         }?;
         write!(f, ":{}", self.ty)
     }
@@ -61,6 +69,10 @@ pub enum PatternKind<'tcx> {
     Binding(Mutability, Ident, Option<&'tcx tir::Pattern<'tcx>>),
     /// generalization of tuple patterns
     /// used to match tuples, and single variant adts (i.e. structs)
+    /// `(...)`, `Foo(...)`, `Foo{...}`, or `Foo`, where `Foo` is a variant name from an ADT with
+    /// a single variant.
     Field(&'tcx [tir::FieldPat<'tcx>]),
     Lit(&'tcx tir::Expr<'tcx>),
+    /// `Foo(...)` or `Foo{...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
+    Variant(&'tcx AdtTy<'tcx>, VariantIdx, &'tcx [tir::Pattern<'tcx>]),
 }

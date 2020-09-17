@@ -1,5 +1,6 @@
 mod closure_tests;
 mod deref_tests;
+mod enum_tests;
 mod fn_tests;
 mod general_tests;
 mod struct_tests;

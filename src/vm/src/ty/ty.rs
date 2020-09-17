@@ -1,6 +1,6 @@
 use super::{Subst, TyConv};
 use crate::ast::{Ident, Mutability, Visibility};
-use crate::ir::{self, DefId, FieldIdx, ParamIdx, VariantIdx};
+use crate::ir::{self, DefId, FieldIdx, ParamIdx, Res, VariantIdx};
 use crate::span::Span;
 use crate::ty::{SubstsRef, TypeFoldable, TypeVisitor};
 use crate::typeck::inference::TyVid;
@@ -8,6 +8,7 @@ use crate::typeck::TyCtx;
 use crate::util;
 use bitflags::bitflags;
 use indexed_vec::{Idx, IndexVec};
+use ir::DefKind;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -150,6 +151,13 @@ impl<'tcx> AdtTy<'tcx> {
     pub fn single_variant(&self) -> &VariantTy<'tcx> {
         assert_eq!(self.variants.len(), 1);
         &self.variants[VariantIdx::new(0)]
+    }
+
+    pub fn variant_idx_with_res(&self, res: Res) -> VariantIdx {
+        match res {
+            Res::Def(def, ..) => self.variant_idx_with_ctor(def),
+            _ => unreachable!(),
+        }
     }
 
     pub fn variant_idx_with_ctor(&self, ctor_id: DefId) -> VariantIdx {

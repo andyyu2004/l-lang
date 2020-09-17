@@ -7,11 +7,11 @@ use std::array::IntoIter;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_exprs(&mut self, exprs: &[Box<Expr>]) -> &'ir [ir::Expr<'ir>] {
-        self.arena.alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
+        self.arena.ir.alloc_from_iter(exprs.iter().map(|x| self.lower_expr_inner(x)))
     }
 
     pub fn lower_expr(&mut self, expr: &Expr) -> &'ir ir::Expr<'ir> {
-        self.arena.alloc(self.lower_expr_inner(expr))
+        self.arena.ir.alloc(self.lower_expr_inner(expr))
     }
 
     fn lower_expr_inner(&mut self, expr: &Expr) -> ir::Expr<'ir> {
@@ -37,7 +37,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
             ExprKind::Struct(path, fields) => ir::ExprKind::Struct(
                 self.lower_path(expr.id, path),
-                self.arena.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
+                self.arena.ir.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
             ),
             ExprKind::Assign(l, r) => ir::ExprKind::Assign(self.lower_expr(l), self.lower_expr(r)),
             ExprKind::Field(expr, ident) => ir::ExprKind::Field(self.lower_expr(expr), *ident),
@@ -52,7 +52,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     }
 
     fn lower_arms(&mut self, arms: &[Arm]) -> &'ir [ir::Arm<'ir>] {
-        self.arena.alloc_from_iter(arms.iter().map(|arm| self.lower_arm(arm)))
+        self.arena.ir.alloc_from_iter(arms.iter().map(|arm| self.lower_arm(arm)))
     }
 
     fn lower_arm(&mut self, arm: &Arm) -> ir::Arm<'ir> {
@@ -95,7 +95,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         };
         let else_arm = self.mk_arm(else_pat, else_expr);
         let arms = IntoIter::new([then_arm, else_arm]);
-        ir::ExprKind::Match(scrutinee, self.arena.alloc_from_iter(arms), ir::MatchSource::If)
+        ir::ExprKind::Match(scrutinee, self.alloc_from_iter(arms), ir::MatchSource::If)
     }
 
     pub(super) fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {
@@ -106,11 +106,11 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             stmts.pop();
         }
         let ir_block = ir::Block {
-            stmts: self.arena.alloc_from_iter(stmts),
+            stmts: self.alloc_from_iter(stmts),
             id: self.lower_node_id(block.id),
             expr,
             span: block.span,
         };
-        self.arena.alloc(ir_block)
+        self.alloc(ir_block)
     }
 }

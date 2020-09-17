@@ -31,27 +31,20 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
-    /// ir -> mir
-    pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> SmallVec<[tir::Item<'tcx>; 1]> {
+    /// ir -> tir
+    pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
         // this `tir` may still have unsubstituted inference variables in it
         item.to_tir(self)
     }
 
     /// ir -> tir -> mir
-    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> SmallVec<[mir::Item<'tcx>; 1]> {
+    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
         let &ir::Item { id, span, vis, ident, ref kind } = item;
+        let mk_item = |kind| mir::Item { span, id: id.def, vis, ident, kind };
         let tir = self.lower_item_tir(item);
-        tir.iter()
-            .map(|item| {
-                println!("{}", item);
-                match item.kind {
-                    tir::ItemKind::Fn(_, _, body) => {
-                        let mir_body = mir::build_fn(self, body);
-                        mir::Item { span, id, vis, ident, kind: mir::ItemKind::Fn(mir_body) }
-                    }
-                }
-            })
-            .collect()
+        match tir.kind {
+            tir::ItemKind::Fn(_, _, body) => mk_item(mir::ItemKind::Fn(mir::build_fn(self, body))),
+        }
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
@@ -93,7 +86,7 @@ impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
 }
 
 impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
-    type Output = SmallVec<[tir::Item<'tcx>; 1]>;
+    type Output = tir::Item<'tcx>;
 
     fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { span, id, ident, vis, ref kind } = self;
@@ -101,10 +94,9 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
             ir::ItemKind::Fn(sig, generics, body) => {
                 let ty = ctx.tcx.collected_ty(self.id.def);
                 let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx));
-                smallvec![tir::Item { kind, span, id, ident, vis }]
+                tir::Item { kind, span, id, ident, vis }
             }
-            ir::ItemKind::Struct(..) => unreachable!(),
-            ir::ItemKind::Enum(_, variants) => unreachable!(),
+            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => unreachable!(),
         }
     }
 }
@@ -131,6 +123,18 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(expr.to_tir_alloc(ctx)),
+            ir::PatternKind::Variant(path, pats) => {
+                let ty = ctx.node_type(self.id);
+                let (adt, substs) = ty.expect_adt();
+                let idx = adt.variant_idx_with_res(path.res);
+                tir::PatternKind::Variant(adt, idx, pats.to_tir(ctx))
+            }
+            ir::PatternKind::Path(path) => {
+                let ty = ctx.node_type(self.id);
+                let (adt, substs) = ty.expect_adt();
+                let idx = adt.variant_idx_with_res(path.res);
+                tir::PatternKind::Variant(adt, idx, &[])
+            }
         };
         let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }
@@ -237,43 +241,16 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                         variant_idx: adt.variant_idx_with_ctor(def_id),
                     }
                 }
-                ir::DefKind::Fn => tir::ExprKind::ItemRef(def_id),
-                // this case should be handled either under struct expressions or the special tuple case
-                ir::DefKind::Ctor(..) => unreachable!(),
+                // functions and function-like variant constructors
+                ir::DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
+                    tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::Ctor(..) => todo!(),
                 ir::DefKind::TyParam(_) => todo!(),
                 ir::DefKind::Enum => todo!(),
                 ir::DefKind::Struct => todo!(),
             },
             ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
         }
-    }
-
-    fn lower_enum_tuple_ctor(
-        &mut self,
-        expr: &ir::Expr<'tcx>,
-        path: &ir::Path<'tcx>,
-        args: &[ir::Expr<'tcx>],
-    ) -> tir::ExprKind<'tcx> {
-        let variant_idx = match path.res {
-            ir::Res::Def(_, DefKind::Ctor(CtorKind::Tuple, idx, _)) => idx,
-            _ => panic!("unexpected res"),
-        };
-        let ty = self.node_type(expr.id);
-        let (adt, substs) = match ty.kind {
-            Adt(adt, substs) => match adt.kind {
-                AdtKind::Enum => (adt, substs),
-                AdtKind::Struct => todo!(),
-            },
-            _ => unreachable!(),
-        };
-        let tcx = self.tcx;
-        let fields = args.iter().enumerate().map(|(i, expr)| tir::Field {
-            index: FieldIdx::new(i),
-            ident: Ident::new(expr.span, Symbol::intern(i)),
-            expr: expr.to_tir_alloc(self),
-        });
-        let fields = tcx.alloc_tir_iter(fields);
-        tir::ExprKind::Adt { adt, substs, variant_idx, fields }
     }
 }
 
@@ -292,15 +269,6 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => ctx.lower_path(self, path),
-            // special case of enum variant tuple constructor
-            // we don't want to lower this into a function
-            // instead, we can lower it into an tir::Adt expression
-            // this pattern matches expressions such as:
-            // Option::Some(x)
-            // where the lhs is syntactically a function (and even type checked as such)
-            ir::ExprKind::Call(ir::Expr { kind: ir::ExprKind::Path(path), .. }, args)
-                if path.is_enum_ctor() =>
-                ctx.lower_enum_tuple_ctor(self, path, args),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
             ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>
@@ -317,10 +285,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                         fields: fields.to_tir(ctx),
                     },
                     AdtKind::Enum => {
-                        let variant_idx = match path.res {
-                            ir::Res::Def(_, DefKind::Ctor(CtorKind::Struct, idx, _)) => idx,
-                            _ => panic!("unexpected resolution"),
-                        };
+                        let variant_idx = adt.variant_idx_with_res(path.res);
                         tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(ctx) }
                     }
                 },

@@ -142,6 +142,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::PatternKind::Field(_) => todo!(),
             tir::PatternKind::Lit(c) => self.as_rvalue(block, c),
+            tir::PatternKind::Variant(_, _, _) => todo!(),
         }
     }
 

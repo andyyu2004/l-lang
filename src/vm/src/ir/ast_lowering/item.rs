@@ -1,7 +1,8 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
-use crate::ir::{self, DefKind, Res};
+use crate::ir::{self, DefKind, Res, VariantIdx};
 use crate::lexer::Symbol;
+use indexed_vec::Idx;
 use std::marker::PhantomData;
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
@@ -19,9 +20,9 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 }
                 ItemKind::Enum(generics, variants) => {
                     let generics = lctx.lower_generics(generics);
-                    let variants = lctx
-                        .arena
-                        .alloc_from_iter(variants.iter().map(|v| lctx.lower_variant(item, v)));
+                    let variants = lctx.arena.ir.alloc_from_iter(
+                        variants.iter().enumerate().map(|(i, v)| lctx.lower_variant(item, i, v)),
+                    );
                     ir::ItemKind::Enum(generics, variants)
                 }
                 ItemKind::Struct(generics, variant_kind) => {
@@ -34,9 +35,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    fn lower_variant(&mut self, item: &Item, variant: &Variant) -> ir::Variant<'ir> {
+    fn lower_variant(&mut self, item: &Item, idx: usize, variant: &Variant) -> ir::Variant<'ir> {
+        let adt_def = self.curr_owner();
         self.with_owner(variant.id, |lctx| ir::Variant {
+            adt_def,
             id: lctx.lower_node_id(variant.id),
+            idx: VariantIdx::new(idx),
             ident: variant.ident,
             span: variant.span,
             kind: lctx.lower_variant_kind(&variant.kind),
@@ -53,10 +57,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         match variant_kind {
             VariantKind::Tuple(fields) => ir::VariantKind::Tuple(
                 self.arena
+                    .ir
                     .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
             ),
             VariantKind::Struct(fields) => ir::VariantKind::Struct(
                 self.arena
+                    .ir
                     .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
             ),
             VariantKind::Unit => ir::VariantKind::Unit,
@@ -65,7 +71,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_generics(&mut self, generics: &Generics) -> &'ir ir::Generics<'ir> {
         let &Generics { span, ref params } = generics;
-        let params = self.arena.alloc_from_iter(params.iter().map(|p| self.lower_ty_param(p)));
+        let params = self.arena.ir.alloc_from_iter(params.iter().map(|p| self.lower_ty_param(p)));
         self.arena.alloc(ir::Generics { span, params })
     }
 
@@ -85,7 +91,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub(super) fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
         let inputs =
-            self.arena.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));
+            self.arena.ir.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));
         let output = sig.ret_ty.as_ref().map(|ty| self.lower_ty(ty));
         self.arena.alloc(ir::FnSig { inputs, output })
     }

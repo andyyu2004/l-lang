@@ -1,19 +1,21 @@
 use crate::arena::{DropArena, DroplessArena, TypedArena};
-use crate::ir::Definitions;
+use crate::ir::{self, Definitions};
 use crate::ty::{Const, List, SubstsRef, Ty, TyFlag, TyKind, TyS};
 use std::{alloc::Layout, marker::PhantomData};
 
 /// collective arena which contains all main arenas
 #[derive(Default)]
 pub struct Arena<'tcx> {
-    dropless: DroplessArena,
+    pub ir: DroplessArena,
     drop: DropArena,
+    dropless: DroplessArena,
     tys: TypedArena<TyS<'tcx>>,
     consts: TypedArena<Const<'tcx>>,
     substs: TypedArena<SubstsRef<'tcx>>,
     tir: DroplessArena,
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
+    prog_marker: PhantomData<ir::Prog<'tcx>>,
 }
 
 impl<'tcx> Arena<'tcx> {

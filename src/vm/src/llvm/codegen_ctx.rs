@@ -90,11 +90,11 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> Option<FunctionValue<'tcx>> {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
-        for (id, item) in &prog.items {
-            self.items.borrow_mut().insert(id.def, item.ident);
+        for (&def, item) in &prog.items {
+            self.items.borrow_mut().insert(def, item.ident);
             match &item.kind {
                 ItemKind::Fn(body) => {
-                    let (_, ty) = self.tcx.collected_ty(id.def).expect_scheme();
+                    let (_, ty) = self.tcx.collected_ty(def).expect_scheme();
                     let (params, ret) = ty.expect_fn();
                     let llty = self.llvm_fn_ty(params, ret);
                     let llfn = self.module.add_function(item.ident.as_str(), llty, None);

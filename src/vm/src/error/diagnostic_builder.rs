@@ -2,12 +2,19 @@ use super::{Diagnostic, Diagnostics, Emitter, TextEmitter};
 use crate::span::Span;
 use std::cell::RefCell;
 use std::error::Error;
+use std::fmt::{self, Debug, Formatter};
 use std::ops::Deref;
 
 pub struct DiagnosticBuilder<'a> {
     diagnostics: &'a Diagnostics,
     diagnostic: Diagnostic,
     emitter: RefCell<Box<dyn Emitter>>,
+}
+
+impl<'a> Debug for DiagnosticBuilder<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.diagnostic)
+    }
 }
 
 impl Deref for DiagnosticBuilder<'_> {

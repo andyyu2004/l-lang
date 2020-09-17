@@ -6,13 +6,16 @@ mod stmt;
 use crate::ir;
 use crate::mir::{self, *};
 use crate::tir::{self, TirCtx};
+use crate::ty::VariantTy;
 use crate::typeck::TyCtx;
 use cfg::Cfg;
 use expr::LvalueBuilder;
 use indexed_vec::{Idx, IndexVec};
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
-static ENTRY_BLOCK_ID: usize = 0;
+const ENTRY_BLOCK: BlockId = BlockId(0);
 
 /// set a block pointer and return the value
 /// `let x = set!(block = self.foo(block, foo))`
@@ -36,25 +39,81 @@ pub fn build_fn<'a, 'tcx>(
     body: &'tcx tir::Body<'tcx>,
 ) -> mir::Body<'tcx> {
     let mut builder = Builder::new(ctx, body);
-    let entry_block = BlockId::new(ENTRY_BLOCK_ID);
-    let _ = builder.build_body(entry_block, body);
+    let _ = builder.build_body(ENTRY_BLOCK, body);
     let mir = builder.complete();
     mir::validate(&mir, &ctx);
-    println!("{}", mir);
+    eprintln!("{}", mir);
     mir
+}
+
+/// a bit of a hacky way to generate the mir for variant constructors
+/// `ty` should be the type of the enum adt
+pub fn build_enum_ctors<'tcx>(tcx: TyCtx<'tcx>, item: &ir::Item) -> SmallVec<[mir::Item<'tcx>; 2]> {
+    // todo deal with generics
+    let scheme = tcx.collected_ty(item.id.def);
+    let (_forall, ty) = scheme.expect_scheme();
+    let (adt_ty, _) = ty.expect_adt();
+    let mut vec = smallvec![];
+    for (idx, variant) in adt_ty.variants.iter_enumerated() {
+        let body = build_variant_ctor(tcx, ty, idx, variant);
+        eprintln!("{}", body);
+        let kind = mir::ItemKind::Fn(body);
+        let item = mir::Item {
+            span: item.span,
+            vis: item.vis,
+            ident: variant.ident,
+            id: variant.ctor.unwrap(),
+            kind,
+        };
+        vec.push(item);
+    }
+    vec
+}
+
+fn build_variant_ctor<'tcx>(
+    tcx: TyCtx<'tcx>,
+    ty: Ty<'tcx>,
+    variant_idx: VariantIdx,
+    variant: &VariantTy<'tcx>,
+) -> mir::Body<'tcx> {
+    let ctor = variant.ctor.unwrap();
+
+    // TODO get a proper span
+    let info = SpanInfo { span: Span::empty() };
+    let (adt, substs) = ty.expect_adt();
+
+    let mut vars = IndexVec::<VarId, Var<'tcx>>::default();
+    let mut alloc_var = |info: SpanInfo, kind: VarKind, ty: Ty<'tcx>| {
+        let var = Var { mtbl: Mutability::Imm, info, kind, ty };
+        vars.push(var)
+    };
+
+    let mut cfg = Cfg::default();
+    let lvalue = alloc_var(info, VarKind::Ret, ty).into();
+
+    // the `fields` of the variant are essentially the parameters of the constructor function
+    let fields = variant
+        .fields
+        .iter()
+        .map(|param| alloc_var(info, VarKind::Arg, param.ty(tcx, substs)))
+        .map(Lvalue::new)
+        .map(Operand::Ref)
+        .collect_vec();
+
+    let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
+    cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
+    cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
+    mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() }
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn new(ctx: &'a TirCtx<'a, 'tcx>, body: &tir::Body<'tcx>) -> Self {
-        let mut cfg = Cfg::default();
         let tcx = ctx.tcx;
-        assert_eq!(cfg.append_basic_block().index(), ENTRY_BLOCK_ID);
-        let vars = IndexVec::default();
         let mut builder = Self {
             tcx: ctx.tcx,
             ctx,
-            cfg,
-            vars,
+            cfg: Default::default(),
+            vars: Default::default(),
             var_ir_map: Default::default(),
             argc: body.params.len(),
         };

@@ -23,46 +23,34 @@ impl<'a, 'r> DefVisitor<'a, 'r> {
         ret
     }
 
-    pub fn with_adt<R>(&mut self, id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
-        let prev = self.curr_adt_id.take();
-        self.curr_adt_id = Some(id);
-        let ret = f(self);
-        self.curr_adt_id = prev;
-        ret
-    }
-
     pub fn new_module(&mut self, name: Ident) -> ModuleId {
         self.resolver.new_module(self.curr_mod, name)
-    }
-
-    fn curr_adt_id(&mut self) -> NodeId {
-        self.curr_adt_id.unwrap()
     }
 }
 
 impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
-        self.with_adt(item.id, |this| match item.kind {
+        match item.kind {
             ItemKind::Enum(..) => {
                 // enums introduce a new namespace represented as a module
-                let module = this.new_module(item.ident);
-                this.with_module(module, |this| ast::walk_item(this, item));
+                let module = self.new_module(item.ident);
+                self.with_module(module, |this| ast::walk_item(this, item));
             }
-            _ => ast::walk_item(this, item),
-        })
+            _ => ast::walk_item(self, item),
+        }
     }
 
     /// define the variant constructor
-    fn visit_variant(&mut self, idx: VariantIdx, variant: &'ast Variant) {
+    fn visit_variant(&mut self, variant: &'ast Variant) {
         let ctor_kind = match variant.kind {
             VariantKind::Struct(..) => CtorKind::Struct,
             VariantKind::Tuple(..) => CtorKind::Tuple,
             VariantKind::Unit => CtorKind::Unit,
         };
-        let def_kind = DefKind::Ctor(ctor_kind, idx, self.curr_adt_id());
+        let def_kind = DefKind::Ctor(ctor_kind);
         self.resolver.def_item(self.curr_mod, variant.ident, variant.id, def_kind);
-        ast::walk_variant(self, idx, variant);
+        ast::walk_variant(self, variant);
     }
 
     fn visit_ty_param(&mut self, ty_param: &'ast TyParam) {

@@ -1,4 +1,5 @@
 use super::{Expr, NodeId, Pattern, Stmt, StmtKind, Ty, P};
+use crate::ir::VariantIdx;
 use crate::lexer::{Symbol, Tok, TokenType};
 use crate::span::Span;
 use crate::util;

@@ -1,20 +1,22 @@
 use super::TyCtx;
 use crate::ast::Ident;
 use crate::error::TypeError;
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, Visitor};
 use crate::ty::{AdtTy, FieldTy, List, Ty, TyConv, TyKind, VariantTy};
+use ir::CtorKind;
 use rustc_hash::FxHashMap;
 
-impl<'tcx> TyCtx<'tcx> {
-    pub fn collect(self, prog: &ir::Prog<'tcx>) {
-        prog.items.values().for_each(|item| self.collect_item(item))
-    }
+struct ItemCollector<'tcx> {
+    tcx: TyCtx<'tcx>,
+}
 
-    pub fn collect_item(self, item: &ir::Item<'tcx>) {
+impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
+    fn visit_item(&mut self, item: &ir::Item<'tcx>) {
+        let tcx = self.tcx;
         let ty = match &item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
-                let fn_ty = TyConv::fn_sig_to_ty(&self, sig);
-                self.generalize(generics, fn_ty)
+                let fn_ty = TyConv::fn_sig_to_ty(&tcx, sig);
+                tcx.generalize(generics, fn_ty)
             }
             ir::ItemKind::Struct(generics, variant_kind) => {
                 // TODO
@@ -22,32 +24,73 @@ impl<'tcx> TyCtx<'tcx> {
                 // self.item_tys
                 //     .borrow_mut()
                 //     .insert(item.id.def, self.generalize(generics, opaque_ty));
-
-                let variant_ty = self.variant_ty(item.ident, None, variant_kind);
-                let adt_ty = self.mk_struct_ty(item.id.def, item.ident, variant_ty);
-                let ty = self.mk_adt_ty(adt_ty, List::empty());
-                self.generalize(generics, ty)
+                let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
+                let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
+                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                tcx.generalize(generics, ty)
             }
             ir::ItemKind::Enum(generics, variants) => {
                 let variant_tys = variants
                     .iter()
                     .map(|variant| {
-                        self.variant_ty(variant.ident, Some(variant.id.def), &variant.kind)
+                        tcx.variant_ty(variant.ident, Some(variant.id.def), &variant.kind)
                     })
                     .collect();
 
-                let adt_ty = self.mk_enum_ty(item.id.def, item.ident, variant_tys);
-                let ty = self.mk_adt_ty(adt_ty, List::empty());
-                self.generalize(generics, ty)
+                let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
+                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                tcx.generalize(generics, ty)
             }
         };
-        info!("collect: {:#?}", ty);
-        self.collect_ty(item.id.def, ty);
+        info!("collect item: {:#?}", ty);
+        tcx.collect_ty(item.id.def, ty);
+    }
+}
+
+/// this runs a separate collection pass as it requires the enum tys to be known
+struct CtorCollector<'tcx> {
+    tcx: TyCtx<'tcx>,
+}
+
+impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
+    fn visit_variant(&mut self, variant: &'tcx ir::Variant<'tcx>) {
+        let tcx = self.tcx;
+        let ty = tcx.collected_ty(variant.adt_def);
+        let (forall, ty) = ty.expect_scheme();
+        let (adt_ty, substs) = ty.expect_adt();
+        let ctor_ty = match variant.kind {
+            // these two constructor kinds are already of the enum type
+            // and should already be handled by the previous collection pass
+            ir::VariantKind::Struct(..) | ir::VariantKind::Unit => unreachable!(),
+            // represent enum tuples as injection functions
+            // enum Option<T> {
+            //     Some(T),
+            //     None
+            // }
+            //
+            // None: Option<T>
+            // Some: T -> Option<T>
+            ir::VariantKind::Tuple(..) => {
+                let variant = &adt_ty.variants[variant.idx];
+                let tys = tcx.mk_substs(variant.fields.iter().map(|f| f.ty(tcx, substs)));
+                tcx.mk_fn_ty(tys, ty)
+            }
+        };
+        let generalized = tcx.mk_ty_scheme(forall, ctor_ty);
+        tcx.collect_ty(variant.id.def, generalized);
+    }
+}
+
+impl<'tcx> TyCtx<'tcx> {
+    pub fn collect(self, prog: &'tcx ir::Prog<'tcx>) {
+        ItemCollector { tcx: self }.visit_prog(prog);
+        CtorCollector { tcx: self }.visit_prog(prog);
     }
 
     /// write collected memory to tcx map
-    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) {
+    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.collected_tys.borrow_mut().insert(def, ty);
+        ty
     }
 
     pub fn variant_ty(

@@ -71,7 +71,7 @@ where
         match item.kind {
             tir::ItemKind::Fn(ty, generics, body) => {
                 let params = body.params.iter().map(|p| format!("{}", p.pat));
-                indentln!(self, "#{:?} :: {}", item.id.def, ty)?;
+                indentln!(self, "fn {} :: {}", item.ident, ty)?;
                 indentln!(
                     self,
                     "{}fn {}<>({}) {}\n",

@@ -1,20 +1,51 @@
 //! control flow graph
 
-use super::{BasicBlock, BlockId, Builder};
+use super::{BasicBlock, BlockId, Builder, ENTRY_BLOCK};
 use crate::mir;
 use crate::ty::Const;
 use crate::typeck::TyCtx;
-use indexed_vec::IndexVec;
+use indexed_vec::{Idx, IndexVec};
 use mir::{Lvalue, Operand, Rvalue, SpanInfo, Terminator, TerminatorKind};
 
-#[derive(Default)]
 pub struct Cfg<'tcx> {
     pub(super) basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
+}
+
+impl Default for Cfg<'_> {
+    fn default() -> Self {
+        let mut cfg = Self { basic_blocks: Default::default() };
+        assert_eq!(cfg.append_basic_block(), ENTRY_BLOCK);
+        cfg
+    }
 }
 
 impl<'tcx> Cfg<'tcx> {
     pub fn append_basic_block(&mut self) -> BlockId {
         self.basic_blocks.push(BasicBlock::default())
+    }
+
+    pub fn push_assignment(
+        &mut self,
+        info: SpanInfo,
+        block: BlockId,
+        lvalue: Lvalue<'tcx>,
+        rvalue: Rvalue<'tcx>,
+    ) {
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Assign(lvalue, rvalue) });
+    }
+
+    pub fn push(&mut self, block: BlockId, stmt: mir::Stmt<'tcx>) {
+        self.basic_blocks[block].stmts.push(stmt);
+    }
+
+    fn block_mut(&mut self, block: BlockId) -> &mut BasicBlock<'tcx> {
+        &mut self.basic_blocks[block]
+    }
+
+    pub fn terminate(&mut self, info: SpanInfo, block: BlockId, kind: TerminatorKind<'tcx>) {
+        let block = self.block_mut(block);
+        debug_assert!(block.terminator.is_none(), "block already has terminator");
+        block.terminator = Some(Terminator { info, kind })
     }
 }
 
@@ -24,7 +55,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn block_mut(&mut self, block: BlockId) -> &mut BasicBlock<'tcx> {
-        &mut self.cfg.basic_blocks[block]
+        self.cfg.block_mut(block)
     }
 
     /// branch inst
@@ -33,9 +64,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     pub fn terminate(&mut self, info: SpanInfo, block: BlockId, kind: TerminatorKind<'tcx>) {
-        let block = self.block_mut(block);
-        debug_assert!(block.terminator.is_none(), "block already has terminator");
-        block.terminator = Some(Terminator { info, kind })
+        self.cfg.terminate(info, block, kind)
     }
 
     /// push a statement onto the given block
@@ -56,6 +85,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         lvalue: Lvalue<'tcx>,
         rvalue: Rvalue<'tcx>,
     ) {
-        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Assign(lvalue, rvalue) });
+        self.cfg.push_assignment(info, block, lvalue, rvalue)
     }
 }

@@ -132,22 +132,6 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         ty
     }
 
-    /// records the type of an enum constructor
-    pub fn write_ctor_ty(&self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        info!("fcx write ctor ty {:?} : {}", def, ty);
-        assert!(self.tables.borrow_mut().ctor_types.insert(def, ty).is_none());
-        ty
-    }
-
-    pub fn ctor_ty_opt(&self, def: DefId) -> Option<Ty<'tcx>> {
-        self.tables.borrow().ctor_types.get(&def).copied()
-    }
-
-    pub fn ctor_ty(&self, def: DefId) -> Ty<'tcx> {
-        self.ctor_ty_opt(def)
-            .unwrap_or_else(|| panic!("ctor type for def `{}` not found in tables", def))
-    }
-
     pub fn write_field_index(&self, id: ir::Id, idx: usize) {
         info!("fcx write field_index {:?} : {}", id, idx);
         self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));

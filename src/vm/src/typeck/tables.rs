@@ -10,17 +10,11 @@ pub struct TypeckOutputs<'tcx> {
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
-    pub ctor_types: FxHashMap<DefId, Ty<'tcx>>,
 }
 
 impl<'tcx> TypeckOutputs<'tcx> {
     pub fn new(def_id: DefId) -> Self {
-        Self {
-            def_id,
-            node_types: Default::default(),
-            field_indices: Default::default(),
-            ctor_types: Default::default(),
-        }
+        Self { def_id, node_types: Default::default(), field_indices: Default::default() }
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {

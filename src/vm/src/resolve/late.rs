@@ -60,13 +60,11 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         // don't recurse here as the visitor will handle that
-        match pat.kind {
-            PatternKind::Ident(ident, ..) => self.def_val(ident, Res::Local(pat.id)),
-            PatternKind::Path(..)
-            | PatternKind::Wildcard
-            | PatternKind::Variant(..)
-            | PatternKind::Tuple(..)
-            | PatternKind::Paren(..) => {}
+        match &pat.kind {
+            PatternKind::Ident(ident, ..) => self.def_val(*ident, Res::Local(pat.id)),
+            PatternKind::Path(path) | PatternKind::Variant(path, _) =>
+                self.resolve_path(pat.id, path, NS::Value),
+            PatternKind::Wildcard | PatternKind::Tuple(..) | PatternKind::Paren(..) => {}
         }
     }
 
