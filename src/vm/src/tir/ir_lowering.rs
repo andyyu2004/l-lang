@@ -124,22 +124,25 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(expr.to_tir_alloc(ctx)),
-            ir::PatternKind::Variant(path, pats) => {
-                let ty = ctx.node_type(self.id);
-                let (_, adt_ty) = ty.expect_fn();
-                let (adt, substs) = adt_ty.expect_adt();
-                let idx = adt.variant_idx_with_res(path.res);
-                tir::PatternKind::Variant(adt, idx, pats.to_tir(ctx))
-            }
-            ir::PatternKind::Path(path) => {
-                let ty = ctx.node_type(self.id);
-                let (adt, substs) = ty.expect_adt();
-                let idx = adt.variant_idx_with_res(path.res);
-                tir::PatternKind::Variant(adt, idx, &[])
-            }
+            ir::PatternKind::Variant(path, pats) => ctx.lower_variant_pat(self, path, pats),
+            ir::PatternKind::Path(path) => ctx.lower_variant_pat(self, path, &[]),
         };
         let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }
+    }
+}
+
+impl<'tcx> TirCtx<'_, 'tcx> {
+    fn lower_variant_pat(
+        &mut self,
+        pat: &ir::Pattern<'tcx>,
+        path: &ir::Path<'tcx>,
+        pats: &'tcx [ir::Pattern<'tcx>],
+    ) -> tir::PatternKind<'tcx> {
+        let ty = self.node_type(pat.id);
+        let (adt, substs) = ty.expect_adt();
+        let idx = adt.variant_idx_with_res(path.res);
+        tir::PatternKind::Variant(adt, idx, pats.to_tir(self))
     }
 }
 

@@ -11,12 +11,12 @@
 
 enum Option {
     Some(int),
-    None(),
+    None,
 }
 
 
 fn main() -> int {
-    let opt = Option::None();
+    let opt = Option::Some(5);
     match opt {
         Option::Some(x) => x,
         Option::None => 99,
