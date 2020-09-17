@@ -1,6 +1,9 @@
 stages:
   - build
 
+before_script:
+  - apt-get install llvm -y
+
 rust-nightly:
   stage: build
   image: rustlang/rust:nightly
