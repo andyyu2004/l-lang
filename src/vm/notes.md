@@ -21,3 +21,7 @@ Is this reasonable..
 
 I suppose the converse is possible by copying the boxed value into the
 stack frame of the function or something?
+
+
+# TODO
+Check for duplicate names in patterns somewhere
