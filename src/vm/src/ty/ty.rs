@@ -92,7 +92,7 @@ impl<'tcx> PartialEq for TyS<'tcx> {
     }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Eq, Hash, PartialEq, Clone)]
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
@@ -253,6 +253,12 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Float | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Int =>
                 TyFlags::empty(),
         }
+    }
+}
+
+impl<'tcx> Debug for TyKind<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 

@@ -126,7 +126,8 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(expr.to_tir_alloc(ctx)),
             ir::PatternKind::Variant(path, pats) => {
                 let ty = ctx.node_type(self.id);
-                let (adt, substs) = ty.expect_adt();
+                let (_, adt_ty) = ty.expect_fn();
+                let (adt, substs) = adt_ty.expect_adt();
                 let idx = adt.variant_idx_with_res(path.res);
                 tir::PatternKind::Variant(adt, idx, pats.to_tir(ctx))
             }

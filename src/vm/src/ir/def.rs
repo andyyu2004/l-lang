@@ -2,6 +2,7 @@ use crate::ir::{self, DefId, ParamIdx, VariantIdx};
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Res<Id = ir::Id> {
@@ -9,6 +10,18 @@ pub enum Res<Id = ir::Id> {
     Def(DefId, DefKind),
     Local(Id),
     Err,
+}
+
+impl<Id> Display for Res<Id> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let description = match *self {
+            Res::Def(_, kind) => return write!(f, "{}", kind),
+            Res::PrimTy(..) => "builtin type",
+            Res::Local(..) => "local variable",
+            Res::Err => "unresolved item",
+        };
+        write!(f, "{}", description)
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -44,6 +57,22 @@ pub enum DefKind {
     /// }
     /// (T, U, V) would have indices (0,1,2) respectively
     TyParam(ParamIdx),
+}
+
+impl Display for DefKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            DefKind::Fn => write!(f, "function"),
+            DefKind::Enum => write!(f, "enum"),
+            DefKind::Struct => write!(f, "struct"),
+            DefKind::Ctor(ctor) => match ctor {
+                CtorKind::Tuple => write!(f, "tuple constructor"),
+                CtorKind::Struct => write!(f, "struct constructor"),
+                CtorKind::Unit => write!(f, "unit constructor"),
+            },
+            DefKind::TyParam(_) => write!(f, "type parameter"),
+        }
+    }
 }
 
 impl<Id> Res<Id> {

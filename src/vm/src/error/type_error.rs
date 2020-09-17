@@ -1,5 +1,5 @@
 use crate::ast::Ident;
-use crate::ir;
+use crate::ir::{self, Res};
 use crate::span::Span;
 use crate::ty::Ty;
 use crate::typeck::inference::TyVid;
@@ -25,6 +25,8 @@ pub enum TypeError<'tcx> {
     IncorrectMainType(Ty<'tcx>),
     #[error("field `{0}` already declared in `{1}`")]
     FieldAlreadyDeclared(Ident, Ident),
+    #[error("expected unit variant, found {0}")]
+    UnexpectedVariant(Res),
     #[error("occurs check failed: type variable `{0}` occurs in type `{1}`")]
     OccursCheck(TyVid, Ty<'tcx>),
     #[error("type annotations required")]
