@@ -337,6 +337,16 @@ pub struct Const<'tcx> {
     marker: PhantomData<&'tcx ()>,
 }
 
+impl<'tcx> Const<'tcx> {
+    pub fn new(kind: ConstKind) -> Self {
+        Self { kind, marker: PhantomData }
+    }
+
+    pub fn unit() -> Self {
+        Self::new(ConstKind::Unit)
+    }
+}
+
 impl<'tcx> std::ops::Add for Const<'tcx> {
     type Output = Self;
 
@@ -382,16 +392,6 @@ impl std::hash::Hash for ConstKind {
             ConstKind::Bool(b) => b.hash(state),
             ConstKind::Unit => {}
         };
-    }
-}
-
-impl<'tcx> Const<'tcx> {
-    pub fn new(kind: ConstKind) -> Self {
-        Self { kind, marker: PhantomData }
-    }
-
-    pub fn unit() -> Self {
-        Self::new(ConstKind::Unit)
     }
 }
 

@@ -3,9 +3,13 @@ use crate::mir::build::*;
 use crate::mir::*;
 use crate::set;
 use crate::span::Span;
-use crate::ty::Ty;
+use crate::ty::{ConstKind, Ty};
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
+    pub fn mk_const_int(&mut self, i: i64) -> &'tcx Const<'tcx> {
+        self.tcx.intern_const(Const::new(ConstKind::Int(i)))
+    }
+
     pub fn as_const(
         &mut self,
         block: BlockId,

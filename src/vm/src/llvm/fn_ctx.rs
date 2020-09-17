@@ -309,15 +309,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_switch(
         &mut self,
-        discr: &mir::Rvalue<'tcx>,
-        arms: &[(mir::Rvalue<'tcx>, BlockId)],
+        discr: &mir::Operand<'tcx>,
+        arms: &[(mir::Operand<'tcx>, BlockId)],
         default: BlockId,
     ) {
-        let discr = self.codegen_rvalue(discr).into_int_value();
+        let discr = self.codegen_operand(discr).into_int_value();
         let arms = arms
             .iter()
             .map(|&(ref rvalue, block)| {
-                let rvalue = self.codegen_rvalue(rvalue).into_int_value();
+                let rvalue = self.codegen_operand(rvalue).into_int_value();
                 let block = self.blocks[block];
                 (rvalue, block)
             })

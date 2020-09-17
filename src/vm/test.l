@@ -18,7 +18,7 @@ enum Option {
 fn main() -> int {
     let opt = Option::Some(5);
     match opt {
-        Option::Some(x) => x,
+        Option::Some(x) => 1000,
         Option::None => 99,
     }
 }

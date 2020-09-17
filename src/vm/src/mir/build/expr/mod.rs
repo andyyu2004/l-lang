@@ -10,26 +10,27 @@ pub use lvalue::LvalueBuilder;
 
 mod constant;
 mod lvalue;
+mod matches;
 mod operand;
 mod rvalue;
 mod tmp;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    /// writes `expr` into `lvalue`
+    /// writes `expr` into `dest`
     // this method exists as it is easier to implement certain expressions
     // given an `lvalue` to write the result of the expression into
     // opposed to returning an rvalue directly
     pub fn write_expr(
         &mut self,
         mut block: BlockId,
-        lvalue: Lvalue<'tcx>,
+        dest: Lvalue<'tcx>,
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
         match expr.kind {
-            tir::ExprKind::Block(ir) => self.ir_block(block, lvalue, expr, ir),
-            tir::ExprKind::Call(f, args) => self.build_call(block, expr, lvalue, f, args),
-            tir::ExprKind::Match(scrut, arms) => self.build_match(block, expr, lvalue, scrut, arms),
+            tir::ExprKind::Block(ir) => self.ir_block(block, dest, expr, ir),
+            tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
+            tir::ExprKind::Match(scrut, arms) => self.build_match(block, dest, expr, scrut, arms),
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
             tir::ExprKind::Lambda(..) => todo!(),
             tir::ExprKind::VarRef(..)
@@ -45,7 +46,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Deref(..)
             | tir::ExprKind::Const(..) => {
                 let rvalue = set!(block = self.as_rvalue(block, expr));
-                self.push_assignment(info, block, lvalue, rvalue);
+                self.push_assignment(info, block, dest, rvalue);
                 block.unit()
             }
         }
@@ -54,8 +55,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn build_call(
         &mut self,
         mut block: BlockId,
-        expr: &tir::Expr<'tcx>,
         lvalue: Lvalue<'tcx>,
+        expr: &tir::Expr<'tcx>,
         f: &tir::Expr<'tcx>,
         args: &[tir::Expr<'tcx>],
     ) -> BlockAnd<()> {
@@ -70,17 +71,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn build_match(
         &mut self,
         mut block: BlockId,
-        expr: &tir::Expr<'tcx>,
         lvalue: Lvalue<'tcx>,
+        expr: &tir::Expr<'tcx>,
         scrut: &tir::Expr<'tcx>,
         arms: &[tir::Arm<'tcx>],
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
-        let scrut_rvalue = set!(block = self.as_rvalue(block, scrut));
+        let scrut_operand = set!(block = self.as_operand(block, scrut));
 
         // terminate all the switch blocks to branch back together again
         let end_block = self.append_basic_block();
-        let (arm_blocks, default) = self.build_arms(info, lvalue, &scrut_rvalue, arms, end_block);
+        let (arm_blocks, default) = self.build_arms(info, lvalue, &scrut_operand, arms, end_block);
 
         // if there is no default block, just create an unreachable one
         let default = default.unwrap_or_else(|| self.mk_unreachable(info));
@@ -88,7 +89,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.terminate(
             info,
             block,
-            TerminatorKind::Switch { discr: scrut_rvalue, arms: arm_blocks, default },
+            TerminatorKind::Switch { discr: scrut_operand, arms: arm_blocks, default },
         );
 
         end_block.unit()
@@ -105,10 +106,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         &mut self,
         info: SpanInfo,
         dest: Lvalue<'tcx>,
-        scrut_rvalue: &Rvalue<'tcx>,
+        scrut_operand: &Operand<'tcx>,
         arms: &[tir::Arm<'tcx>],
         end_block: BlockId,
-    ) -> (Vec<(Rvalue<'tcx>, BlockId)>, Option<BlockId>) {
+    ) -> (Vec<(Operand<'tcx>, BlockId)>, Option<BlockId>) {
         let mut switch_arms = Vec::with_capacity(arms.len());
         for arm in arms {
             // create the block for the body of the arm
@@ -117,13 +118,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // but we need to return the start block for the switch terminator
             let mut block = start_block;
             // the first irrefutable pattern will be assigned the default block of the switch
-            let rvalue = set!(block = self.build_arm_pat(block, arm.pat, scrut_rvalue));
+            let operand = set!(block = self.build_arm_pat(block, arm.pat, scrut_operand));
             set!(block = self.write_expr(block, dest, arm.body));
             self.terminate(info, block, TerminatorKind::Branch(end_block));
             if !arm.pat.is_refutable() {
                 return (switch_arms, Some(start_block));
             }
-            switch_arms.push((rvalue, start_block));
+            switch_arms.push((operand, start_block));
         }
         (switch_arms, None)
     }
@@ -132,16 +133,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         &mut self,
         block: BlockId,
         pat: &tir::Pattern<'tcx>,
-        cmp_rval: &Rvalue<'tcx>,
-    ) -> BlockAnd<Rvalue<'tcx>> {
+        cmp_operand: &Operand<'tcx>,
+    ) -> BlockAnd<Operand<'tcx>> {
         match pat.kind {
-            tir::PatternKind::Wildcard => block.and(cmp_rval.clone()),
+            tir::PatternKind::Wildcard => block.and(cmp_operand.clone()),
             tir::PatternKind::Binding(m, ident, _) => {
                 self.alloc_local(pat);
-                block.and(cmp_rval.clone())
+                block.and(cmp_operand.clone())
             }
             tir::PatternKind::Field(_) => todo!(),
-            tir::PatternKind::Lit(c) => self.as_rvalue(block, c),
+            tir::PatternKind::Lit(c) => self.as_operand(block, c),
             tir::PatternKind::Variant(adt, idx, pats) => todo!(),
         }
     }
