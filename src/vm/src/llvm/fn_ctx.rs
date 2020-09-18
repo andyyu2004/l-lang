@@ -169,6 +169,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
+            mir::Rvalue::Closure(body) => todo!(),
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
                 let operand = self.codegen_operand(operand);

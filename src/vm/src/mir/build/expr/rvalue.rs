@@ -39,6 +39,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let rhs = set!(block = self.as_operand(block, r));
                 self.build_binary_op(block, expr.span, expr.ty, op, lhs, rhs)
             }
+            tir::ExprKind::Closure(body) => self.build_closure(block, expr, body),
             tir::ExprKind::Unary(op, expr) => {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Unary(op, operand))
@@ -65,7 +66,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
-            | tir::ExprKind::Lambda(..)
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Field(..)

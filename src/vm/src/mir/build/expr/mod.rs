@@ -8,6 +8,7 @@ use itertools::Itertools;
 
 pub use lvalue::LvalueBuilder;
 
+mod closure;
 mod constant;
 mod lvalue;
 mod matches;
@@ -32,10 +33,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => self.build_match(block, dest, expr, scrut, arms),
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
-            tir::ExprKind::Lambda(..) => todo!(),
             tir::ExprKind::VarRef(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Closure(..)
             | tir::ExprKind::Ref(..)
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Field(..)

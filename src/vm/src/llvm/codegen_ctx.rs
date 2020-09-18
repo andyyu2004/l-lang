@@ -103,7 +103,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
         for (id, item) in &prog.items {
             match &item.kind {
-                ItemKind::Fn(body) => self.codegen_body(item, body),
+                ItemKind::Fn(body) => self.codegen_body(item.ident.as_str(), body),
             };
         }
         self.module.print_to_stderr();
@@ -115,12 +115,8 @@ impl<'tcx> CodegenCtx<'tcx> {
         })
     }
 
-    fn codegen_body(
-        &mut self,
-        item: &mir::Item,
-        body: &'tcx mir::Body<'tcx>,
-    ) -> FunctionValue<'tcx> {
-        let llfn = self.module.get_function(item.ident.as_str()).unwrap();
+    fn codegen_body(&mut self, fn_name: &str, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
+        let llfn = self.module.get_function(fn_name).unwrap();
         let mut fcx = FnCtx::new(&self, body, llfn);
         fcx.codegen_body();
         llfn

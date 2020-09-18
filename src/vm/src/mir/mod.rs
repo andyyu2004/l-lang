@@ -64,7 +64,7 @@ pub enum ItemKind<'tcx> {
     Fn(mir::Body<'tcx>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Body<'tcx> {
     pub basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
     pub vars: IndexVec<VarId, Var<'tcx>>,
@@ -195,6 +195,7 @@ pub enum Rvalue<'tcx> {
     Ref(Lvalue<'tcx>),
     /// (x,y)
     Tuple(Vec<Operand<'tcx>>),
+    Closure(mir::Body<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,

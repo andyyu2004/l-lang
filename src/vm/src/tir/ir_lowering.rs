@@ -275,7 +275,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => ctx.lower_path(self, path),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
-            ir::ExprKind::Closure(_, body) => tir::ExprKind::Lambda(body.to_tir_alloc(ctx)),
+            ir::ExprKind::Closure(_, body) => tir::ExprKind::Closure(body.to_tir_alloc(ctx)),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),

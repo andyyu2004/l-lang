@@ -70,7 +70,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Tuple(..)
-            | tir::ExprKind::Lambda(..)
+            | tir::ExprKind::Closure(..)
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Assign(..)

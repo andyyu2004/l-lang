@@ -2,6 +2,7 @@ use super::{Module, ModuleTree};
 use crate::arena::TypedArena;
 use crate::ast::{Ident, NodeId, Prog};
 use crate::driver::Session;
+use crate::error::ResolutionError;
 use crate::ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use crate::lexer::{symbol, Symbol};
 use crate::span::Span;
@@ -71,7 +72,9 @@ impl<'a> Resolver<'a> {
     pub fn new_module(&mut self, par: ModuleId, name: Ident) -> ModuleId {
         let module = self.arenas.modules.alloc(Module::default());
         let id = self.modules.push(module);
-        self.modules[par].submodules.borrow_mut().insert(name, id);
+        if self.modules[par].submodules.borrow_mut().insert(name, id).is_some() {
+            self.emit_error(name.span, ResolutionError::DuplicateModuleDefinition(name));
+        };
         id
     }
 
@@ -104,7 +107,14 @@ impl<'a> Resolver<'a> {
         def_kind: DefKind,
     ) -> DefId {
         let def_id = self.def(name, node_id);
-        self.modules[module].items.borrow_mut().insert(name, Res::Def(def_id, def_kind));
+        if self.modules[module]
+            .items
+            .borrow_mut()
+            .insert(name, Res::Def(def_id, def_kind))
+            .is_some()
+        {
+            self.emit_error(name.span, ResolutionError::DuplicateDefinition(def_kind, name));
+        };
         def_id
     }
 

@@ -16,7 +16,7 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::ItemRef(def_id) => self.compile_item_ref(def_id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
-            tir::ExprKind::Lambda(f) => self.compile_lambda(f),
+            tir::ExprKind::Closure(f) => self.compile_lambda(f),
             tir::ExprKind::Ret(expr) => self.compile_ret(expr),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(expr, arms) => self.compile_match(expr, arms),

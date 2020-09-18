@@ -25,7 +25,7 @@ pub enum ExprKind<'tcx> {
     /// reference to an item such as a function or a constant
     ItemRef(DefId),
     Tuple(&'tcx [tir::Expr<'tcx>]),
-    Lambda(&'tcx tir::Body<'tcx>),
+    Closure(&'tcx tir::Body<'tcx>),
     Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
     Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
     Assign(&'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
