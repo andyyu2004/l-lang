@@ -9,6 +9,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         body: &'tcx tir::Body<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
         let body = build_fn(&self.ctx, body);
-        block.and(Rvalue::Closure(body))
+        block.and(Rvalue::Closure(expr.ty, body))
     }
 }

@@ -195,7 +195,7 @@ pub enum Rvalue<'tcx> {
     Ref(Lvalue<'tcx>),
     /// (x,y)
     Tuple(Vec<Operand<'tcx>>),
-    Closure(mir::Body<'tcx>),
+    Closure(Ty<'tcx>, mir::Body<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,

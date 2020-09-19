@@ -18,9 +18,10 @@ enum Option {
 fn main() -> int {
     let opt = Option::Some(5);
     let (x, x) = (1,2);
-    let f = fn() => 5;
+    let f = fn(k) => k;
+    let g = fn(k) => 1 + k;
+    return f(g(9));
 
-    return 5;
     // match opt {
     //     Option::Some(x) => 1000,
     //     Option::None => 99,

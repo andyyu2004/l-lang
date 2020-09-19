@@ -1,9 +1,11 @@
+use super::util::LLVMAsPtrVal;
 use super::CodegenCtx;
 use crate::ast;
 use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
-use inkwell::{basic_block::BasicBlock, values::*, AddressSpace, FloatPredicate, IntPredicate};
+use inkwell::basic_block::BasicBlock;
+use inkwell::{values::*, AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use mir::Lvalue;
 use rustc_hash::FxHashMap;
@@ -60,7 +62,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         std::iter::once(retvar).chain(args).chain(vars).collect()
     }
 
-    crate fn codegen_body(&mut self) {
+    /// entry point of `FnCtx`
+    crate fn codegen(&mut self) {
         for id in self.body.basic_blocks.indices() {
             self.codegen_basic_block(id);
         }
@@ -79,14 +82,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.blocks[id]
     }
 
-    fn codegen_stmt(&mut self, stmt: &mir::Stmt<'tcx>) {
+    fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
             mir::StmtKind::Nop => {}
         }
     }
 
-    fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &mir::Rvalue<'tcx>) {
+    fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &'tcx mir::Rvalue<'tcx>) {
         let var = self.codegen_lvalue(lvalue);
         // certain aggregate rvalues require special treatment as
         // llvm doesn't like recursively building these values (with temporaries)
@@ -167,9 +170,26 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn codegen_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
+    /// saves the previous insert block, runs a function, then restores the builder to the end of
+    /// the previous basic block
+    fn with_new_insertion_point<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        // save the insertion point of the outer function
+        let prev_block = self.get_insert_block();
+        let ret = f(self);
+        if let Some(block) = prev_block {
+            self.position_at_end(block);
+        }
+        ret
+    }
+
+    fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
-            mir::Rvalue::Closure(body) => todo!(),
+            mir::Rvalue::Closure(ty, body) => {
+                let name = "<closure>";
+                let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
+                self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
+                f.as_llvm_ptr().into()
+            }
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
                 let operand = self.codegen_operand(operand);

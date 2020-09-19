@@ -184,7 +184,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 write!(f, "{}", op)?;
                 operand.mir_fmt(f)
             }
-            mir::Rvalue::Closure(body) => write!(f, "<closure>"),
+            mir::Rvalue::Closure(_, body) => write!(f, "<closure>"),
         }
     }
 }

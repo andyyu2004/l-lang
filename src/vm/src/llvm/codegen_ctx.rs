@@ -9,11 +9,10 @@ use crate::span::Span;
 use crate::tir;
 use crate::ty::*;
 use crate::typeck::TyCtx;
+use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
-use inkwell::{
-    basic_block::BasicBlock, builder::Builder, context::Context, module::Module, passes::PassManager
-};
+use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -25,11 +24,11 @@ use symbol::Symbol;
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub llctx: &'tcx Context,
-    pub builder: Builder<'tcx>,
     pub fpm: PassManager<FunctionValue<'tcx>>,
     pub module: Module<'tcx>,
     pub vals: CommonValues<'tcx>,
     pub types: CommonTypes<'tcx>,
+    pub builder: Builder<'tcx>,
     /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
     /// this api is a bit awkward, but its what inkwell has so..
     pub items: RefCell<FxHashMap<DefId, Ident>>,
@@ -115,11 +114,16 @@ impl<'tcx> CodegenCtx<'tcx> {
         })
     }
 
-    fn codegen_body(&mut self, fn_name: &str, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
+    pub fn codegen_body(&self, fn_name: &str, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
         let llfn = self.module.get_function(fn_name).unwrap();
         let mut fcx = FnCtx::new(&self, body, llfn);
-        fcx.codegen_body();
+        fcx.codegen();
         llfn
+    }
+
+    pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
+        let (params, ret) = ty.expect_fn();
+        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
     pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {

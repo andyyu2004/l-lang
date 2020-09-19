@@ -96,7 +96,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn idx_of_ty_param(&mut self, id: NodeId) -> ParamIdx {
-        *self.ty_param_id_to_idx.get(&id).unwrap()
+        self.ty_param_id_to_idx.get(&id).copied().unwrap()
     }
 
     pub fn def_item(
