@@ -1,4 +1,4 @@
-use crate::ast::{Ident, Lit, UnaryOp, Visibility};
+use crate::ast::{Ident, Lit, Mutability, UnaryOp, Visibility};
 use crate::ir::{self, CtorKind, DefId, DefKind, FieldIdx, VariantIdx};
 use crate::lexer::Symbol;
 use crate::mir;
@@ -144,6 +144,35 @@ impl<'tcx> TirCtx<'_, 'tcx> {
         let idx = adt.variant_idx_with_res(path.res);
         tir::PatternKind::Variant(adt, idx, pats.to_tir(self))
     }
+
+    fn lower_closure(&mut self, closure: &ir::Expr, body: &ir::Body<'tcx>) -> tir::ExprKind<'tcx> {
+        let body = body.to_tir_alloc(self);
+        let upvar_captures = self.tables.upvar_captures_for_closure(closure.id);
+        let upvars = self
+            .tcx
+            .alloc_tir_iter(upvar_captures.iter().map(|&upvar| self.capture_upvar(closure, upvar)));
+        tir::ExprKind::Closure { body, upvars }
+    }
+
+    /// manually constructs a (mutable?) borrow expression to an upvar
+    fn capture_upvar(&mut self, closure: &ir::Expr, upvar: UpvarId) -> tir::Expr<'tcx> {
+        let id = upvar.var_id;
+        let span = closure.span;
+        let ty = self.node_type(id);
+        // rebuild the `VarRef` expressions that the upvar refers to
+        let captured = self.alloc_tir(tir::Expr { id, span, ty, kind: tir::ExprKind::VarRef(id) });
+        // construct a mutable borrow expression to the captured upvar
+        let borrow_expr = tir::Expr {
+            // quite hacky, but we intentionally reuse the id of `captured` so the references to
+            // `captured` actually end up referencing the `borrow_expr`
+            // we insert some dereferences in the mir for upvars so the types work out
+            id,
+            span,
+            ty: self.mk_ptr_ty(Mutability::Mut, ty),
+            kind: tir::ExprKind::Ref(captured),
+        };
+        borrow_expr
+    }
 }
 
 impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
@@ -275,7 +304,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
             ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
             ir::ExprKind::Path(path) => ctx.lower_path(self, path),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
-            ir::ExprKind::Closure(_, body) => tir::ExprKind::Closure(body.to_tir_alloc(ctx)),
+            ir::ExprKind::Closure(_sig, body) => ctx.lower_closure(self, body),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
@@ -303,7 +332,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 tir::ExprKind::Field(expr.to_tir_alloc(ctx), ctx.tables.field_index(self.id)),
             ir::ExprKind::Box(expr) => tir::ExprKind::Box(expr.to_tir_alloc(ctx)),
         };
-        tir::Expr { span, id, kind, ty }
+        tir::Expr { id, span, kind, ty }
     }
 }
 

@@ -36,7 +36,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::VarRef(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Adt { .. }
-            | tir::ExprKind::Closure(..)
+            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Ref(..)
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Field(..)
@@ -139,7 +139,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         match pat.kind {
             tir::PatternKind::Wildcard => block.and(cmp_operand.clone()),
             tir::PatternKind::Binding(m, ident, _) => {
-                self.alloc_local(pat);
+                let &tir::Pattern { id, span, ty, .. } = pat;
+                self.alloc_local(id, span, ty);
                 block.and(cmp_operand.clone())
             }
             tir::PatternKind::Field(_) => todo!(),

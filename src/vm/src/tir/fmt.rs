@@ -110,8 +110,8 @@ where
                 None => indent!(self, "return"),
             },
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
-            tir::ExprKind::Closure(b) =>
-                indent!(self, "(λ({}) {})", util::join2(b.params.iter(), ","), b.expr),
+            tir::ExprKind::Closure { upvars, body } =>
+                indent!(self, "(λ({}) {})", util::join2(body.params.iter(), ","), body),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
             tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
             tir::ExprKind::Adt { adt, fields, .. } => {

@@ -184,7 +184,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
         match rvalue {
-            mir::Rvalue::Closure(ty, body) => {
+            mir::Rvalue::Closure(ty, body, upvars) => {
                 let name = "<closure>";
                 let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
                 self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
@@ -224,7 +224,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ConstKind::Bool(b) => self.types.boolean.const_int(b as u64, true).into(),
                 ConstKind::Unit => self.vals.unit.into(),
             },
-            &mir::Operand::Ref(lvalue) => {
+            &mir::Operand::Use(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
                 self.build_load(var.ptr, "load").into()
             }

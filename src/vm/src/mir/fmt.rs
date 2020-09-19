@@ -152,6 +152,7 @@ impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
             mir::VarKind::Local => write!(f, "{}", self.info.span.to_string()),
             mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
             mir::VarKind::Ret => write!(f, "retvar"),
+            mir::VarKind::Upvar => write!(f, "upvar"),
         }
     }
 }
@@ -193,7 +194,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
-            mir::Operand::Ref(lvalue) => lvalue.mir_fmt(f),
+            mir::Operand::Use(lvalue) => lvalue.mir_fmt(f),
             mir::Operand::Item(def) => write!(f, "#{:?}", def),
         }
     }

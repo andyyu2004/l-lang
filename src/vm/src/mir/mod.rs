@@ -179,6 +179,7 @@ pub enum VarKind {
     Arg,
     /// location of return value.
     Ret,
+    Upvar,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -208,7 +209,7 @@ pub enum Rvalue<'tcx> {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operand<'tcx> {
     Const(&'tcx Const<'tcx>),
-    Ref(Lvalue<'tcx>),
+    Use(Lvalue<'tcx>),
     Item(DefId),
 }
 

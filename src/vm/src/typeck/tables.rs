@@ -1,20 +1,48 @@
 use crate::ir::{self, DefId, FieldIdx, LocalId};
-use crate::ty::Ty;
-use rustc_hash::FxHashMap;
+use crate::ty::{Ty, UpvarId};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::hash_map::Entry;
 
 /// the outputs of typechecking
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeckOutputs<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
-    pub def_id: DefId,
+    def_id: DefId,
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
+    upvar_captures: FxHashMap<ir::Id, FxHashSet<UpvarId>>,
 }
 
 impl<'tcx> TypeckOutputs<'tcx> {
     pub fn new(def_id: DefId) -> Self {
-        Self { def_id, node_types: Default::default(), field_indices: Default::default() }
+        Self {
+            def_id,
+            node_types: Default::default(),
+            field_indices: Default::default(),
+            upvar_captures: Default::default(),
+        }
+    }
+
+    pub fn upvar_captures_for_closure(&self, closure_id: ir::Id) -> &FxHashSet<UpvarId> {
+        &self.upvar_captures[&closure_id]
+    }
+
+    pub fn record_upvar_capture_for_closure(
+        &mut self,
+        closure_id: ir::Id,
+        upvars: FxHashSet<UpvarId>,
+    ) {
+        match self.upvar_captures.entry(closure_id) {
+            Entry::Vacant(entry) => entry.insert(upvars),
+            Entry::Occupied(_) => panic!("upvars already set for closure `{}`", closure_id),
+        };
+    }
+
+    pub fn record_upvar_capture(&mut self, upvar: UpvarId) {
+        if self.upvar_captures.entry(upvar.closure_id).or_default().insert(upvar) {
+            panic!("variable captured twice by the same closure")
+        }
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
@@ -86,5 +114,9 @@ impl<'a, T> TableDefIdValidatorMut<'a, T> {
     pub fn remove(&mut self, id: ir::Id) -> Option<T> {
         validate_id(self.def_id, id);
         self.table.remove(&id.local)
+    }
+
+    pub fn clear(&mut self) {
+        self.table.clear()
     }
 }

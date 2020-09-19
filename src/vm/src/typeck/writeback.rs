@@ -1,11 +1,12 @@
 //! this pass goes over the entire hir and constructs a `TypeckTable` which replaces all inference
 //! variables with their actual values
 
-use super::{inference::FnCtx, TypeckOutputs};
+use super::inference::FnCtx;
+use super::TypeckOutputs;
 use crate::error::TypeError;
+use crate::ir::{self, Visitor};
+use crate::span::Span;
 use crate::ty::{InferenceVarSubstFolder, Ty, TypeFoldable, TypeFolder};
-use crate::{ir, span::Span};
-use ir::Visitor;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// constructs a new typeck table with all inference variables replaced by their actual types
@@ -32,7 +33,13 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
         let def_id = body.expr.id.def;
         let substs = fcx.inference_substs();
         let subst_folder = InferenceVarSubstFolder::new(fcx.tcx, substs);
-        let tables = TypeckOutputs::new(def_id);
+
+        // TODO this whole approach is pretty ugly..
+
+        // just clone as most of the stuff is the same
+        // currently only node_types needs to be overwritten
+        let mut tables = fcx.tables.borrow().clone();
+        tables.node_types_mut().clear();
         Self { fcx, tables, body, subst_folder }
     }
 
@@ -44,23 +51,6 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
 impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx ir::Expr<'tcx>) {
         self.write_node_ty(expr.span, expr.id);
-        match expr.kind {
-            ir::ExprKind::Lit(_)
-            | ir::ExprKind::Bin(..)
-            | ir::ExprKind::Unary(..)
-            | ir::ExprKind::Ret(_)
-            | ir::ExprKind::Block(_)
-            | ir::ExprKind::Path(_)
-            | ir::ExprKind::Tuple(_)
-            | ir::ExprKind::Closure(..)
-            | ir::ExprKind::Assign(..)
-            | ir::ExprKind::Call(..)
-            | ir::ExprKind::Box(..)
-            | ir::ExprKind::Match(..) => {}
-            ir::ExprKind::Field(..) => self.visit_field_id(expr.id),
-            ir::ExprKind::Struct(_, fields) =>
-                fields.iter().for_each(|f| self.visit_field_id(f.id)),
-        }
         ir::walk_expr(self, expr);
     }
 
@@ -71,12 +61,6 @@ impl<'a, 'tcx> ir::Visitor<'tcx> for WritebackCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
-    fn visit_field_id(&mut self, id: ir::Id) {
-        if let Some(idx) = self.fcx.tables.borrow_mut().field_indices_mut().remove(id) {
-            self.tables.field_indices_mut().insert(id, idx);
-        }
-    }
-
     fn write_node_ty(&mut self, span: Span, id: ir::Id) {
         let unresolved_ty = self.fcx.node_ty(id);
         let ty = self.resolve_ty(unresolved_ty, span);

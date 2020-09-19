@@ -16,16 +16,16 @@ impl<'tcx> Compiler<'tcx> {
             tir::ExprKind::VarRef(id) => self.compile_var_ref(id),
             tir::ExprKind::ItemRef(def_id) => self.compile_item_ref(def_id),
             tir::ExprKind::Tuple(xs) => self.compile_tuple(xs),
-            tir::ExprKind::Closure(f) => self.compile_lambda(f),
             tir::ExprKind::Ret(expr) => self.compile_ret(expr),
             tir::ExprKind::Call(f, args) => self.compile_call(f, args),
             tir::ExprKind::Match(expr, arms) => self.compile_match(expr, arms),
             tir::ExprKind::Assign(l, r) => self.compile_assign(l, r),
             tir::ExprKind::Box(..) => todo!(),
-            tir::ExprKind::Adt { .. } => todo!(),
             tir::ExprKind::Field(_, _) => todo!(),
             tir::ExprKind::Deref(_) => todo!(),
             tir::ExprKind::Ref(_) => todo!(),
+            tir::ExprKind::Adt { .. } => todo!(),
+            tir::ExprKind::Closure { upvars, body } => self.compile_lambda(body),
         };
     }
 

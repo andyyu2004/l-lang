@@ -46,13 +46,32 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         block.and(builder.lvalue(self.tcx))
     }
 
+    pub fn var_id_as_lvalue(&mut self, id: ir::Id) -> Lvalue<'tcx> {
+        self.var_id_as_lvalue_builder(id).lvalue(self.tcx)
+    }
+
+    pub fn var_id_as_lvalue_builder(&mut self, id: ir::Id) -> LvalueBuilder<'tcx> {
+        let var_id = self
+            .var_ir_map
+            .get(&id)
+            .copied()
+            .unwrap_or_else(|| panic!("no variable with id `{}`", id));
+        let var = self.vars[var_id];
+        match var.kind {
+            // there needs to be an implicit dereference on upvars
+            // as every upvar is actually a mutable reference to the captured variable
+            VarKind::Upvar => LvalueBuilder::from(var_id).project_deref(),
+            _ => LvalueBuilder::from(var_id),
+        }
+    }
+
     pub fn as_lvalue_builder(
         &mut self,
         mut block: BlockId,
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<LvalueBuilder<'tcx>> {
         match expr.kind {
-            tir::ExprKind::VarRef(id) => block.and(LvalueBuilder::from(self.var_ir_map[&id])),
+            tir::ExprKind::VarRef(id) => block.and(self.var_id_as_lvalue_builder(id)),
             tir::ExprKind::Field(base, idx) => {
                 let builder = set!(block = self.as_lvalue_builder(block, base));
                 block.and(builder.project_field(idx, expr.ty))
@@ -70,7 +89,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Tuple(..)
-            | tir::ExprKind::Closure(..)
+            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Assign(..)

@@ -39,7 +39,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let rhs = set!(block = self.as_operand(block, r));
                 self.build_binary_op(block, expr.span, expr.ty, op, lhs, rhs)
             }
-            tir::ExprKind::Closure(body) => self.build_closure(block, expr, body),
+            tir::ExprKind::Closure { upvars, body } =>
+                self.build_closure(block, expr, upvars, body),
             tir::ExprKind::Unary(op, expr) => {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Unary(op, operand))
@@ -48,8 +49,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // as there is no direct rvalue variant for it
             // but it feels better than the other options so..
             tir::ExprKind::Assign(l, r) => {
-                let lhs = set!(block = self.as_lvalue(block, l));
+                // always evaluate rhs first in assignments
                 let rhs = set!(block = self.as_rvalue(block, r));
+                let lhs = set!(block = self.as_lvalue(block, l));
                 self.push_assignment(info, block, lhs, rhs.clone());
                 block.and(rhs)
             }

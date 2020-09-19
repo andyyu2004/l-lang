@@ -39,26 +39,26 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.append_basic_block().unit()
             }
             tir::ExprKind::Assign(l, r) => {
-                let lvalue = set!(block = self.as_lvalue(block, l));
                 let rvalue = set!(block = self.as_rvalue(block, r));
+                let lvalue = set!(block = self.as_lvalue(block, l));
                 self.push_assignment(info, block, lvalue, rvalue);
                 block.unit()
             }
-            tir::ExprKind::Const(_)
-            | tir::ExprKind::Bin(_, _, _)
-            | tir::ExprKind::Unary(_, _)
-            | tir::ExprKind::Block(_)
-            | tir::ExprKind::VarRef(_)
-            | tir::ExprKind::ItemRef(_)
-            | tir::ExprKind::Tuple(_)
-            | tir::ExprKind::Closure(_)
+            tir::ExprKind::Const(..)
+            | tir::ExprKind::Bin(..)
+            | tir::ExprKind::Unary(..)
+            | tir::ExprKind::Block(..)
+            | tir::ExprKind::VarRef(..)
+            | tir::ExprKind::ItemRef(..)
+            | tir::ExprKind::Tuple(..)
             | tir::ExprKind::Ref(..)
-            | tir::ExprKind::Deref(_)
+            | tir::ExprKind::Deref(..)
             | tir::ExprKind::Field(..)
-            | tir::ExprKind::Call(_, _)
+            | tir::ExprKind::Call(..)
+            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Box(..)
-            | tir::ExprKind::Match(_, _) => {
+            | tir::ExprKind::Match(..) => {
                 // write the expr stmt into some (unused) tmp var
                 set!(block = self.as_tmp(block, expr));
                 block.unit()

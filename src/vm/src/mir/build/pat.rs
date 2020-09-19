@@ -22,8 +22,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         match irref_pat.kind {
             tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
-                let rvalue = Rvalue::Use(Operand::Ref(lvalue));
-                let local = self.alloc_local(irref_pat);
+                let rvalue = Rvalue::Use(Operand::Use(lvalue));
+                let &tir::Pattern { id, span, ty, .. } = irref_pat;
+                let local = self.alloc_local(id, span, ty);
                 self.vars[local].mtbl = m;
                 self.push_assignment(info, block, local.into(), rvalue);
                 block.unit()

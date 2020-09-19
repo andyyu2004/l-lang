@@ -20,20 +20,32 @@ pub enum ExprKind<'tcx> {
     Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
     Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
     Block(&'tcx tir::Block<'tcx>),
-    /// reference to a local variable (reference not in the rust sense, but just a usage of the variable)
+    /// reference to a local variable
+    /// (reference not in the & sense, but just a usage of the variable)
     VarRef(ir::Id),
-    /// reference to an item such as a function or a constant
+    /// reference to an item such as a function item or a constant
     ItemRef(DefId),
+    /// (x, y)
     Tuple(&'tcx [tir::Expr<'tcx>]),
-    Closure(&'tcx tir::Body<'tcx>),
+    /// f(x)
     Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
     Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
+    /// x = y
     Assign(&'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
+    /// s.x
     Field(&'tcx tir::Expr<'tcx>, FieldIdx),
+    /// return x
     Ret(Option<&'tcx tir::Expr<'tcx>>),
+    /// &x
     Ref(&'tcx tir::Expr<'tcx>),
+    /// *x
     Deref(&'tcx tir::Expr<'tcx>),
+    /// box x
     Box(&'tcx tir::Expr<'tcx>),
+    Closure {
+        upvars: &'tcx [tir::Expr<'tcx>],
+        body: &'tcx tir::Body<'tcx>,
+    },
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,

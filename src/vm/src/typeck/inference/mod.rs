@@ -8,6 +8,7 @@ mod stmt;
 mod type_variable;
 mod undo_logs;
 mod unify;
+mod upvars;
 
 pub(super) use at::At;
 pub(super) use equate::Equate;

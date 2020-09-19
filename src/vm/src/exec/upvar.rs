@@ -1,8 +1,7 @@
 use super::Val;
 use crate::gc::{GCStateMap, Gc, Trace};
-use std::{
-    ops::{Deref, DerefMut}, ptr::NonNull
-};
+use std::ops::{Deref, DerefMut};
+use std::ptr::NonNull;
 
 #[derive(Debug)]
 pub enum Upvar {

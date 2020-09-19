@@ -324,6 +324,15 @@ impl Display for InferTy {
     }
 }
 
+/// upvars are identified by the closure that references them as well as the original variable id
+/// the original variable id alone is not sufficient as multiple closures can reference the same
+/// variable and the UpvarId would not be unique
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
+pub struct UpvarId {
+    pub closure_id: ir::Id,
+    pub var_id: ir::Id,
+}
+
 impl<'tcx> Display for TyS<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.kind)

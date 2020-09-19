@@ -108,7 +108,7 @@ fn build_variant_ctor<'tcx>(
         .iter()
         .map(|param| alloc_var(info, VarKind::Arg, param.ty(tcx, substs)))
         .map(Lvalue::new)
-        .map(Operand::Ref)
+        .map(Operand::Use)
         .collect_vec();
 
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
@@ -129,7 +129,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             argc: body.params.len(),
         };
         let info = builder.span_info(body.expr.span);
-        builder.alloc_var(info, VarKind::Ret, builder.ctx.node_type(body.expr.id));
+        builder.alloc_var(info, VarKind::Ret, body.expr.ty);
         builder
     }
 
@@ -140,7 +140,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
         let info = self.span_info(body.expr.span.hi());
         for param in body.params {
-            let lvalue = self.alloc_arg(param.pat).into();
+            let &tir::Pattern { id, span, ty, .. } = param.pat;
+            let lvalue = self.alloc_arg(id, span, ty).into();
             set!(block = self.bind_pat_to_lvalue(block, param.pat, lvalue));
         }
         set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
@@ -172,19 +173,19 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     /// create variable that has a corresponding var in the `ir`
-    fn alloc_ir_var(&mut self, pat: &tir::Pattern<'tcx>, kind: VarKind) -> VarId {
-        let info = self.span_info(pat.span);
-        let idx = self.alloc_var(info, kind, pat.ty);
-        self.var_ir_map.insert(pat.id, idx);
+    fn alloc_ir_var(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>, kind: VarKind) -> VarId {
+        let info = self.span_info(span);
+        let idx = self.alloc_var(info, kind, ty);
+        self.var_ir_map.insert(id, idx);
         idx
     }
 
-    fn alloc_arg(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
-        self.alloc_ir_var(pat, VarKind::Arg)
+    fn alloc_arg(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Arg)
     }
 
-    fn alloc_local(&mut self, pat: &tir::Pattern<'tcx>) -> VarId {
-        self.alloc_ir_var(pat, VarKind::Local)
+    fn alloc_local(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Local)
     }
 
     fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {
