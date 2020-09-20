@@ -63,7 +63,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         fpm.add_reassociate_pass();
         fpm.initialize();
         let types = CommonTypes {
-            unit: llctx.struct_type(&[], false),
+            unit: llctx.struct_type(&[], true),
             int: llctx.i64_type(),
             float: llctx.f64_type(),
             boolean: llctx.bool_type(),
@@ -147,7 +147,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Tuple(tys) => {
                 // tuples are represented as anonymous structs
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
-                self.llctx.struct_type(&lltys, false).into()
+                self.llctx.struct_type(&lltys, true).into()
             }
             TyKind::Param(_) => todo!(),
             TyKind::Scheme(_, _) => todo!(),
@@ -215,7 +215,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         // TODO cache results
         // note we preserve the field declaration order of the struct
         let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty(self.tcx, substs))).collect_vec();
-        self.llctx.struct_type(&tys, false)
+        self.llctx.struct_type(&tys, true)
     }
 }
 

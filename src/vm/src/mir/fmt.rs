@@ -52,7 +52,8 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         writeln!(self, "MIR")?;
 
         for (id, var) in self.mir.vars.iter_enumerated() {
-            writeln!(self, "%{:?} {}:{} ({:?})", id, var.to_string(), var.ty, var.kind,)?;
+            id.mir_fmt(self)?;
+            writeln!(self, ":{} ({:?})", var.ty, var.kind,)?;
         }
 
         writeln!(self)?;
@@ -140,7 +141,11 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
 impl<'tcx> MirFmt<'tcx> for mir::VarId {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         let var = f.mir.vars[*self];
-        write!(f, "{}", var)
+        match var.kind {
+            mir::VarKind::Tmp | mir::VarKind::Ret | mir::VarKind::Upvar =>
+                write!(f, "{}{:?}", var, self),
+            _ => write!(f, "{}", var),
+        }
     }
 }
 
@@ -170,16 +175,6 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
             mir::Rvalue::Box(operand) => {
                 write!(f, "box ")?;
                 operand.mir_fmt(f)
-            }
-            mir::Rvalue::Tuple(xs) => {
-                write!(f, "(")?;
-                let n = xs.len() - 1;
-                for x in &xs[..n] {
-                    x.mir_fmt(f)?;
-                    write!(f, ",")?;
-                }
-                xs[n].mir_fmt(f)?;
-                write!(f, ")")
             }
             mir::Rvalue::Unary(op, operand) => {
                 write!(f, "{}", op)?;

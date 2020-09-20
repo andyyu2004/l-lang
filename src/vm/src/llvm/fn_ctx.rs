@@ -95,12 +95,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // llvm doesn't like recursively building these values (with temporaries)
         // instead, we use geps to set the fields directly
         match rvalue {
-            mir::Rvalue::Tuple(xs) =>
-                for (i, x) in xs.iter().enumerate() {
-                    let operand = self.codegen_operand(x);
-                    let field_ptr = self.build_struct_gep(var.ptr, i as u32, "tuple_gep").unwrap();
-                    self.build_store(field_ptr, operand);
-                },
             mir::Rvalue::Adt { adt, substs, fields, variant_idx } => {
                 let ty = self.tcx.mk_adt_ty(adt, substs);
                 match adt.kind {
@@ -212,7 +206,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Unary(_, _) => todo!(),
             // handle these cases in `codegen_assignment`
-            mir::Rvalue::Tuple(..) | mir::Rvalue::Adt { .. } => unreachable!(),
+            mir::Rvalue::Adt { .. } => unreachable!(),
         }
     }
 
