@@ -12,10 +12,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         body: &'tcx tir::Body<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
         let info = self.span_info(closure.span);
-        let upvars: FxHashMap<ir::Id, _> = upvars
-            .iter()
-            .map(|upvar| (upvar.id, set!(block = self.as_operand(block, upvar))))
-            .collect();
+        let upvars =
+            upvars.iter().map(|upvar| set!(block = self.as_operand(block, upvar))).collect_vec();
         todo!()
     }
 }

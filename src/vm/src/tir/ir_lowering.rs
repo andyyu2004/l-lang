@@ -160,13 +160,9 @@ impl<'tcx> TirCtx<'_, 'tcx> {
         let span = closure.span;
         let ty = self.node_type(id);
         // rebuild the `VarRef` expressions that the upvar refers to
-        let captured = self.alloc_tir(tir::Expr { id, span, ty, kind: tir::ExprKind::VarRef(id) });
+        let captured = self.alloc_tir(tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) });
         // construct a mutable borrow expression to the captured upvar
         let borrow_expr = tir::Expr {
-            // quite hacky, but we intentionally reuse the id of `captured` so the references to
-            // `captured` actually end up referencing the `borrow_expr`
-            // we insert some dereferences in the mir for upvars so the types work out
-            id,
             span,
             ty: self.mk_ptr_ty(Mutability::Mut, ty),
             kind: tir::ExprKind::Ref(captured),
@@ -332,7 +328,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
                 tir::ExprKind::Field(expr.to_tir_alloc(ctx), ctx.tables.field_index(self.id)),
             ir::ExprKind::Box(expr) => tir::ExprKind::Box(expr.to_tir_alloc(ctx)),
         };
-        tir::Expr { id, span, kind, ty }
+        tir::Expr { span, kind, ty }
     }
 }
 
