@@ -39,7 +39,7 @@ pub fn build_fn<'a, 'tcx>(
     body: &'tcx tir::Body<'tcx>,
 ) -> mir::Body<'tcx> {
     let mut builder = Builder::new(ctx, body);
-    let _ = builder.build_body(ENTRY_BLOCK, body);
+    let _ = builder.build_body();
     let mir = builder.complete();
     mir::validate(&mir, &ctx);
     eprintln!("{}", mir);
@@ -118,11 +118,12 @@ fn build_variant_ctor<'tcx>(
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    fn new(ctx: &'a TirCtx<'a, 'tcx>, body: &tir::Body<'tcx>) -> Self {
+    fn new(ctx: &'a TirCtx<'a, 'tcx>, body: &'tcx tir::Body<'tcx>) -> Self {
         let tcx = ctx.tcx;
         let mut builder = Self {
             tcx: ctx.tcx,
             ctx,
+            body,
             cfg: Default::default(),
             vars: Default::default(),
             var_ir_map: Default::default(),
@@ -137,7 +138,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         mir::Body { basic_blocks: self.cfg.basic_blocks, vars: self.vars, argc: self.argc }
     }
 
-    fn build_body(&mut self, mut block: BlockId, body: &'tcx tir::Body<'tcx>) -> BlockAnd<()> {
+    /// entry point to building
+    fn build_body(&mut self) -> BlockAnd<()> {
+        let mut block = ENTRY_BLOCK;
+        let body = self.body;
         let info = self.span_info(body.expr.span.hi());
         for param in body.params {
             let &tir::Pattern { id, span, ty, .. } = param.pat;
@@ -153,9 +157,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 struct Builder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     ctx: &'a TirCtx<'a, 'tcx>,
+    body: &'tcx tir::Body<'tcx>,
     cfg: Cfg<'tcx>,
-    var_ir_map: FxHashMap<ir::Id, VarId>,
     vars: IndexVec<VarId, Var<'tcx>>,
+    var_ir_map: FxHashMap<ir::Id, VarId>,
     argc: usize,
 }
 
@@ -186,6 +191,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     fn alloc_local(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
         self.alloc_ir_var(id, span, ty, VarKind::Local)
+    }
+
+    fn alloc_upvar(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Upvar)
     }
 
     fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {

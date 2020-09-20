@@ -55,9 +55,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.push_assignment(info, block, lhs, rhs.clone());
                 block.and(rhs)
             }
-            tir::ExprKind::Tuple(xs) => block.and(Rvalue::Tuple(
-                xs.iter().map(|x| set!(block = self.as_operand(block, x))).collect(),
-            )),
             tir::ExprKind::Box(expr) => {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Box(operand))
@@ -71,6 +68,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Field(..)
+            | tir::ExprKind::Tuple(..)
             | tir::ExprKind::Deref(_)
             | tir::ExprKind::Const(..)
             | tir::ExprKind::VarRef(..)

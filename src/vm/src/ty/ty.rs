@@ -127,8 +127,9 @@ pub enum Projection<'tcx> {
     Deref,
     /// the type is the type of the entire expression after projection
     /// struct S { x: int }
-    /// S.x :: int
-    /// so the projection from `S` would be `Projection::Field(0, int)`
+    /// let s: S;
+    /// s.x :: int
+    /// so the projection from `s` would be `Projection::Field(0, int)`
     Field(FieldIdx, Ty<'tcx>),
 }
 

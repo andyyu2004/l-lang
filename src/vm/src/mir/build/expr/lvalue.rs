@@ -51,17 +51,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     pub fn var_id_as_lvalue_builder(&mut self, id: ir::Id) -> LvalueBuilder<'tcx> {
-        let var_id = self
-            .var_ir_map
-            .get(&id)
-            .copied()
-            .unwrap_or_else(|| panic!("no variable with id `{}`", id));
-        let var = self.vars[var_id];
-        match var.kind {
-            // there needs to be an implicit dereference on upvars
-            // as every upvar is actually a mutable reference to the captured variable
-            VarKind::Upvar => LvalueBuilder::from(var_id).project_deref(),
-            _ => LvalueBuilder::from(var_id),
+        if let Some(&var_id) = self.var_ir_map.get(&id) {
+            LvalueBuilder::from(var_id)
+        } else {
+            panic!("no var found with id `{}`", id)
         }
     }
 

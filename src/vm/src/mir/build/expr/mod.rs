@@ -1,9 +1,12 @@
 use super::{BlockAnd, BlockAndExt, Builder};
 use crate::error::TypeError;
+use crate::ir::FieldIdx;
 use crate::mir::{BlockId, Lvalue, Operand, Rvalue, SpanInfo, TerminatorKind};
 use crate::set;
 use crate::span::Span;
 use crate::tir;
+use crate::ty::Projection;
+use indexed_vec::Idx;
 use itertools::Itertools;
 
 pub use lvalue::LvalueBuilder;
@@ -33,6 +36,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => self.build_match(block, dest, expr, scrut, arms),
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
+            tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, xs),
             tir::ExprKind::VarRef(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Adt { .. }
@@ -41,7 +45,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Assign(..)
-            | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Deref(..)
@@ -51,6 +54,22 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.unit()
             }
         }
+    }
+
+    fn build_tuple(
+        &mut self,
+        mut block: BlockId,
+        dest: Lvalue<'tcx>,
+        expr: &tir::Expr<'tcx>,
+        xs: &[tir::Expr<'tcx>],
+    ) -> BlockAnd<()> {
+        let info = self.span_info(expr.span);
+        xs.iter().enumerate().for_each(|(i, x)| {
+            let rvalue = set!(block = self.as_rvalue(block, x));
+            let lvalue = self.tcx.project_lvalue(dest, Projection::Field(FieldIdx::new(i), x.ty));
+            self.push_assignment(info, block, lvalue, rvalue);
+        });
+        block.unit()
     }
 
     fn build_call(

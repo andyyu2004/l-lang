@@ -12,7 +12,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<Operand<'tcx>> {
         match expr.kind {
-            tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) => {
+            tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
+            tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) | tir::ExprKind::VarRef(..) => {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Use(lvalue))
             }
@@ -20,11 +21,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let constant = set!(block = self.as_const(block, expr));
                 block.and(Operand::Const(constant))
             }
-            tir::ExprKind::VarRef(id) => {
-                let lvalue = self.var_id_as_lvalue(id);
-                block.and(Operand::Use(lvalue))
-            }
-            tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
             tir::ExprKind::Unary(..)
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Block(_)

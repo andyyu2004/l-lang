@@ -15,6 +15,7 @@ use crate::tir::{self, TirCtx};
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
 pub use build::{build_enum_ctors, build_fn};
 use indexed_vec::{Idx, IndexVec};
+use rustc_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
@@ -194,8 +195,6 @@ pub enum Rvalue<'tcx> {
     Box(Operand<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
-    /// (x,y)
-    Tuple(Vec<Operand<'tcx>>),
     Closure(Ty<'tcx>, mir::Body<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,
@@ -208,8 +207,8 @@ pub enum Rvalue<'tcx> {
 // this design flattens out recursive expressions into a series of temporaries
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operand<'tcx> {
-    Const(&'tcx Const<'tcx>),
     Use(Lvalue<'tcx>),
+    Const(&'tcx Const<'tcx>),
     Item(DefId),
 }
 
