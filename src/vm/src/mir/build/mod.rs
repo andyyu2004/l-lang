@@ -15,7 +15,7 @@ use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
-const ENTRY_BLOCK: BlockId = BlockId(0);
+pub const ENTRY_BLOCK: BlockId = BlockId(0);
 
 /// set a block pointer and return the value
 /// `let x = set!(block = self.foo(block, foo))`

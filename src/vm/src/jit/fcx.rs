@@ -1,18 +1,17 @@
-use super::util::LLVMAsPtrVal;
-use super::CodegenCtx;
+use super::JitCtx;
 use crate::ast;
-use crate::mir::{self, BlockId, VarId};
+use crate::llvm::util::LLVMAsPtrVal;
+use crate::mir::{self, BlockId, Lvalue, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
 use inkwell::{values::*, AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use mir::Lvalue;
 use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
-pub struct FnCtx<'a, 'tcx> {
-    cctx: &'a CodegenCtx<'tcx>,
+pub struct Fcx<'a, 'tcx, G> {
+    jit: &'a JitCtx<'a, 'tcx, G>,
     body: &'tcx mir::Body<'tcx>,
     llfn: FunctionValue<'tcx>,
     vars: IndexVec<mir::VarId, LLVMVar<'tcx>>,
@@ -25,18 +24,18 @@ struct LLVMVar<'tcx> {
     ptr: PointerValue<'tcx>,
 }
 
-impl<'a, 'tcx> FnCtx<'a, 'tcx> {
+impl<'a, 'tcx, G> Fcx<'a, 'tcx, G> {
     pub fn new(
-        cctx: &'a CodegenCtx<'tcx>,
-        body: &'tcx mir::Body<'tcx>,
+        jit: &'a JitCtx<'a, 'tcx, G>,
         llfn: FunctionValue<'tcx>,
+        body: &'tcx mir::Body<'tcx>,
     ) -> Self {
         let blocks = body
             .basic_blocks
             .indices()
-            .map(|i| cctx.llctx.append_basic_block(llfn, &format!("basic_block{:?}", i)))
+            .map(|i| jit.llctx.append_basic_block(llfn, &format!("basic_block{:?}", i)))
             .collect();
-        let mut ctx = Self { cctx, body, llfn, vars: Default::default(), blocks };
+        let mut ctx = Self { jit, body, llfn, vars: Default::default(), blocks };
         ctx.set_block(BlockId::new(0));
         ctx.vars = ctx.alloc_vars();
         ctx
@@ -186,6 +185,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
+                // TODO use the gc somehow
                 let operand = self.codegen_operand(operand);
                 let ty = operand.get_type();
                 let ptr = self.build_malloc(ty, "box").unwrap();
@@ -341,10 +341,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
-    type Target = CodegenCtx<'tcx>;
+impl<'a, 'tcx, G> Deref for Fcx<'a, 'tcx, G> {
+    type Target = JitCtx<'a, 'tcx, G>;
 
     fn deref(&self) -> &Self::Target {
-        &self.cctx
+        &self.jit
     }
 }

@@ -3,11 +3,11 @@ use rustc_hash::FxHashSet;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 
-type Inner = FxHashSet<NonNull<()>>;
-
 #[derive(Default, Debug)]
-// we can't use NonNull<dyn Trace> as this messes up equality (because of vtable ptr)
 pub struct GCStateMap(Inner);
+
+// we can't use NonNull<dyn Trace> as this messes up equality (because of vtable ptr)
+type Inner = FxHashSet<NonNull<()>>;
 
 impl GCStateMap {
     pub fn mark_gc_ptr<T>(&mut self, gc: &Gc<T>)

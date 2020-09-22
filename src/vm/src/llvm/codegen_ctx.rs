@@ -85,8 +85,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    /// returns the main function
-    pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> Option<FunctionValue<'tcx>> {
+    pub fn declare_items(&self, prog: &'tcx mir::Prog<'tcx>) {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
         for (&def, item) in &prog.items {
@@ -100,6 +99,11 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
             };
         }
+    }
+
+    /// returns the main function
+    pub fn codegen(&mut self, prog: &'tcx mir::Prog<'tcx>) -> Option<FunctionValue<'tcx>> {
+        self.declare_items(prog);
         for (id, item) in &prog.items {
             match &item.kind {
                 ItemKind::Fn(body) => self.codegen_body(item.ident.as_str(), body),

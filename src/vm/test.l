@@ -1,8 +1,8 @@
 
-// struct Node {
-//     x: int,
-//     next: Node,
-// }
+ struct Node {
+     x: int,
+     next: Node,
+ }
 
 // struct S {
 //     x: int,
@@ -15,12 +15,9 @@
 // }
 
 
+
 fn main() -> int {
-    let x = 5;
-    return (1, 2).1;
-    /* let f = fn() => x; */
-    /* return f(); */
+    let x = box 5;
+    return *x
 }
-
-
 
