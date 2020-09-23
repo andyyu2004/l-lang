@@ -261,7 +261,7 @@ impl<'a> Parse<'a> for StructExprParser {
                 // this is the implementation of the struct shorthand
                 // S { t } -> S { t: t }
                 let segment = PathSegment { id: parser.mk_id(), ident, args: None };
-                let path = Path { span, segments: vec![segment] };
+                let path = parser.mk_path(span, vec![segment]);
                 parser.mk_expr(span, ExprKind::Path(path))
             };
             let span = ident.span.merge(expr.span);
@@ -320,7 +320,7 @@ impl<'a> Parse<'a> for PathParser {
             .spanned(false)
             .parse(parser)?;
         // if the path is immediately followed by an open brace, it could be a struct expr
-        Ok(Path { span, segments })
+        Ok(parser.mk_path(span, segments))
     }
 }
 

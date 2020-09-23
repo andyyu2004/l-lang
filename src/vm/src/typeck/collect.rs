@@ -36,6 +36,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 let ty = tcx.mk_adt_ty(adt_ty, List::empty());
                 tcx.generalize(generics, ty)
             }
+            ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
         };
         info!("collect item: {:#?}", ty);
         tcx.collect_ty(item.id.def, ty);

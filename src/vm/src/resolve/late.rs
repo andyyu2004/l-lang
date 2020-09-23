@@ -2,6 +2,7 @@ use super::{Resolver, Scope, Scopes};
 use crate::ast::{self, *};
 use crate::error::ResolutionError;
 use crate::ir::{DefKind, ModuleId, ParamIdx, PerNS, Res, NS, ROOT_MODULE};
+use crate::lexer::symbol;
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
@@ -63,7 +64,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         match &pat.kind {
             PatternKind::Ident(ident, ..) => self.def_val(*ident, Res::Local(pat.id)),
             PatternKind::Path(path) | PatternKind::Variant(path, _) =>
-                self.resolve_path(pat.id, path, NS::Value),
+                self.resolve_path(path, NS::Value),
             PatternKind::Wildcard | PatternKind::Tuple(..) | PatternKind::Paren(..) => {}
         }
     }
@@ -89,7 +90,44 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         match &item.kind {
             ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
-            ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
+            ItemKind::Impl { generics, trait_path, self_ty, items } =>
+                self.resolve_impl(generics, trait_path.as_ref(), self_ty, items),
+        }
+    }
+
+    fn with_self_ty<R>(&mut self, ty: &'ast Ty, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.with_ty_scope(|this| {
+            this.scopes[NS::Type].def(Ident::unspanned(symbol::USELF), Res::SelfTy);
+            f(this)
+        })
+    }
+
+    fn resolve_impl(
+        &mut self,
+        generics: &'ast Generics,
+        trait_path: Option<&'ast Path>,
+        self_ty: &'ast Ty,
+        items: &'ast [Box<AssocItem>],
+    ) {
+        self.with_generics(generics, |this| {
+            this.with_self_ty(self_ty, |this| {
+                if let Some(path) = trait_path {
+                    this.resolve_path(path, NS::Type);
+                }
+                if trait_path.is_some() {
+                    todo!()
+                }
+                for item in items {
+                    this.resolve_assoc_item(item);
+                }
+            })
+        })
+    }
+
+    fn resolve_assoc_item(&mut self, item: &'ast AssocItem) {
+        match &item.kind {
+            AssocItemKind::Fn(_, generics, _) =>
+                self.with_generics(generics, |this| ast::walk_assoc_item(this, item)),
         }
     }
 
@@ -98,12 +136,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     /// `id` belongs to the `Ty` or `Expr`
-    fn resolve_path(&mut self, id: NodeId, path: &'ast Path, ns: NS) {
+    fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
         let res = match ns {
             NS::Value => self.resolve_val_path(path),
             NS::Type => self.resolve_ty_path(path),
         };
-        self.resolver.resolve_node(id, res);
+        self.resolver.resolve_node(path.id, res);
     }
 
     fn resolve_val_path(&mut self, path: &'ast Path) -> Res<NodeId> {
@@ -196,8 +234,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
-            ExprKind::Struct(path, _) | ExprKind::Path(path) =>
-                self.resolve_path(expr.id, path, NS::Value),
+            ExprKind::Struct(path, _) | ExprKind::Path(path) => self.resolve_path(path, NS::Value),
             ExprKind::Closure(name, sig, body) =>
                 if let Some(ident) = name {
                     self.def_val(*ident, Res::Local(expr.id))
@@ -209,7 +246,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_ty(&mut self, ty: &'ast Ty) {
         match &ty.kind {
-            TyKind::Path(path) => self.resolve_path(ty.id, path, NS::Type),
+            TyKind::Path(path) => self.resolve_path(path, NS::Type),
             _ => {}
         };
         ast::walk_ty(self, ty);

@@ -49,7 +49,7 @@ impl TryFrom<ItemKind> for AssocItemKind {
     }
 }
 
-type AssocItem = Item<AssocItemKind>;
+pub type AssocItem = Item<AssocItemKind>;
 
 impl ItemKind {
     pub fn def_kind(&self) -> DefKind {

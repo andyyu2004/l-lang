@@ -15,7 +15,7 @@ pub use def::*;
 pub use expr::{Expr, ExprKind};
 use indexed_vec::Idx;
 pub use ir::*;
-pub use item::{Item, ItemKind};
+pub use item::*;
 use map::IRMap;
 pub use pattern::{Pattern, PatternKind};
 pub use prog::Prog;
@@ -25,6 +25,7 @@ pub use ty::*;
 pub use visit::*;
 
 newtype_index!(DefId);
+newtype_index!(ImplItemId);
 newtype_index!(LocalId);
 newtype_index!(ModuleId);
 newtype_index!(ParamIdx);

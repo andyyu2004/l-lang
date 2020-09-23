@@ -102,6 +102,10 @@ pub trait Visitor<'ast>: Sized {
     fn visit_arm(&mut self, arm: &'ast Arm) {
         walk_arm(self, arm);
     }
+
+    fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
+        walk_assoc_item(self, item)
+    }
 }
 
 pub fn walk_fn<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, body: Option<&'ast Expr>) {
@@ -251,6 +255,18 @@ pub fn walk_variant_kind<'ast>(visitor: &mut impl Visitor<'ast>, kind: &'ast Var
     }
 }
 
+pub fn walk_assoc_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast AssocItem) {
+    let Item { vis, ident, kind, .. } = &item;
+    visitor.visit_vis(vis);
+    visitor.visit_ident(*ident);
+    match &item.kind {
+        AssocItemKind::Fn(sig, generics, body) => {
+            visitor.visit_generics(generics);
+            visitor.visit_fn(sig, body.as_deref());
+        }
+    }
+}
+
 pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
     let Item { vis, ident, kind, .. } = &item;
     visitor.visit_vis(vis);
@@ -272,6 +288,7 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             trait_path.iter().for_each(|path| visitor.visit_path(path));
             visitor.visit_ty(self_ty);
+            items.iter().for_each(|item| visitor.visit_assoc_item(item));
         }
     }
 }

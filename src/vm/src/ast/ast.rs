@@ -69,6 +69,10 @@ impl Ident {
         Self { span, symbol }
     }
 
+    pub fn unspanned(symbol: Symbol) -> Self {
+        Self::new(Span::empty(), symbol)
+    }
+
     pub fn empty() -> Self {
         Self::new(Span::empty(), symbol::EMPTY)
     }
@@ -207,14 +211,15 @@ pub struct Spanned<T> {
 
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub struct Path {
+    pub id: NodeId,
     pub span: Span,
     pub segments: Vec<PathSegment>,
 }
 
-// just to make it `std::mem::take` able
+// just to make it `std::mem::take`able
 impl Default for Path {
     fn default() -> Self {
-        Self { span: Span::new(0, 0), segments: Default::default() }
+        Self { id: NodeId(0), span: Span::new(0, 0), segments: Default::default() }
     }
 }
 

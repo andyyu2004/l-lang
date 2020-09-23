@@ -39,7 +39,7 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
     }
 
     /// ir -> tir -> mir
-    pub fn lower_item(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
+    pub fn lower_item_mir(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
         let &ir::Item { id, span, vis, ident, ref kind } = item;
         let mk_item = |kind| mir::Item { span, id: id.def, vis, ident, kind };
         let tir = self.lower_item_tir(item);
@@ -97,6 +97,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), body.to_tir(ctx));
                 tir::Item { kind, span, id, ident, vis }
             }
+            ir::ItemKind::Impl { .. } => todo!(),
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => unreachable!(),
         }
     }
@@ -282,6 +283,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                 ir::DefKind::Enum => todo!(),
                 ir::DefKind::Struct => todo!(),
             },
+            ir::Res::SelfTy => todo!(),
             ir::Res::Err | ir::Res::PrimTy(_) => unreachable!(),
         }
     }

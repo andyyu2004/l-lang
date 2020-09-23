@@ -290,7 +290,7 @@ impl<'tcx> TyCtx<'tcx> {
     fn build_tir_inner(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
-        for &item in prog.items.values() {
+        for item in prog.items.values() {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) => {
                     if let Ok(tir) = self
@@ -303,6 +303,7 @@ impl<'tcx> TyCtx<'tcx> {
                 // note that no tir is generated for enum constructors
                 // the constructor code is generated at mir level only
                 ir::ItemKind::Enum(..) => {}
+                ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
             }
         }
         tir::Prog { items }
@@ -312,11 +313,11 @@ impl<'tcx> TyCtx<'tcx> {
     fn build_mir_inner(self, prog: &ir::Prog<'tcx>) -> mir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
-        for &item in prog.items.values() {
+        for item in prog.items.values() {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) =>
-                    if let Ok(mir) =
-                        self.lower_fn(item, sig, generics, body, |mut lctx| lctx.lower_item(item))
+                    if let Ok(mir) = self
+                        .lower_fn(item, sig, generics, body, |mut lctx| lctx.lower_item_mir(item))
                     {
                         items.insert(item.id.def, mir);
                     },
@@ -328,6 +329,7 @@ impl<'tcx> TyCtx<'tcx> {
                         items.insert(item.id, item);
                     }
                 }
+                ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
             }
         }
         mir::Prog { items }

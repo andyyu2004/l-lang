@@ -23,6 +23,7 @@ impl<'ir> Expr<'ir> {
         match self.kind {
             ExprKind::Path(p) => match p.res {
                 ir::Res::Local(id) => true,
+                ir::Res::SelfTy => false,
                 ir::Res::Def(_, def_kind) => match def_kind {
                     ir::DefKind::Fn => false,
                     ir::DefKind::Enum => false,

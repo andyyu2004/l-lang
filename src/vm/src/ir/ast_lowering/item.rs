@@ -6,7 +6,7 @@ use indexed_vec::Idx;
 use std::marker::PhantomData;
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
-    pub fn lower_item(&mut self, item: &Item) -> &'ir ir::Item<'ir> {
+    pub fn lower_item(&mut self, item: &Item) {
         self.with_owner(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
             let kind = match &kind {
@@ -30,10 +30,25 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let kind = lctx.lower_variant_kind(variant_kind);
                     ir::ItemKind::Struct(generics, kind)
                 }
-                ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
+                ItemKind::Impl { generics, trait_path, self_ty, items } =>
+                    lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
             };
-            lctx.arena.alloc(ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind })
-        })
+            let item = ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind };
+            lctx.items.insert(item.id, item);
+        });
+    }
+
+    fn lower_impl(
+        &mut self,
+        generics: &Generics,
+        path: Option<&Path>,
+        ty: &Ty,
+        impl_items: &[Box<AssocItem>],
+    ) -> ir::ItemKind<'ir> {
+        let generics = self.lower_generics(generics);
+        let path = path.map(|path| self.lower_path(path));
+        todo!();
+        // ir::ItemKind::Impl { generics,  }
     }
 
     fn lower_variant(&mut self, item: &Item, idx: usize, variant: &Variant) -> ir::Variant<'ir> {

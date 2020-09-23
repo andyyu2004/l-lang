@@ -18,11 +18,9 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             PatternKind::Wildcard => ir::PatternKind::Wildcard,
             PatternKind::Paren(pat) => return self.lower_pattern_inner(pat),
             PatternKind::Tuple(pats) => ir::PatternKind::Tuple(self.lower_patterns(pats)),
-            PatternKind::Variant(path, patterns) => ir::PatternKind::Variant(
-                self.lower_path(pat.id, path),
-                self.lower_patterns(patterns),
-            ),
-            PatternKind::Path(path) => ir::PatternKind::Path(self.lower_path(pat.id, path)),
+            PatternKind::Variant(path, patterns) =>
+                ir::PatternKind::Variant(self.lower_path(path), self.lower_patterns(patterns)),
+            PatternKind::Path(path) => ir::PatternKind::Path(self.lower_path(path)),
             PatternKind::Ident(ident, sub, m) => {
                 let sub = sub.as_ref().map(|pat| self.lower_pattern(pat));
                 ir::PatternKind::Binding(*ident, sub, *m)

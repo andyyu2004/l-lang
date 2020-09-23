@@ -168,6 +168,10 @@ impl<'a> Parser<'a> {
         })
     }
 
+    pub(super) fn mk_path(&self, span: Span, segments: Vec<PathSegment>) -> Path {
+        Path { id: self.mk_id(), span, segments }
+    }
+
     pub(super) fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
         box Expr { span, id: self.mk_id(), kind }
     }

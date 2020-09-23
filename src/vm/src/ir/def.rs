@@ -9,6 +9,7 @@ pub enum Res<Id = ir::Id> {
     PrimTy(ir::PrimTy),
     Def(DefId, DefKind),
     Local(Id),
+    SelfTy,
     Err,
 }
 
@@ -18,6 +19,7 @@ impl<Id> Display for Res<Id> {
             Res::Def(_, kind) => return write!(f, "{}", kind),
             Res::PrimTy(..) => "builtin type",
             Res::Local(..) => "local variable",
+            Res::SelfTy => "self",
             Res::Err => "unresolved item",
         };
         write!(f, "{}", description)
@@ -83,6 +85,7 @@ impl<Id> Res<Id> {
             Res::PrimTy(ty) => Res::PrimTy(ty),
             Res::Local(id) => Res::Local(f(id)),
             Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind),
+            Res::SelfTy => Res::SelfTy,
             Res::Err => Res::Err,
         }
     }

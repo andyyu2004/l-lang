@@ -137,6 +137,7 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_generics(generics);
             v.visit_variant_kind(kind);
         }
+        ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
     }
 }
 
