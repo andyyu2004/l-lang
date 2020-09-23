@@ -2,6 +2,7 @@
 
 mod build;
 mod fmt;
+mod interpret;
 pub mod traversal;
 
 pub use fmt::MirFmt;

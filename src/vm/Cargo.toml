@@ -15,6 +15,7 @@ name = "vm"
 path = "src/bin.rs"
 
 [dependencies]
+chalk-engine = "0.28.0"
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm10-0" }
 llvm-sys = "100"

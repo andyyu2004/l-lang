@@ -145,6 +145,8 @@ impl<'tcx> TirCtx<'_, 'tcx> {
         tir::PatternKind::Variant(adt, idx, pats.to_tir(self))
     }
 
+    // useful impl ideas
+    // https://stackoverflow.com/questions/43171341/swift-function-object-wrapper-in-apple-swift
     fn lower_closure(&mut self, closure: &ir::Expr, body: &ir::Body<'tcx>) -> tir::ExprKind<'tcx> {
         let body = body.to_tir_alloc(self);
         let upvar_captures = self.tables.upvar_captures_for_closure(closure.id);
