@@ -118,7 +118,7 @@ pub fn walk_generics<'ir>(v: &mut impl Visitor<'ir>, generics: &'ir ir::Generics
 
 pub fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
     sig.inputs.iter().for_each(|ty| v.visit_ty(ty));
-    sig.output.map(|ty| v.visit_ty(ty));
+    sig.output.iter().for_each(|ty| v.visit_ty(ty));
 }
 
 pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
@@ -202,7 +202,7 @@ pub fn walk_field<'ir, V: Visitor<'ir>>(v: &mut V, field: &'ir ir::Field<'ir>) {
 
 pub fn walk_arm<'ir, V: Visitor<'ir>>(v: &mut V, arm: &'ir ir::Arm<'ir>) {
     v.visit_pat(arm.pat);
-    arm.guard.map(|expr| v.visit_expr(expr));
+    arm.guard.iter().for_each(|expr| v.visit_expr(expr));
     v.visit_expr(arm.body);
 }
 
@@ -215,7 +215,7 @@ pub fn walk_stmt<'ir, V: Visitor<'ir>>(v: &mut V, stmt: &'ir ir::Stmt<'ir>) {
 
 pub fn walk_block<'ir, V: Visitor<'ir>>(v: &mut V, block: &'ir ir::Block<'ir>) {
     block.stmts.iter().for_each(|stmt| v.visit_stmt(stmt));
-    block.expr.map(|expr| v.visit_expr(expr));
+    block.expr.iter().for_each(|expr| v.visit_expr(expr));
 }
 
 pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
@@ -232,9 +232,9 @@ pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
 }
 
 pub fn walk_let<'ir, V: Visitor<'ir>>(v: &mut V, l: &'ir ir::Let<'ir>) {
-    l.init.map(|expr| v.visit_expr(expr));
+    l.init.iter().for_each(|expr| v.visit_expr(expr));
     v.visit_pat(l.pat);
-    l.ty.map(|ty| v.visit_ty(ty));
+    l.ty.iter().for_each(|ty| v.visit_ty(ty));
 }
 
 pub fn walk_path<'ir, V: Visitor<'ir>>(v: &mut V, path: &'ir ir::Path<'ir>) {
@@ -252,7 +252,7 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
         ir::PatternKind::Lit(expr) => v.visit_expr(expr),
         ir::PatternKind::Binding(ident, subpat, m) => {
             v.visit_ident(*ident);
-            subpat.map(|p| v.visit_pat(p));
+            subpat.iter().for_each(|p| v.visit_pat(p));
         }
         ir::PatternKind::Variant(path, pats) => {
             v.visit_path(path);

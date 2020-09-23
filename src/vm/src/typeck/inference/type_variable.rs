@@ -98,7 +98,8 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         if ty.contains_tyvid(root) {
             Err(TypeError::OccursCheck(root, ty))
         } else {
-            Ok(self.eq_relations().union_value(root, TyVarValue::Known(ty)))
+            self.eq_relations().union_value(root, TyVarValue::Known(ty));
+            Ok(())
         }
     }
 

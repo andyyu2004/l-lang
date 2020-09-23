@@ -276,6 +276,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                 // functions and function-like variant constructors
                 ir::DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
                     tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::Impl => todo!(),
                 ir::DefKind::Ctor(..) => todo!(),
                 ir::DefKind::TyParam(_) => todo!(),
                 ir::DefKind::Enum => todo!(),

@@ -17,7 +17,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_let_stmt(&mut self, l: &ir::Let) {
         let ty =
             l.init.map(|expr| self.check_expr(expr)).unwrap_or_else(|| self.new_infer_var(l.span));
-        l.ty.map(|t| self.unify(l.span, self.lower_ty(t), ty));
+        l.ty.iter().for_each(|t| self.unify(l.span, self.lower_ty(t), ty));
         let pat_ty = self.check_pat(l.pat, ty);
         self.unify(l.span, ty, pat_ty);
     }

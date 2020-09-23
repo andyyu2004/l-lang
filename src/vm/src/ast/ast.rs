@@ -1,6 +1,6 @@
 use super::{Expr, NodeId, Pattern, Stmt, StmtKind, Ty, P};
 use crate::ir::VariantIdx;
-use crate::lexer::{Symbol, Tok, TokenType};
+use crate::lexer::{symbol, Symbol, Tok, TokenType};
 use crate::span::Span;
 use crate::util;
 use std::fmt::{self, Display, Formatter};
@@ -65,13 +65,17 @@ pub struct Ident {
 }
 
 impl Ident {
-    pub fn new(span: Span, symbol: Symbol) -> Ident {
+    pub fn new(span: Span, symbol: Symbol) -> Self {
         Self { span, symbol }
+    }
+
+    pub fn empty() -> Self {
+        Self::new(Span::empty(), symbol::EMPTY)
     }
 
     /// joins two identifiers `a` and `b`
     /// a::b
-    pub fn concat_as_path(self, ident: Ident) -> Ident {
+    pub fn concat_as_path(self, ident: Self) -> Self {
         let mut concatenated = self.as_str().to_owned();
         concatenated.push_str("::");
         concatenated.push_str(ident.as_str());

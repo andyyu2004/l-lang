@@ -231,7 +231,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let expected_ty = self.check_expr(arms[n].body);
         arms[..n].iter().for_each(|arm| {
             let arm_ty = self.check_expr(arm.body);
-            arm.guard.map(|expr| {
+            arm.guard.iter().for_each(|expr| {
                 let guard_ty = self.check_expr(expr);
                 self.unify(expr.span, self.tcx.types.boolean, guard_ty);
             });
@@ -306,7 +306,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             // instantiate ty params
             DefKind::Fn | DefKind::Enum | DefKind::Struct | DefKind::Ctor(..) =>
                 self.instantiate(span, self.collected_ty(def_id)),
-            DefKind::TyParam(_) => unreachable!(),
+            DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
         }
     }
 

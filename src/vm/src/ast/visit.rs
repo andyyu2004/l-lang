@@ -106,7 +106,7 @@ pub trait Visitor<'ast>: Sized {
 
 pub fn walk_fn<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, body: Option<&'ast Expr>) {
     visitor.visit_fn_sig(sig);
-    body.as_ref().map(|body| visitor.visit_expr(body));
+    body.iter().for_each(|body| visitor.visit_expr(body));
 }
 
 pub fn walk_block<'ast>(visitor: &mut impl Visitor<'ast>, block: &'ast Block) {
@@ -126,15 +126,15 @@ pub fn walk_stmt<'ast>(visitor: &mut impl Visitor<'ast>, stmt: &'ast Stmt) {
 /// let x = x;
 /// this will only behave correctly if the pattern is resolved after the initializer
 pub fn walk_let<'ast>(visitor: &mut impl Visitor<'ast>, Let { pat, ty, init, .. }: &'ast Let) {
-    init.as_ref().map(|expr| visitor.visit_expr(expr));
+    init.iter().for_each(|expr| visitor.visit_expr(expr));
     visitor.visit_pattern(pat);
-    ty.as_ref().map(|ty| visitor.visit_ty(ty));
+    ty.iter().for_each(|ty| visitor.visit_ty(ty));
 }
 
 pub fn walk_arm<'ast>(visitor: &mut impl Visitor<'ast>, arm: &'ast Arm) {
     visitor.visit_pattern(&arm.pat);
     visitor.visit_expr(&arm.body);
-    arm.guard.as_ref().map(|expr| visitor.visit_expr(expr));
+    arm.guard.iter().for_each(|expr| visitor.visit_expr(expr));
 }
 
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
@@ -163,7 +163,7 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
         ExprKind::If(c, l, r) => {
             visitor.visit_expr(c);
             visitor.visit_block(l);
-            r.as_ref().map(|expr| visitor.visit_expr(expr));
+            r.iter().for_each(|expr| visitor.visit_expr(expr));
         }
         ExprKind::Bin(_, l, r) => {
             visitor.visit_expr(l);
@@ -203,7 +203,7 @@ pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
         PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
         PatternKind::Ident(ident, pat, _) => {
             visitor.visit_ident(*ident);
-            pat.as_ref().map(|p| visitor.visit_pattern(p));
+            pat.iter().for_each(|p| visitor.visit_pattern(p));
         }
         PatternKind::Variant(path, pats) => {
             visitor.visit_path(path);
@@ -220,7 +220,7 @@ pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
         TyKind::Path(path) => visitor.visit_path(path),
         TyKind::Fn(params, ret) => {
             params.iter().for_each(|ty| visitor.visit_ty(ty));
-            ret.as_ref().map(|ty| visitor.visit_ty(ty));
+            ret.iter().for_each(|ty| visitor.visit_ty(ty));
         }
         TyKind::Infer => {}
         TyKind::Ptr(_, ty) => visitor.visit_ty(ty),
@@ -268,6 +268,10 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             visitor.visit_variant_kind(variant_kind);
         }
-        ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
+        ItemKind::Impl { generics, trait_path, self_ty, items } => {
+            visitor.visit_generics(generics);
+            trait_path.iter().for_each(|path| visitor.visit_path(path));
+            visitor.visit_ty(self_ty);
+        }
     }
 }

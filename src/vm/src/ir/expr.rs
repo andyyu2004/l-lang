@@ -27,6 +27,7 @@ impl<'ir> Expr<'ir> {
                     ir::DefKind::Fn => false,
                     ir::DefKind::Enum => false,
                     ir::DefKind::Struct => false,
+                    ir::DefKind::Impl => false,
                     ir::DefKind::TyParam(_) => false,
                     ir::DefKind::Ctor(..) => false,
                 },

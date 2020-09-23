@@ -13,12 +13,10 @@ impl<'a> Parse<'a> for ItemParser {
     type Output = P<Item>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(impl_kw) = parser.accept(TokenType::Impl) {
-            // impl doesn't really have the same grammar as the rest of the items..
-            todo!();
-            // return ImplParser { impl_kw }.parse(parser);
-        }
         let vis = VisibilityParser.parse(parser)?;
+        if let Some(impl_kw) = parser.accept(TokenType::Impl) {
+            return ImplParser { impl_kw, vis }.parse(parser);
+        }
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
@@ -27,7 +25,6 @@ impl<'a> Parse<'a> for ItemParser {
                 TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
                 TokenType::Type => TypeAliasParser { type_kw: kw }.parse(parser),
-                TokenType::Impl => ImplParser { impl_kw: kw }.parse(parser),
                 _ => unreachable!(),
             },
             false,
@@ -41,10 +38,11 @@ impl<'a> Parse<'a> for ItemParser {
 
 pub struct ImplParser {
     impl_kw: Tok,
+    vis: Visibility,
 }
 
 impl<'a> Parse<'a> for ImplParser {
-    type Output = ItemKind;
+    type Output = P<Item>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = parser.parse_generics()?;
@@ -57,14 +55,19 @@ impl<'a> Parse<'a> for ImplParser {
         };
         parser.expect(TokenType::OpenBrace)?;
         let mut items = vec![];
-        while parser.accept(TokenType::CloseBrace).is_none() {
+        let close_brace = loop {
+            if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
+                break close_brace;
+            }
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match AssocItemKind::try_from(kind) {
                 Ok(kind) => items.push(box Item { span, id, vis, ident, kind }),
                 Err(kind) => parser.err(span, ParseError::InvalidImplItem(kind)).emit(),
             };
-        }
-        Ok(ItemKind::Impl { generics, trait_path, self_ty, items })
+        };
+        let span = self.impl_kw.span.merge(close_brace.span);
+        let kind = ItemKind::Impl { generics, trait_path, self_ty, items };
+        Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
     }
 }
 

@@ -57,7 +57,7 @@ impl ItemKind {
             ItemKind::Fn(..) => DefKind::Fn,
             ItemKind::Enum(..) => DefKind::Enum,
             ItemKind::Struct(..) => DefKind::Struct,
-            ItemKind::Impl { .. } => todo!(),
+            ItemKind::Impl { .. } => DefKind::Impl,
         }
     }
 }

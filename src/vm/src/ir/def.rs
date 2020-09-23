@@ -48,6 +48,7 @@ pub enum DefKind {
     Fn,
     Enum,
     Struct,
+    Impl,
     /// constructor of enum variant
     /// `DefId` is the parent of the adt itself
     Ctor(CtorKind),
@@ -63,6 +64,7 @@ impl Display for DefKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             DefKind::Fn => write!(f, "function"),
+            DefKind::Impl => write!(f, "impl"),
             DefKind::Enum => write!(f, "enum"),
             DefKind::Struct => write!(f, "struct"),
             DefKind::Ctor(ctor) => match ctor {

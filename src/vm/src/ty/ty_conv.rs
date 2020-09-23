@@ -44,7 +44,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                     ty
                 }
                 ir::DefKind::Ctor(..) => todo!(),
-                ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
+                ir::DefKind::Impl | ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
             },
             ir::Res::Err => tcx.mk_ty_err(),
             ir::Res::Local(_) => panic!("unexpected resolution"),

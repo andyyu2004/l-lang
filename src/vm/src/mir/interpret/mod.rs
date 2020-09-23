@@ -74,9 +74,10 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
     }
 }
 
-enum Value {
+enum Value<'tcx> {
     Int(i64),
     Bool(bool),
+    Function(mir::Body<'tcx>),
 }
 
 struct Frame<'mir, 'tcx> {

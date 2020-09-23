@@ -86,7 +86,9 @@ pub struct Block<'tcx> {
 impl<'tcx> Display for Block<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "{{")?;
-        self.stmts.iter().map(|stmt| writeln!(f, "\t{};", stmt)).count();
+        for stmt in self.stmts {
+            writeln!(f, "\t{};", stmt)?;
+        }
         self.expr.map(|expr| writeln!(f, "\t{}", expr));
         write!(f, "}}")
     }
