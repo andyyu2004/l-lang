@@ -89,6 +89,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         match &item.kind {
             ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
+            ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
         }
     }
 

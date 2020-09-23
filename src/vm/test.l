@@ -9,10 +9,16 @@
 //     y: bool,
 // }
 
-// enum Option {
-//     Some(int),
-//     None,
-// }
+enum Option {
+    Some(int),
+    None,
+}
+
+impl Option {
+    fn unwrap() -> int {
+	99
+    }
+}
 
 
 fn main() -> int {

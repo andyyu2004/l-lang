@@ -30,6 +30,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let kind = lctx.lower_variant_kind(variant_kind);
                     ir::ItemKind::Struct(generics, kind)
                 }
+                ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
             };
             lctx.arena.alloc(ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind })
         })

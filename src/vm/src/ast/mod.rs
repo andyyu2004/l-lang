@@ -12,10 +12,10 @@ newtype_index!(NodeId);
 pub type P<T> = Box<T>;
 
 pub use ast::*;
-pub use expr::{Expr, ExprKind};
-pub use item::{Item, ItemKind};
-pub use pattern::{Mutability, Pattern, PatternKind};
+pub use expr::*;
+pub use item::*;
+pub use pattern::*;
 pub use prog::Prog;
-pub use stmt::{Let, Stmt, StmtKind};
-pub use ty::{Ty, TyKind};
+pub use stmt::*;
+pub use ty::*;
 pub use visit::*;

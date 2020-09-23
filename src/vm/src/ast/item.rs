@@ -2,15 +2,16 @@ use super::*;
 use crate::util;
 use crate::{ir::DefKind, lexer::Symbol, span::Span};
 use indexed_vec::Idx;
+use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Item {
+pub struct Item<K = ItemKind> {
     pub span: Span,
     pub id: NodeId,
     pub vis: Visibility,
     pub ident: Ident,
-    pub kind: ItemKind,
+    pub kind: K,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -18,7 +19,37 @@ pub enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
     Enum(Generics, Vec<Variant>),
     Struct(Generics, VariantKind),
+    Impl { generics: Generics, trait_path: Option<Path>, self_ty: P<Ty>, items: Vec<P<AssocItem>> },
 }
+
+impl ItemKind {
+    pub fn descr(&self) -> &str {
+        match self {
+            ItemKind::Fn(..) => "function",
+            ItemKind::Enum(..) => "enum",
+            ItemKind::Struct(..) => "struct",
+            ItemKind::Impl { .. } => "impl block",
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum AssocItemKind {
+    Fn(FnSig, Generics, Option<P<Expr>>),
+}
+
+impl TryFrom<ItemKind> for AssocItemKind {
+    type Error = ItemKind;
+
+    fn try_from(kind: ItemKind) -> Result<Self, Self::Error> {
+        match kind {
+            ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
+            ItemKind::Enum(..) | ItemKind::Struct(..) | ItemKind::Impl { .. } => Err(kind),
+        }
+    }
+}
+
+type AssocItem = Item<AssocItemKind>;
 
 impl ItemKind {
     pub fn def_kind(&self) -> DefKind {
@@ -26,6 +57,7 @@ impl ItemKind {
             ItemKind::Fn(..) => DefKind::Fn,
             ItemKind::Enum(..) => DefKind::Enum,
             ItemKind::Struct(..) => DefKind::Struct,
+            ItemKind::Impl { .. } => todo!(),
         }
     }
 }
@@ -44,6 +76,7 @@ impl Display for Item {
             ),
             ItemKind::Enum(generics, variants) => todo!(),
             ItemKind::Struct(generics, variant_kind) => todo!(),
+            ItemKind::Impl { .. } => todo!(),
         }
     }
 }

@@ -133,6 +133,14 @@ impl<'a> Parser<'a> {
         ExprParser.parse(self)
     }
 
+    pub fn parse_generics(&mut self) -> ParseResult<'a, Generics> {
+        GenericsParser.parse(self)
+    }
+
+    pub fn parse_ty(&mut self) -> ParseResult<'a, P<Ty>> {
+        TyParser.parse(self)
+    }
+
     pub fn parse_pattern(&mut self) -> ParseResult<'a, P<Pattern>> {
         PatParser.parse(self)
     }

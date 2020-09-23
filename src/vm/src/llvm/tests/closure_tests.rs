@@ -1,6 +1,6 @@
 use super::*;
 
-#[test]
+// #[test]
 fn llvm_simple_closure() {
     let src = r#"
     fn main() -> int {

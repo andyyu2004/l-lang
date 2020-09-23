@@ -25,6 +25,10 @@ lazy_static! {
         "type" => TokenType::Type,
         "box" => TokenType::Box,
         "unsafe" => TokenType::Unsafe,
+        "const" => TokenType::Const,
+        "impl" => TokenType::Impl,
+        "for" => TokenType::For,
+        "loop" => TokenType::Loop,
     };
 }
 
@@ -141,6 +145,10 @@ impl Lexer {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Const,
+    For,
+    Loop,
+    Impl,
     Unsafe,
     Match,
     Box,

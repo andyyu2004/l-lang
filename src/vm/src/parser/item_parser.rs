@@ -2,8 +2,10 @@ use super::*;
 use crate::ast::*;
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::{Tok, TokenType};
+use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 3] = [TokenType::Fn, TokenType::Struct, TokenType::Enum];
+const ITEM_KEYWORDS: [TokenType; 5] =
+    [TokenType::Fn, TokenType::Struct, TokenType::Enum, TokenType::Const, TokenType::Impl];
 
 pub struct ItemParser;
 
@@ -11,6 +13,11 @@ impl<'a> Parse<'a> for ItemParser {
     type Output = P<Item>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        if let Some(impl_kw) = parser.accept(TokenType::Impl) {
+            // impl doesn't really have the same grammar as the rest of the items..
+            todo!();
+            // return ImplParser { impl_kw }.parse(parser);
+        }
         let vis = VisibilityParser.parse(parser)?;
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
@@ -20,6 +27,7 @@ impl<'a> Parse<'a> for ItemParser {
                 TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
                 TokenType::Type => TypeAliasParser { type_kw: kw }.parse(parser),
+                TokenType::Impl => ImplParser { impl_kw: kw }.parse(parser),
                 _ => unreachable!(),
             },
             false,
@@ -28,6 +36,35 @@ impl<'a> Parse<'a> for ItemParser {
         parser.accept(TokenType::Semi);
 
         Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
+    }
+}
+
+pub struct ImplParser {
+    impl_kw: Tok,
+}
+
+impl<'a> Parse<'a> for ImplParser {
+    type Output = ItemKind;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let generics = parser.parse_generics()?;
+        let mut trait_path = Some(parser.parse_path()?);
+        let self_ty = if parser.accept(TokenType::For).is_some() {
+            parser.parse_ty()?
+        } else {
+            let ty_path = trait_path.take().unwrap();
+            parser.mk_ty(ty_path.span, TyKind::Path(ty_path))
+        };
+        parser.expect(TokenType::OpenBrace)?;
+        let mut items = vec![];
+        while parser.accept(TokenType::CloseBrace).is_none() {
+            let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
+            match AssocItemKind::try_from(kind) {
+                Ok(kind) => items.push(box Item { span, id, vis, ident, kind }),
+                Err(kind) => parser.err(span, ParseError::InvalidImplItem(kind)).emit(),
+            };
+        }
+        Ok(ItemKind::Impl { generics, trait_path, self_ty, items })
     }
 }
 

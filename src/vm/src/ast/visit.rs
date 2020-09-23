@@ -268,5 +268,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             visitor.visit_variant_kind(variant_kind);
         }
+        ItemKind::Impl { generics, trait_path, self_ty, items } => todo!(),
     }
 }
