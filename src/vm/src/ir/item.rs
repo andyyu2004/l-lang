@@ -13,6 +13,15 @@ pub struct Item<'ir> {
 }
 
 impl<'ir> Item<'ir> {
+    pub fn body(&self) -> &ir::Body<'ir> {
+        match &self.kind {
+            ItemKind::Fn(_, _, body) => body,
+            _ => panic!(),
+        }
+    }
+}
+
+impl<'ir> Item<'ir> {
     pub fn generics(&self) -> &'ir ir::Generics<'ir> {
         match self.kind {
             ItemKind::Impl { generics: g, .. }

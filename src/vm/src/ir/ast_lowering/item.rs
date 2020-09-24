@@ -1,7 +1,7 @@
 use super::AstLoweringCtx;
 use crate::ast::*;
 use crate::ir::{self, DefKind, Res, VariantIdx};
-use crate::lexer::Symbol;
+use crate::lexer::symbol::{self, Symbol};
 use indexed_vec::Idx;
 use std::marker::PhantomData;
 
@@ -9,10 +9,14 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     pub fn lower_item(&mut self, item: &Item) {
         self.with_owner(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
+            let id = lctx.lower_node_id(id);
             let kind = match &kind {
                 ItemKind::Fn(sig, generics, expr) => {
-                    // assume the function has a body for now
+                    if ident.symbol == symbol::MAIN {
+                        lctx.entry_id = Some(id.def);
+                    }
                     let lowered_sig = lctx.lower_fn_sig(sig);
+                    // assume the function has a body for now
                     let body = lctx.lower_body(sig, expr.as_ref().unwrap());
                     let lowered_sig = lctx.lower_fn_sig(sig);
                     let generics = lctx.lower_generics(generics);
@@ -33,8 +37,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
             };
-            let item = ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind };
-            lctx.items.insert(item.id, item);
+            let item = ir::Item { span, id, vis, ident, kind };
+            lctx.items.insert(item.id.def, item);
         });
     }
 
@@ -57,7 +61,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     fn lower_impl_item_ref(&mut self, impl_item: &AssocItem) -> ir::ImplItemRef {
         self.with_owner(impl_item.id, |lctx| {
             let item = lctx.lower_impl_item(impl_item);
-            let id = ir::ImplItemId(item.id);
+            let id = ir::ImplItemId(item.id.def);
             lctx.impl_items.insert(id, item);
             ir::ImplItemRef { id }
         })

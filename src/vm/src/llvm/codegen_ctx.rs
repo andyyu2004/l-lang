@@ -43,8 +43,10 @@ pub struct CommonValues<'tcx> {
 pub struct CommonTypes<'tcx> {
     pub unit: StructType<'tcx>,
     pub int: IntType<'tcx>,
+    pub byte: IntType<'tcx>,
     pub float: FloatType<'tcx>,
     pub boolean: IntType<'tcx>,
+    pub gcptr: PointerType<'tcx>,
     // using a fix sized discriminant for ease for now
     pub discr: IntType<'tcx>,
 }
@@ -66,6 +68,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             unit: llctx.struct_type(&[], true),
             int: llctx.i64_type(),
             float: llctx.f64_type(),
+            byte: llctx.i8_type(),
+            gcptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             boolean: llctx.bool_type(),
             discr: llctx.i8_type(),
         };
@@ -111,11 +115,11 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn declare_items(&self, prog: &'tcx ir::Prog<'tcx>) {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
-        for (&id, item) in &prog.items {
-            self.items.borrow_mut().insert(id.def, item.ident);
+        for (&def, item) in &prog.items {
+            self.items.borrow_mut().insert(def, item.ident);
             match &item.kind {
                 ir::ItemKind::Fn(body, ..) => {
-                    let (_, ty) = self.tcx.collected_ty(id.def).expect_scheme();
+                    let (_, ty) = self.tcx.collected_ty(def).expect_scheme();
                     let (params, ret) = ty.expect_fn();
                     let llty = self.llvm_fn_ty(params, ret);
                     let llfn = self.module.add_function(item.ident.as_str(), llty, None);

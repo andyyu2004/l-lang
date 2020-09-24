@@ -14,7 +14,7 @@ fn main() {
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
         return if interpret {
-            unimplemented!();
+            println!("{}", libvm::jit(&src).unwrap_or_else(|_| std::process::exit(1)));
         } else {
             println!("{}", libvm::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
         };

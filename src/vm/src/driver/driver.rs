@@ -89,30 +89,29 @@ impl<'tcx> Driver<'tcx> {
         Ok((ir, resolutions))
     }
 
-    fn with_tcx_and_ir<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
+    fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
         let gcx =
             self.global_ctx.get_or_init(|| GlobalCtx::new(ir, &self.arena, &defs, &self.sess));
-        let ret = gcx.enter_tcx(|tcx| {
-            tcx.run_typeck();
-            f(tcx)
-        });
+        let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }
 
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-        self.with_tcx_and_ir(|tcx| tcx.build_tir())
+        self.with_tcx(|tcx| tcx.build_tir())
     }
 
-    pub fn create_codegen_ctx(&'tcx self) -> CodegenCtx {
-        let gcx = self.global_ctx.get().unwrap();
+    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx<'tcx>> {
         let llvm_ctx = LLVMCtx::create();
-        gcx.enter_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))
+        self.with_tcx(|tcx| {
+            tcx.run_typeck();
+            CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx))
+        })
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
-        let mut cctx = self.create_codegen_ctx();
+        let mut cctx = self.create_codegen_ctx()?;
         let main_fn = cctx.codegen();
         check_errors!(self, (cctx, main_fn.unwrap()))
     }
@@ -126,9 +125,9 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn llvm_jit(&'tcx self) -> LResult<i32> {
-        // let mut cctx = self.create_codegen_ctx();
-        // let jcx = JitCtx::new(&cctx, GC::default());
-        // jcx.run_jit(&mir);
+        let cctx = self.create_codegen_ctx()?;
+        let mut jcx = JitCtx::new(&cctx, GC::default())?;
+        jcx.run_jit();
         todo!()
     }
 

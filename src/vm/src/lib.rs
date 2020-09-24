@@ -88,10 +88,14 @@ pub fn parse(src: &str) -> LResult<Box<ast::Prog>> {
 //     Ok(res)
 // }
 
+pub fn jit(src: &str) -> LResult<i32> {
+    let driver = mk_driver(src);
+    driver.llvm_jit()
+}
+
 pub fn llvm_exec(src: &str) -> LResult<i32> {
     let driver = mk_driver(src);
-    let res = driver.llvm_exec()?;
-    Ok(res)
+    driver.llvm_exec()
 }
 
 pub macro tir($src:expr) {{

@@ -248,6 +248,8 @@ macro halt_on_error($tcx:expr) {{
 
 impl<'tcx> TyCtx<'tcx> {
     /// top level entrace to typechecking?
+    /// this does not run typechecking inside function bodies
+    /// that is done during lowering to mir
     pub fn run_typeck(self) {
         self.collect(self.ir);
     }
@@ -257,6 +259,15 @@ impl<'tcx> TyCtx<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let forall = Forall { binders };
         self.mk_ty_scheme(forall, ty)
+    }
+
+    pub fn build_mir(self, def_id: DefId) -> LResult<&'tcx mir::Body<'tcx>> {
+        let item = self.ir.items.get(&def_id).unwrap_or_else(|| panic!("unknown def_id"));
+        match &item.kind {
+            ir::ItemKind::Fn(sig, generics, body) =>
+                self.typeck_fn(item, sig, generics, body, |mut ctx| ctx.build_mir(body)),
+            _ => panic!("no mir to build for item kind"),
+        }
     }
 
     pub fn typeck_fn<R>(
@@ -314,6 +325,7 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// top level entrace to typechecking and lowering to tir
     pub fn build_tir(self) -> tir::Prog<'tcx> {
+        self.collect(self.ir);
         self.build_tir_inner(self.ir)
     }
 }

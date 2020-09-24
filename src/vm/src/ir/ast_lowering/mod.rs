@@ -16,12 +16,13 @@ use std::cell::Cell;
 use std::collections::BTreeMap;
 
 pub struct AstLoweringCtx<'a, 'ir> {
-    pub(super) arena: &'ir Arena<'ir>,
-    pub(super) resolver: &'a mut Resolver<'ir>,
-    pub(super) node_id_to_id: FxHashMap<NodeId, ir::Id>,
-    pub(super) item_stack: Vec<(DefId, usize)>,
-    pub(super) items: BTreeMap<ir::Id, ir::Item<'ir>>,
-    pub(super) impl_items: BTreeMap<ir::ImplItemId, ir::ImplItem<'ir>>,
+    arena: &'ir Arena<'ir>,
+    resolver: &'a mut Resolver<'ir>,
+    node_id_to_id: FxHashMap<NodeId, ir::Id>,
+    item_stack: Vec<(DefId, usize)>,
+    items: BTreeMap<DefId, ir::Item<'ir>>,
+    impl_items: BTreeMap<ir::ImplItemId, ir::ImplItem<'ir>>,
+    entry_id: Option<DefId>,
     /// this counter counts backwards as to be sure not to not
     /// overlap with the ids that the parser assigned
     node_id_counter: Cell<usize>,
@@ -77,8 +78,9 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     pub fn new(arena: &'ir Arena<'ir>, resolver: &'a mut Resolver<'ir>) -> Self {
         Self {
             arena,
-            item_stack: Default::default(),
             resolver,
+            entry_id: None,
+            item_stack: Default::default(),
             items: Default::default(),
             impl_items: Default::default(),
             node_id_to_id: Default::default(),
@@ -99,7 +101,11 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub fn lower_prog(mut self, prog: &Prog) -> &'ir ir::Prog<'ir> {
         prog.items.iter().for_each(|item| self.lower_item(item));
-        self.arena.alloc(ir::Prog { items: self.items, impl_items: self.impl_items })
+        self.arena.alloc(ir::Prog {
+            entry_id: self.entry_id,
+            items: self.items,
+            impl_items: self.impl_items,
+        })
     }
 
     pub(super) fn with_owner<T>(&mut self, owner: NodeId, f: impl FnOnce(&mut Self) -> T) -> T {

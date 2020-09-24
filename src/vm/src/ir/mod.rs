@@ -32,7 +32,7 @@ newtype_index!(VariantIdx);
 newtype_index!(FieldIdx);
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-pub struct ImplItemId(pub self::Id);
+pub struct ImplItemId(DefId);
 
 pub const ROOT_MODULE: ModuleId = ModuleId(0);
 
