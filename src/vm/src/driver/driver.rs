@@ -89,23 +89,20 @@ impl<'tcx> Driver<'tcx> {
         Ok((ir, resolutions))
     }
 
-    fn with_tcx_and_ir<R>(
-        &'tcx self,
-        f: impl FnOnce(TyCtx<'tcx>, &'tcx ir::Prog<'tcx>) -> R,
-    ) -> LResult<R> {
+    fn with_tcx_and_ir<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
         let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
-        let gcx = self.global_ctx.get_or_init(|| GlobalCtx::new(&self.arena, &defs, &self.sess));
-        let ret = gcx.enter_tcx(|tcx| f(tcx, &ir));
+        let gcx =
+            self.global_ctx.get_or_init(|| GlobalCtx::new(ir, &self.arena, &defs, &self.sess));
+        let ret = gcx.enter_tcx(|tcx| {
+            tcx.run_typeck();
+            f(tcx)
+        });
         check_errors!(self, ret)
     }
 
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-        self.with_tcx_and_ir(|tcx, ir| tcx.build_tir(ir))
-    }
-
-    pub fn gen_mir(&'tcx self) -> LResult<mir::Prog<'tcx>> {
-        self.with_tcx_and_ir(|tcx, ir| tcx.build_mir(ir))
+        self.with_tcx_and_ir(|tcx| tcx.build_tir())
     }
 
     pub fn create_codegen_ctx(&'tcx self) -> CodegenCtx {
@@ -115,9 +112,8 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
-        let mir = self.arena.alloc(self.gen_mir()?);
         let mut cctx = self.create_codegen_ctx();
-        let main_fn = cctx.codegen(&mir);
+        let main_fn = cctx.codegen();
         check_errors!(self, (cctx, main_fn.unwrap()))
     }
 
@@ -130,10 +126,9 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn llvm_jit(&'tcx self) -> LResult<i32> {
-        let mir = self.arena.alloc(self.gen_mir()?);
-        let mut cctx = self.create_codegen_ctx();
-        let jcx = JitCtx::new(&cctx, GC::default());
-        jcx.run_jit(&mir);
+        // let mut cctx = self.create_codegen_ctx();
+        // let jcx = JitCtx::new(&cctx, GC::default());
+        // jcx.run_jit(&mir);
         todo!()
     }
 

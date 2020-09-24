@@ -36,7 +36,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
             ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
             ir::Res::Def(def_id, def_kind) => match def_kind {
                 ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
-                ir::DefKind::Struct => {
+                ir::DefKind::Struct | ir::DefKind::Enum => {
                     // TODO unsure how to deal with the forall currently
                     // instantiation requires an inferctx which may not be available if we are only
                     // performing type collection
@@ -44,7 +44,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
                     ty
                 }
                 ir::DefKind::Ctor(..) => todo!(),
-                ir::DefKind::Impl | ir::DefKind::Fn | ir::DefKind::Enum => unreachable!(),
+                ir::DefKind::AssocFn | ir::DefKind::Impl | ir::DefKind::Fn => todo!(),
             },
             ir::Res::SelfTy => todo!(),
             ir::Res::Err => tcx.mk_ty_err(),

@@ -42,13 +42,38 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         &mut self,
         generics: &Generics,
         path: Option<&Path>,
-        ty: &Ty,
+        self_ty: &Ty,
         impl_items: &[Box<AssocItem>],
     ) -> ir::ItemKind<'ir> {
+        let arena = &self.arena.ir;
         let generics = self.lower_generics(generics);
-        let path = path.map(|path| self.lower_path(path));
-        todo!();
-        // ir::ItemKind::Impl { generics,  }
+        let trait_path = path.map(|path| self.lower_path(path));
+        let self_ty = self.lower_ty(self_ty);
+        let impl_items = impl_items.iter().map(|item| self.lower_impl_item_ref(item));
+        let impl_item_refs = arena.alloc_from_iter(impl_items);
+        ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs }
+    }
+
+    fn lower_impl_item_ref(&mut self, impl_item: &AssocItem) -> ir::ImplItemRef {
+        self.with_owner(impl_item.id, |lctx| {
+            let item = lctx.lower_impl_item(impl_item);
+            let id = ir::ImplItemId(item.id);
+            lctx.impl_items.insert(id, item);
+            ir::ImplItemRef { id }
+        })
+    }
+
+    fn lower_impl_item(&mut self, impl_item: &AssocItem) -> ir::ImplItem<'ir> {
+        let &AssocItem { span, id, vis, ident, ref kind } = impl_item;
+        let (generics, kind) = match kind {
+            AssocItemKind::Fn(sig, generics, body) => {
+                let generics = self.lower_generics(generics);
+                let body = body.as_ref().map(|body| self.lower_body(sig, body));
+                let sig = self.lower_fn_sig(sig);
+                (generics, ir::ImplItemKind::Fn(sig, body))
+            }
+        };
+        ir::ImplItem { id: self.lower_node_id(id), ident, span, vis, generics, kind }
     }
 
     fn lower_variant(&mut self, item: &Item, idx: usize, variant: &Variant) -> ir::Variant<'ir> {

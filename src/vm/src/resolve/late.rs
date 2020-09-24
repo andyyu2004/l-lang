@@ -114,6 +114,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
                 if let Some(path) = trait_path {
                     this.resolve_path(path, NS::Type);
                 }
+                this.visit_ty(self_ty);
                 if trait_path.is_some() {
                     todo!()
                 }

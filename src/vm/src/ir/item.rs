@@ -4,12 +4,6 @@ use crate::span::Span;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct ImplItem<'ir> {
-    // tmp
-    kind: ItemKind<'ir>,
-}
-
-#[derive(Debug)]
 pub struct Item<'ir> {
     pub span: Span,
     pub id: ir::Id,
@@ -37,10 +31,27 @@ pub enum ItemKind<'ir> {
     Impl {
         generics: &'ir ir::Generics<'ir>,
         trait_path: Option<&'ir ir::Path<'ir>>,
-        ty: &'ir ir::Ty<'ir>,
-        impl_item_refs: ImplItemRef,
+        self_ty: &'ir ir::Ty<'ir>,
+        impl_item_refs: &'ir [ImplItemRef],
     },
 }
 
+#[derive(Debug)]
+pub struct ImplItem<'ir> {
+    pub id: ir::Id,
+    pub ident: Ident,
+    pub span: Span,
+    pub vis: Visibility,
+    pub generics: &'ir ir::Generics<'ir>,
+    pub kind: ImplItemKind<'ir>,
+}
+
+#[derive(Debug)]
+pub enum ImplItemKind<'ir> {
+    Fn(&'ir ir::FnSig<'ir>, Option<&'ir ir::Body<'ir>>),
+}
+
 #[derive(Debug, Clone, Copy)]
-pub struct ImplItemRef {}
+pub struct ImplItemRef {
+    pub id: ir::ImplItemId,
+}

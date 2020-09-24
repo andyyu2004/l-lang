@@ -48,6 +48,7 @@ impl CtorKind {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum DefKind {
     Fn,
+    AssocFn,
     Enum,
     Struct,
     Impl,
@@ -66,6 +67,7 @@ impl Display for DefKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             DefKind::Fn => write!(f, "function"),
+            DefKind::AssocFn => write!(f, "associated function"),
             DefKind::Impl => write!(f, "impl"),
             DefKind::Enum => write!(f, "enum"),
             DefKind::Struct => write!(f, "struct"),

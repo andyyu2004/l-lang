@@ -13,21 +13,21 @@ use std::cell::RefCell;
 use std::ops::Deref;
 
 pub struct FnCtx<'a, 'tcx> {
-    inherited: &'a Inherited<'a, 'tcx>,
+    inherited: &'a InheritedCtx<'a, 'tcx>,
     pub(super) fn_ty: Ty<'tcx>,
     pub(super) param_tys: SubstsRef<'tcx>,
     pub(super) ret_ty: Ty<'tcx>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(inherited: &'a Inherited<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
+    pub fn new(inherited: &'a InheritedCtx<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
         let (param_tys, ret_ty) = fn_ty.expect_fn();
         Self { inherited, fn_ty, param_tys, ret_ty }
     }
 }
 
 impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
-    type Target = Inherited<'a, 'tcx>;
+    type Target = InheritedCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
         &self.inherited
@@ -54,7 +54,7 @@ impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
+impl<'a, 'tcx> Deref for InheritedCtx<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
@@ -62,15 +62,15 @@ impl<'a, 'tcx> Deref for Inherited<'a, 'tcx> {
     }
 }
 
-/// stuff that is shared between functions
+/// context that is shared between functions
 /// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
 /// well as the outermost fn item
-pub struct Inherited<'a, 'tcx> {
+pub struct InheritedCtx<'a, 'tcx> {
     pub(super) infcx: &'a InferCtx<'a, 'tcx>,
     locals: RefCell<FxHashMap<ir::Id, LocalTy<'tcx>>>,
 }
 
-pub struct InheritedBuilder<'tcx> {
+pub struct InheritedCtxBuilder<'tcx> {
     infcx: InferCtxBuilder<'tcx>,
 }
 
@@ -86,19 +86,19 @@ impl<'tcx> LocalTy<'tcx> {
     }
 }
 
-impl<'tcx> InheritedBuilder<'tcx> {
-    pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(Inherited<'a, 'tcx>) -> R) -> R {
-        self.infcx.enter(|infcx| f(Inherited::new(&infcx)))
+impl<'tcx> InheritedCtxBuilder<'tcx> {
+    pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(InheritedCtx<'a, 'tcx>) -> R) -> R {
+        self.infcx.enter(|infcx| f(InheritedCtx::new(&infcx)))
     }
 }
 
-impl<'a, 'tcx> Inherited<'a, 'tcx> {
+impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     pub fn new(infcx: &'a InferCtx<'a, 'tcx>) -> Self {
         Self { infcx, locals: Default::default() }
     }
 
-    pub fn build(tcx: TyCtx<'tcx>, def_id: DefId) -> InheritedBuilder<'tcx> {
-        InheritedBuilder { infcx: tcx.infer_ctx(def_id) }
+    pub fn build(tcx: TyCtx<'tcx>, def_id: DefId) -> InheritedCtxBuilder<'tcx> {
+        InheritedCtxBuilder { infcx: tcx.infer_ctx(def_id) }
     }
 
     /// top level entry point for typechecking a function item

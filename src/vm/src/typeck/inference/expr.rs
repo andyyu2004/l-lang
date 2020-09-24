@@ -307,6 +307,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             // instantiate ty params
             DefKind::Fn | DefKind::Enum | DefKind::Struct | DefKind::Ctor(..) =>
                 self.instantiate(span, self.collected_ty(def_id)),
+            DefKind::AssocFn => todo!(),
             DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
         }
     }

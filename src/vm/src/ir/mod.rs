@@ -25,12 +25,14 @@ pub use ty::*;
 pub use visit::*;
 
 newtype_index!(DefId);
-newtype_index!(ImplItemId);
 newtype_index!(LocalId);
 newtype_index!(ModuleId);
 newtype_index!(ParamIdx);
 newtype_index!(VariantIdx);
 newtype_index!(FieldIdx);
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
+pub struct ImplItemId(pub self::Id);
 
 pub const ROOT_MODULE: ModuleId = ModuleId(0);
 

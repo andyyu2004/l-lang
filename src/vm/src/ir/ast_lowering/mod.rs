@@ -137,7 +137,6 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub(super) fn lower_body(&mut self, sig: &FnSig, expr: &Expr) -> &'ir ir::Body<'ir> {
         let params = self.lower_params(&sig.params);
-        let sig = self.lower_fn_sig(sig);
         let expr = self.lower_expr(expr);
         self.alloc(ir::Body { params, expr })
     }

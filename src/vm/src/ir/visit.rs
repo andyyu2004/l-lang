@@ -87,10 +87,24 @@ pub trait Visitor<'ir>: Sized {
     fn visit_variant(&mut self, variant: &'ir ir::Variant<'ir>) {
         walk_variant(self, variant)
     }
+
+    fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
+        walk_impl_item(self, impl_item);
+    }
 }
 
 pub fn walk_prog<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::Prog<'ir>) {
-    prog.items.values().for_each(|item| v.visit_item(item))
+    prog.items.values().for_each(|item| v.visit_item(item));
+    prog.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
+}
+
+pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplItem<'ir>) {
+    match impl_item.kind {
+        ir::ImplItemKind::Fn(sig, body) => {
+            v.visit_fn_sig(sig);
+            v.visit_body(body.unwrap());
+        }
+    }
 }
 
 pub fn walk_variant<'ir>(v: &mut impl Visitor<'ir>, variant: &'ir ir::Variant<'ir>) {
@@ -137,7 +151,13 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_generics(generics);
             v.visit_variant_kind(kind);
         }
-        ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
+        ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
+            v.visit_generics(generics);
+            trait_path.iter().for_each(|path| v.visit_path(path));
+            v.visit_ty(self_ty);
+            // TODO
+            // impl_item_refs.iter().for_each();
+        }
     }
 }
 

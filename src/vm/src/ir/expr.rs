@@ -25,12 +25,13 @@ impl<'ir> Expr<'ir> {
                 ir::Res::Local(id) => true,
                 ir::Res::SelfTy => false,
                 ir::Res::Def(_, def_kind) => match def_kind {
-                    ir::DefKind::Fn => false,
-                    ir::DefKind::Enum => false,
-                    ir::DefKind::Struct => false,
-                    ir::DefKind::Impl => false,
-                    ir::DefKind::TyParam(_) => false,
-                    ir::DefKind::Ctor(..) => false,
+                    ir::DefKind::Fn
+                    | ir::DefKind::AssocFn
+                    | ir::DefKind::Enum
+                    | ir::DefKind::Struct
+                    | ir::DefKind::Impl
+                    | ir::DefKind::TyParam(_)
+                    | ir::DefKind::Ctor(..) => false,
                 },
                 ir::Res::Err => false,
                 ir::Res::PrimTy(_) => unreachable!(),

@@ -24,46 +24,10 @@ newtype_index!(BlockId);
 
 pub const RETURN: usize = 0;
 
-#[derive(Debug)]
-pub struct Prog<'tcx> {
-    pub items: BTreeMap<DefId, Item<'tcx>>,
-}
-
 /// mir analyses go here
 /// dataflow etc...
 pub fn validate<'a, 'tcx>(mir: &mir::Body<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
     dataflow::check_assignments(mir, ctx);
-}
-
-impl<'tcx> std::fmt::Display for Prog<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for item in self.items.values() {
-            writeln!(f, "{}", item)?;
-        }
-        Ok(())
-    }
-}
-
-impl<'tcx> std::fmt::Display for Item<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
-            ItemKind::Fn(body) => write!(f, "{}", body),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Item<'tcx> {
-    pub span: Span,
-    pub id: DefId,
-    pub vis: Visibility,
-    pub ident: Ident,
-    pub kind: mir::ItemKind<'tcx>,
-}
-
-#[derive(Debug)]
-pub enum ItemKind<'tcx> {
-    Fn(mir::Body<'tcx>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

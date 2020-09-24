@@ -31,14 +31,22 @@ impl<'a, 'r> DefVisitor<'a, 'r> {
 impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
-        match item.kind {
+        match &item.kind {
             ItemKind::Enum(..) => {
                 // enums introduce a new namespace represented as a module
                 let module = self.new_module(item.ident);
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
+            ItemKind::Impl { self_ty, .. } => {
+                // TODO need to namespace the impl items behind the self_ty somehow
+                ast::walk_item(self, item);
+            }
             _ => ast::walk_item(self, item),
         }
+    }
+
+    fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
+        self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
     }
 
     /// define the variant constructor

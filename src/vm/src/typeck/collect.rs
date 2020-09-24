@@ -36,10 +36,52 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 let ty = tcx.mk_adt_ty(adt_ty, List::empty());
                 tcx.generalize(generics, ty)
             }
-            ir::ItemKind::Impl { generics, trait_path, ty, impl_item_refs } => todo!(),
+            ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
+                for impl_item_ref in *impl_item_refs {
+                    tcx.collect_impl_item(impl_item_ref);
+                }
+                return;
+            }
         };
         info!("collect item: {:#?}", ty);
         tcx.collect_ty(item.id.def, ty);
+    }
+}
+
+impl<'tcx> TyCtx<'tcx> {
+    pub fn collect(self, prog: &'tcx ir::Prog<'tcx>) {
+        ItemCollector { tcx: self }.visit_prog(prog);
+        CtorCollector { tcx: self }.visit_prog(prog);
+    }
+
+    /// write collected ty to tcx map
+    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
+        self.collected_tys.borrow_mut().insert(def, ty);
+        ty
+    }
+
+    pub fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef) {
+        let impl_item = self.impl_item(impl_item_ref.id);
+        let ty = match impl_item.kind {
+            ir::ImplItemKind::Fn(sig, _) => TyConv::fn_sig_to_ty(&self, sig),
+        };
+        self.collect_ty(impl_item.id.def, ty);
+    }
+
+    pub fn variant_ty(
+        self,
+        ident: Ident,
+        ctor: Option<DefId>,
+        variant_kind: &ir::VariantKind<'tcx>,
+    ) -> VariantTy<'tcx> {
+        let mut seen = FxHashMap::default();
+        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
+            if let Some(span) = seen.insert(f.ident, f.span) {
+                self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
+            }
+            FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
+        }));
+        VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
     }
 }
 
@@ -73,34 +115,5 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
         };
         let generalized = tcx.mk_ty_scheme(forall, ctor_ty);
         tcx.collect_ty(variant.id.def, generalized);
-    }
-}
-
-impl<'tcx> TyCtx<'tcx> {
-    pub fn collect(self, prog: &'tcx ir::Prog<'tcx>) {
-        ItemCollector { tcx: self }.visit_prog(prog);
-        CtorCollector { tcx: self }.visit_prog(prog);
-    }
-
-    /// write collected memory to tcx map
-    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        self.collected_tys.borrow_mut().insert(def, ty);
-        ty
-    }
-
-    pub fn variant_ty(
-        self,
-        ident: Ident,
-        ctor: Option<DefId>,
-        variant_kind: &ir::VariantKind<'tcx>,
-    ) -> VariantTy<'tcx> {
-        let mut seen = FxHashMap::default();
-        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
-            if let Some(span) = seen.insert(f.ident, f.span) {
-                self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
-            }
-            FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
-        }));
-        VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
     }
 }

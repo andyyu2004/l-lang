@@ -48,31 +48,35 @@ pub fn build_fn<'a, 'tcx>(
 
 /// a bit of a hacky way to generate the mir for variant constructors
 /// `ty` should be the type of the enum adt
-pub fn build_enum_ctors<'tcx>(tcx: TyCtx<'tcx>, item: &ir::Item) -> SmallVec<[mir::Item<'tcx>; 2]> {
+pub fn build_enum_ctors<'tcx>(
+    tcx: TyCtx<'tcx>,
+    item: &ir::Item,
+) -> FxHashMap<Ident, &'tcx Body<'tcx>> {
     // todo deal with generics
     let scheme = tcx.collected_ty(item.id.def);
     let (_forall, ty) = scheme.expect_scheme();
     let (adt_ty, _) = ty.expect_adt();
-    let mut vec = smallvec![];
+    let mut map = FxHashMap::default();
     for (idx, variant) in adt_ty.variants.iter_enumerated() {
         let body = build_variant_ctor(tcx, ty, idx, variant);
         match body {
             None => continue,
             Some(body) => {
                 eprintln!("{}", body);
-                let kind = mir::ItemKind::Fn(body);
-                let item = mir::Item {
-                    span: item.span,
-                    vis: item.vis,
-                    ident: variant.ident,
-                    id: variant.ctor.unwrap(),
-                    kind,
-                };
-                vec.push(item);
+                map.insert(item.ident.concat_as_path(variant.ident), body);
+                // let kind = mir::ItemKind::Fn(body);
+                // let item = mir::Item {
+                //     span: item.span,
+                //     vis: item.vis,
+                //     ident: variant.ident,
+                //     id: variant.ctor.unwrap(),
+                //     kind,
+                // };
+                // vec.push(item);
             }
         }
     }
-    vec
+    map
 }
 
 /// constructs the mir for a single variant constructor (if it is a function)
@@ -81,7 +85,7 @@ fn build_variant_ctor<'tcx>(
     ty: Ty<'tcx>,
     variant_idx: VariantIdx,
     variant: &VariantTy<'tcx>,
-) -> Option<mir::Body<'tcx>> {
+) -> Option<&'tcx mir::Body<'tcx>> {
     // don't construct any mir for a constructor that is not a function
     if !variant.ctor_kind.is_function() {
         return None;
@@ -114,7 +118,8 @@ fn build_variant_ctor<'tcx>(
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
     cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
     cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
-    Some(mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() })
+    let body = mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() };
+    Some(tcx.alloc(body))
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {

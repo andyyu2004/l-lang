@@ -35,23 +35,6 @@ where
         todo!()
     }
 
-    pub fn run_jit(&self, prog: &'tcx mir::Prog<'tcx>) {
-        self.cctx.declare_items(prog);
-        for item in prog.items.values() {
-            self.jit_item(item);
-        }
-        // self.engine.add_module(&self.module);
-    }
-
-    fn jit_item(&self, item: &'tcx mir::Item<'tcx>) {
-        match &item.kind {
-            mir::ItemKind::Fn(body) => {
-                let llfn = self.cctx.module.get_function(item.ident.as_str()).unwrap();
-                self.jit_body(llfn, body);
-            }
-        }
-    }
-
     pub fn jit_body(&self, llfn: FunctionValue<'tcx>, body: &'tcx mir::Body<'tcx>) {
         let mut fcx = Fcx::new(self, llfn, body);
         fcx.codegen();

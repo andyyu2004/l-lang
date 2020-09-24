@@ -12,7 +12,7 @@ mod upvars;
 
 pub(super) use at::At;
 pub(super) use equate::Equate;
-pub(super) use fn_ctx::{FnCtx, Inherited, InheritedBuilder};
+pub(super) use fn_ctx::{FnCtx, InheritedCtx, InheritedCtxBuilder};
 pub use infer_ctx::{InferCtx, InferCtxBuilder};
 pub use type_variable::*;
 pub(super) use undo_logs::InferCtxUndoLogs;

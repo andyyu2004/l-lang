@@ -39,13 +39,9 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
     }
 
     /// ir -> tir -> mir
-    pub fn lower_item_mir(&mut self, item: &ir::Item<'tcx>) -> mir::Item<'tcx> {
-        let &ir::Item { id, span, vis, ident, ref kind } = item;
-        let mk_item = |kind| mir::Item { span, id: id.def, vis, ident, kind };
-        let tir = self.lower_item_tir(item);
-        match tir.kind {
-            tir::ItemKind::Fn(_, _, body) => mk_item(mir::ItemKind::Fn(mir::build_fn(self, body))),
-        }
+    pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx mir::Body<'tcx> {
+        let tir = body.to_tir(self);
+        self.tcx.alloc(mir::build_fn(self, tir))
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
@@ -277,6 +273,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
                 // functions and function-like variant constructors
                 ir::DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
                     tir::ExprKind::ItemRef(def_id),
+                ir::DefKind::AssocFn => todo!(),
                 ir::DefKind::Impl => todo!(),
                 ir::DefKind::Ctor(..) => todo!(),
                 ir::DefKind::TyParam(_) => todo!(),

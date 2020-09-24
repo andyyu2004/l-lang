@@ -38,6 +38,14 @@ pub enum AssocItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
 }
 
+impl AssocItemKind {
+    pub fn def_kind(&self) -> DefKind {
+        match self {
+            Self::Fn(..) => DefKind::AssocFn,
+        }
+    }
+}
+
 impl TryFrom<ItemKind> for AssocItemKind {
     type Error = ItemKind;
 

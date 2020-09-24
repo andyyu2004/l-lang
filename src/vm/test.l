@@ -5,14 +5,20 @@
  }
 
 // struct S {
-//     x: int,
-//     y: bool,
+//     val: int,
+//     next: OptionS,
+// }
+//
+// enum OptionS {
+//     Some(S),
+//     None,
 // }
 
 enum Option {
     Some(int),
     None,
 }
+
 
 impl Option {
     fn unwrap() -> int {
