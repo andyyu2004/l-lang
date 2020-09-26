@@ -49,7 +49,7 @@ impl<'tcx> TyS<'tcx> {
         self.visit_with(&mut TyVidVisitor { tyvid })
     }
 
-    pub fn expect_scheme(&self) -> (Forall<'tcx>, Ty<'tcx>) {
+    pub fn expect_scheme(&self) -> (Generics<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Scheme(forall, ty) => (forall, ty),
             _ => panic!("expected TyKind::Scheme, found {}", self),
@@ -113,7 +113,7 @@ pub enum TyKind<'tcx> {
     Infer(InferTy),
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
-    Scheme(Forall<'tcx>, Ty<'tcx>),
+    Scheme(Generics<'tcx>, Ty<'tcx>),
     /// pointer to a type
     /// created by box expressions
     /// mutability inherited by the pointee?
@@ -121,6 +121,20 @@ pub enum TyKind<'tcx> {
     /// mut x: T -> box x: &mut T
     Ptr(Mutability, Ty<'tcx>),
     Opaque(DefId, SubstsRef<'tcx>),
+}
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+pub struct Generics<'tcx> {
+    pub params: &'tcx [TyParam<'tcx>],
+}
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+pub struct TyParam<'tcx> {
+    pub id: ir::Id,
+    pub span: Span,
+    pub ident: Ident,
+    pub index: ParamIdx,
+    pub default: Option<Ty<'tcx>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -310,15 +324,15 @@ impl<'tcx> Display for TyKind<'tcx> {
     }
 }
 
-/// the current representation of type parameters are their DefId
-#[derive(Debug, Eq, Copy, Hash, PartialEq, Clone)]
-pub struct Forall<'tcx> {
-    pub binders: &'tcx [ParamIdx],
+impl<'tcx> Display for TyParam<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ident)
+    }
 }
 
-impl<'tcx> Display for Forall<'tcx> {
+impl<'tcx> Display for Generics<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "τ{}", util::join2(self.binders.iter(), ","))
+        write!(f, "τ{}", util::join2(self.params.iter(), ","))
     }
 }
 

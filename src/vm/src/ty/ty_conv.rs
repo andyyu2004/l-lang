@@ -1,6 +1,6 @@
 //! conversion of ir::Ty to ty::Ty
 
-use super::{List, Subst};
+use super::{Generics, List, Subst, TyParam};
 use crate::error::TypeError;
 use crate::ir::{self, Res};
 use crate::span::Span;
@@ -66,6 +66,14 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
             ir::Res::Err => tcx.mk_ty_err(),
             ir::Res::Local(_) => panic!("unexpected resolution"),
         }
+    }
+
+    pub fn lower_generics(&self, generics: &ir::Generics) -> Generics<'tcx> {
+        let params =
+            generics.params.iter().map(|&ir::TyParam { id, index, ident, span, default }| {
+                TyParam { id, span, ident, index, default: default.map(|ty| self.ir_ty_to_ty(ty)) }
+            });
+        Generics { params: self.tcx().alloc_iter(params) }
     }
 
     pub fn fn_sig_to_ty(&self, sig: &ir::FnSig) -> Ty<'tcx> {

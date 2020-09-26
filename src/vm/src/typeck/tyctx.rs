@@ -96,7 +96,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Array(ty, n))
     }
 
-    pub fn mk_ty_scheme(self, forall: Forall<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn mk_ty_scheme(self, forall: Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
@@ -274,8 +274,8 @@ impl<'tcx> TyCtx<'tcx> {
     /// constructs a TypeScheme from a type and its generics
     pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
-        let forall = Forall { binders };
-        self.mk_ty_scheme(forall, ty)
+        let generics = TyConv::lower_generics(&self, generics);
+        self.mk_ty_scheme(generics, ty)
     }
 
     pub fn typeck_fn<R>(

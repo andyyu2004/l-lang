@@ -127,6 +127,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_assoc_item(&mut self, item: &'ast AssocItem) {
         match &item.kind {
+            // TODO add the impls generics to the assoc fns generics
             AssocItemKind::Fn(_, generics, _) =>
                 self.with_generics(generics, |this| ast::walk_assoc_item(this, item)),
         }

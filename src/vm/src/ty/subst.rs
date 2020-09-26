@@ -1,6 +1,6 @@
 use crate::ir::{self, DefId, ParamIdx};
 use crate::span::Span;
-use crate::ty::{Forall, InferTy, List, Ty, TyKind, TypeFoldable, TypeFolder};
+use crate::ty::{Generics, InferTy, List, Ty, TyKind, TypeFoldable, TypeFolder};
 use crate::typeck::{inference::InferCtx, TyCtx};
 use indexed_vec::Idx;
 use rustc_hash::FxHashMap;
@@ -49,6 +49,14 @@ pub type SubstsRef<'tcx> = &'tcx Substs<'tcx>;
 pub type Substs<'tcx> = List<Ty<'tcx>>;
 
 impl<'tcx> Substs<'tcx> {
+    /// creates a fresh inference variable for each type parameter in `forall`
+    pub fn forall(infcx: &InferCtx<'_, 'tcx>, forall: &Generics<'tcx>) -> SubstsRef<'tcx> {
+        let tcx = infcx.tcx;
+        let n = forall.params.len();
+        let params = forall.params.iter().map(|p| infcx.new_infer_var(p.span));
+        tcx.mk_substs(params)
+    }
+
     /// crates an identity substitution given the generics for some item
     pub fn id_for_generics(tcx: TyCtx<'tcx>, generics: &ir::Generics) -> SubstsRef<'tcx> {
         let params = generics.params.iter().map(|p| tcx.mk_ty_param(p.id.def, p.index));
@@ -63,20 +71,10 @@ pub struct InstantiationFolder<'tcx> {
 }
 
 impl<'tcx> InstantiationFolder<'tcx> {
-    pub fn new(infcx: &InferCtx<'_, 'tcx>, span: Span, forall: &Forall<'tcx>) -> Self {
+    pub fn new(infcx: &InferCtx<'_, 'tcx>, span: Span, forall: &Generics<'tcx>) -> Self {
         let tcx = infcx.tcx;
-        let n = forall.binders.len();
-        debug_assert!(forall.binders.is_sorted());
-        let substs = tcx.mk_substs((0..n).map(|i| {
-            let idx = ParamIdx::new(i);
-            if forall.binders.binary_search(&idx).is_ok() {
-                infcx.new_infer_var(span)
-            } else {
-                // case where parameter with index i is not mentioned in `forall` so
-                // use the special case and don't substitute anything
-                tcx.mk_ty_param(DefId::new(0), idx)
-            }
-        }));
+        let n = forall.params.len();
+        let substs = Substs::forall(infcx, forall);
 
         Self { tcx, substs }
     }
