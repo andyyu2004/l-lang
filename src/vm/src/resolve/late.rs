@@ -158,29 +158,50 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         path: &'ast Path,
         segments: &'ast [PathSegment],
     ) -> Res<NodeId> {
-        match segments {
+        match &segments {
             [] => panic!("empty val path"),
-            &[segment] => self.resolve_var(segment.ident).unwrap_or_else(|| {
-                let err = ResolutionError::UnresolvedPath(segment, path.clone());
-                self.resolver.emit_error(path.span, err)
-            }),
+            [segment] => self.resolve_path_segment(path, segment, NS::Value),
             [segment, xs @ ..] => match self.resolve_module(segment.ident) {
                 Some(module) =>
                     self.with_module(module, |this| this.resolve_val_path_segments(path, xs)),
                 None =>
                     return self.resolver.emit_error(
                         path.span,
-                        ResolutionError::UnresolvedPath(*segment, path.clone()),
+                        ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
                     ),
             },
         }
     }
 
+    fn resolve_val_path_segment(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+    ) -> Res<NodeId> {
+        self.resolve_var(segment.ident).unwrap_or_else(|| {
+            let err = ResolutionError::UnresolvedPath(segment.clone(), path.clone());
+            self.resolver.emit_error(path.span, err)
+        })
+    }
+
     fn resolve_ty_path(&mut self, path: &'ast Path) -> Res<NodeId> {
         match path.segments.as_slice() {
             [] => panic!("empty ty path"),
-            [segment] => self.resolve_ty_path_segment(path, segment),
+            [segment] => self.resolve_path_segment(path, segment, NS::Type),
             [xs @ .., segment] => todo!(),
+        }
+    }
+
+    fn resolve_path_segment(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+        ns: NS,
+    ) -> Res<NodeId> {
+        self.visit_path_segment(segment);
+        match ns {
+            NS::Value => self.resolve_val_path_segment(path, segment),
+            NS::Type => self.resolve_ty_path_segment(path, segment),
         }
     }
 

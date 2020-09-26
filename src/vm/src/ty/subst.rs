@@ -1,4 +1,4 @@
-use crate::ir::{self, DefId};
+use crate::ir::{self, DefId, ParamIdx};
 use crate::span::Span;
 use crate::ty::{Forall, InferTy, List, Ty, TyKind, TypeFoldable, TypeFolder};
 use crate::typeck::{inference::InferCtx, TyCtx};
@@ -6,6 +6,7 @@ use indexed_vec::Idx;
 use rustc_hash::FxHashMap;
 
 pub trait Subst<'tcx>: Sized {
+    /// replaces all the type parameters with the appropriate substitution
     fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self;
 }
 
@@ -14,8 +15,26 @@ where
     T: TypeFoldable<'tcx>,
 {
     fn subst(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self {
-        let mut folder = InferenceVarSubstFolder { tcx, substs };
+        let mut folder = SubstsFolder { tcx, substs };
         self.fold_with(&mut folder)
+    }
+}
+
+pub struct SubstsFolder<'tcx> {
+    tcx: TyCtx<'tcx>,
+    substs: SubstsRef<'tcx>,
+}
+
+impl<'tcx> TypeFolder<'tcx> for SubstsFolder<'tcx> {
+    fn tcx(&self) -> TyCtx<'tcx> {
+        self.tcx
+    }
+
+    fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        match ty.kind {
+            TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
+            _ => ty.inner_fold_with(self),
+        }
     }
 }
 
@@ -26,7 +45,7 @@ where
 /// this is also used to represent a slice of `Ty`s
 pub type SubstsRef<'tcx> = &'tcx List<Ty<'tcx>>;
 
-/// instantiates universal type variables with fresh inference variables
+/// instantiates universal type variables introduced by generic parameters with fresh inference variables
 pub struct InstantiationFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstsRef<'tcx>,
@@ -35,10 +54,19 @@ pub struct InstantiationFolder<'tcx> {
 impl<'tcx> InstantiationFolder<'tcx> {
     pub fn new(infcx: &InferCtx<'_, 'tcx>, span: Span, forall: &Forall<'tcx>) -> Self {
         let tcx = infcx.tcx;
-        // check that the indices of the binder aren't weird
         let n = forall.binders.len();
-        assert!(forall.binders.iter().map(|idx| idx.index()).eq(0..n));
-        let substs = tcx.mk_substs((0..n).map(|_| infcx.new_infer_var(span)));
+        debug_assert!(forall.binders.is_sorted());
+        let substs = tcx.mk_substs((0..n).map(|i| {
+            let idx = ParamIdx::new(i);
+            if forall.binders.binary_search(&idx).is_ok() {
+                infcx.new_infer_var(span)
+            } else {
+                // case where parameter with index i is not mentioned in `forall` so
+                // use the special case and don't substitute anything
+                tcx.mk_ty_param(DefId::new(0), idx)
+            }
+        }));
+
         Self { tcx, substs }
     }
 }
@@ -50,7 +78,14 @@ impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
 
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match ty.kind {
-            TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
+            TyKind::Param(param_ty) => {
+                let ty = self.substs[param_ty.idx.index()];
+                match ty.kind {
+                    // this is a special case that indicates we don't wish to substitute anything
+                    TyKind::Param(p) if param_ty.idx == p.idx => ty,
+                    _ => ty,
+                }
+            }
             TyKind::Adt(adt, substs) => self.tcx.mk_adt_ty(adt, self.substs),
             _ => ty.inner_fold_with(self),
         }

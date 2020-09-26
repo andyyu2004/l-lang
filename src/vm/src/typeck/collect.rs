@@ -109,7 +109,8 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
             // Some: T -> Option<T>
             ir::VariantKind::Tuple(..) => {
                 let variant = &adt_ty.variants[variant.idx];
-                let tys = tcx.mk_substs(variant.fields.iter().map(|f| f.ty(tcx, substs)));
+                let tys = tcx
+                    .mk_substs(variant.fields.iter().map(|f| TyConv::ir_ty_to_ty(&tcx, f.ir_ty)));
                 tcx.mk_fn_ty(tys, ty)
             }
         };

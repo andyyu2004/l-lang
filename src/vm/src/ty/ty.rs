@@ -185,12 +185,29 @@ pub struct VariantTy<'tcx> {
     pub fields: &'tcx [FieldTy<'tcx>],
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug)]
 pub struct FieldTy<'tcx> {
     pub def_id: DefId,
     pub ident: Ident,
     pub vis: Visibility,
     pub ir_ty: &'tcx ir::Ty<'tcx>,
+}
+
+impl<'tcx> Eq for FieldTy<'tcx> {
+}
+
+impl<'tcx> Hash for FieldTy<'tcx> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.def_id.hash(state);
+        self.ident.hash(state);
+        self.vis.hash(state);
+    }
+}
+
+impl<'tcx> PartialEq for FieldTy<'tcx> {
+    fn eq(&self, other: &Self) -> bool {
+        self.def_id == other.def_id && self.ident == other.ident && self.vis == other.vis
+    }
 }
 
 impl<'tcx> FieldTy<'tcx> {

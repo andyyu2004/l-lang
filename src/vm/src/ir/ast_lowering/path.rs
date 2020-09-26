@@ -17,7 +17,16 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     }
 
     pub fn lower_path_segment(&mut self, segment: &PathSegment) -> ir::PathSegment<'ir> {
-        let &PathSegment { id, ident, args } = segment;
-        ir::PathSegment { ident, id: self.lower_node_id(id), pd: PhantomData }
+        let &PathSegment { id, ident, ref args } = segment;
+        ir::PathSegment {
+            ident,
+            id: self.lower_node_id(id),
+            args: args.as_ref().map(|args| self.lower_generic_args(&args)),
+        }
+    }
+
+    fn lower_generic_args(&mut self, args: &GenericArgs) -> &'ir ir::GenericArgs<'ir> {
+        let args = ir::GenericArgs { span: args.span, args: self.lower_tys(&args.args) };
+        self.alloc(args)
     }
 }

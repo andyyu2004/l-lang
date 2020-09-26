@@ -262,8 +262,9 @@ pub fn walk_path<'ir, V: Visitor<'ir>>(v: &mut V, path: &'ir ir::Path<'ir>) {
     path.segments.iter().for_each(|seg| v.visit_path_segment(seg));
 }
 
-pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, seg: &'ir ir::PathSegment<'ir>) {
-    v.visit_ident(seg.ident)
+pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, segment: &'ir ir::PathSegment<'ir>) {
+    v.visit_ident(segment.ident);
+    // TODO visit segment.args
 }
 
 pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {

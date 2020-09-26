@@ -30,7 +30,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn dump_stream(&self) {
+    pub fn dump_token_stream(&self) {
         for token in &self.tokens[self.idx..] {
             eprintln!("{:?}", token.ttype);
         }
@@ -78,9 +78,14 @@ impl<'a> Parser<'a> {
     }
 
     /// returns true if the current token is an ident
-    /// similar to accept ident except the token stream is not advanced
-    pub fn on_ident(&self) -> ParseResult<'a, bool> {
-        Ok(if let TokenType::Ident(_) = self.safe_peek()?.ttype { true } else { false })
+    /// similar to `accept_ident` except the token stream is not advanced
+    pub fn ident(&self) -> ParseResult<'a, Option<Ident>> {
+        let tok = self.safe_peek()?;
+        Ok(if let TokenType::Ident(symbol) = tok.ttype {
+            Some(Ident::new(tok.span, symbol))
+        } else {
+            None
+        })
     }
 
     /// separates float x.y into x . y
@@ -137,16 +142,20 @@ impl<'a> Parser<'a> {
         GenericsParser.parse(self)
     }
 
-    pub fn parse_ty(&mut self) -> ParseResult<'a, P<Ty>> {
-        TyParser.parse(self)
+    pub fn parse_ty(&mut self, allow_infer: bool) -> ParseResult<'a, P<Ty>> {
+        TyParser { allow_infer }.parse(self)
     }
 
     pub fn parse_pattern(&mut self) -> ParseResult<'a, P<Pattern>> {
         PatParser.parse(self)
     }
 
+    pub fn parse_type_path(&mut self) -> ParseResult<'a, Path> {
+        PathParser { kind: PathKind::Type }.parse(self)
+    }
+
     pub fn parse_path(&mut self) -> ParseResult<'a, Path> {
-        PathParser.parse(self)
+        PathParser { kind: PathKind::Expr }.parse(self)
     }
 
     pub(super) fn mk_id(&self) -> NodeId {

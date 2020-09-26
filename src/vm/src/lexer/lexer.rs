@@ -72,6 +72,14 @@ impl Lexer {
                         } else {
                             TokenType::Eq
                         },
+                    TokenKind::Colon =>
+                        if tokens[i].kind == TokenKind::Colon {
+                            i += 1;
+                            span_index += 1;
+                            TokenType::Dcolon
+                        } else {
+                            TokenType::Colon
+                        },
                     TokenKind::Minus =>
                         if tokens[i].kind == TokenKind::Gt {
                             i += 1;
@@ -91,6 +99,8 @@ impl Lexer {
                     TokenKind::Ident =>
                         if let Some(&keyword) = KEYWORDS.get(slice) {
                             keyword
+                        } else if slice == "_" {
+                            TokenType::Underscore
                         } else {
                             let symbol = with_interner(|interner| interner.intern(slice));
                             TokenType::Ident(symbol)
@@ -114,7 +124,6 @@ impl Lexer {
                     TokenKind::Pound => TokenType::Pound,
                     TokenKind::Tilde => TokenType::Tilde,
                     TokenKind::Question => TokenType::Question,
-                    TokenKind::Colon => TokenType::Colon,
                     TokenKind::Dollar => TokenType::Dollar,
                     TokenKind::Not => TokenType::Not,
                     TokenKind::Lt => TokenType::Lt,
@@ -218,6 +227,8 @@ pub enum TokenType {
     Tilde,
     /// "?"
     Question,
+    /// "::"
+    Dcolon,
     /// ":"
     Colon,
     /// "$"

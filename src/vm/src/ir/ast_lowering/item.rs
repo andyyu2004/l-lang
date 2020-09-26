@@ -110,26 +110,6 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         }
     }
 
-    fn lower_generics(&mut self, generics: &Generics) -> &'ir ir::Generics<'ir> {
-        let &Generics { span, ref params } = generics;
-        let params = self.arena.ir.alloc_from_iter(params.iter().map(|p| self.lower_ty_param(p)));
-        self.arena.alloc(ir::Generics { span, params })
-    }
-
-    fn lower_ty_param(&mut self, param: &TyParam) -> ir::TyParam<'ir> {
-        // `TyParam`s have their own `DefId`
-        self.with_owner(param.id, |lctx| {
-            let &TyParam { span, id, ident, ref default } = param;
-            ir::TyParam {
-                span,
-                id: lctx.lower_node_id(id),
-                index: lctx.resolver.idx_of_ty_param(id),
-                ident,
-                default: default.as_ref().map(|ty| lctx.lower_ty(ty)),
-            }
-        })
-    }
-
     pub(super) fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
         let inputs =
             self.arena.ir.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));

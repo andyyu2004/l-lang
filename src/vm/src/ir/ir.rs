@@ -67,10 +67,16 @@ impl Display for ParamIdx {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Generics<'ir> {
     pub span: Span,
     pub params: &'ir [ir::TyParam<'ir>],
+}
+
+#[derive(Debug)]
+pub struct GenericArgs<'ir> {
+    pub span: Span,
+    pub args: &'ir [ir::Ty<'ir>],
 }
 
 #[derive(Debug)]
@@ -116,7 +122,7 @@ pub struct FnSig<'ir> {
     pub output: Option<&'ir ir::Ty<'ir>>,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Path<'ir> {
     pub span: Span,
     pub res: Res,
@@ -146,11 +152,11 @@ pub struct Param<'ir> {
     pub pat: &'ir ir::Pattern<'ir>,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct PathSegment<'ir> {
     pub ident: Ident,
     pub id: ir::Id,
-    pub pd: PhantomData<&'ir ()>,
+    pub args: Option<&'ir ir::GenericArgs<'ir>>,
 }
 
 #[derive(Debug)]

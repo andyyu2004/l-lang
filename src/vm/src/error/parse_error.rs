@@ -25,4 +25,10 @@ pub enum ParseError {
     RequireUnsafeCtx,
     #[error("unimplemented in parser")]
     Unimpl,
+    #[error("generic arguments not allowed in module paths")]
+    GenericArgsInModulePath,
+    #[error("generic arguments in expression path require `::` prefix")]
+    AmbiguousGenericArgsInExprPath,
+    #[error("elided type annotation not allowed here")]
+    ElidedTypeNotAllowedInThisContext,
 }

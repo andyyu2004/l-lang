@@ -3,6 +3,7 @@ mod deref_tests;
 mod enum_tests;
 mod fn_tests;
 mod general_tests;
+mod parametric_tests;
 mod struct_tests;
 
 use crate::driver::Driver;

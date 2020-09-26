@@ -1,42 +1,19 @@
 
- struct Node {
-     x: int,
-     next: Node,
- }
-
-// struct S {
-//     val: int,
-//     next: OptionS,
-// }
-//
-// enum OptionS {
-//     Some(S),
-//     None,
-// }
-
-enum Option<T> {
-    Some(T),
-    None,
+struct G<T, U> {
+    s: S<U>,
 }
 
-struct G<T> {
+struct S<T> {
     t: T
 }
 
 
-// impl Option {
-//     fn unwrap() -> int {
-// 	99
-//     }
-// }
-
-
-fn id<T>(x: T) -> T {
-    x
-}
-
 fn main() -> int {
-    let g = G { t: 5 };
-    g.t
+    /* let s: S<_> = S { t: false }; */
+    5
+    /* let s = S { t: 5 }; */
+    /* let g = G { */
+    /*     s, */
+    /* }; */
+    /* g.s.t */
 }
-
