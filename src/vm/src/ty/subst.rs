@@ -35,7 +35,7 @@ pub struct InstantiationFolder<'tcx> {
 impl<'tcx> InstantiationFolder<'tcx> {
     pub fn new(infcx: &InferCtx<'_, 'tcx>, span: Span, forall: &Forall<'tcx>) -> Self {
         let tcx = infcx.tcx;
-        // check that the index of the binders aren't weird
+        // check that the indices of the binder aren't weird
         let n = forall.binders.len();
         assert!(forall.binders.iter().map(|idx| idx.index()).eq(0..n));
         let substs = tcx.mk_substs((0..n).map(|_| infcx.new_infer_var(span)));
@@ -51,6 +51,7 @@ impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match ty.kind {
             TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
+            TyKind::Adt(adt, substs) => self.tcx.mk_adt_ty(adt, self.substs),
             _ => ty.inner_fold_with(self),
         }
     }

@@ -62,7 +62,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 if let Some((idx, field)) =
                     variant.fields.iter().find_position(|f| f.ident == ident)
                 {
-                    // note the id belongs is the id of the entire field expression not just the identifier or base
+                    // note the id belongs is the id of the entire field expression
+                    // not just the identifier or base
                     self.write_field_index(expr.id, idx);
                     field.ty(self.tcx, substs)
                 } else {
@@ -112,10 +113,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_struct_path(&mut self, path: &ir::Path) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
         let ty = self.check_expr_path(path);
-        // TODO deal with substs
         let variant = match path.res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
-                Adt(adt, _substs) => Some((adt.single_variant(), ty)),
+                Adt(adt, substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
             ir::Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
@@ -180,7 +180,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 None => {
                     has_error = true;
                     if let Some(&idx) = seen_fields.get(&field.ident) {
-                        // write the index even on error to avoid missing entries in table later (may be unnecessary)
+                        // write the index even on error to avoid missing
+                        // entries in table later (may be unnecessary)
                         self.write_field_index(field.id, idx);
                         self.emit_ty_err(
                             field.span,

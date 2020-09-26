@@ -84,7 +84,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Adt(adt_ty, self.intern_substs(&[])))
+        self.mk_ty(TyKind::Adt(adt_ty, substs))
     }
 
     pub fn mk_opaque_ty(self, def: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
@@ -247,9 +247,27 @@ macro halt_on_error($tcx:expr) {{
 }}
 
 impl<'tcx> TyCtx<'tcx> {
-    /// top level entrace to typechecking?
+    /// top level entrace to typechecking
+    /// does not check bodies, that is done when lowering to tir/mir
     pub fn run_typeck(self) {
         self.collect(self.ir);
+    }
+
+    /// runs all analyses on `self.ir`
+    pub fn check(self) {
+        // TODO abstract this pattern into a item or function visitor?
+        // we can ignore the results as the driver will pick it up
+        self.ir.items.iter().for_each(|(id, item)| match item.kind {
+            ir::ItemKind::Fn(sig, generics, body) => {
+                let _ = self.typeck_fn(id.def, sig, generics, body, |_| {});
+            }
+            _ => {}
+        });
+        self.ir.impl_items.values().for_each(|item| match item.kind {
+            ir::ImplItemKind::Fn(sig, body) => {
+                let _ = self.typeck_fn(item.id.def, sig, item.generics, body.unwrap(), |_| {});
+            }
+        })
     }
 
     /// constructs a TypeScheme from a type and its generics
@@ -261,14 +279,14 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn typeck_fn<R>(
         self,
-        item: &ir::Item<'tcx>,
+        def_id: DefId,
         sig: &ir::FnSig<'tcx>,
         generics: &ir::Generics<'tcx>,
         body: &'tcx ir::Body<'tcx>,
         f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
     ) -> LResult<R> {
-        InheritedCtx::build(self, item.id.def).enter(|inherited| {
-            let fcx = inherited.check_fn_item(item, sig, generics, body);
+        InheritedCtx::build(self, def_id).enter(|inherited| {
+            let fcx = inherited.check_fn_item(def_id, sig, generics, body);
             // don't bother continuing if typeck failed
             // note that the failure to typeck could also come from resolution errors
             halt_on_error!(self);
@@ -295,9 +313,9 @@ impl<'tcx> TyCtx<'tcx> {
         for item in prog.items.values() {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) => {
-                    if let Ok(tir) = self
-                        .typeck_fn(item, sig, generics, body, |mut lctx| lctx.lower_item_tir(item))
-                    {
+                    if let Ok(tir) = self.typeck_fn(item.id.def, sig, generics, body, |mut lctx| {
+                        lctx.lower_item_tir(item)
+                    }) {
                         items.insert(item.id, tir);
                     }
                 }

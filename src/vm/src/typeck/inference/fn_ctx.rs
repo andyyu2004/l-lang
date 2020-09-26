@@ -104,20 +104,21 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     /// top level entry point for typechecking a function item
     pub fn check_fn_item(
         &'a self,
-        item: &ir::Item,
+        def_id: DefId,
         sig: &ir::FnSig,
         generics: &ir::Generics,
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
-        let fn_ty = self.tcx.collected_ty(item.id.def);
+        let fn_ty = self.tcx.collected_ty(def_id);
         // don't instantiate anything and typeck the body using the param tys
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
         debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
+        // TODO do this somewhere else
         // check main function has the expected type fn() -> int
-        if item.ident.symbol == symbol::MAIN && ty != self.types.main {
-            self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
-        }
+        // if item.ident.symbol == symbol::MAIN && ty != self.types.main {
+        // self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
+        // }
         self.check_fn(ty, body)
     }
 

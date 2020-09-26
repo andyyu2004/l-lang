@@ -105,6 +105,10 @@ impl<'tcx> Driver<'tcx> {
         self.with_tcx(|tcx| tcx.build_tir())
     }
 
+    pub fn check(&'tcx self) -> LResult<()> {
+        self.with_tcx(|tcx| tcx.check())
+    }
+
     pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
         let llvm_ctx = LLVMCtx::create();
         self.with_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))

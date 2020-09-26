@@ -89,9 +89,10 @@ impl<'tcx> CodegenCtx<'tcx> {
         for (id, item) in &prog.items {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) =>
-                    if let Ok(body) = self
-                        .tcx
-                        .typeck_fn(item, sig, generics, body, |mut lctx| lctx.build_mir(body))
+                    if let Ok(body) =
+                        self.tcx.typeck_fn(item.id.def, sig, generics, body, |mut lctx| {
+                            lctx.build_mir(body)
+                        })
                     {
                         self.codegen_body(item.ident.as_str(), &body);
                     },

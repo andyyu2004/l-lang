@@ -14,22 +14,29 @@
 //     None,
 // }
 
-enum Option {
-    Some(int),
+enum Option<T> {
+    Some(T),
     None,
 }
 
-
-impl Option {
-    fn unwrap() -> int {
-	99
-    }
+struct G<T> {
+    t: T
 }
 
 
+// impl Option {
+//     fn unwrap() -> int {
+// 	99
+//     }
+// }
+
+
+fn id<T>(x: T) -> T {
+    x
+}
 
 fn main() -> int {
-    let x = box 5;
-    return *x
+    let g = G { t: 5 };
+    g.t
 }
 

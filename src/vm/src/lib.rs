@@ -88,6 +88,18 @@ pub fn parse(src: &str) -> LResult<Box<ast::Prog>> {
 //     Ok(res)
 // }
 
+/// runs all analyses but produces no output
+pub fn check(src: &str) -> LResult<()> {
+    let driver = mk_driver(src);
+    driver.check()
+}
+
+pub fn dump_tir(src: &str) -> LResult<()> {
+    let driver = mk_driver(src);
+    println!("{}", driver.gen_tir()?);
+    Ok(())
+}
+
 pub fn llvm_exec(src: &str) -> LResult<i32> {
     let driver = mk_driver(src);
     let res = driver.llvm_exec()?;

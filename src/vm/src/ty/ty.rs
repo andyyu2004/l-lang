@@ -92,7 +92,7 @@ impl<'tcx> PartialEq for TyS<'tcx> {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Clone)]
+#[derive(Eq, Hash, PartialEq, Clone, Debug, Copy)]
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
@@ -139,12 +139,18 @@ pub enum AdtKind {
     Enum,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Eq, Hash, Clone)]
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
     pub kind: AdtKind,
     pub ident: Ident,
     pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+}
+
+impl<'tcx> PartialEq for AdtTy<'tcx> {
+    fn eq(&self, other: &Self) -> bool {
+        ptr::eq(self, other)
+    }
 }
 
 impl<'tcx> AdtTy<'tcx> {
@@ -257,11 +263,11 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
     }
 }
 
-impl<'tcx> Debug for TyKind<'tcx> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
-}
+// impl<'tcx> Debug for TyKind<'tcx> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         write!(f, "{}", self)
+//     }
+// }
 
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -273,7 +279,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
-            TyKind::Adt(adt, _) => write!(f, "{}", adt.ident),
+            TyKind::Adt(adt, substs) => write!(f, "{}<{}>", adt.ident, substs),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
             TyKind::Int => write!(f, "int"),
@@ -313,8 +319,6 @@ impl Display for ParamTy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum InferTy {
     TyVar(TyVid),
-    // IntVar(IntVid),
-    // FloatVar(FloatVid),
 }
 
 impl Display for InferTy {
