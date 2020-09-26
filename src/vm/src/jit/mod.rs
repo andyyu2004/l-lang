@@ -1,73 +1,68 @@
 mod fcx;
+mod native;
 
-use crate::error::LResult;
 use crate::gc::*;
-use crate::ir::{self, DefId};
 use crate::lexer::symbol;
 use crate::llvm;
 use crate::mir;
-use crate::typeck::TyCtx;
 use fcx::Fcx;
 use inkwell::execution_engine::ExecutionEngine;
 use inkwell::values::*;
 use inkwell::OptimizationLevel;
 use itertools::Itertools;
-use rustc_hash::FxHashMap;
 use std::ops::Deref;
 
-pub struct JitCtx<'a, 'tcx, G> {
+pub struct Runtime<G> {
     gc: G,
-    tcx: TyCtx<'tcx>,
+}
+
+pub struct JitCtx<'a, 'tcx, G> {
+    runtime: Runtime<G>,
     engine: ExecutionEngine<'tcx>,
     cctx: &'a llvm::CodegenCtx<'tcx>,
     stack: Vec<BasicValueEnum<'tcx>>,
-    mir: FxHashMap<DefId, &'tcx mir::Body<'tcx>>,
 }
 
 impl<'a, 'tcx, G> JitCtx<'a, 'tcx, G>
 where
     G: GarbageCollector<'tcx>,
 {
-    pub fn new(cctx: &'a llvm::CodegenCtx<'tcx>, gc: G) -> LResult<Self> {
-        let mut jit = Self {
-            gc,
+    pub fn new(cctx: &'a llvm::CodegenCtx<'tcx>, gc: G) -> Self {
+        Self {
+            runtime: Runtime { gc },
             cctx,
-            tcx: cctx.tcx,
             engine: cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap(),
-            stack: Default::default(),
-            mir: Default::default(),
-        };
-        jit.init()?;
-        Ok(jit)
-    }
-
-    fn init(&mut self) -> LResult<()> {
-        self.collect_mir()?;
-        Ok(())
-    }
-
-    fn collect_mir(&mut self) -> LResult<()> {
-        for (&def, item) in &self.tcx.ir.items {
-            match &item.kind {
-                ir::ItemKind::Fn(..) =>
-                    if let Ok(mir) = self.tcx.build_mir(def) {
-                        self.mir.insert(def, mir);
-                    },
-                _ => {}
-            }
+            stack: vec![],
         }
-        self.tcx.sess.check_for_errors()
     }
 
-    pub fn run_jit(&mut self) -> i32 {
-        dbg!(&self.mir);
-        let tcx = self.tcx;
-        let ir = tcx.ir;
-        let main_id = ir.entry_id.unwrap();
-        let mir = self.mir[&main_id];
-        let llfn = todo!();
-        let fcx = Fcx::new(self, llfn, mir);
+    pub fn jit_compile_fn(&self, body: &mir::Body<'tcx>) -> FunctionValue<'tcx> {
         todo!()
+    }
+
+    pub fn jit_body(&self, llfn: FunctionValue<'tcx>, body: &'tcx mir::Body<'tcx>) {
+        let mut fcx = Fcx::new(self, llfn, body);
+        fcx.codegen();
+    }
+
+    fn jit_operand(&mut self, operand: &mir::Operand<'tcx>) -> Value<'tcx> {
+        todo!()
+    }
+
+    fn jit_terminator(&mut self, terminator: &mir::Terminator<'tcx>) {
+        match &terminator.kind {
+            mir::TerminatorKind::Branch(_) => {}
+            mir::TerminatorKind::Return => {}
+            mir::TerminatorKind::Unreachable => {}
+            mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
+                let f = self.jit_operand(f).as_fn();
+                let args = vec![];
+                // let args = args.iter().map(|arg| self.jit_operand(arg)).collect_vec();
+                let ret = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
+                self.stack.push(ret);
+            }
+            mir::TerminatorKind::Switch { discr, arms, default } => {}
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 use super::JitCtx;
 use crate::ast;
+use crate::gc::GarbageCollector;
 use crate::llvm::util::LLVMAsPtrVal;
 use crate::mir::{self, BlockId, Lvalue, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection};
@@ -24,7 +25,10 @@ struct LLVMVar<'tcx> {
     ptr: PointerValue<'tcx>,
 }
 
-impl<'a, 'tcx, G> Fcx<'a, 'tcx, G> {
+impl<'a, 'tcx, G> Fcx<'a, 'tcx, G>
+where
+    G: GarbageCollector<'tcx>,
+{
     pub fn new(
         jit: &'a JitCtx<'a, 'tcx, G>,
         llfn: FunctionValue<'tcx>,
