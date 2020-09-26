@@ -73,11 +73,67 @@ fn multiple_generic_parameters() {
 }
 
 #[test]
+fn incorrect_number_of_generic_args() {
+    let src = r#"
+    struct S<T> { t: T }
+    fn main() -> int {
+        let s: S<_, _>;
+        5
+    }"#;
+    expect_error!(src);
+}
+
+#[test]
+fn conflicting_generic_args_in_path() {
+    let src = r#"
+    struct S<T> {
+        t: T
+    }
+
+    fn main() -> int {
+        let s: S<int> = S { t: false };
+        s.t
+    }"#;
+
+    expect_error!(src);
+}
+
+#[test]
+fn infer_generic_args_in_path() {
+    let src = r#"
+    struct S<T> {
+        t: T
+    }
+
+    fn main() -> int {
+        let s: S<_> = S { t: 5 };
+        s.t
+    }"#;
+
+    typeck!(src);
+}
+
+// #[test]
+// fn infer_generic_args_in_path() {
+//     let src = r#"
+//     struct S<T> {
+//         t: T
+//     }
+
+//     fn main() -> int {
+//         let s: S<_> = S { t: false };
+//         s.t
+//     }"#;
+
+//     expect_error!(src);
+// }
+
+#[test]
 fn nested_generic_structs() {
     let src = r#"
     struct G<T, U> {
         s: S<U>,
-        u: U,
+        u: T,
     }
 
     struct S<T> {
@@ -88,15 +144,15 @@ fn nested_generic_structs() {
         k: K,
     }
 
-
     fn main() -> int {
         let s = S { t: 5 };
         let g = G {
             s,
-            u: R { k: bool }
+            u: R { k: false }
         };
         g.s.t
     }"#;
 
-    typeck!(src);
+    let prog = typeck!(src);
+    eprintln!("{}", prog);
 }

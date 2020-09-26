@@ -1,6 +1,7 @@
 //! conversion of ir::Ty to ty::Ty
 
 use super::{List, Subst};
+use crate::error::TypeError;
 use crate::ir::{self, Res};
 use crate::span::Span;
 use crate::ty::{Ty, TyKind};
@@ -38,13 +39,23 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
             ir::Res::Def(def_id, def_kind) => match def_kind {
                 ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
                 ir::DefKind::Struct | ir::DefKind::Enum => {
-                    // TODO unsure how to deal with the forall currently
-                    // instantiation requires an inferctx which may not be available if we are only
-                    // performing type collection
+                    let expected_argc = tcx.resolutions.generic_arg_counts[&def_id];
+                    // assume for now only the last path segment has generic args
                     let generic_args = path.segments.last().unwrap().args;
-                    // replace each generic arg with either an inference variable the specified
-                    // type
-                    let substs = generic_args.map(|args| todo!()).unwrap_or_else(List::empty);
+                    // replace each generic parameter with either an inference variable
+                    // or the specified type
+                    let substs = match generic_args {
+                        Some(args) =>
+                            if args.args.len() != expected_argc {
+                                let err =
+                                    TypeError::GenericArgCount(expected_argc, args.args.len());
+                                tcx.sess.build_error(path.span, err).emit();
+                                return tcx.mk_ty_err();
+                            } else {
+                                tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
+                            },
+                        None => tcx.mk_substs((0..expected_argc).map(|_| self.infer_ty(path.span))),
+                    };
                     let (_forall, ty) = tcx.collected_ty(def_id).expect_scheme();
                     ty.subst(tcx, substs)
                 }

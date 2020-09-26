@@ -43,7 +43,18 @@ impl<'tcx> TypeFolder<'tcx> for SubstsFolder<'tcx> {
 /// this is compared for equality by pointer equality
 /// i.e. the type for `InferTy::TyVid(i)` is `Substitutions[i]`
 /// this is also used to represent a slice of `Ty`s
-pub type SubstsRef<'tcx> = &'tcx List<Ty<'tcx>>;
+pub type SubstsRef<'tcx> = &'tcx Substs<'tcx>;
+
+// we require this indirection allow impl blocks
+pub type Substs<'tcx> = List<Ty<'tcx>>;
+
+impl<'tcx> Substs<'tcx> {
+    /// crates an identity substitution given the generics for some item
+    pub fn id_for_generics(tcx: TyCtx<'tcx>, generics: &ir::Generics) -> SubstsRef<'tcx> {
+        let params = generics.params.iter().map(|p| tcx.mk_ty_param(p.id.def, p.index));
+        tcx.mk_substs(params)
+    }
+}
 
 /// instantiates universal type variables introduced by generic parameters with fresh inference variables
 pub struct InstantiationFolder<'tcx> {

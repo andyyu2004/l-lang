@@ -1,6 +1,7 @@
 
 struct G<T, U> {
     s: S<U>,
+    t: T,
 }
 
 struct S<T> {
@@ -9,11 +10,9 @@ struct S<T> {
 
 
 fn main() -> int {
-    /* let s: S<_> = S { t: false }; */
-    5
-    /* let s = S { t: 5 }; */
-    /* let g = G { */
-    /*     s, */
-    /* }; */
-    /* g.s.t */
+    let s: S<_> = S { t: 8 };
+    let g = G {
+	s, t: false
+    };
+    g.s.t
 }

@@ -14,6 +14,17 @@ pub struct Item<K = ItemKind> {
     pub kind: K,
 }
 
+impl Item {
+    pub fn generics(&self) -> &Generics {
+        match &self.kind {
+            ItemKind::Impl { generics: g, .. }
+            | ItemKind::Fn(_, g, _)
+            | ItemKind::Struct(g, _)
+            | ItemKind::Enum(g, _) => g,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),

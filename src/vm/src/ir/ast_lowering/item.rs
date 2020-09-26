@@ -9,6 +9,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     pub fn lower_item(&mut self, item: &Item) {
         self.with_owner(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
+            let generic_arg_count = item.generics().params.len();
+            let id = lctx.lower_node_id(id);
+            lctx.resolver.record_generic_arg_count(id.def, generic_arg_count);
+
             let kind = match &kind {
                 ItemKind::Fn(sig, generics, expr) => {
                     // assume the function has a body for now
@@ -33,7 +37,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
             };
-            let item = ir::Item { span, id: lctx.lower_node_id(id), vis, ident, kind };
+            let item = ir::Item { span, id, vis, ident, kind };
             lctx.items.insert(item.id, item);
         });
     }

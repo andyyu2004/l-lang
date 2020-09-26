@@ -5,6 +5,7 @@ use crate::driver::Session;
 use crate::error::{LError, LResult, TypeResult};
 use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
 use crate::mir;
+use crate::resolve::Resolutions;
 use crate::span::Span;
 use crate::tir::{self, TirCtx};
 use crate::ty::{self, *};
@@ -201,7 +202,7 @@ pub struct GlobalCtx<'tcx> {
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::Prog<'tcx>,
     interners: CtxInterners<'tcx>,
-    defs: &'tcx Definitions,
+    pub resolutions: &'tcx Resolutions,
     /// where the results of type collection are stored
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
@@ -210,12 +211,12 @@ impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
         ir: &'tcx ir::Prog<'tcx>,
         arena: &'tcx Arena<'tcx>,
-        defs: &'tcx Definitions,
+        resolutions: &'tcx Resolutions,
         sess: &'tcx Session,
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
-        Self { types, ir, arena, interners, defs, sess, collected_tys: Default::default() }
+        Self { types, ir, arena, interners, resolutions, sess, collected_tys: Default::default() }
     }
 
     pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {

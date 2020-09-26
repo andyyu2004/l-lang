@@ -92,7 +92,8 @@ impl<'tcx> PartialEq for TyS<'tcx> {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Debug, Copy)]
+// #[derive(Debug)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
@@ -280,11 +281,11 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
     }
 }
 
-// impl<'tcx> Debug for TyKind<'tcx> {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-//         write!(f, "{}", self)
-//     }
-// }
+impl<'tcx> Debug for TyKind<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
 
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

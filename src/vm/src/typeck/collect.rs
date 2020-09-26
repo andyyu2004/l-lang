@@ -2,7 +2,7 @@ use super::TyCtx;
 use crate::ast::Ident;
 use crate::error::TypeError;
 use crate::ir::{self, DefId, Visitor};
-use crate::ty::{AdtTy, FieldTy, List, Ty, TyConv, TyKind, VariantTy};
+use crate::ty::{AdtTy, FieldTy, List, Substs, Ty, TyConv, TyKind, VariantTy};
 use ir::CtorKind;
 use rustc_hash::FxHashMap;
 
@@ -21,7 +21,8 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
-                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                let substs = Substs::id_for_generics(tcx, generics);
+                let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
             ir::ItemKind::Enum(generics, variants) => {
@@ -33,7 +34,8 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                     .collect();
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
-                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                let substs = Substs::id_for_generics(tcx, generics);
+                let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
