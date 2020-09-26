@@ -3,6 +3,8 @@
 mod build;
 mod fmt;
 mod interpret;
+mod opt;
+mod refcount;
 pub mod traversal;
 
 pub use fmt::MirFmt;

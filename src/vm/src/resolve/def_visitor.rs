@@ -37,10 +37,7 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
                 let module = self.new_module(item.ident);
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
-            ItemKind::Impl { self_ty, .. } => {
-                // TODO need to namespace the impl items behind the self_ty somehow
-                ast::walk_item(self, item);
-            }
+            ItemKind::Impl { self_ty, .. } => ast::walk_item(self, item),
             _ => ast::walk_item(self, item),
         }
     }
