@@ -258,7 +258,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         // the resolver resolved the closure name to the id of the entire closure expr
         // so we define an immutable local variable for it with the closure's type
-        let clsr_ty = TyConv::fn_sig_to_ty(self.infcx, sig);
+        let clsr_ty = self.fn_sig_to_ty(sig);
         self.record_upvars(closure, body);
         self.def_local(closure.id, clsr_ty, Mutability::Imm);
         let _fcx = self.check_fn(clsr_ty, body);

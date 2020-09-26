@@ -232,7 +232,7 @@ impl<'tcx> FieldTy<'tcx> {
     // therefore, the lowering must be done post type collection
     pub fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
         // TODO cache this result somewhere
-        let ty = TyConv::ir_ty_to_ty(&tcx, &self.ir_ty);
+        let ty = tcx.ir_ty_to_ty(&self.ir_ty);
         ty.subst(tcx, substs)
     }
 }

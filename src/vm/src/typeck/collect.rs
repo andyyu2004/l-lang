@@ -15,7 +15,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
         let tcx = self.tcx;
         let ty = match &item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
-                let fn_ty = TyConv::fn_sig_to_ty(&tcx, sig);
+                let fn_ty = tcx.fn_sig_to_ty(sig);
                 tcx.generalize(generics, fn_ty)
             }
             ir::ItemKind::Struct(generics, variant_kind) => {
@@ -65,7 +65,7 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef) {
         let impl_item = self.impl_item(impl_item_ref.id);
         let ty = match impl_item.kind {
-            ir::ImplItemKind::Fn(sig, _) => TyConv::fn_sig_to_ty(&self, sig),
+            ir::ImplItemKind::Fn(sig, _) => self.fn_sig_to_ty(sig),
         };
         self.collect_ty(impl_item.id.def, ty);
     }
@@ -111,8 +111,7 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
             // Some: T -> Option<T>
             ir::VariantKind::Tuple(..) => {
                 let variant = &adt_ty.variants[variant.idx];
-                let tys = tcx
-                    .mk_substs(variant.fields.iter().map(|f| TyConv::ir_ty_to_ty(&tcx, f.ir_ty)));
+                let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.ir_ty_to_ty(f.ir_ty)));
                 tcx.mk_fn_ty(tys, ty)
             }
         };

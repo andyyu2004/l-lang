@@ -274,7 +274,7 @@ impl<'tcx> TyCtx<'tcx> {
     /// constructs a TypeScheme from a type and its generics
     pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
-        let generics = TyConv::lower_generics(&self, generics);
+        let generics = self.lower_generics(generics);
         self.mk_ty_scheme(generics, ty)
     }
 

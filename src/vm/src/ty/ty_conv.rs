@@ -9,12 +9,10 @@ use crate::typeck::TyCtx;
 
 pub trait TyConv<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx>;
-    fn infer_ty(&self, span: Span) -> Ty<'tcx>;
-}
 
-impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
-    /// lower `ir::Ty` to `ty::Ty`
-    pub fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
+    fn infer_ty(&self, span: Span) -> Ty<'tcx>;
+
+    fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
             ir::TyKind::Array(ty) => {
@@ -32,7 +30,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
         }
     }
 
-    pub fn path_to_ty(&self, path: &ir::Path) -> Ty<'tcx> {
+    fn path_to_ty(&self, path: &ir::Path) -> Ty<'tcx> {
         let tcx = self.tcx();
         match path.res {
             ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
@@ -68,7 +66,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
         }
     }
 
-    pub fn lower_generics(&self, generics: &ir::Generics) -> Generics<'tcx> {
+    fn lower_generics(&self, generics: &ir::Generics) -> Generics<'tcx> {
         let params =
             generics.params.iter().map(|&ir::TyParam { id, index, ident, span, default }| {
                 TyParam { id, span, ident, index, default: default.map(|ty| self.ir_ty_to_ty(ty)) }
@@ -76,7 +74,7 @@ impl<'a, 'tcx> dyn TyConv<'tcx> + 'a {
         Generics { params: self.tcx().alloc_iter(params) }
     }
 
-    pub fn fn_sig_to_ty(&self, sig: &ir::FnSig) -> Ty<'tcx> {
+    fn fn_sig_to_ty(&self, sig: &ir::FnSig) -> Ty<'tcx> {
         let tcx = self.tcx();
         // None return type on fn sig implies unit type
         let ret_ty = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);
