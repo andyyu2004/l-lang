@@ -87,15 +87,7 @@ impl<'tcx> TypeFolder<'tcx> for InstantiationFolder<'tcx> {
 
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         match ty.kind {
-            TyKind::Param(param_ty) => {
-                let ty = self.substs[param_ty.idx.index()];
-                match ty.kind {
-                    // this is a special case that indicates we don't wish to substitute anything
-                    TyKind::Param(p) if param_ty.idx == p.idx => ty,
-                    _ => ty,
-                }
-            }
-            TyKind::Adt(adt, substs) => self.tcx.mk_adt_ty(adt, self.substs),
+            TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
             _ => ty.inner_fold_with(self),
         }
     }
