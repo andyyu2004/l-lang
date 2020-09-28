@@ -1,4 +1,4 @@
-use super::{diagnostic::MultiSpan, Diagnostic, Diagnostics, Emitter, TextEmitter};
+use super::{Diagnostic, Diagnostics, Emitter, TextEmitter};
 use crate::span::Span;
 use std::cell::RefCell;
 use std::error::Error;
