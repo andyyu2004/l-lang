@@ -77,6 +77,7 @@ impl<'tcx> TyCtx<'tcx> {
         variant_kind: &ir::VariantKind<'tcx>,
     ) -> VariantTy<'tcx> {
         let mut seen = FxHashMap::default();
+        // TODO check the number of generic params are correct
         let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
             if let Some(span) = seen.insert(f.ident, f.span) {
                 self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));

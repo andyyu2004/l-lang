@@ -153,4 +153,9 @@ impl<'tcx> Driver<'tcx> {
     //     let value = vm.run()?;
     //     Ok(value)
     // }
+
+    #[cfg(test)]
+    pub fn has_errors(&self) -> bool {
+        self.sess.has_errors()
+    }
 }

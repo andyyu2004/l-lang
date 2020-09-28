@@ -113,20 +113,65 @@ fn infer_generic_args_in_path() {
     typeck!(src);
 }
 
-// #[test]
-// fn infer_generic_args_in_path() {
-//     let src = r#"
-//     struct S<T> {
-//         t: T
-//     }
+#[test]
+fn incorrect_number_of_generic_args_in_struct_decl() {
+    // TODO need to fix
+    let src = r#"
+    struct S<T> {
+        t: T
+    }
 
-//     fn main() -> int {
-//         let s: S<_> = S { t: false };
-//         s.t
-//     }"#;
+    struct K<T, U> {
+        s: S<T, U>
+    }
+    "#;
 
-//     expect_error!(src);
-// }
+    expect_error!(src);
+}
+
+#[test]
+fn more_complex_parametrix_inference() {
+    let src = r#"
+    enum Either<L, R> {
+        Left(L),
+        Right(R),
+    }
+
+    fn main() -> int {
+        let either: Either<int, _> = Either::Right(false);
+        5
+    }"#;
+
+    typeck!(src);
+
+    // check that the `U` parameter of Complex<T, U> correctly
+    // constraints the type of `L`
+    let src = r#"
+    enum Option<T> {
+        Some(T),
+        None,
+    }
+
+    enum Either<L, R> {
+        Left(L),
+        Right(R),
+    }
+
+    struct Complex<T, U> {
+        either: Either<U, T>,
+        option: Option<U>,
+    }
+
+    fn main() -> int {
+        let option: Option<_> = Option::Some(false);
+        let either: Either<_, _> = Either::Right(9);
+
+        Complex { either, option };
+        5
+    }"#;
+
+    typeck!(src);
+}
 
 #[test]
 fn nested_generic_structs() {

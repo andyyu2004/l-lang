@@ -16,4 +16,6 @@ pub enum ResolutionError {
     DuplicateDefinition(DefKind, Ident),
     #[error("module with name `{0}` already defined")]
     DuplicateModuleDefinition(Ident),
+    #[error("identifier `{0}` bound more than once in the same pattern")]
+    DuplicatePatternIdentifier(Ident),
 }

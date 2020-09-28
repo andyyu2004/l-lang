@@ -1,4 +1,4 @@
-use super::{Diagnostic, Diagnostics, Emitter, TextEmitter};
+use super::{diagnostic::MultiSpan, Diagnostic, Diagnostics, Emitter, TextEmitter};
 use crate::span::Span;
 use std::cell::RefCell;
 use std::error::Error;
@@ -35,7 +35,11 @@ impl<'a> DiagnosticBuilder<'a> {
         self.emitter.borrow_mut().emit(self)
     }
 
-    pub(super) fn new(diagnostics: &'a Diagnostics, span: Span, err: impl Error) -> Self {
+    pub(super) fn new(
+        diagnostics: &'a Diagnostics,
+        span: impl Into<MultiSpan>,
+        err: impl Error,
+    ) -> Self {
         let diagnostic = Diagnostic::from_err(span, err);
         Self { diagnostics, diagnostic, emitter: Self::default_emitter() }
     }

@@ -38,7 +38,9 @@ pub trait TyConv<'tcx> {
                 ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
                 ir::DefKind::Struct | ir::DefKind::Enum => {
                     let expected_argc = tcx.resolutions.generic_arg_counts[&def_id];
-                    // assume for now only the last path segment has generic args
+                    // TODO assume for now only the last path segment has generic args
+                    // this may not always be true e.g.
+                    // ADT<T, U>::method<V>();
                     let generic_args = path.segments.last().unwrap().args;
                     // replace each generic parameter with either an inference variable
                     // or the specified type

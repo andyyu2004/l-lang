@@ -2,7 +2,7 @@ use super::{Module, ModuleTree};
 use crate::arena::TypedArena;
 use crate::ast::{Ident, NodeId, Prog};
 use crate::driver::Session;
-use crate::error::ResolutionError;
+use crate::error::{MultiSpan, ResolutionError};
 use crate::ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use crate::lexer::{symbol, Symbol};
 use crate::span::Span;
@@ -91,7 +91,7 @@ impl<'a> Resolver<'a> {
         def_id
     }
 
-    pub fn emit_error(&self, span: Span, err: impl Error) -> Res<NodeId> {
+    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> Res<NodeId> {
         self.sess.emit_error(span, err);
         Res::Err
     }

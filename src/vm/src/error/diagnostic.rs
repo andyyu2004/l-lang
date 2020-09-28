@@ -26,11 +26,15 @@ impl Diagnostics {
         if self.has_errors() { Err(LError::ErrorReported) } else { Ok(()) }
     }
 
-    pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'_> {
+    pub fn build_error(
+        &self,
+        span: impl Into<MultiSpan>,
+        err: impl Error,
+    ) -> DiagnosticBuilder<'_> {
         DiagnosticBuilder::new(self, span, err)
     }
 
-    pub fn emit_error(&self, span: Span, err: impl Error) -> LError {
+    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> LError {
         self.build_error(span, err).emit();
         LError::ErrorReported
     }
@@ -53,6 +57,15 @@ impl Diagnostic {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
 pub struct MultiSpan {
     pub primary_spans: Vec<Span>,
+}
+
+impl<I> From<I> for MultiSpan
+where
+    I: IntoIterator<Item = Span>,
+{
+    fn from(iter: I) -> Self {
+        Self { primary_spans: iter.into_iter().collect() }
+    }
 }
 
 impl From<Span> for MultiSpan {

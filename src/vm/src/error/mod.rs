@@ -8,7 +8,7 @@ mod type_error;
 mod vm_error;
 
 use crate::impl_from_inner;
-pub use diagnostic::{Diagnostic, Diagnostics};
+pub use diagnostic::{Diagnostic, Diagnostics, MultiSpan};
 pub use diagnostic_builder::DiagnosticBuilder;
 pub use emitter::{Emitter, TextEmitter};
 pub use llvm_error::LLVMError;

@@ -108,37 +108,3 @@ impl Definitions {
         DefId::new(def_id)
     }
 }
-
-/// namespaces for types and values
-#[derive(Debug, Clone, Copy)]
-pub enum NS {
-    Type,
-    Value,
-}
-
-/// a `T` for each namespace
-#[derive(Default, Debug)]
-pub struct PerNS<T> {
-    pub value: T,
-    pub ty: T,
-}
-
-impl<T> std::ops::Index<NS> for PerNS<T> {
-    type Output = T;
-
-    fn index(&self, ns: NS) -> &Self::Output {
-        match ns {
-            NS::Value => &self.value,
-            NS::Type => &self.ty,
-        }
-    }
-}
-
-impl<T> std::ops::IndexMut<NS> for PerNS<T> {
-    fn index_mut(&mut self, ns: NS) -> &mut Self::Output {
-        match ns {
-            NS::Value => &mut self.value,
-            NS::Type => &mut self.ty,
-        }
-    }
-}
