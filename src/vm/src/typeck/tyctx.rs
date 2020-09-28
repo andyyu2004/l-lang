@@ -5,6 +5,7 @@ use crate::driver::Session;
 use crate::error::{LError, LResult, TypeResult};
 use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
 use crate::mir;
+use crate::resolve::Resolutions;
 use crate::span::Span;
 use crate::tir::{self, TirCtx};
 use crate::ty::{self, *};
@@ -84,7 +85,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Adt(adt_ty, self.intern_substs(&[])))
+        self.mk_ty(TyKind::Adt(adt_ty, substs))
     }
 
     pub fn mk_opaque_ty(self, def: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
@@ -95,7 +96,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Array(ty, n))
     }
 
-    pub fn mk_ty_scheme(self, forall: Forall<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn mk_ty_scheme(self, forall: Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
@@ -201,7 +202,7 @@ pub struct GlobalCtx<'tcx> {
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::Prog<'tcx>,
     interners: CtxInterners<'tcx>,
-    defs: &'tcx Definitions,
+    pub resolutions: &'tcx Resolutions,
     /// where the results of type collection are stored
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
@@ -210,12 +211,12 @@ impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
         ir: &'tcx ir::Prog<'tcx>,
         arena: &'tcx Arena<'tcx>,
-        defs: &'tcx Definitions,
+        resolutions: &'tcx Resolutions,
         sess: &'tcx Session,
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
-        Self { types, ir, arena, interners, defs, sess, collected_tys: Default::default() }
+        Self { types, ir, arena, interners, resolutions, sess, collected_tys: Default::default() }
     }
 
     pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
@@ -247,39 +248,55 @@ macro halt_on_error($tcx:expr) {{
 }}
 
 impl<'tcx> TyCtx<'tcx> {
-    /// top level entrace to typechecking?
-    /// this does not run typechecking inside function bodies
-    /// that is done during lowering to mir
+    /// top level entrace to typechecking
+    /// does not check bodies, that is done when lowering to tir/mir
     pub fn run_typeck(self) {
         self.collect(self.ir);
+    }
+
+    /// runs all analyses on `self.ir`
+    pub fn check(self) {
+        // TODO abstract this pattern into a item or function visitor?
+        // we can ignore the results as the driver will pick it up
+        self.ir.items.iter().for_each(|(&id, item)| match item.kind {
+            ir::ItemKind::Fn(sig, generics, body) => {
+                let _ = self.typeck_fn(id, sig, generics, body, |_| {});
+            }
+            _ => {}
+        });
+        self.ir.impl_items.values().for_each(|item| match item.kind {
+            ir::ImplItemKind::Fn(sig, body) => {
+                let _ = self.typeck_fn(item.id.def, sig, item.generics, body.unwrap(), |_| {});
+            }
+        })
     }
 
     /// constructs a TypeScheme from a type and its generics
     pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
-        let forall = Forall { binders };
-        self.mk_ty_scheme(forall, ty)
+        let generics = self.lower_generics(generics);
+        self.mk_ty_scheme(generics, ty)
     }
 
     pub fn build_mir(self, def_id: DefId) -> LResult<&'tcx mir::Body<'tcx>> {
         let item = self.ir.items.get(&def_id).unwrap_or_else(|| panic!("unknown def_id"));
         match &item.kind {
             ir::ItemKind::Fn(sig, generics, body) =>
-                self.typeck_fn(item, sig, generics, body, |mut ctx| ctx.build_mir(body)),
+                self.typeck_fn(def_id, sig, generics, body, |mut ctx| ctx.build_mir(body)),
             _ => panic!("no mir to build for item kind"),
         }
     }
 
     pub fn typeck_fn<R>(
         self,
-        item: &ir::Item<'tcx>,
+        def_id: DefId,
         sig: &ir::FnSig<'tcx>,
         generics: &ir::Generics<'tcx>,
         body: &'tcx ir::Body<'tcx>,
         f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
     ) -> LResult<R> {
-        InheritedCtx::build(self, item.id.def).enter(|inherited| {
-            let fcx = inherited.check_fn_item(item, sig, generics, body);
+        InheritedCtx::build(self, def_id).enter(|inherited| {
+            let fcx = inherited.check_fn_item(def_id, sig, generics, body);
             // don't bother continuing if typeck failed
             // note that the failure to typeck could also come from resolution errors
             halt_on_error!(self);
@@ -306,9 +323,9 @@ impl<'tcx> TyCtx<'tcx> {
         for item in prog.items.values() {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) => {
-                    if let Ok(tir) = self
-                        .typeck_fn(item, sig, generics, body, |mut lctx| lctx.lower_item_tir(item))
-                    {
+                    if let Ok(tir) = self.typeck_fn(item.id.def, sig, generics, body, |mut lctx| {
+                        lctx.lower_item_tir(item)
+                    }) {
                         items.insert(item.id, tir);
                     }
                 }

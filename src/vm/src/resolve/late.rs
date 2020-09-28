@@ -1,19 +1,20 @@
-use super::{Resolver, Scope, Scopes};
+use super::{PatternResolutionCtx, PerNS, Resolver, Scope, Scopes, NS};
 use crate::ast::{self, *};
 use crate::error::ResolutionError;
-use crate::ir::{DefKind, ModuleId, ParamIdx, PerNS, Res, NS, ROOT_MODULE};
+use crate::ir::{DefKind, ModuleId, ParamIdx, Res, ROOT_MODULE};
 use crate::lexer::symbol;
 use indexed_vec::Idx;
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
-struct LateResolutionVisitor<'a, 'r, 'ast> {
+pub struct LateResolver<'a, 'r, 'ast> {
     resolver: &'a mut Resolver<'r>,
     scopes: PerNS<Scopes<Res<NodeId>>>,
     current_module: Vec<ModuleId>,
     pd: &'ast PhantomData<()>,
 }
 
-impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
+impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self {
             resolver,
@@ -55,18 +56,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         })
     }
 
-    fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
+    pub(super) fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
         self.scopes[NS::Value].def(ident, res);
     }
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
-        // don't recurse here as the visitor will handle that
-        match &pat.kind {
-            PatternKind::Ident(ident, ..) => self.def_val(*ident, Res::Local(pat.id)),
-            PatternKind::Path(path) | PatternKind::Variant(path, _) =>
-                self.resolve_path(path, NS::Value),
-            PatternKind::Wildcard | PatternKind::Tuple(..) | PatternKind::Paren(..) => {}
-        }
+        PatternResolutionCtx::new(self).resolve_pattern(pat);
     }
 
     fn curr_module(&self) -> ModuleId {
@@ -127,6 +122,7 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
 
     fn resolve_assoc_item(&mut self, item: &'ast AssocItem) {
         match &item.kind {
+            // TODO add the impls generics to the assoc fns generics
             AssocItemKind::Fn(_, generics, _) =>
                 self.with_generics(generics, |this| ast::walk_assoc_item(this, item)),
         }
@@ -137,12 +133,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
     }
 
     /// `id` belongs to the `Ty` or `Expr`
-    fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
+    pub(super) fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
         let res = match ns {
             NS::Value => self.resolve_val_path(path),
             NS::Type => self.resolve_ty_path(path),
         };
-        self.resolver.resolve_node(path.id, res);
+        self.resolve_node(path.id, res);
     }
 
     fn resolve_val_path(&mut self, path: &'ast Path) -> Res<NodeId> {
@@ -158,29 +154,50 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         path: &'ast Path,
         segments: &'ast [PathSegment],
     ) -> Res<NodeId> {
-        match segments {
+        match &segments {
             [] => panic!("empty val path"),
-            &[segment] => self.resolve_var(segment.ident).unwrap_or_else(|| {
-                let err = ResolutionError::UnresolvedPath(segment, path.clone());
-                self.resolver.emit_error(path.span, err)
-            }),
+            [segment] => self.resolve_path_segment(path, segment, NS::Value),
             [segment, xs @ ..] => match self.resolve_module(segment.ident) {
                 Some(module) =>
                     self.with_module(module, |this| this.resolve_val_path_segments(path, xs)),
                 None =>
                     return self.resolver.emit_error(
                         path.span,
-                        ResolutionError::UnresolvedPath(*segment, path.clone()),
+                        ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
                     ),
             },
         }
     }
 
+    fn resolve_val_path_segment(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+    ) -> Res<NodeId> {
+        self.resolve_var(segment.ident).unwrap_or_else(|| {
+            let err = ResolutionError::UnresolvedPath(segment.clone(), path.clone());
+            self.resolver.emit_error(path.span, err)
+        })
+    }
+
     fn resolve_ty_path(&mut self, path: &'ast Path) -> Res<NodeId> {
         match path.segments.as_slice() {
             [] => panic!("empty ty path"),
-            [segment] => self.resolve_ty_path_segment(path, segment),
+            [segment] => self.resolve_path_segment(path, segment, NS::Type),
             [xs @ .., segment] => todo!(),
+        }
+    }
+
+    fn resolve_path_segment(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+        ns: NS,
+    ) -> Res<NodeId> {
+        self.visit_path_segment(segment);
+        match ns {
+            NS::Value => self.resolve_val_path_segment(path, segment),
+            NS::Type => self.resolve_ty_path_segment(path, segment),
         }
     }
 
@@ -196,12 +213,12 @@ impl<'a, 'r, 'ast> LateResolutionVisitor<'a, 'r, 'ast> {
         } else if let Some(&ty) = self.resolver.primitive_types.get(&segment.ident.symbol) {
             Res::PrimTy(ty)
         } else {
-            self.resolver.emit_error(path.span, ResolutionError::UnresolvedType(path.clone()))
+            self.emit_error(path.span, ResolutionError::UnresolvedType(path.clone()))
         }
     }
 }
 
-impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
+impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
     fn visit_block(&mut self, block: &'ast Block) {
         self.with_val_scope(|this| ast::walk_block(this, block));
     }
@@ -230,7 +247,6 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 
     fn visit_pattern(&mut self, pattern: &'ast Pattern) {
         self.resolve_pattern(pattern);
-        ast::walk_pat(self, pattern);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
@@ -255,8 +271,22 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolutionVisitor<'a, '_, 'ast> {
 }
 
 impl<'a> Resolver<'a> {
-    pub fn late_resolve_prog(&mut self, prog: &Prog) {
-        let mut visitor = LateResolutionVisitor::new(self);
+    pub fn late_resolve(&mut self, prog: &Prog) {
+        let mut visitor = LateResolver::new(self);
         visitor.visit_prog(prog);
+    }
+}
+
+impl<'r> Deref for LateResolver<'_, 'r, '_> {
+    type Target = Resolver<'r>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.resolver
+    }
+}
+
+impl<'r> DerefMut for LateResolver<'_, 'r, '_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.resolver
     }
 }

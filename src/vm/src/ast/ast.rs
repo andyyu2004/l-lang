@@ -229,11 +229,17 @@ impl Display for Path {
     }
 }
 
-#[derive(Debug, Copy, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub struct PathSegment {
     pub ident: Ident,
     pub id: NodeId,
-    pub args: Option<()>,
+    pub args: Option<GenericArgs>,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub struct GenericArgs {
+    pub span: Span,
+    pub args: Vec<P<Ty>>,
 }
 
 impl Display for PathSegment {

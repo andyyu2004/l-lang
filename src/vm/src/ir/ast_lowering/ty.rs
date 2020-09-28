@@ -4,7 +4,7 @@ use crate::ir;
 use itertools::Itertools;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
-    fn lower_tys(&mut self, tys: &[Box<Ty>]) -> &'ir [ir::Ty<'ir>] {
+    pub fn lower_tys(&mut self, tys: &[Box<Ty>]) -> &'ir [ir::Ty<'ir>] {
         self.arena.ir.alloc_from_iter(tys.iter().map(|x| self.lower_ty_inner(x)))
     }
 

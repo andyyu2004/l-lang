@@ -8,7 +8,7 @@ use crate::gc::GC;
 use crate::jit::{self, JitCtx};
 use crate::llvm::CodegenCtx;
 use crate::pluralize;
-use crate::resolve::{Resolver, ResolverArenas, ResolverOutputs};
+use crate::resolve::{Resolutions, Resolver, ResolverArenas};
 use crate::typeck::{GlobalCtx, TyCtx};
 use crate::{exec, ir, lexer, mir, parser, span, tir};
 use exec::VM;
@@ -75,10 +75,11 @@ impl<'tcx> Driver<'tcx> {
         let tokens = self.lex()?;
         let mut parser = Parser::new(&self.sess, tokens);
         let ast = parser.parse();
+        error!("{:#?}", ast);
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Prog<'tcx>, ResolverOutputs)> {
+    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Prog<'tcx>, Resolutions)> {
         let ast = self.parse()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
@@ -91,10 +92,14 @@ impl<'tcx> Driver<'tcx> {
 
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, mut resolutions) = self.gen_ir()?;
-        let defs = self.arena.alloc(std::mem::take(&mut resolutions.defs));
-        let gcx =
-            self.global_ctx.get_or_init(|| GlobalCtx::new(ir, &self.arena, &defs, &self.sess));
-        let ret = gcx.enter_tcx(|tcx| f(tcx));
+        let resolutions = self.arena.alloc(std::mem::take(&mut resolutions));
+        let gcx = self
+            .global_ctx
+            .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
+        let ret = gcx.enter_tcx(|tcx| {
+            tcx.run_typeck();
+            f(tcx)
+        });
         check_errors!(self, ret)
     }
 
@@ -102,12 +107,13 @@ impl<'tcx> Driver<'tcx> {
         self.with_tcx(|tcx| tcx.build_tir())
     }
 
-    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx<'tcx>> {
+    pub fn check(&'tcx self) -> LResult<()> {
+        self.with_tcx(|tcx| tcx.check())
+    }
+
+    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
         let llvm_ctx = LLVMCtx::create();
-        self.with_tcx(|tcx| {
-            tcx.run_typeck();
-            CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx))
-        })
+        self.with_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
@@ -125,8 +131,7 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn llvm_jit(&'tcx self) -> LResult<i32> {
         let cctx = self.create_codegen_ctx()?;
-        let mut jcx = JitCtx::new(&cctx, GC::default())?;
-        jcx.run_jit();
+        let jcx = JitCtx::new(&cctx, GC::default());
         todo!()
     }
 
@@ -147,4 +152,9 @@ impl<'tcx> Driver<'tcx> {
     //     let value = vm.run()?;
     //     Ok(value)
     // }
+
+    #[cfg(test)]
+    pub fn has_errors(&self) -> bool {
+        self.sess.has_errors()
+    }
 }

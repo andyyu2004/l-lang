@@ -49,7 +49,7 @@ impl<'tcx> TyS<'tcx> {
         self.visit_with(&mut TyVidVisitor { tyvid })
     }
 
-    pub fn expect_scheme(&self) -> (Forall<'tcx>, Ty<'tcx>) {
+    pub fn expect_scheme(&self) -> (Generics<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Scheme(forall, ty) => (forall, ty),
             _ => panic!("expected TyKind::Scheme, found {}", self),
@@ -92,7 +92,8 @@ impl<'tcx> PartialEq for TyS<'tcx> {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Clone)]
+// #[derive(Debug)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
@@ -112,7 +113,7 @@ pub enum TyKind<'tcx> {
     Infer(InferTy),
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
-    Scheme(Forall<'tcx>, Ty<'tcx>),
+    Scheme(Generics<'tcx>, Ty<'tcx>),
     /// pointer to a type
     /// created by box expressions
     /// mutability inherited by the pointee?
@@ -120,6 +121,20 @@ pub enum TyKind<'tcx> {
     /// mut x: T -> box x: &mut T
     Ptr(Mutability, Ty<'tcx>),
     Opaque(DefId, SubstsRef<'tcx>),
+}
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+pub struct Generics<'tcx> {
+    pub params: &'tcx [TyParam<'tcx>],
+}
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+pub struct TyParam<'tcx> {
+    pub id: ir::Id,
+    pub span: Span,
+    pub ident: Ident,
+    pub index: ParamIdx,
+    pub default: Option<Ty<'tcx>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -139,12 +154,18 @@ pub enum AdtKind {
     Enum,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Eq, Hash, Clone)]
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
     pub kind: AdtKind,
     pub ident: Ident,
     pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+}
+
+impl<'tcx> PartialEq for AdtTy<'tcx> {
+    fn eq(&self, other: &Self) -> bool {
+        ptr::eq(self, other)
+    }
 }
 
 impl<'tcx> AdtTy<'tcx> {
@@ -179,12 +200,29 @@ pub struct VariantTy<'tcx> {
     pub fields: &'tcx [FieldTy<'tcx>],
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug)]
 pub struct FieldTy<'tcx> {
     pub def_id: DefId,
     pub ident: Ident,
     pub vis: Visibility,
     pub ir_ty: &'tcx ir::Ty<'tcx>,
+}
+
+impl<'tcx> Eq for FieldTy<'tcx> {
+}
+
+impl<'tcx> Hash for FieldTy<'tcx> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.def_id.hash(state);
+        self.ident.hash(state);
+        self.vis.hash(state);
+    }
+}
+
+impl<'tcx> PartialEq for FieldTy<'tcx> {
+    fn eq(&self, other: &Self) -> bool {
+        self.def_id == other.def_id && self.ident == other.ident && self.vis == other.vis
+    }
 }
 
 impl<'tcx> FieldTy<'tcx> {
@@ -194,7 +232,7 @@ impl<'tcx> FieldTy<'tcx> {
     // therefore, the lowering must be done post type collection
     pub fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
         // TODO cache this result somewhere
-        let ty = TyConv::ir_ty_to_ty(&tcx, &self.ir_ty);
+        let ty = tcx.ir_ty_to_ty(&self.ir_ty);
         ty.subst(tcx, substs)
     }
 }
@@ -273,7 +311,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
-            TyKind::Adt(adt, _) => write!(f, "{}", adt.ident),
+            TyKind::Adt(adt, substs) => write!(f, "{}<{}>", adt.ident, substs),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
             TyKind::Int => write!(f, "int"),
@@ -286,15 +324,15 @@ impl<'tcx> Display for TyKind<'tcx> {
     }
 }
 
-/// the current representation of type parameters are their DefId
-#[derive(Debug, Eq, Copy, Hash, PartialEq, Clone)]
-pub struct Forall<'tcx> {
-    pub binders: &'tcx [ParamIdx],
+impl<'tcx> Display for TyParam<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ident)
+    }
 }
 
-impl<'tcx> Display for Forall<'tcx> {
+impl<'tcx> Display for Generics<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "τ{}", util::join2(self.binders.iter(), ","))
+        write!(f, "τ{}", util::join2(self.params.iter(), ","))
     }
 }
 
@@ -313,8 +351,6 @@ impl Display for ParamTy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum InferTy {
     TyVar(TyVid),
-    // IntVar(IntVid),
-    // FloatVar(FloatVid),
 }
 
 impl Display for InferTy {

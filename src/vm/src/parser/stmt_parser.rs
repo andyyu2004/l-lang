@@ -32,7 +32,7 @@ impl<'a> Parse<'a> for LetParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = parser.parse_pattern()?;
-        let ty = parser.accept(TokenType::Colon).map(|_| TyParser.parse(parser)).transpose()?;
+        let ty = parser.accept(TokenType::Colon).map(|_| parser.parse_ty(true)).transpose()?;
         let init = parser.accept(TokenType::Eq).map(|_| ExprParser.parse(parser)).transpose()?;
         let semi = parser.expect(TokenType::Semi)?;
         let span = self.let_kw.span.merge(semi.span);

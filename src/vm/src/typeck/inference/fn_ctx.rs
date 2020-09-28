@@ -36,11 +36,11 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn lower_tys(&self, ir_tys: &[ir::Ty]) -> &'tcx [Ty<'tcx>] {
-        self.tcx.mk_substs(ir_tys.iter().map(|ty| TyConv::ir_ty_to_ty(self.infcx, ty)))
+        self.tcx.mk_substs(ir_tys.iter().map(|ty| self.ir_ty_to_ty(ty)))
     }
 
     pub fn lower_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
-        TyConv::ir_ty_to_ty(self.infcx, ir_ty)
+        self.ir_ty_to_ty(ir_ty)
     }
 }
 
@@ -104,20 +104,21 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     /// top level entry point for typechecking a function item
     pub fn check_fn_item(
         &'a self,
-        item: &ir::Item,
+        def_id: DefId,
         sig: &ir::FnSig,
         generics: &ir::Generics,
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
-        let fn_ty = self.tcx.collected_ty(item.id.def);
+        let fn_ty = self.tcx.collected_ty(def_id);
         // don't instantiate anything and typeck the body using the param tys
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
-        debug_assert_eq!(ty, TyConv::fn_sig_to_ty(self.infcx, sig));
+        debug_assert_eq!(ty, self.fn_sig_to_ty(sig));
+        // TODO do this somewhere else
         // check main function has the expected type fn() -> int
-        if item.ident.symbol == symbol::MAIN && ty != self.types.main {
-            self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
-        }
+        // if item.ident.symbol == symbol::MAIN && ty != self.types.main {
+        // self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
+        // }
         self.check_fn(ty, body)
     }
 

@@ -2,7 +2,7 @@ use super::{Module, ModuleTree};
 use crate::arena::TypedArena;
 use crate::ast::{Ident, NodeId, Prog};
 use crate::driver::Session;
-use crate::error::ResolutionError;
+use crate::error::{MultiSpan, ResolutionError};
 use crate::ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use crate::lexer::{symbol, Symbol};
 use crate::span::Span;
@@ -21,6 +21,9 @@ pub struct Resolver<'a> {
     root: ModuleTree<'a>,
     modules: IndexVec<ModuleId, &'a Module<'a>>,
     defs: Definitions,
+    /// (usize, usize) is (min, max) number of type parameters expected
+    /// (as some may be default parameters)
+    generic_arg_counts: FxHashMap<DefId, usize>,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
     res_map: FxHashMap<NodeId, Res<NodeId>>,
@@ -29,9 +32,11 @@ pub struct Resolver<'a> {
     pub(super) primitive_types: PrimitiveTypes,
 }
 
-#[derive(Debug)]
-pub struct ResolverOutputs {
+/// stuff that is useful later in `TyCtx` that the resolver computes
+#[derive(Debug, Default)]
+pub struct Resolutions {
     pub defs: Definitions,
+    pub generic_arg_counts: FxHashMap<DefId, usize>,
 }
 
 impl<'a> Resolver<'a> {
@@ -40,6 +45,7 @@ impl<'a> Resolver<'a> {
             sess,
             arenas,
             modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::default()), 1),
+            generic_arg_counts: Default::default(),
             root: Default::default(),
             res_map: Default::default(),
             defs: Default::default(),
@@ -52,12 +58,12 @@ impl<'a> Resolver<'a> {
     /// top level function to run the resolver on the given prog
     pub fn resolve(&mut self, prog: &Prog) {
         self.resolve_items(prog);
-        self.late_resolve_prog(prog);
+        self.late_resolve(prog);
     }
 
-    pub fn complete(self) -> ResolverOutputs {
-        let Resolver { defs, .. } = self;
-        ResolverOutputs { defs }
+    pub fn complete(self) -> Resolutions {
+        let Resolver { defs, generic_arg_counts, .. } = self;
+        Resolutions { defs, generic_arg_counts }
     }
 
     pub fn find_module(&mut self, par: ModuleId, ident: Ident) -> Option<ModuleId> {
@@ -85,7 +91,7 @@ impl<'a> Resolver<'a> {
         def_id
     }
 
-    pub fn emit_error(&self, span: Span, err: impl Error) -> Res<NodeId> {
+    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> Res<NodeId> {
         self.sess.emit_error(span, err);
         Res::Err
     }
@@ -133,7 +139,15 @@ impl<'a> Resolver<'a> {
 
     /// writes the resolution for a given `NodeId` into the map
     pub(super) fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
-        self.res_map.insert(node_id, res);
+        info!("resolving node {:?} to {:?}", node_id, res);
+        if let Some(prev_res) = self.res_map.insert(node_id, res) {
+            // not sure why its resolving some stuff twice, but make sure its the same
+            assert_eq!(res, prev_res);
+        }
+    }
+
+    pub fn record_generic_arg_count(&mut self, def_id: DefId, argc: usize) {
+        assert!(self.generic_arg_counts.insert(def_id, argc).is_none())
     }
 }
 

@@ -19,6 +19,8 @@ pub enum TypeError<'tcx> {
     UnknownField(Ty<'tcx>, Ident),
     #[error("attempted to index `.{0}` into a {1}-tuple")]
     TupleOutOfBounds(usize, usize),
+    #[error("expected {0} generic parameters but received {1}")]
+    GenericArgCount(usize, usize),
     #[error("{0}")]
     Msg(String),
     #[error("`main` has type `{0}` but should be of type `fn() -> int`")]

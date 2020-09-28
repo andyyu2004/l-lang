@@ -1,35 +1,23 @@
 
- struct Node {
-     x: int,
-     next: Node,
- }
-
-// struct S {
-//     val: int,
-//     next: OptionS,
-// }
-//
-// enum OptionS {
-//     Some(S),
-//     None,
-// }
-
-enum Option {
-    Some(int),
+enum Option<T> {
+    Some(T),
     None,
 }
 
-
-impl Option {
-    fn unwrap() -> int {
-	99
-    }
+enum Either<L, R> {
+    Left(L),
+    Right(R),
 }
 
-
+struct Complex<T, U> {
+    either: Either<U, T>,
+    option: Option<U>,
+}
 
 fn main() -> int {
-    let x = box 5;
-    return *x
-}
+    let option: Option<_> = Option::Some(false);
+    let either: Either<_, _> = Either::Right(9);
 
+    Complex { either, option };
+    5
+}

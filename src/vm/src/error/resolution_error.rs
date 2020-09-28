@@ -6,7 +6,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ResolutionError {
-    #[error("unresolved path `{0}` in `{1}`")]
+    #[error("unresolved value path segment `{0}` in `{1}`")]
     UnresolvedPath(PathSegment, Path),
     #[error("unresolved type `{0}`")]
     UnresolvedType(Path),
@@ -16,4 +16,6 @@ pub enum ResolutionError {
     DuplicateDefinition(DefKind, Ident),
     #[error("module with name `{0}` already defined")]
     DuplicateModuleDefinition(Ident),
+    #[error("identifier `{0}` bound more than once in the same pattern")]
+    DuplicatePatternIdentifier(Ident),
 }

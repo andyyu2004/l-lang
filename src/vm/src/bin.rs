@@ -9,12 +9,15 @@ fn main() {
     let mut rl = Editor::<()>::new();
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
-    let interpret = matches.is_present("interpret");
+    let check = matches.is_present("check");
+    let tir = matches.is_present("tir");
 
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
-        return if interpret {
-            println!("{}", libvm::jit(&src).unwrap_or_else(|_| std::process::exit(1)));
+        return if tir {
+            libvm::dump_tir(&src).ok().unwrap_or_else(|| std::process::exit(1));
+        } else if check {
+            libvm::check(&src).ok().unwrap_or_else(|| std::process::exit(1));
         } else {
             println!("{}", libvm::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
         };

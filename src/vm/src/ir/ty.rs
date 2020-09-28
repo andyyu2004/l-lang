@@ -10,14 +10,14 @@ pub enum PrimTy {
     Int,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug)]
 pub struct Ty<'ir> {
     pub id: ir::Id,
     pub span: Span,
     pub kind: ir::TyKind<'ir>,
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug)]
 pub enum TyKind<'ir> {
     Path(&'ir ir::Path<'ir>),
     Array(&'ir ir::Ty<'ir>),

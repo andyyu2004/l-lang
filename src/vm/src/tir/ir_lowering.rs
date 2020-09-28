@@ -34,13 +34,13 @@ impl<'a, 'tcx> TirCtx<'a, 'tcx> {
     /// ir -> tir
     pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
         let tir = item.to_tir(self);
-        eprintln!("{}", tir);
         tir
     }
 
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx mir::Body<'tcx> {
         let tir = body.to_tir(self);
+        eprintln!("{}", tir);
         self.tcx.alloc(mir::build_fn(self, tir))
     }
 

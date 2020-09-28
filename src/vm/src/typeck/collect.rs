@@ -2,7 +2,7 @@ use super::TyCtx;
 use crate::ast::Ident;
 use crate::error::TypeError;
 use crate::ir::{self, DefId, Visitor};
-use crate::ty::{AdtTy, FieldTy, List, Ty, TyConv, TyKind, VariantTy};
+use crate::ty::{AdtTy, FieldTy, List, Substs, Ty, TyConv, TyKind, VariantTy};
 use ir::CtorKind;
 use rustc_hash::FxHashMap;
 
@@ -15,13 +15,14 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
         let tcx = self.tcx;
         let ty = match &item.kind {
             ir::ItemKind::Fn(sig, generics, _body) => {
-                let fn_ty = TyConv::fn_sig_to_ty(&tcx, sig);
+                let fn_ty = tcx.fn_sig_to_ty(sig);
                 tcx.generalize(generics, fn_ty)
             }
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
-                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                let substs = Substs::id_for_generics(tcx, generics);
+                let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
             ir::ItemKind::Enum(generics, variants) => {
@@ -33,7 +34,8 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                     .collect();
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
-                let ty = tcx.mk_adt_ty(adt_ty, List::empty());
+                let substs = Substs::id_for_generics(tcx, generics);
+                let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
@@ -63,7 +65,7 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef) {
         let impl_item = self.impl_item(impl_item_ref.id);
         let ty = match impl_item.kind {
-            ir::ImplItemKind::Fn(sig, _) => TyConv::fn_sig_to_ty(&self, sig),
+            ir::ImplItemKind::Fn(sig, _) => self.fn_sig_to_ty(sig),
         };
         self.collect_ty(impl_item.id.def, ty);
     }
@@ -75,6 +77,7 @@ impl<'tcx> TyCtx<'tcx> {
         variant_kind: &ir::VariantKind<'tcx>,
     ) -> VariantTy<'tcx> {
         let mut seen = FxHashMap::default();
+        // TODO check the number of generic params are correct
         let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
             if let Some(span) = seen.insert(f.ident, f.span) {
                 self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
@@ -109,7 +112,7 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
             // Some: T -> Option<T>
             ir::VariantKind::Tuple(..) => {
                 let variant = &adt_ty.variants[variant.idx];
-                let tys = tcx.mk_substs(variant.fields.iter().map(|f| f.ty(tcx, substs)));
+                let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.ir_ty_to_ty(f.ir_ty)));
                 tcx.mk_fn_ty(tys, ty)
             }
         };

@@ -93,6 +93,18 @@ pub fn jit(src: &str) -> LResult<i32> {
     driver.llvm_jit()
 }
 
+/// runs all analyses but produces no output
+pub fn check(src: &str) -> LResult<()> {
+    let driver = mk_driver(src);
+    driver.check()
+}
+
+pub fn dump_tir(src: &str) -> LResult<()> {
+    let driver = mk_driver(src);
+    println!("{}", driver.gen_tir()?);
+    Ok(())
+}
+
 pub fn llvm_exec(src: &str) -> LResult<i32> {
     let driver = mk_driver(src);
     driver.llvm_exec()

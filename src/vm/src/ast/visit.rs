@@ -85,11 +85,15 @@ pub trait Visitor<'ast>: Sized {
     }
 
     fn visit_path(&mut self, path: &'ast Path) {
-        path.segments.iter().for_each(|seg| self.visit_path_segment(seg))
+        walk_path(self, path);
     }
 
     fn visit_path_segment(&mut self, segment: &'ast PathSegment) {
-        self.visit_ident(segment.ident)
+        walk_path_segment(self, segment);
+    }
+
+    fn visit_generic_args(&mut self, args: &'ast GenericArgs) {
+        walk_generic_args(self, args)
     }
 
     fn visit_ty(&mut self, ty: &'ast Ty) {
@@ -106,6 +110,10 @@ pub trait Visitor<'ast>: Sized {
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         walk_assoc_item(self, item)
     }
+}
+
+fn walk_generic_args<'ast>(visitor: &mut impl Visitor<'ast>, args: &'ast GenericArgs) {
+    args.args.iter().for_each(|ty| visitor.visit_ty(ty));
 }
 
 pub fn walk_fn<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig, body: Option<&'ast Expr>) {
@@ -133,6 +141,15 @@ pub fn walk_let<'ast>(visitor: &mut impl Visitor<'ast>, Let { pat, ty, init, .. 
     init.iter().for_each(|expr| visitor.visit_expr(expr));
     visitor.visit_pattern(pat);
     ty.iter().for_each(|ty| visitor.visit_ty(ty));
+}
+
+pub fn walk_path<'ast>(visitor: &mut impl Visitor<'ast>, path: &'ast Path) {
+    path.segments.iter().for_each(|seg| visitor.visit_path_segment(seg));
+}
+
+pub fn walk_path_segment<'ast>(visitor: &mut impl Visitor<'ast>, segment: &'ast PathSegment) {
+    visitor.visit_ident(segment.ident);
+    segment.args.iter().for_each(|args| visitor.visit_generic_args(args));
 }
 
 pub fn walk_arm<'ast>(visitor: &mut impl Visitor<'ast>, arm: &'ast Arm) {

@@ -21,7 +21,7 @@ impl<'a, W> Formatter<'a, W> {
     }
 }
 
-macro_rules! indent {
+macro_rules! indent_internal {
     ($s:expr, $($x:expr),*) => {{
         for _ in 0..$s.current_indent {
             write!($s.writer, "{}", $s.indent)?;
@@ -30,29 +30,29 @@ macro_rules! indent {
     }};
 }
 
-macro_rules! indent_each {
+macro_rules! indent_internal_ln {
+    ($s:expr, $($x:expr),*) => {{
+        indent_internal!($s, $($x),*)?;
+        indent_internal!($s, "\n")
+    }};
+}
+
+macro_rules! indent {
     ($s:expr, $($x:expr),*) => {{
         // we need to indent every line that is written, not just the first
         let s = format!($($x),*);
         let lines = s.split_inclusive("\n").collect_vec();
         for line in &lines {
-            indent!($s, "{}", line)?;
+            indent_internal!($s, "{}", line)?;
         }
         Ok(())
-    }};
-}
-
-macro_rules! indent_each_ln {
-    ($s:expr, $($x:expr),*) => {{
-        indent_each!($s, $($x),*)?;
-        write!($s.writer, "\n")
     }};
 }
 
 macro_rules! indentln {
     ($s:expr, $($x:expr),*) => {{
         indent!($s, $($x),*)?;
-        indent!($s, "\n")
+        write!($s.writer, "\n")
     }};
 }
 
@@ -129,7 +129,7 @@ where
     }
 
     pub fn fmt_field(&mut self, field: &tir::Field) -> fmt::Result {
-        indentln!(self, "{} = {};", field.ident, field.expr)
+        indentln!(self, "{}: {},", field.ident, field.expr)
     }
 
     fn fmt_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> fmt::Result {
@@ -143,10 +143,10 @@ where
         indentln!(self, "{{")?;
         self.with_indent(INDENT, |this| {
             for stmt in block.stmts {
-                indent_each_ln!(this, "{};", stmt)?;
+                indentln!(this, "{};", stmt)?;
             }
             if let Some(expr) = block.expr {
-                indent_each!(this, "{}", expr)?;
+                indent!(this, "{}", expr)?;
             }
             Ok(())
         })?;
@@ -164,7 +164,7 @@ where
         indentln!(self, "match {} {{", expr)?;
         self.with_indent(INDENT, |this| {
             for arm in arms.iter() {
-                indent_each_ln!(this, "{},", arm)?;
+                indentln!(this, "{},", arm)?;
             }
             Ok(())
         })?;

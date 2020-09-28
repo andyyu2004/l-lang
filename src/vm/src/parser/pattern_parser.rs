@@ -13,7 +13,7 @@ impl<'a> Parse<'a> for PatParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(token) = parser.accept(TokenType::Underscore) {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
-        } else if parser.on_ident()? {
+        } else if parser.ident()?.is_some() {
             let path = parser.parse_path()?;
             if path.segments.len() == 1 {
                 let ident = path.segments[0].ident;

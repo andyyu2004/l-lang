@@ -79,7 +79,7 @@ impl<'a> Parse<'a> for FnSigParser {
         let inputs = param_parser.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
         let mut output =
-            parser.accept(TokenType::RArrow).map(|_arrow| TyParser.parse(parser)).transpose()?;
+            parser.accept(TokenType::RArrow).map(|_arrow| parser.parse_ty(false)).transpose()?;
 
         if output.is_none() && !require_type_annotations {
             output = Some(parser.mk_infer_ty())
@@ -100,7 +100,7 @@ impl<'a> Parse<'a> for ParamParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pattern = PatParser.parse(parser)?;
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
-            TyParser.parse(parser)
+            parser.parse_ty(!self.require_type_annotations)
         } else if self.require_type_annotations {
             Err(parser.err(pattern.span, ParseError::RequireTypeAnnotations))
         } else {
@@ -282,7 +282,8 @@ impl<'a> Parse<'a> for PathExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let (span, path) = PathParser.spanned(false).parse(parser)?;
+        let path = parser.parse_path()?;
+        let span = path.span;
         // if the path is immediately followed by an open brace, it may be a struct expr
         // SomeStruct {
         //    x: int,
@@ -305,34 +306,78 @@ impl<'a> Parse<'a> for PathExprParser {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum PathKind {
+    /// arguments in expr position require disambiguation as follows
+    /// this is due to ambiguity with comparision operators etc...
+    /// a::b::<T>()
+    Expr,
+    /// types don't require the extra `::` as this ambiguity does not exists
+    Type,
+    /// it doesn't make sense to have generic parameters in module paths
+    Module,
+}
+
 /// parses a path a::b::c
-pub struct PathParser;
+pub struct PathParser {
+    pub kind: PathKind,
+}
 
 impl<'a> Parse<'a> for PathParser {
     type Output = Path;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let separator = |parser: &mut Parser<'a>| {
-            parser.expect(TokenType::Colon)?;
-            parser.expect(TokenType::Colon)
-        };
-        let (span, segments) = Punctuated1Parser { inner: PathSegmentParser, separator }
-            .spanned(false)
-            .parse(parser)?;
+        let (span, segments) = Punctuated1Parser {
+            inner: PathSegmentParser { kind: self.kind },
+            separator: TokenType::Dcolon,
+        }
+        .spanned(false)
+        .parse(parser)?;
         // if the path is immediately followed by an open brace, it could be a struct expr
         Ok(parser.mk_path(span, segments))
     }
 }
 
-pub struct PathSegmentParser;
+pub struct PathSegmentParser {
+    kind: PathKind,
+}
 
 impl<'a> Parse<'a> for PathSegmentParser {
     type Output = PathSegment;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
-        // with the generics of the initial ident
-        Ok(PathSegment { ident, id: parser.mk_id(), args: None })
+        // TODO this does not deal with the where there is a preceding ::
+        // and also does not handle the errors for expr position paths where :: is required
+        let args = parser.parse_generic_args()?;
+        Ok(PathSegment { ident, id: parser.mk_id(), args })
+    }
+}
+
+pub struct GenericArgsParser;
+
+impl<'a> Parser<'a> {
+    fn parse_generic_args(&mut self) -> ParseResult<'a, Option<GenericArgs>> {
+        GenericArgsParser.parse(self)
+    }
+}
+
+impl<'a> Parse<'a> for GenericArgsParser {
+    type Output = Option<GenericArgs>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let lt = match parser.accept(TokenType::Lt) {
+            Some(lt) => lt,
+            None => return Ok(None),
+        };
+        let args =
+            PunctuatedParser { inner: TyParser { allow_infer: true }, separator: TokenType::Comma }
+                .parse(parser)?;
+        let gt = parser.expect(TokenType::Gt)?;
+        let span = lt.span.merge(gt.span);
+        // if there are no arguments just treat it the same as if there was nothing there at all
+        // i.e. a::b::<>::c <=> a::b::c
+        Ok(if args.is_empty() { None } else { Some(GenericArgs { span, args }) })
     }
 }
 
@@ -514,7 +559,7 @@ impl<'a> Parse<'a> for TyParamParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
-        let default = parser.accept(TokenType::Eq).map(|_| TyParser.parse(parser)).transpose()?;
+        let default = parser.accept(TokenType::Eq).map(|_| parser.parse_ty(false)).transpose()?;
         // eventually parse bounds here
         Ok(TyParam { span: ident.span, id: parser.mk_id(), ident, default })
     }
