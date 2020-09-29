@@ -6,10 +6,13 @@ use crate::lexer::symbol;
 use crate::llvm;
 use crate::mir;
 use fcx::Fcx;
+use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
+use inkwell::types::{BasicTypeEnum, PointerType};
 use inkwell::values::*;
 use inkwell::OptimizationLevel;
 use itertools::Itertools;
+use llvm::CodegenCtx;
 use std::ops::Deref;
 
 pub struct Runtime<G> {
