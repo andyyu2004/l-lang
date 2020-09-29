@@ -6,7 +6,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ResolutionError {
-    #[error("unresolved value path segment `{0}` in `{1}`")]
+    #[error("unresolved value path segment `{0}` in path `{1}`")]
     UnresolvedPath(PathSegment, Path),
     #[error("unresolved type `{0}`")]
     UnresolvedType(Path),

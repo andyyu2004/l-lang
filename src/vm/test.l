@@ -4,16 +4,20 @@ struct S {
     k: bool,
 }
 
-enum Option {
-    Test
-}
-
 
 fn main() -> int {
-    let ptr = double_ptr();
-    ***ptr
+    let ptr = f2();
+    **ptr
 }
 
-fn double_ptr() -> &&&int {
-    box box box 99
+fn f1() -> &&&int {
+    box f2()
+}
+
+fn f2() -> &&int {
+    box f3()
+}
+
+fn f3() -> &int {
+    box 99
 }

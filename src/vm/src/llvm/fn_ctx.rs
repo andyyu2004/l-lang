@@ -104,13 +104,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let lvalue = self.vars[var];
         // `ptr` is a pointer into the boxed content (not including the rc header)
         let ptr = self.build_load(lvalue.ptr, "load_box").into_pointer_value();
-        // better to use the safe struct gep rather than just subtracting a single i64 pointer from
-        // `ptr` as not sure about alignment and padding etc..
-        let ty = self.llvm_boxed_ty(lvalue.ty).ptr_type(AddressSpace::Generic);
-        let cast = self.build_pointer_cast(ptr, ty, "rc_cast");
-        let header = unsafe { self.build_gep(cast, &[self.vals.neg_one], "rc_header_gep") };
-        // finally the refernce count itself
-        self.build_struct_gep(header, 0, "rc").unwrap()
+        // we need to deref as `lvalue.ty` is the type of the pointer to the box
+        let llty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
+        let cast = self.build_pointer_cast(ptr, llty, "rc_cast");
+        // finally the reference count itself
+        self.build_struct_gep(cast, 1, "rc").unwrap()
     }
 
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
@@ -121,7 +119,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_atomicrmw(
                     AtomicRMWBinOp::Add,
                     rc,
-                    self.vals.one,
+                    self.vals.one32,
                     AtomicOrdering::SequentiallyConsistent,
                 )
                 .unwrap();
@@ -238,11 +236,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 // important the refcount itself is boxed so it is shared correctly
                 let llty = self.llvm_boxed_ty(ty);
                 let ptr = self.build_malloc(llty, "box").unwrap();
+                // the refcount is at index 1 in the implicit struct
+                let rc = self.build_struct_gep(ptr, 1, "rc").unwrap();
                 // set the rc to `1` initially
-                let rc = self.build_struct_gep(ptr, 0, "rc").unwrap();
-                self.build_store(rc, self.vals.one);
-                // gep the returned pointer to point past the rc header to the content and return that
-                let val = self.build_struct_gep(ptr, 1, "rc_gep").unwrap().into();
+                self.build_atomicrmw(
+                    AtomicRMWBinOp::Xchg,
+                    rc,
+                    self.vals.one32,
+                    AtomicOrdering::SequentiallyConsistent,
+                )
+                .unwrap();
+                self.build_store(rc, self.vals.one32);
+                // gep the returned pointer to point to the content only and return that
+                let val = self.build_struct_gep(ptr, 0, "rc_gep").unwrap().into();
                 ValueRef { ty, val }
             }
             mir::Rvalue::Ref(lvalue) => {
