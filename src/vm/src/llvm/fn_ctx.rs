@@ -67,7 +67,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // store arguments into the respective vars
         let args = self.body.arg_iter().zip(self.llfn.get_param_iter()).map(|(id, llval)| {
             let var = alloca(id);
-            // store the provided argument into the local variable we provided for args
+            // store the provided arguments into the local variables we provided
             self.build_store(var.ptr, llval);
             var
         });
@@ -99,6 +99,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// generates the code to retrieve the reference count for a given variable
     /// the variable must refer to a box to be valid
+    /// returns the i64 pointer to the refcount itself
     fn build_get_rc(&mut self, var: VarId) -> PointerValue<'tcx> {
         let lvalue = self.vars[var];
         // `ptr` is a pointer into the boxed content (not including the rc header)
@@ -127,6 +128,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::StmtKind::Release(var) => {
                 let rc = self.build_get_rc(var);
+                self.build_call(self.native_functions.rc_release, &[rc.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }

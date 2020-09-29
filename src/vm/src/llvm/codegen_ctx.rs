@@ -14,7 +14,7 @@ use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
-use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
+use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::cell::RefCell;
@@ -29,6 +29,7 @@ pub struct CodegenCtx<'tcx> {
     pub vals: CommonValues<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub builder: Builder<'tcx>,
+    pub native_functions: NativeFunctions<'tcx>,
     /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
     /// this api is a bit awkward, but its what inkwell has so..
     pub items: RefCell<FxHashMap<DefId, Ident>>,
@@ -51,6 +52,51 @@ pub struct CommonTypes<'tcx> {
     pub intptr: PointerType<'tcx>,
     // using a fix sized discriminant for ease for now
     pub discr: IntType<'tcx>,
+}
+
+pub struct NativeFunctions<'tcx> {
+    pub rc_release: FunctionValue<'tcx>,
+}
+
+impl<'tcx> NativeFunctions<'tcx> {
+    pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
+        let rc_release = module.add_function(
+            "rc_release",
+            llctx
+                .void_type()
+                .fn_type(&[llctx.i64_type().ptr_type(AddressSpace::Generic).into()], false),
+            None,
+        );
+
+        // build the function
+        let builder = llctx.create_builder();
+        let block = llctx.append_basic_block(rc_release, "rc_release");
+        // this is a pointer to the refcount itself
+        let ptr = rc_release.get_first_param().unwrap().into_pointer_value();
+        builder.position_at_end(block);
+        let one = llctx.i64_type().const_int(1, false);
+        let ref_count = builder
+            .build_atomicrmw(AtomicRMWBinOp::Sub, ptr, one, AtomicOrdering::SequentiallyConsistent)
+            .unwrap();
+        let then = llctx.append_basic_block(rc_release, "free");
+        let els = llctx.append_basic_block(rc_release, "ret");
+        // this ref_count is the count before decrement
+        // if refcount == 1 then this the last reference and we can free it
+        let cmp = builder.build_int_compare(IntPredicate::EQ, ref_count, one, "rc_cmp");
+        builder.build_conditional_branch(cmp, then, els);
+        // build trivial else branch
+        builder.position_at_end(els);
+        builder.build_return(None);
+
+        // build code to free the ptr
+        builder.position_at_end(then);
+        // conveniently, the pointer passed to free does not need to be the same as the one given
+        // during the malloc call (I think)
+        // if it's anything like C, then malloc takes a void pointer
+        builder.build_free(ptr);
+        builder.build_return(None);
+        Self { rc_release }
+    }
 }
 
 impl<'tcx> CodegenCtx<'tcx> {
@@ -82,6 +128,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             unit: types.unit.get_undef(),
         };
 
+        let native_functions = NativeFunctions::new(llctx, &module);
+
         Self {
             tcx,
             llctx,
@@ -89,6 +137,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             fpm,
             vals,
             types,
+            native_functions,
             builder: llctx.create_builder(),
             items: Default::default(),
             lltypes: Default::default(),
