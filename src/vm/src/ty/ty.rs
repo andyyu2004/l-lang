@@ -70,6 +70,13 @@ impl<'tcx> TyS<'tcx> {
         }
     }
 
+    pub fn deref_ty(&self) -> Ty<'tcx> {
+        match self.kind {
+            TyKind::Ptr(_, ty) => ty,
+            _ => panic!("cannot dereference a non-pointer"),
+        }
+    }
+
     pub fn expect_adt(&self) -> (&'tcx AdtTy<'tcx>, SubstsRef<'tcx>) {
         match self.kind {
             TyKind::Adt(adt, substs) => (adt, substs),

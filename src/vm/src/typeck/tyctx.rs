@@ -162,6 +162,10 @@ impl<'tcx> TyCtx<'tcx> {
         self.project_lvalue(lvalue, Projection::Field(field, ty))
     }
 
+    pub fn project_deref(self, lvalue: mir::Lvalue<'tcx>) -> mir::Lvalue<'tcx> {
+        self.project_lvalue(lvalue, Projection::Deref)
+    }
+
     pub fn project_lvalue(
         self,
         mir::Lvalue { id, projs }: mir::Lvalue<'tcx>,

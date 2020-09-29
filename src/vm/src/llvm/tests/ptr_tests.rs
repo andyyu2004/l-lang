@@ -39,27 +39,6 @@ fn test_box_deref_assign() {
 }
 
 #[test]
-fn test_stack_pointers() {
-    let src = r#"
-    fn main() -> int {
-        let x = 5;
-        let ptr = unsafe { &x };
-        *ptr
-    }"#;
-    assert_eq!(llvm_exec!(src), 5);
-
-    let src = r#"
-    fn main() -> int {
-        // mir allocates a variable for constants that we try to take the address of
-        // we call `as_lvalue` on 5 which creates a temporary so this makes sense
-        let ptr = unsafe { &5 };
-        *ptr = 19;
-        *ptr
-    }"#;
-    assert_eq!(llvm_exec!(src), 19);
-}
-
-#[test]
 fn test_double_pointers() {
     let src = r#"
     fn main() -> int {
@@ -67,8 +46,8 @@ fn test_double_pointers() {
     }
 
     fn double_ptr() -> &&int {
-        unsafe { &(box 5) }
-    }
-    "#;
+        box box 5
+    }"#;
+
     dbg!(llvm_exec!(src));
 }

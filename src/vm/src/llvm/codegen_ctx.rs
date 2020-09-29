@@ -71,7 +71,7 @@ impl<'tcx> NativeFunctions<'tcx> {
         // build the function
         let builder = llctx.create_builder();
         let block = llctx.append_basic_block(rc_release, "rc_release");
-        // this is a pointer to the refcount itself
+        // this should be a pointer to the refcount itself
         let ptr = rc_release.get_first_param().unwrap().into_pointer_value();
         builder.position_at_end(block);
         let one = llctx.i64_type().const_int(1, false);
@@ -90,9 +90,10 @@ impl<'tcx> NativeFunctions<'tcx> {
 
         // build code to free the ptr
         builder.position_at_end(then);
-        // conveniently, the pointer passed to free does not need to be the same as the one given
-        // during the malloc call (I think)
+        // conveniently, the pointer passed to free does not need to be the
+        // same type as the one given during the malloc call (I think)
         // if it's anything like C, then malloc takes a void pointer
+        // but it must be the same address
         builder.build_free(ptr);
         builder.build_return(None);
         Self { rc_release }

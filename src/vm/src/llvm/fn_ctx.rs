@@ -203,10 +203,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         LvalueRef { ptr, ty }
                     }
                     Projection::Deref => {
-                        let operand = self.build_load(var.ptr, "deref_load");
-                        let ptr = operand.into_pointer_value();
-                        todo!();
-                        // LvalueRef { ptr, ty: todo!() };
+                        let ptr = self.build_load(var.ptr, "load_deref").into_pointer_value();
+                        let ty = var.ty.deref_ty();
+                        LvalueRef { ptr, ty }
                     }
                 }
             }
@@ -248,7 +247,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Ref(lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
-                todo!();
+                panic!("not supported anymore");
             }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);

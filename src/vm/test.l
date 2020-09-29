@@ -8,8 +8,11 @@ enum Option {
     Test
 }
 
+
 fn main() -> int {
-    let boxed = box S { x: 5, k: false };
-    8
+    *double_ptr()
 }
 
+fn double_ptr() -> &int {
+    box 5
+}
