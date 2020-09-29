@@ -57,8 +57,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Box(boxed) => {
                 let var = self.alloc_tmp(info, expr.ty);
-                // self.push_retain(info, block, var);
-                // self.schedule_release(info, var);
                 let rvalue = Rvalue::Box(boxed.ty);
                 let lvalue = Lvalue::from(var);
                 self.push_assignment(info, block, lvalue, rvalue);

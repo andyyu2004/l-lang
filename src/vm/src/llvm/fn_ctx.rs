@@ -5,7 +5,9 @@ use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection, Ty};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
-use inkwell::{values::*, AddressSpace, FloatPredicate, IntPredicate};
+use inkwell::{
+    values::*, AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate
+};
 use itertools::Itertools;
 use mir::Lvalue;
 use rustc_hash::FxHashMap;
@@ -95,12 +97,38 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.blocks[id]
     }
 
+    /// generates the code to retrieve the reference count for a given variable
+    /// the variable must refer to a box to be valid
+    fn build_get_rc(&mut self, var: VarId) -> PointerValue<'tcx> {
+        let lvalue = self.vars[var];
+        // `ptr` is a pointer into the boxed content (not including the rc header)
+        let ptr = self.build_load(lvalue.ptr, "load_box").into_pointer_value();
+        // better to use the safe struct gep rather than just subtracting a single i64 pointer from
+        // `ptr` as not sure about alignment and padding etc..
+        let ty = self.llvm_boxed_ty(lvalue.ty).ptr_type(AddressSpace::Generic);
+        let cast = self.build_pointer_cast(ptr, ty, "rc_cast");
+        let header = unsafe { self.build_gep(cast, &[self.vals.neg_one], "rc_header_gep") };
+        // finally the refernce count itself
+        self.build_struct_gep(header, 0, "rc").unwrap()
+    }
+
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
-        match &stmt.kind {
-            mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
+        match stmt.kind {
+            mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
+            mir::StmtKind::Retain(var) => {
+                let rc = self.build_get_rc(var);
+                self.build_atomicrmw(
+                    AtomicRMWBinOp::Add,
+                    rc,
+                    self.vals.one,
+                    AtomicOrdering::SequentiallyConsistent,
+                )
+                .unwrap();
+            }
+            mir::StmtKind::Release(var) => {
+                let rc = self.build_get_rc(var);
+            }
             mir::StmtKind::Nop => {}
-            mir::StmtKind::Retain(_) => {}
-            mir::StmtKind::Release(_) => {}
         }
     }
 
@@ -206,9 +234,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(ty) => {
-                let llty = self.llvm_ty(ty);
+                // important the refcount itself is boxed so it is shared correctly
+                let llty = self.llvm_boxed_ty(ty);
                 let ptr = self.build_malloc(llty, "box").unwrap();
-                ValueRef { ty, val: ptr.into() }
+                // set the rc to `1` initially
+                let rc = self.build_struct_gep(ptr, 0, "rc").unwrap();
+                self.build_store(rc, self.vals.one);
+                // gep the returned pointer to point past the rc header to the content and return that
+                let val = self.build_struct_gep(ptr, 1, "rc_gep").unwrap().into();
+                ValueRef { ty, val }
             }
             mir::Rvalue::Ref(lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },

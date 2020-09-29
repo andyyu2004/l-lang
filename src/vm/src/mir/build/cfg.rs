@@ -96,10 +96,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) {
         let var_id = lvalue.id;
         let var = self.vars[var_id];
+        self.cfg.push_assignment(info, block, lvalue, rvalue);
         if let TyKind::Ptr(..) = var.ty.kind {
             self.push_retain(info, block, var_id);
             self.schedule_release(info, var_id);
         }
-        self.cfg.push_assignment(info, block, lvalue, rvalue)
     }
 }

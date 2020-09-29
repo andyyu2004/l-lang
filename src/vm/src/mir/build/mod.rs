@@ -55,7 +55,7 @@ pub fn build_enum_ctors<'tcx>(
     tcx: TyCtx<'tcx>,
     item: &ir::Item,
 ) -> FxHashMap<DefId, (Ident, &'tcx mir::Body<'tcx>)> {
-    // todo deal with generics
+    // TODO deal with generics
     let scheme = tcx.collected_ty(item.id.def);
     let (_forall, ty) = scheme.expect_scheme();
     let (adt_ty, _) = ty.expect_adt();
@@ -69,15 +69,6 @@ pub fn build_enum_ctors<'tcx>(
                 let value = (item.ident.concat_as_path(variant.ident), body);
                 let ctor_id = variant.ctor.unwrap();
                 map.insert(ctor_id, value);
-                // let kind = mir::ItemKind::Fn(body);
-                // let item = mir::Item {
-                //     span: item.span,
-                //     vis: item.vis,
-                //     ident: variant.ident,
-                //     id: variant.ctor.unwrap(),
-                //     kind,
-                // };
-                // vec.push(item);
             }
         }
     }

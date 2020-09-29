@@ -37,16 +37,18 @@ pub struct CodegenCtx<'tcx> {
 
 pub struct CommonValues<'tcx> {
     pub zero: IntValue<'tcx>,
+    pub one: IntValue<'tcx>,
+    pub neg_one: IntValue<'tcx>,
     pub unit: StructValue<'tcx>,
 }
 
 pub struct CommonTypes<'tcx> {
-    pub unit: StructType<'tcx>,
     pub int: IntType<'tcx>,
+    pub unit: StructType<'tcx>,
     pub byte: IntType<'tcx>,
     pub float: FloatType<'tcx>,
     pub boolean: IntType<'tcx>,
-    pub gcptr: PointerType<'tcx>,
+    pub intptr: PointerType<'tcx>,
     // using a fix sized discriminant for ease for now
     pub discr: IntType<'tcx>,
 }
@@ -69,12 +71,16 @@ impl<'tcx> CodegenCtx<'tcx> {
             int: llctx.i64_type(),
             float: llctx.f64_type(),
             byte: llctx.i8_type(),
-            gcptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             boolean: llctx.bool_type(),
+            intptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
             discr: llctx.i8_type(),
         };
-        let vals =
-            CommonValues { zero: llctx.i64_type().const_zero(), unit: types.unit.get_undef() };
+        let vals = CommonValues {
+            zero: types.int.const_zero(),
+            one: types.int.const_int(1, false),
+            neg_one: types.int.const_all_ones(),
+            unit: types.unit.get_undef(),
+        };
 
         Self {
             tcx,
@@ -128,6 +134,12 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {
         self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+    }
+
+    /// wraps a `Ty` with refcount info
+    pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
+        let ty = self.llvm_ty(ty);
+        self.llctx.struct_type(&[self.types.int.into(), ty], true)
     }
 
     /// converts a L type into a llvm representation
