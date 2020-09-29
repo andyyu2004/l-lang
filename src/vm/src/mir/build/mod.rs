@@ -1,6 +1,7 @@
 mod cfg;
 mod expr;
 mod pat;
+mod scope;
 mod stmt;
 
 use crate::ir;
@@ -13,6 +14,7 @@ use expr::LvalueBuilder;
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
+use scope::Scopes;
 use smallvec::SmallVec;
 
 pub const ENTRY_BLOCK: BlockId = BlockId(0);
@@ -42,7 +44,7 @@ pub fn build_fn<'a, 'tcx>(
     let _ = builder.build_body();
     let mir = builder.complete();
     mir::validate(&mir, &ctx);
-    eprintln!("{}", mir);
+    // eprintln!("{}", mir);
     mir
 }
 
@@ -62,7 +64,7 @@ pub fn build_enum_ctors<'tcx>(
         match body {
             None => continue,
             Some(body) => {
-                eprintln!("{}", body);
+                // eprintln!("{}", body);
                 map.insert(item.ident.concat_as_path(variant.ident), body);
                 // let kind = mir::ItemKind::Fn(body);
                 // let item = mir::Item {
@@ -129,6 +131,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tcx: ctx.tcx,
             ctx,
             body,
+            scopes: Default::default(),
             cfg: Default::default(),
             vars: Default::default(),
             var_ir_map: Default::default(),
@@ -163,6 +166,7 @@ struct Builder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     ctx: &'a TirCtx<'a, 'tcx>,
     body: &'tcx tir::Body<'tcx>,
+    scopes: Scopes,
     cfg: Cfg<'tcx>,
     vars: IndexVec<VarId, Var<'tcx>>,
     var_ir_map: FxHashMap<ir::Id, VarId>,
@@ -219,12 +223,7 @@ impl<T> BlockAnd<T> {
     }
 }
 
-trait BlockAndExt {
-    fn and<T>(self, v: T) -> BlockAnd<T>;
-    fn unit(self) -> BlockAnd<()>;
-}
-
-impl BlockAndExt for mir::BlockId {
+impl mir::BlockId {
     fn and<T>(self, v: T) -> BlockAnd<T> {
         BlockAnd(self, v)
     }

@@ -2,7 +2,7 @@ use super::util::LLVMAsPtrVal;
 use super::CodegenCtx;
 use crate::ast;
 use crate::mir::{self, BlockId, VarId};
-use crate::ty::{AdtKind, ConstKind, Projection};
+use crate::ty::{AdtKind, ConstKind, Projection, Ty};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
 use inkwell::{values::*, AddressSpace, FloatPredicate, IntPredicate};
@@ -15,9 +15,21 @@ pub struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
     body: &'tcx mir::Body<'tcx>,
     llfn: FunctionValue<'tcx>,
-    vars: IndexVec<mir::VarId, LLVMVar<'tcx>>,
+    vars: IndexVec<mir::VarId, LvalueRef<'tcx>>,
     /// map from mir block to llvm block
     blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct LvalueRef<'tcx> {
+    ptr: PointerValue<'tcx>,
+    ty: Ty<'tcx>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ValueRef<'tcx> {
+    val: BasicValueEnum<'tcx>,
+    ty: Ty<'tcx>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -28,8 +40,8 @@ struct LLVMVar<'tcx> {
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(
         cctx: &'a CodegenCtx<'tcx>,
-        body: &'tcx mir::Body<'tcx>,
         llfn: FunctionValue<'tcx>,
+        body: &'tcx mir::Body<'tcx>,
     ) -> Self {
         let blocks = body
             .basic_blocks
@@ -42,11 +54,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ctx
     }
 
-    fn alloc_vars(&mut self) -> IndexVec<VarId, LLVMVar<'tcx>> {
+    fn alloc_vars(&mut self) -> IndexVec<VarId, LvalueRef<'tcx>> {
         let alloca = |var_id| {
             let mir_var = self.body.vars[var_id];
-            let ptr = self.build_alloca(self.llvm_ty(mir_var.ty), &mir_var.to_string());
-            LLVMVar { ptr }
+            let ty = mir_var.ty;
+            let ptr = self.build_alloca(self.llvm_ty(ty), &mir_var.to_string());
+            LvalueRef { ptr, ty }
         };
 
         // store arguments into the respective vars
@@ -86,6 +99,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
             mir::StmtKind::Nop => {}
+            mir::StmtKind::Retain(_) => todo!(),
+            mir::StmtKind::Release(_) => todo!(),
         }
     }
 
@@ -105,7 +120,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                             let operand = self.codegen_operand(f);
                             let field_ptr =
                                 self.build_struct_gep(var.ptr, i as u32, "struct_gep").unwrap();
-                            self.build_store(field_ptr, operand);
+                            self.build_store(field_ptr, operand.val);
                         }
                     }
                     AdtKind::Enum => {
@@ -121,28 +136,31 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         );
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
-                            let ty = operand.get_type();
                             let field_ptr = self
                                 .build_struct_gep(content_ptr, i as u32, "enum_content_gep")
                                 .unwrap();
-                            self.build_store(field_ptr, operand);
+                            self.build_store(field_ptr, operand.val);
                         }
                     }
                 }
             }
             _ => {
                 let value = self.codegen_rvalue(rvalue);
-                self.build_store(var.ptr, value);
+                self.build_store(var.ptr, value.val);
             }
         }
     }
 
     /// returns a pointer to where the lvalue points to
-    fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LLVMVar<'tcx> {
+    fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LvalueRef<'tcx> {
         self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
     }
 
-    fn codegen_lvalue_inner(&mut self, var_id: VarId, projs: &[Projection<'tcx>]) -> LLVMVar<'tcx> {
+    fn codegen_lvalue_inner(
+        &mut self,
+        var_id: VarId,
+        projs: &[Projection<'tcx>],
+    ) -> LvalueRef<'tcx> {
         match projs {
             [] => self.vars[var_id],
             [projs @ .., proj] => {
@@ -152,12 +170,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     Projection::Field(f, ty) => {
                         let index = f.index() as u32;
                         let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
-                        LLVMVar { ptr }
+                        LvalueRef { ptr, ty }
                     }
                     Projection::Deref => {
                         let operand = self.build_load(var.ptr, "deref_load");
                         let ptr = operand.into_pointer_value();
-                        LLVMVar { ptr }
+                        todo!();
+                        // LvalueRef { ptr, ty: todo!() };
                     }
                 }
             }
@@ -176,31 +195,41 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ret
     }
 
-    fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> BasicValueEnum<'tcx> {
+    fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> ValueRef<'tcx> {
         match rvalue {
             mir::Rvalue::Closure(ty, body) => {
                 let name = "<closure>";
                 let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
                 self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
-                f.as_llvm_ptr().into()
+                let val = f.as_llvm_ptr().into();
+                ValueRef { val, ty }
             }
             mir::Rvalue::Use(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
+                // TODO use the gc somehow
+                // but even if we somehow managed to get the gc to allocate the memory,
+                // how would the gc know which variables are still in use?
+                // we would need to have our own stack machine or something where we can access
+                // everything and mark the roots
                 let operand = self.codegen_operand(operand);
-                let ty = operand.get_type();
+                let ty = operand.val.get_type();
                 let ptr = self.build_malloc(ty, "box").unwrap();
-                self.build_store(ptr, operand);
-                ptr.into()
+                self.build_store(ptr, operand.val);
+                todo!();
+                // ptr.into()
             }
-            mir::Rvalue::Ref(lvalue) => self.codegen_lvalue(*lvalue).ptr.into(),
+            mir::Rvalue::Ref(lvalue) => {
+                // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
+                todo!();
+            }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);
                 let rhs = self.codegen_operand(r);
-                match (lhs, rhs) {
-                    (BasicValueEnum::FloatValue(l), BasicValueEnum::FloatValue(r)) =>
-                        self.codegen_float_op(*op, l, r),
-                    (BasicValueEnum::IntValue(l), BasicValueEnum::IntValue(r)) =>
-                        self.codegen_int_op(*op, l, r),
+                match (lhs.val, rhs.val) {
+                    (BasicValueEnum::FloatValue(_), BasicValueEnum::FloatValue(_)) =>
+                        self.codegen_float_op(*op, lhs, rhs),
+                    (BasicValueEnum::IntValue(_), BasicValueEnum::IntValue(_)) =>
+                        self.codegen_int_op(*op, lhs, rhs),
                     _ => unreachable!(),
                 }
             }
@@ -210,17 +239,27 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn codegen_operand(&mut self, operand: &mir::Operand<'tcx>) -> BasicValueEnum<'tcx> {
+    fn codegen_operand(&mut self, operand: &mir::Operand<'tcx>) -> ValueRef<'tcx> {
         match operand {
             mir::Operand::Const(c) => match c.kind {
-                ConstKind::Float(f) => self.types.float.const_float(f).into(),
-                ConstKind::Int(i) => self.types.int.const_int(i as u64, true).into(),
-                ConstKind::Bool(b) => self.types.boolean.const_int(b as u64, true).into(),
-                ConstKind::Unit => self.vals.unit.into(),
+                ConstKind::Float(f) => ValueRef {
+                    val: self.types.float.const_float(f).into(),
+                    ty: self.tcx.types.float,
+                },
+                ConstKind::Int(i) => ValueRef {
+                    val: self.types.int.const_int(i as u64, true).into(),
+                    ty: self.tcx.types.int,
+                },
+                ConstKind::Bool(b) => ValueRef {
+                    val: self.types.boolean.const_int(b as u64, true).into(),
+                    ty: self.tcx.types.boolean,
+                },
+                ConstKind::Unit => ValueRef { val: self.vals.unit.into(), ty: self.tcx.types.unit },
             },
             &mir::Operand::Use(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
-                self.build_load(var.ptr, "load")
+                let val = self.build_load(var.ptr, "load").into();
+                ValueRef { val, ty: var.ty }
             }
             mir::Operand::Item(def_id) => {
                 // TODO assume item is fn for now
@@ -232,7 +271,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     .unwrap_or_else(|| panic!("no entry in items with def_id `{}`", def_id));
                 let llfn = self.module.get_function(ident.as_str()).unwrap();
                 // probably not the `correct` way to do this :)
-                unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into()
+                let val =
+                    unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into();
+                ValueRef { val, ty: self.tcx.collected_ty(*def_id) }
             }
         }
     }
@@ -240,59 +281,75 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_int_op(
         &mut self,
         op: ast::BinOp,
-        lhs: IntValue<'tcx>,
-        rhs: IntValue<'tcx>,
-    ) -> BasicValueEnum<'tcx> {
-        match op {
-            ast::BinOp::Mul => self.build_int_mul(lhs, rhs, "tmpimul").into(),
-            ast::BinOp::Div => self.build_int_signed_div(lhs, rhs, "tmpidiv").into(),
-            ast::BinOp::Add => self.build_int_add(lhs, rhs, "tmpidd").into(),
-            ast::BinOp::Sub => self.build_int_sub(lhs, rhs, "tmpisub").into(),
-            ast::BinOp::Lt | ast::BinOp::Gt => self.compile_icmp(op, lhs, rhs).into(),
-        }
+        lhs: ValueRef<'tcx>,
+        rhs: ValueRef<'tcx>,
+    ) -> ValueRef<'tcx> {
+        let l = lhs.val.into_int_value();
+        let r = rhs.val.into_int_value();
+        let val = match op {
+            ast::BinOp::Mul => self.build_int_mul(l, r, "tmpimul").into(),
+            ast::BinOp::Div => self.build_int_signed_div(l, r, "tmpidiv").into(),
+            ast::BinOp::Add => self.build_int_add(l, r, "tmpidd").into(),
+            ast::BinOp::Sub => self.build_int_sub(l, r, "tmpisub").into(),
+            ast::BinOp::Lt | ast::BinOp::Gt => return self.compile_icmp(op, lhs, rhs),
+        };
+        assert_eq!(lhs.ty, rhs.ty);
+        ValueRef { val, ty: self.tcx.types.int }
     }
 
     fn codegen_float_op(
         &mut self,
         op: ast::BinOp,
-        lhs: FloatValue<'tcx>,
-        rhs: FloatValue<'tcx>,
-    ) -> BasicValueEnum<'tcx> {
-        match op {
-            ast::BinOp::Mul => self.build_float_mul(lhs, rhs, "tmpfmul").into(),
-            ast::BinOp::Div => self.build_float_div(lhs, rhs, "tmpfdiv").into(),
-            ast::BinOp::Add => self.build_float_add(lhs, rhs, "tmpadd").into(),
-            ast::BinOp::Sub => self.build_float_sub(lhs, rhs, "tmpfsub").into(),
-            ast::BinOp::Lt | ast::BinOp::Gt => self.compile_fcmp(op, lhs, rhs).into(),
-        }
+        lhs: ValueRef<'tcx>,
+        rhs: ValueRef<'tcx>,
+    ) -> ValueRef<'tcx> {
+        let l = lhs.val.into_float_value();
+        let r = rhs.val.into_float_value();
+        let val = match op {
+            ast::BinOp::Mul => self.build_float_mul(l, r, "tmpfmul"),
+            ast::BinOp::Div => self.build_float_div(l, r, "tmpfdiv"),
+            ast::BinOp::Add => self.build_float_add(l, r, "tmpadd"),
+            ast::BinOp::Sub => self.build_float_sub(l, r, "tmpfsub"),
+            ast::BinOp::Lt | ast::BinOp::Gt => return self.compile_fcmp(op, lhs, rhs),
+        };
+        assert_eq!(lhs.ty, rhs.ty);
+        ValueRef { val: val.into(), ty: self.tcx.types.float }
     }
 
     fn compile_icmp(
         &mut self,
         op: ast::BinOp,
-        l: IntValue<'tcx>,
-        r: IntValue<'tcx>,
-    ) -> IntValue<'tcx> {
-        match op {
+        lhs: ValueRef<'tcx>,
+        rhs: ValueRef<'tcx>,
+    ) -> ValueRef<'tcx> {
+        let l = lhs.val.into_int_value();
+        let r = rhs.val.into_int_value();
+        let val = match op {
             ast::BinOp::Lt => self.builder.build_int_compare(IntPredicate::SLT, l, r, "icmp_lt"),
             ast::BinOp::Gt => self.builder.build_int_compare(IntPredicate::SGT, l, r, "icmp_gt"),
             ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
-        }
+        };
+        assert_eq!(lhs.ty, rhs.ty);
+        ValueRef { val: val.into(), ty: self.tcx.types.boolean }
     }
 
     fn compile_fcmp(
         &mut self,
         op: ast::BinOp,
-        l: FloatValue<'tcx>,
-        r: FloatValue<'tcx>,
-    ) -> IntValue<'tcx> {
-        match op {
+        lhs: ValueRef<'tcx>,
+        rhs: ValueRef<'tcx>,
+    ) -> ValueRef<'tcx> {
+        let l = lhs.val.into_float_value();
+        let r = lhs.val.into_float_value();
+        let val = match op {
             ast::BinOp::Lt =>
                 self.builder.build_float_compare(FloatPredicate::OLT, l, r, "fcmp_lt"),
             ast::BinOp::Gt =>
                 self.builder.build_float_compare(FloatPredicate::OGT, l, r, "fcmp_gt"),
             ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
-        }
+        };
+        assert_eq!(l, r);
+        ValueRef { val: val.into(), ty: self.tcx.types.boolean }
     }
 
     fn codegen_terminator(&mut self, terminator: &mir::Terminator<'tcx>) {
@@ -310,8 +367,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_unconditional_branch(self.blocks[*block]);
             }
             mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
-                let f = self.codegen_operand(f).into_pointer_value();
-                let args = args.iter().map(|arg| self.codegen_operand(arg)).collect_vec();
+                let f = self.codegen_operand(f).val.into_pointer_value();
+                let args = args.iter().map(|arg| self.codegen_operand(arg).val).collect_vec();
                 let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
                 let var = self.vars[lvalue.id];
                 self.build_store(var.ptr, value);
@@ -328,11 +385,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         arms: &[(mir::Operand<'tcx>, BlockId)],
         default: BlockId,
     ) {
-        let discr = self.codegen_operand(discr).into_int_value();
+        let discr = self.codegen_operand(discr).val.into_int_value();
         let arms = arms
             .iter()
             .map(|&(ref rvalue, block)| {
-                let rvalue = self.codegen_operand(rvalue).into_int_value();
+                let rvalue = self.codegen_operand(rvalue).val.into_int_value();
                 let block = self.blocks[block];
                 (rvalue, block)
             })

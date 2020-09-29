@@ -108,6 +108,14 @@ impl<'tcx> MirFmt<'tcx> for mir::StmtKind<'tcx> {
         f.indent()?;
         match self {
             mir::StmtKind::Assign(lvalue, rvalue) => f.fmt_assign(lvalue, rvalue),
+            mir::StmtKind::Retain(var) => {
+                write!(f, "retain ")?;
+                var.mir_fmt(f)
+            }
+            mir::StmtKind::Release(var) => {
+                write!(f, "release ")?;
+                var.mir_fmt(f)
+            }
             mir::StmtKind::Nop => write!(f, "nop"),
         }?;
         writeln!(f)

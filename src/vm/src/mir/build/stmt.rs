@@ -1,4 +1,4 @@
-use super::{BlockAnd, BlockAndExt, Builder};
+use super::{BlockAnd, Builder};
 use crate::mir::{BlockId, Lvalue, Rvalue, TerminatorKind, VarKind};
 use crate::set;
 use crate::tir;

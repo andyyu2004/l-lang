@@ -17,7 +17,7 @@ pub struct Arena<'tcx> {
     tir: DroplessArena,
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
-    prog_marker: PhantomData<ir::Prog<'tcx>>,
+    prog_marker: PhantomData<ir::IR<'tcx>>,
     typeck_outputs_marker: PhantomData<TypeckOutputs<'tcx>>,
 }
 

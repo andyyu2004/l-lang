@@ -97,6 +97,8 @@ where
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
             mir::StmtKind::Nop => {}
+            mir::StmtKind::Retain(_) => todo!(),
+            mir::StmtKind::Release(_) => todo!(),
         }
     }
 

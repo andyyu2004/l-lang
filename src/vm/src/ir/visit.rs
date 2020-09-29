@@ -2,7 +2,7 @@ use crate::ast::{Ident, Visibility};
 use crate::ir;
 
 pub trait Visitor<'ir>: Sized {
-    fn visit_prog(&mut self, prog: &'ir ir::Prog<'ir>) {
+    fn visit_prog(&mut self, prog: &'ir ir::IR<'ir>) {
         walk_prog(self, prog)
     }
 
@@ -93,7 +93,7 @@ pub trait Visitor<'ir>: Sized {
     }
 }
 
-pub fn walk_prog<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::Prog<'ir>) {
+pub fn walk_prog<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::IR<'ir>) {
     prog.items.values().for_each(|item| v.visit_item(item));
     prog.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
 }
@@ -102,7 +102,7 @@ pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplIt
     match impl_item.kind {
         ir::ImplItemKind::Fn(sig, body) => {
             v.visit_fn_sig(sig);
-            v.visit_body(body.unwrap());
+            v.visit_body(body);
         }
     }
 }

@@ -57,6 +57,10 @@ pub struct ImplItem<'ir> {
 
 #[derive(Debug)]
 pub enum ImplItemKind<'ir> {
+    Fn(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
+}
+
+pub enum TraitItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, Option<&'ir ir::Body<'ir>>),
 }
 

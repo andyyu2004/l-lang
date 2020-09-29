@@ -13,4 +13,7 @@ args:
       required: false
       short: t
       long: tir
+  - emit-mir:
+      required: false
+      long: emit-mir
 

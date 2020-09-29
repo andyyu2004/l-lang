@@ -29,6 +29,8 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
                 let lvalue = self.interpret_lvalue(lvalue);
             }
             mir::StmtKind::Nop => {}
+            mir::StmtKind::Retain(_) => {}
+            mir::StmtKind::Release(_) => {}
         }
     }
 

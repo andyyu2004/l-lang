@@ -41,7 +41,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             // TODO how to handle mutability?
             UnaryOp::Deref => {
                 let ty = self.new_infer_var(expr.span);
-                self.unify(expr.span, operand_ty, self.mk_ptr_ty(Mutability::Mut, ty));
+                self.unify(expr.span, self.mk_ptr_ty(Mutability::Mut, ty), operand_ty);
                 ty
             }
             UnaryOp::Ref => self.mk_ptr_ty(Mutability::Mut, operand_ty),

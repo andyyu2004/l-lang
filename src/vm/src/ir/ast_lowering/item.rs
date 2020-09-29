@@ -74,7 +74,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let (generics, kind) = match kind {
             AssocItemKind::Fn(sig, generics, body) => {
                 let generics = self.lower_generics(generics);
-                let body = body.as_ref().map(|body| self.lower_body(sig, body));
+                let body = self.lower_body(sig, body.as_deref().unwrap());
                 let sig = self.lower_fn_sig(sig);
                 (generics, ir::ImplItemKind::Fn(sig, body))
             }

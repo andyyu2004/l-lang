@@ -51,7 +51,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn collect(self, prog: &'tcx ir::Prog<'tcx>) {
+    pub fn collect(self, prog: &'tcx ir::IR<'tcx>) {
         ItemCollector { tcx: self }.visit_prog(prog);
         CtorCollector { tcx: self }.visit_prog(prog);
     }

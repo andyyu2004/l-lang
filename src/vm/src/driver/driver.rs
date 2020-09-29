@@ -79,7 +79,7 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Prog<'tcx>, Resolutions)> {
+    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::IR<'tcx>, Resolutions)> {
         let ast = self.parse()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
@@ -105,6 +105,10 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
         self.with_tcx(|tcx| tcx.build_tir())
+    }
+
+    pub fn dump_mir(&'tcx self) -> LResult<()> {
+        self.with_tcx(|tcx| tcx.dump_mir(&mut std::io::stderr()))
     }
 
     pub fn check(&'tcx self) -> LResult<()> {

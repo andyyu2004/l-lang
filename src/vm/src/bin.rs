@@ -10,11 +10,14 @@ fn main() {
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
     let check = matches.is_present("check");
-    let tir = matches.is_present("tir");
+    let emit_tir = matches.is_present("tir");
+    let emit_mir = matches.is_present("emit-mir");
 
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
-        return if tir {
+        return if emit_mir {
+            libvm::dump_mir(&src).ok().unwrap_or_else(|| std::process::exit(1));
+        } else if emit_tir {
             libvm::dump_tir(&src).ok().unwrap_or_else(|| std::process::exit(1));
         } else if check {
             libvm::check(&src).ok().unwrap_or_else(|| std::process::exit(1));

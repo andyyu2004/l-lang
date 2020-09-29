@@ -1,4 +1,4 @@
-use super::{BlockAnd, BlockAndExt, Builder};
+use super::{BlockAnd, Builder};
 use crate::error::TypeError;
 use crate::ir::FieldIdx;
 use crate::mir::{BlockId, Lvalue, Operand, Rvalue, SpanInfo, TerminatorKind};

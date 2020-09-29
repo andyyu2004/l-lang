@@ -89,7 +89,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    fn build_mir_inner(&self, prog: &ir::Prog<'tcx>) {
+    fn build_mir_inner(&self, prog: &ir::IR<'tcx>) {
         for (id, item) in &prog.items {
             match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) =>
@@ -113,7 +113,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    pub fn declare_items(&self, prog: &'tcx ir::Prog<'tcx>) {
+    pub fn declare_items(&self, prog: &'tcx ir::IR<'tcx>) {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
         for (&def, item) in &prog.items {
@@ -146,7 +146,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn codegen_body(&self, fn_name: &str, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
         let llfn = self.module.get_function(fn_name).unwrap();
-        let mut fcx = FnCtx::new(&self, body, llfn);
+        let mut fcx = FnCtx::new(&self, llfn, body);
         fcx.codegen();
         llfn
     }

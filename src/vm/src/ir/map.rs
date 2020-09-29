@@ -1,16 +1,22 @@
-use crate::ir;
-use rustc_hash::FxHashMap;
+use crate::ir::{self, DefId};
 
-pub struct IRMap<'ir> {
-    expr_map: FxHashMap<ir::Id, &'ir ir::Expr<'ir>>,
-}
-
-impl<'ir> IRMap<'ir> {
-    pub fn def_expr(&mut self, id: ir::Id, expr: &'ir ir::Expr<'ir>) {
-        self.expr_map.insert(id, expr);
-    }
-
-    pub fn expr(&mut self, id: ir::Id) -> &'ir ir::Expr<'ir> {
-        self.expr_map[&id]
+impl<'ir> ir::IR<'ir> {
+    pub fn fn_info(
+        &self,
+        def_id: DefId,
+    ) -> (&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>) {
+        if let Some(item) = self.items.get(&def_id) {
+            match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) => (sig, generics, body),
+                _ => unreachable!(),
+            }
+        } else if let Some(impl_item) = self.impl_items.get(&ir::ImplItemId(def_id)) {
+            match impl_item.kind {
+                ir::ImplItemKind::Fn(sig, body) => (sig, impl_item.generics, body),
+            }
+        } else {
+            // TODO check for trait items too
+            panic!()
+        }
     }
 }

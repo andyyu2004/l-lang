@@ -3,18 +3,20 @@ use crate::ast::{Ident, Mutability};
 use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::{LError, LResult, TypeResult};
-use crate::ir::{self, DefId, Definitions, FieldIdx, ParamIdx, VariantIdx};
+use crate::ir::{self, DefId, Definitions, FieldIdx, FnVisitor, ParamIdx, VariantIdx};
 use crate::mir;
 use crate::resolve::Resolutions;
 use crate::span::Span;
 use crate::tir::{self, TirCtx};
 use crate::ty::{self, *};
 use indexed_vec::{Idx, IndexVec};
+use ir::ItemVisitor;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::io::{self, Write};
 use std::ops::Deref;
 
 #[derive(Copy, Clone)]
@@ -200,7 +202,7 @@ pub struct GlobalCtx<'tcx> {
     pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
-    pub ir: &'tcx ir::Prog<'tcx>,
+    pub ir: &'tcx ir::IR<'tcx>,
     interners: CtxInterners<'tcx>,
     pub resolutions: &'tcx Resolutions,
     /// where the results of type collection are stored
@@ -209,7 +211,7 @@ pub struct GlobalCtx<'tcx> {
 
 impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
-        ir: &'tcx ir::Prog<'tcx>,
+        ir: &'tcx ir::IR<'tcx>,
         arena: &'tcx Arena<'tcx>,
         resolutions: &'tcx Resolutions,
         sess: &'tcx Session,
@@ -266,7 +268,7 @@ impl<'tcx> TyCtx<'tcx> {
         });
         self.ir.impl_items.values().for_each(|item| match item.kind {
             ir::ImplItemKind::Fn(sig, body) => {
-                let _ = self.typeck_fn(item.id.def, sig, item.generics, body.unwrap(), |_| {});
+                let _ = self.typeck_fn(item.id.def, sig, item.generics, body, |_| {});
             }
         })
     }
@@ -276,15 +278,6 @@ impl<'tcx> TyCtx<'tcx> {
         let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let generics = self.lower_generics(generics);
         self.mk_ty_scheme(generics, ty)
-    }
-
-    pub fn build_mir(self, def_id: DefId) -> LResult<&'tcx mir::Body<'tcx>> {
-        let item = self.ir.items.get(&def_id).unwrap_or_else(|| panic!("unknown def_id"));
-        match &item.kind {
-            ir::ItemKind::Fn(sig, generics, body) =>
-                self.typeck_fn(def_id, sig, generics, body, |mut ctx| ctx.build_mir(body)),
-            _ => panic!("no mir to build for item kind"),
-        }
     }
 
     pub fn typeck_fn<R>(
@@ -317,7 +310,7 @@ impl<'tcx> TyCtx<'tcx> {
     /// ir -> tir
     /// this isn't actually used in the compiler pipeline anymore, its mostly for testing and debugging
     /// some older tests rely on this
-    fn build_tir_inner(self, prog: &ir::Prog<'tcx>) -> tir::Prog<'tcx> {
+    fn build_tir_inner(self, prog: &ir::IR<'tcx>) -> tir::Prog<'tcx> {
         let mut items = BTreeMap::new();
 
         for item in prog.items.values() {
@@ -344,6 +337,30 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn build_tir(self) -> tir::Prog<'tcx> {
         self.collect(self.ir);
         self.build_tir_inner(self.ir)
+    }
+
+    pub fn dump_mir(self, writer: &mut dyn Write) {
+        MirDump { writer, tcx: self }.visit_ir(self.ir);
+    }
+}
+
+struct MirDump<'a, 'tcx> {
+    tcx: TyCtx<'tcx>,
+    writer: &'a mut dyn Write,
+}
+
+impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
+    fn visit_fn(
+        &mut self,
+        def_id: DefId,
+        sig: &'tcx ir::FnSig<'tcx>,
+        generics: &'tcx ir::Generics<'tcx>,
+        body: &'tcx ir::Body<'tcx>,
+    ) {
+        let _ = self.tcx.typeck_fn(def_id, sig, generics, body, |mut lctx| {
+            let mir = lctx.build_mir(body);
+            write!(self.writer, "\n{}", mir).unwrap();
+        });
     }
 }
 
