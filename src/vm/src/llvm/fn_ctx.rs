@@ -99,8 +99,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match &stmt.kind {
             mir::StmtKind::Assign(lvalue, rvalue) => self.codegen_assignment(*lvalue, rvalue),
             mir::StmtKind::Nop => {}
-            mir::StmtKind::Retain(_) => todo!(),
-            mir::StmtKind::Release(_) => todo!(),
+            mir::StmtKind::Retain(_) => {}
+            mir::StmtKind::Release(_) => {}
         }
     }
 
@@ -204,19 +204,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let val = f.as_llvm_ptr().into();
                 ValueRef { val, ty }
             }
-            mir::Rvalue::Use(operand) => self.codegen_operand(operand),
-            mir::Rvalue::Box(operand) => {
-                // TODO use the gc somehow
-                // but even if we somehow managed to get the gc to allocate the memory,
-                // how would the gc know which variables are still in use?
-                // we would need to have our own stack machine or something where we can access
-                // everything and mark the roots
-                let operand = self.codegen_operand(operand);
-                let ty = operand.val.get_type();
-                let ptr = self.build_malloc(ty, "box").unwrap();
-                self.build_store(ptr, operand.val);
-                todo!();
-                // ptr.into()
+            mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
+            mir::Rvalue::Box(ty) => {
+                let llty = self.llvm_ty(ty);
+                let ptr = self.build_malloc(llty, "box").unwrap();
+                ValueRef { ty, val: ptr.into() }
             }
             mir::Rvalue::Ref(lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
@@ -256,7 +248,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 },
                 ConstKind::Unit => ValueRef { val: self.vals.unit.into(), ty: self.tcx.types.unit },
             },
-            &mir::Operand::Use(lvalue) => {
+            &mir::Operand::Lvalue(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
                 let val = self.build_load(var.ptr, "load").into();
                 ValueRef { val, ty: var.ty }

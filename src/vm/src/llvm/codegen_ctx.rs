@@ -1,9 +1,10 @@
+use super::codegen::*;
 use super::util::{LLVMAsPtrVal, LLVMTypeExt};
 use super::FnCtx;
 use crate::ast::{self, Ident};
 use crate::error::{LLVMError, LResult};
-use crate::ir::{self, DefId};
-use crate::lexer::symbol;
+use crate::ir::{self, DefId, FnVisitor, ItemVisitor};
+use crate::lexer::symbol::{self, Symbol};
 use crate::mir::{self, *};
 use crate::span::Span;
 use crate::tir;
@@ -19,7 +20,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::cell::RefCell;
 use std::fmt::Display;
 use std::ops::Deref;
-use symbol::Symbol;
 
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
@@ -89,52 +89,22 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    fn build_mir_inner(&self, prog: &ir::IR<'tcx>) {
-        for (id, item) in &prog.items {
-            match item.kind {
-                ir::ItemKind::Fn(sig, generics, body) =>
-                    if let Ok(body) =
-                        self.tcx.typeck_fn(item.id.def, sig, generics, body, |mut lctx| {
-                            lctx.build_mir(body)
-                        })
-                    {
-                        self.codegen_body(item.ident.as_str(), &body);
-                    },
-                ir::ItemKind::Struct(_, _) => {}
-                // enum constructors are lowered into functions in the mir
-                ir::ItemKind::Enum(generics, variants) => {
-                    let ctors = mir::build_enum_ctors(self.tcx, item);
-                    for (ident, body) in &ctors {
-                        self.codegen_body(ident.as_str(), body);
-                    }
-                }
-                ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {}
-            }
-        }
-    }
-
-    pub fn declare_items(&self, prog: &'tcx ir::IR<'tcx>) {
+    pub fn declare_items(&self) {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
-        for (&def, item) in &prog.items {
-            self.items.borrow_mut().insert(def, item.ident);
-            match &item.kind {
-                ir::ItemKind::Fn(body, ..) => {
-                    let (_, ty) = self.tcx.collected_ty(def).expect_scheme();
-                    let (params, ret) = ty.expect_fn();
-                    let llty = self.llvm_fn_ty(params, ret);
-                    let llfn = self.module.add_function(item.ident.as_str(), llty, None);
-                }
-                _ => todo!(),
-            };
-        }
+        DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
+    }
+
+    pub fn codegen_items(&self) {
+        // we need to predeclare all items as we don't require them to be declared in the source
+        // file in topological order
+        CodegenCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
     /// returns the main function
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
-        let prog = self.tcx.ir;
-        self.declare_items(prog);
-        self.build_mir_inner(prog);
+        self.declare_items();
+        self.codegen_items();
         self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();

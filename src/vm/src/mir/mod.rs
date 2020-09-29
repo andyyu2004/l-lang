@@ -155,13 +155,13 @@ pub enum VarKind {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
     /// x
-    Use(Operand<'tcx>),
+    Operand(Operand<'tcx>),
     /// - x
     Unary(ast::UnaryOp, Operand<'tcx>),
     /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
-    /// box x
-    Box(Operand<'tcx>),
+    /// returns (uninit) memory of `Ty`
+    Box(Ty<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
     Closure(Ty<'tcx>, mir::Body<'tcx>),
@@ -176,7 +176,7 @@ pub enum Rvalue<'tcx> {
 // this design flattens out recursive expressions into a series of temporaries
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operand<'tcx> {
-    Use(Lvalue<'tcx>),
+    Lvalue(Lvalue<'tcx>),
     Const(&'tcx Const<'tcx>),
     Item(DefId),
 }

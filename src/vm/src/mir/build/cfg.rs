@@ -1,8 +1,8 @@
 //! control flow graph
 
-use super::{BasicBlock, BlockId, Builder, ENTRY_BLOCK};
+use super::{BasicBlock, BlockId, Builder, ReleaseInfo, VarId, ENTRY_BLOCK};
 use crate::mir;
-use crate::ty::Const;
+use crate::ty::{Const, TyKind};
 use crate::typeck::TyCtx;
 use indexed_vec::{Idx, IndexVec};
 use mir::{Lvalue, Operand, Rvalue, SpanInfo, Terminator, TerminatorKind};
@@ -67,6 +67,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.cfg.terminate(info, block, kind)
     }
 
+    pub fn push_release(&mut self, block: BlockId, release: ReleaseInfo) {
+        let ReleaseInfo { info, var } = release;
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Release(var) })
+    }
+
+    pub fn push_retain(&mut self, info: SpanInfo, block: BlockId, var: VarId) {
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Retain(var) })
+    }
+
     /// push a statement onto the given block
     pub fn push(&mut self, block: BlockId, stmt: mir::Stmt<'tcx>) {
         self.cfg.basic_blocks[block].stmts.push(stmt);
@@ -75,7 +84,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     /// writes a unit into `lvalue`
     pub fn push_assign_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
         let unit = self.tcx.intern_const(Const::unit());
-        self.push_assignment(info, block, lvalue, Rvalue::Use(Operand::Const(unit)));
+        self.push_assignment(info, block, lvalue, Rvalue::Operand(Operand::Const(unit)));
     }
 
     pub fn push_assignment(
@@ -85,6 +94,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         lvalue: Lvalue<'tcx>,
         rvalue: Rvalue<'tcx>,
     ) {
+        let var_id = lvalue.id;
+        let var = self.vars[var_id];
+        if let TyKind::Ptr(..) = var.ty.kind {
+            self.push_retain(info, block, var_id);
+            self.schedule_release(info, var_id);
+        }
         self.cfg.push_assignment(info, block, lvalue, rvalue)
     }
 }

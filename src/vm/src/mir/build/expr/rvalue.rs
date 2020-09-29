@@ -55,9 +55,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.push_assignment(info, block, lhs, rhs.clone());
                 block.and(rhs)
             }
-            tir::ExprKind::Box(expr) => {
-                let operand = set!(block = self.as_operand(block, expr));
-                block.and(Rvalue::Box(operand))
+            tir::ExprKind::Box(boxed) => {
+                let var = self.alloc_tmp(info, expr.ty);
+                // self.push_retain(info, block, var);
+                // self.schedule_release(info, var);
+                let rvalue = Rvalue::Box(boxed.ty);
+                let lvalue = Lvalue::from(var);
+                self.push_assignment(info, block, lvalue, rvalue);
+                // set!(block = self.write_expr(block, lvalue, boxed));
+                block.and(Rvalue::Operand(Operand::Lvalue(var.into())))
             }
             tir::ExprKind::Ref(expr) => {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
@@ -74,7 +80,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::VarRef(..)
             | tir::ExprKind::Ret(..) => {
                 let operand = set!(block = self.as_operand(block, expr));
-                block.and(Rvalue::Use(operand))
+                block.and(Rvalue::Operand(operand))
             }
         }
     }

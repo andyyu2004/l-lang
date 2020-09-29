@@ -176,15 +176,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         ir: &tir::Block<'tcx>,
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
-        for stmt in ir.stmts {
-            set!(block = self.build_stmt(block, stmt));
-        }
+        self.with_scope(info, |builder| {
+            for stmt in ir.stmts {
+                set!(block = builder.build_stmt(block, stmt));
+            }
 
-        if let Some(expr) = ir.expr {
-            set!(block = self.write_expr(block, lvalue, expr));
-        } else {
-            self.push_assign_unit(info, block, lvalue)
-        }
-        block.unit()
+            if let Some(expr) = ir.expr {
+                set!(block = builder.write_expr(block, lvalue, expr));
+            } else {
+                builder.push_assign_unit(info, block, lvalue)
+            }
+            block.unit()
+        })
     }
 }

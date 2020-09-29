@@ -15,7 +15,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::ItemRef(def) => block.and(Operand::Item(def)),
             tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) | tir::ExprKind::VarRef(..) => {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
-                block.and(Operand::Use(lvalue))
+                block.and(Operand::Lvalue(lvalue))
             }
             tir::ExprKind::Const(c) => {
                 let constant = set!(block = self.as_const(block, expr));
@@ -35,7 +35,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Tuple(..) => {
                 // create temporary var to hold the result
                 let lvalue = set!(block = self.as_tmp(block, expr)).into();
-                block.and(Operand::Use(lvalue))
+                block.and(Operand::Lvalue(lvalue))
             }
         }
     }

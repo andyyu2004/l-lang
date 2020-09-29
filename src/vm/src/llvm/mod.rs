@@ -1,9 +1,7 @@
+mod codegen;
 mod codegen_ctx;
 mod fn_ctx;
-mod monomorphization;
-// #[cfg(test)]
-// llvm broken atm so ignore tests for now
-#[cfg(windows)]
+#[cfg(test)]
 mod tests;
 pub mod util;
 

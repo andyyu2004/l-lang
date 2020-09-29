@@ -39,7 +39,7 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
 
     fn interpret_rvalue(&mut self, rvalue: &mir::Rvalue<'tcx>) {
         match rvalue {
-            mir::Rvalue::Use(operand) => self.interpret_operand(operand),
+            mir::Rvalue::Operand(operand) => self.interpret_operand(operand),
             mir::Rvalue::Unary(_, _) => {}
             mir::Rvalue::Bin(_, _, _) => {}
             mir::Rvalue::Box(_) => {}
@@ -51,7 +51,7 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
 
     fn interpret_operand(&mut self, operand: &mir::Operand<'tcx>) {
         match operand {
-            mir::Operand::Use(_) => {}
+            mir::Operand::Lvalue(_) => {}
             mir::Operand::Const(c) => match c.kind {
                 ConstKind::Float(_) => {}
                 ConstKind::Int(_) => {}

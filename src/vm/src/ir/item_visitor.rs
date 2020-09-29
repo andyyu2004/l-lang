@@ -1,3 +1,4 @@
+use crate::ast::Ident;
 use crate::ir::{self, DefId};
 
 /// visits all items in the `IR`
@@ -32,17 +33,20 @@ pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
     fn visit_fn(
         &mut self,
         def_id: DefId,
+        ident: Ident,
         sig: &'ir ir::FnSig<'ir>,
         generics: &'ir ir::Generics<'ir>,
         body: &'ir ir::Body<'ir>,
     );
 
+    fn visit_enum(&mut self, item: &'ir ir::Item<'ir>) {
+    }
+
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
         match item.kind {
             ir::ItemKind::Fn(sig, generics, body) =>
-                self.visit_fn(item.id.def, sig, generics, body),
-            // TODO visit constructors?
-            ir::ItemKind::Enum(_, _) => {}
+                self.visit_fn(item.id.def, item.ident, sig, generics, body),
+            ir::ItemKind::Enum(..) => self.visit_enum(item),
             ir::ItemKind::Struct(_, _) => {}
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {}
         }
@@ -51,7 +55,7 @@ pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
     fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
         match impl_item.kind {
             ir::ImplItemKind::Fn(sig, body) =>
-                self.visit_fn(impl_item.id.def, sig, impl_item.generics, body),
+                self.visit_fn(impl_item.id.def, impl_item.ident, sig, impl_item.generics, body),
         }
     }
 }

@@ -194,7 +194,7 @@ impl<'tcx> AdtTy<'tcx> {
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct VariantTy<'tcx> {
     pub ident: Ident,
-    /// None for struct variants
+    /// `None` for struct variants
     pub ctor: Option<DefId>,
     pub ctor_kind: CtorKind,
     pub fields: &'tcx [FieldTy<'tcx>],

@@ -349,17 +349,19 @@ impl<'a> Parse<'a> for PathSegmentParser {
         let ident = parser.expect_ident()?;
         // TODO this does not deal with the where there is a preceding ::
         // and also does not handle the errors for expr position paths where :: is required
-        let args = parser.parse_generic_args()?;
+        let args = parser.parse_generic_args(self.kind)?;
         Ok(PathSegment { ident, id: parser.mk_id(), args })
     }
 }
 
-pub struct GenericArgsParser;
-
 impl<'a> Parser<'a> {
-    fn parse_generic_args(&mut self) -> ParseResult<'a, Option<GenericArgs>> {
-        GenericArgsParser.parse(self)
+    fn parse_generic_args(&mut self, kind: PathKind) -> ParseResult<'a, Option<GenericArgs>> {
+        GenericArgsParser { kind }.parse(self)
     }
+}
+
+pub struct GenericArgsParser {
+    kind: PathKind,
 }
 
 impl<'a> Parse<'a> for GenericArgsParser {
@@ -367,7 +369,14 @@ impl<'a> Parse<'a> for GenericArgsParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let lt = match parser.accept(TokenType::Lt) {
-            Some(lt) => lt,
+            Some(lt) => match self.kind {
+                PathKind::Expr => {
+                    parser.backtrack(1);
+                    return Ok(None);
+                }
+                PathKind::Module => todo!(),
+                PathKind::Type => lt,
+            },
             None => return Ok(None),
         };
         let args =

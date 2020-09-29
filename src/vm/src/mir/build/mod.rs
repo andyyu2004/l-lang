@@ -14,6 +14,7 @@ use expr::LvalueBuilder;
 use indexed_vec::{Idx, IndexVec};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
+use scope::ReleaseInfo;
 use scope::Scopes;
 use smallvec::SmallVec;
 
@@ -53,7 +54,7 @@ pub fn build_fn<'a, 'tcx>(
 pub fn build_enum_ctors<'tcx>(
     tcx: TyCtx<'tcx>,
     item: &ir::Item,
-) -> FxHashMap<Ident, &'tcx Body<'tcx>> {
+) -> FxHashMap<DefId, (Ident, &'tcx mir::Body<'tcx>)> {
     // todo deal with generics
     let scheme = tcx.collected_ty(item.id.def);
     let (_forall, ty) = scheme.expect_scheme();
@@ -65,7 +66,9 @@ pub fn build_enum_ctors<'tcx>(
             None => continue,
             Some(body) => {
                 // eprintln!("{}", body);
-                map.insert(item.ident.concat_as_path(variant.ident), body);
+                let value = (item.ident.concat_as_path(variant.ident), body);
+                let ctor_id = variant.ctor.unwrap();
+                map.insert(ctor_id, value);
                 // let kind = mir::ItemKind::Fn(body);
                 // let item = mir::Item {
                 //     span: item.span,
@@ -114,7 +117,7 @@ fn build_variant_ctor<'tcx>(
         .iter()
         .map(|param| alloc_var(info, VarKind::Arg, param.ty(tcx, substs)))
         .map(Lvalue::new)
-        .map(Operand::Use)
+        .map(Operand::Lvalue)
         .collect_vec();
 
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
@@ -151,14 +154,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let mut block = ENTRY_BLOCK;
         let body = self.body;
         let info = self.span_info(body.expr.span.hi());
-        for param in body.params {
-            let &tir::Pattern { id, span, ty, .. } = param.pat;
-            let lvalue = self.alloc_arg(id, span, ty).into();
-            set!(block = self.bind_pat_to_lvalue(block, param.pat, lvalue));
-        }
-        set!(block = self.write_expr(block, Lvalue::ret(), body.expr));
-        self.terminate(info, block, TerminatorKind::Return);
-        block.unit()
+        self.with_scope(info, |this| {
+            for param in body.params {
+                let &tir::Pattern { id, span, ty, .. } = param.pat;
+                let lvalue = this.alloc_arg(id, span, ty).into();
+                set!(block = this.bind_pat_to_lvalue(block, param.pat, lvalue));
+            }
+            set!(block = this.write_expr(block, Lvalue::ret(), body.expr));
+            this.terminate(info, block, TerminatorKind::Return);
+            block.unit()
+        })
     }
 }
 

@@ -32,6 +32,12 @@ newtype_index!(ParamIdx);
 newtype_index!(VariantIdx);
 newtype_index!(FieldIdx);
 
+impl DefId {
+    pub fn dummy() -> Self {
+        DefId::new(usize::MAX)
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 pub struct ImplItemId(DefId);
 

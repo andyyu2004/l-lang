@@ -173,17 +173,14 @@ impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
 impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         match self {
-            mir::Rvalue::Use(operand) => operand.mir_fmt(f),
+            mir::Rvalue::Operand(operand) => operand.mir_fmt(f),
             mir::Rvalue::Bin(op, lhs, rhs) => f.fmt_bin(*op, lhs, rhs),
             mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
             mir::Rvalue::Ref(lvalue) => {
                 write!(f, "&")?;
                 lvalue.mir_fmt(f)
             }
-            mir::Rvalue::Box(operand) => {
-                write!(f, "box ")?;
-                operand.mir_fmt(f)
-            }
+            mir::Rvalue::Box(ty) => write!(f, "box {}", ty),
             mir::Rvalue::Unary(op, operand) => {
                 write!(f, "{}", op)?;
                 operand.mir_fmt(f)
@@ -197,7 +194,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
-            mir::Operand::Use(lvalue) => lvalue.mir_fmt(f),
+            mir::Operand::Lvalue(lvalue) => lvalue.mir_fmt(f),
             mir::Operand::Item(def) => write!(f, "#{:?}", def),
         }
     }

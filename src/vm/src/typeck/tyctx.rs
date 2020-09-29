@@ -4,6 +4,7 @@ use crate::core::{Arena, CtxInterners};
 use crate::driver::Session;
 use crate::error::{LError, LResult, TypeResult};
 use crate::ir::{self, DefId, Definitions, FieldIdx, FnVisitor, ParamIdx, VariantIdx};
+use crate::lexer::Symbol;
 use crate::mir;
 use crate::resolve::Resolutions;
 use crate::span::Span;
@@ -280,6 +281,16 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty_scheme(generics, ty)
     }
 
+    pub fn build_mir(
+        self,
+        def_id: DefId,
+        sig: &ir::FnSig<'tcx>,
+        generics: &ir::Generics<'tcx>,
+        body: &'tcx ir::Body<'tcx>,
+    ) -> LResult<&'tcx mir::Body<'tcx>> {
+        self.typeck_fn(def_id, sig, generics, body, |mut lctx| lctx.build_mir(body))
+    }
+
     pub fn typeck_fn<R>(
         self,
         def_id: DefId,
@@ -353,6 +364,7 @@ impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
     fn visit_fn(
         &mut self,
         def_id: DefId,
+        _ident: Ident,
         sig: &'tcx ir::FnSig<'tcx>,
         generics: &'tcx ir::Generics<'tcx>,
         body: &'tcx ir::Body<'tcx>,
