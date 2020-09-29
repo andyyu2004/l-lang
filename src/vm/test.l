@@ -10,9 +10,10 @@ enum Option {
 
 
 fn main() -> int {
-    *double_ptr()
+    let ptr = double_ptr();
+    ***ptr
 }
 
-fn double_ptr() -> &int {
-    box 5
+fn double_ptr() -> &&&int {
+    box box box 99
 }

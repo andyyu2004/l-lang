@@ -247,7 +247,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Ref(lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
-                panic!("not supported anymore");
+                panic!("unsupported");
             }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);

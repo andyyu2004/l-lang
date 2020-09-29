@@ -56,6 +56,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {
         let base_ty = self.check_expr(base);
+        // autoderef?
         match base_ty.kind {
             Adt(adt, substs) if adt.kind != AdtKind::Enum => {
                 let variant = adt.single_variant();
