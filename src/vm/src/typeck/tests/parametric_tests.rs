@@ -130,7 +130,7 @@ fn incorrect_number_of_generic_args_in_struct_decl() {
 }
 
 #[test]
-fn more_complex_parametrix_inference() {
+fn more_complex_parametric_inference() {
     let src = r#"
     enum Either<L, R> {
         Left(L),

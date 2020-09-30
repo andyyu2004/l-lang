@@ -82,6 +82,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         for id in self.body.basic_blocks.indices() {
             self.codegen_basic_block(id);
         }
+        // self.fpm.run_on(&self.llfn);
     }
 
     /// sets the current llvm block to write to
@@ -236,10 +237,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(ty) => {
-                // important the refcount itself is boxed so it is shared correctly
+                // important the refcount itself is boxed so it is shared
                 let llty = self.llvm_boxed_ty(ty);
                 let ptr = self.build_malloc(llty, "box").unwrap();
-                // the refcount is at index 1 in the implicit struct
+                // the refcount is at index `1` in the implicit struct
                 let rc = self.build_struct_gep(ptr, 1, "rc").unwrap();
                 // set the rc to `1` initially
                 self.build_atomicrmw(
@@ -249,7 +250,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     AtomicOrdering::SequentiallyConsistent,
                 )
                 .unwrap();
-                self.build_store(rc, self.vals.one32);
                 // gep the returned pointer to point to the content only and return that
                 let val = self.build_struct_gep(ptr, 0, "rc_gep").unwrap().into();
                 ValueRef { ty, val }

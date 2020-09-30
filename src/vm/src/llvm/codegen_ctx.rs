@@ -1,6 +1,6 @@
 use super::codegen::*;
 use super::util::{LLVMAsPtrVal, LLVMTypeExt};
-use super::FnCtx;
+use super::{FnCtx, NativeFunctions};
 use crate::ast::{self, Ident};
 use crate::error::{LLVMError, LResult};
 use crate::ir::{self, DefId, FnVisitor, ItemVisitor};
@@ -60,65 +60,6 @@ pub struct CommonTypes<'tcx> {
     pub discr: IntType<'tcx>,
 }
 
-pub struct NativeFunctions<'tcx> {
-    pub rc_release: FunctionValue<'tcx>,
-}
-
-impl<'tcx> NativeFunctions<'tcx> {
-    pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
-        let rc_release = module.add_function(
-            "rc_release",
-            llctx.void_type().fn_type(
-                &[
-                    llctx.i8_type().ptr_type(AddressSpace::Generic).into(),
-                    llctx.i32_type().ptr_type(AddressSpace::Generic).into(),
-                ],
-                false,
-            ),
-            None,
-        );
-
-        // build the function
-        let builder = llctx.create_builder();
-        let block = llctx.append_basic_block(rc_release, "rc_release");
-        // this is the pointer to be freed
-        let ptr = rc_release.get_first_param().unwrap().into_pointer_value();
-        // this should be a pointer to the refcount itself
-        let rc_ptr = rc_release.get_nth_param(1).unwrap().into_pointer_value();
-        builder.position_at_end(block);
-        // the refcount is an i32
-        // partially because i64 is too large and it helps a lot with catching type errors
-        let one = llctx.i32_type().const_int(1, false);
-        let ref_count = builder
-            .build_atomicrmw(
-                AtomicRMWBinOp::Sub,
-                rc_ptr,
-                one,
-                AtomicOrdering::SequentiallyConsistent,
-            )
-            .unwrap();
-        let then = llctx.append_basic_block(rc_release, "free");
-        let els = llctx.append_basic_block(rc_release, "ret");
-        // this ref_count is the count before decrement
-        // if refcount == 1 then this the last reference and we can free it
-        let cmp = builder.build_int_compare(IntPredicate::EQ, ref_count, one, "rc_cmp");
-        builder.build_conditional_branch(cmp, then, els);
-        // build trivial else branch
-        builder.position_at_end(els);
-        builder.build_return(None);
-
-        // build code to free the ptr
-        builder.position_at_end(then);
-        // conveniently, the pointer passed to free does not need to be the
-        // same type as the one given during the malloc call (I think)
-        // if it's anything like C, then malloc takes a void pointer
-        // but it must be the same address
-        builder.build_free(ptr);
-        builder.build_return(None);
-        Self { rc_release }
-    }
-}
-
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, llctx: &'tcx Context) -> Self {
         let module = llctx.create_module("main");
@@ -144,6 +85,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
             discr: llctx.i8_type(),
         };
+
         let vals = CommonValues {
             zero: types.int.const_zero(),
             one: types.int.const_int(1, false),
@@ -212,7 +154,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     /// wraps a `Ty` with refcount info (place the refcount in the second field instead of the first
-    /// allows for easier geps)
+    /// to allows for easier geps)
     pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
         let llty = self.llvm_ty(ty);
         self.llctx.struct_type(&[llty, self.types.int32.into()], true)
@@ -237,10 +179,6 @@ impl<'tcx> CodegenCtx<'tcx> {
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
                 self.llctx.struct_type(&lltys, true).into()
             }
-            TyKind::Param(_) => todo!(),
-            TyKind::Scheme(_, _) => todo!(),
-            TyKind::Never => todo!(),
-            TyKind::Error | TyKind::Infer(_) => unreachable!(),
             TyKind::Adt(adt, substs) => match adt.kind {
                 AdtKind::Struct => {
                     let variant = adt.single_variant();
@@ -259,14 +197,34 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
             },
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Opaque(..) => unreachable!(),
+            TyKind::Opaque(..) => todo!(),
+            TyKind::Param(..)
+            | TyKind::Scheme(..)
+            | TyKind::Never
+            | TyKind::Error
+            | TyKind::Infer(_) => unreachable!(),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty
     }
 
+    fn const_size_of(&self, llty: BasicTypeEnum<'tcx>) {
+        let idx = self.types.int32.const_int(1, false);
+    }
+
+    fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
+        // this works for both enums and structs
+        // as structs by definition only have one variant the max is essentially redundant
+        adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap()
+    }
+
     fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
-        variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.ty_size(ty)).sum()
+        variant_ty
+            .fields
+            .iter()
+            .map(|f| f.ty(self.tcx, substs))
+            .map(|ty| self.approx_sizeof(ty))
+            .sum()
     }
 
     // there is probably all sorts of problems with this
@@ -274,22 +232,19 @@ impl<'tcx> CodegenCtx<'tcx> {
     // however, this does not need to be exact
     // as this is only used to decide the largest variant in an enum
     // so hopefully its accurate enough for that
-    fn ty_size(&self, ty: Ty<'tcx>) -> usize {
+    fn approx_sizeof(&self, ty: Ty<'tcx>) -> usize {
         let size = match ty.kind {
             Bool | Char => 1,
             Float | Int => 8,
-            // assuming 64bit :P
+            // assuming 64bit..
             Ptr(..) => 8,
-            Never => 0,
-            Array(ty, n) => n * self.ty_size(ty),
-            Fn(_, _) => todo!(),
-            Param(_) => todo!(),
-            Adt(_, _) => todo!(),
-            Scheme(_, _) => todo!(),
+            Array(ty, n) => n * self.approx_sizeof(ty),
+            Fn(..) => 8,
+            Adt(adt, substs) => self.adt_size(adt, substs),
+            Tuple(tys) => tys.iter().map(|ty| self.approx_sizeof(ty)).sum(),
             Opaque(_, _) => todo!(),
-            Error => unreachable!(),
-            Infer(_) => unreachable!(),
-            Tuple(tys) => tys.iter().map(|ty| self.ty_size(ty)).sum(),
+            Scheme(..) | Param(..) | Infer(..) | Never | Error =>
+                unreachable!("`approx_sizeof` called on {}", ty),
         };
         info!("sizeof({}) = {}", ty, size);
         size

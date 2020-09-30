@@ -1,3 +1,12 @@
+enum Option {
+    Some(int),
+    None
+}
+
+// struct Node {
+//     val: int,
+//     next: Option<Node>,
+// }
 
 struct S {
     x: int,
@@ -6,18 +15,7 @@ struct S {
 
 
 fn main() -> int {
-    let ptr = f1();
-    ***ptr
+    let x = Option::None;
+    9
 }
 
-fn f1() -> &&&int {
-    box f2()
-}
-
-fn f2() -> &&int {
-    box f3()
-}
-
-fn f3() -> &int {
-    box 99
-}
