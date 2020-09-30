@@ -7,7 +7,7 @@ use crate::ty::{ConstKind, Ty};
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn mk_const_int(&mut self, i: i64) -> &'tcx Const<'tcx> {
-        self.tcx.intern_const(Const::new(ConstKind::Int(i)))
+        self.tcx.intern_const(Const::new(ConstKind::Int(i), self.tcx.types.int))
     }
 
     pub fn as_const(

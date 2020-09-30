@@ -406,8 +406,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let f = self.codegen_operand(f).val.into_pointer_value();
                 let args = args.iter().map(|arg| self.codegen_operand(arg).val).collect_vec();
                 let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
-                let var = self.vars[lvalue.id];
-                self.build_store(var.ptr, value);
+                let lvalue_ref = self.codegen_lvalue(*lvalue);
+                self.build_store(lvalue_ref.ptr, value);
                 self.build_unconditional_branch(self.blocks[*target]);
             }
             mir::TerminatorKind::Switch { discr, arms, default } =>

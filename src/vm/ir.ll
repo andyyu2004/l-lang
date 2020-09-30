@@ -20,27 +20,72 @@ declare void @free(i8*)
 define i64 @main() {
 basic_block0:
   %retvar = alloca i64
-  %tmp = alloca i64**
-  %ptr = alloca i64**
-  %fcall = call i64** @f2()
-  store i64** %fcall, i64*** %tmp
+  %tmp = alloca i64***
+  %ptr = alloca i64***
+  %fcall = call i64*** @f1()
+  store i64*** %fcall, i64**** %tmp
   br label %basic_block1
 
 basic_block1:                                     ; preds = %basic_block0
-  %load = load i64**, i64*** %tmp
-  store i64** %load, i64*** %ptr
-  %load_box = load i64**, i64*** %ptr
-  %rc_cast = bitcast i64** %load_box to <{ i64*, i32 }>*
-  %rc = getelementptr inbounds <{ i64*, i32 }>, <{ i64*, i32 }>* %rc_cast, i32 0, i32 1
+  %load = load i64***, i64**** %tmp
+  store i64*** %load, i64**** %ptr
+  %load_box = load i64***, i64**** %ptr
+  %rc_cast = bitcast i64*** %load_box to <{ i64**, i32 }>*
+  %rc = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast, i32 0, i32 1
   %0 = atomicrmw add i32* %rc, i32 1 seq_cst
-  store i64 5, i64* %retvar
-  %rc_release_cast = bitcast i64*** %ptr to i8*
-  %load_box1 = load i64**, i64*** %ptr
-  %rc_cast2 = bitcast i64** %load_box1 to <{ i64*, i32 }>*
-  %rc3 = getelementptr inbounds <{ i64*, i32 }>, <{ i64*, i32 }>* %rc_cast2, i32 0, i32 1
-  call void @rc_release(i8* %rc_release_cast, i32* %rc3)
+  %load_deref = load i64***, i64**** %ptr
+  %load_deref1 = load i64**, i64*** %load_deref
+  %load_deref2 = load i64*, i64** %load_deref1
+  %load3 = load i64, i64* %load_deref2
+  store i64 %load3, i64* %retvar
+  %rc_release_cast = bitcast i64**** %ptr to i8*
+  %load_box4 = load i64***, i64**** %ptr
+  %rc_cast5 = bitcast i64*** %load_box4 to <{ i64**, i32 }>*
+  %rc6 = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast5, i32 0, i32 1
+  call void @rc_release(i8* %rc_release_cast, i32* %rc6)
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
+}
+
+define i64*** @f1() {
+basic_block0:
+  %retvar = alloca i64***
+  %tmp = alloca i64***
+  %malloccall = tail call i8* @malloc(i32 ptrtoint (<{ i64**, i32 }>* getelementptr (<{ i64**, i32 }>, <{ i64**, i32 }>* null, i32 1) to i32))
+  %box = bitcast i8* %malloccall to <{ i64**, i32 }>*
+  %rc = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %box, i32 0, i32 1
+  %0 = atomicrmw xchg i32* %rc, i32 1 seq_cst
+  store i32 1, i32* %rc
+  %rc_gep = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %box, i32 0, i32 0
+  store i64*** %rc_gep, i64**** %tmp
+  %load_box = load i64***, i64**** %tmp
+  %rc_cast = bitcast i64*** %load_box to <{ i64**, i32 }>*
+  %rc1 = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast, i32 0, i32 1
+  %1 = atomicrmw add i32* %rc1, i32 1 seq_cst
+  %fcall = call i64** @f2()
+  %load_deref = load i64***, i64**** %tmp
+  store i64** %fcall, i64*** %load_deref
+  br label %basic_block1
+
+basic_block1:                                     ; preds = %basic_block0
+  %load = load i64***, i64**** %tmp
+  store i64*** %load, i64**** %retvar
+  %load_box2 = load i64***, i64**** %retvar
+  %rc_cast3 = bitcast i64*** %load_box2 to <{ i64**, i32 }>*
+  %rc4 = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast3, i32 0, i32 1
+  %2 = atomicrmw add i32* %rc4, i32 1 seq_cst
+  %rc_release_cast = bitcast i64**** %tmp to i8*
+  %load_box5 = load i64***, i64**** %tmp
+  %rc_cast6 = bitcast i64*** %load_box5 to <{ i64**, i32 }>*
+  %rc7 = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast6, i32 0, i32 1
+  call void @rc_release(i8* %rc_release_cast, i32* %rc7)
+  %rc_release_cast8 = bitcast i64**** %retvar to i8*
+  %load_box9 = load i64***, i64**** %retvar
+  %rc_cast10 = bitcast i64*** %load_box9 to <{ i64**, i32 }>*
+  %rc11 = getelementptr inbounds <{ i64**, i32 }>, <{ i64**, i32 }>* %rc_cast10, i32 0, i32 1
+  call void @rc_release(i8* %rc_release_cast8, i32* %rc11)
+  %load_ret = load i64***, i64**** %retvar
+  ret i64*** %load_ret
 }
 
 define i64** @f2() {
@@ -59,7 +104,8 @@ basic_block0:
   %rc1 = getelementptr inbounds <{ i64*, i32 }>, <{ i64*, i32 }>* %rc_cast, i32 0, i32 1
   %1 = atomicrmw add i32* %rc1, i32 1 seq_cst
   %fcall = call i64* @f3()
-  store i64* %fcall, i64*** %tmp
+  %load_deref = load i64**, i64*** %tmp
+  store i64* %fcall, i64** %load_deref
   br label %basic_block1
 
 basic_block1:                                     ; preds = %basic_block0

@@ -3,7 +3,7 @@ use crate::mir::*;
 /// trait for mir visitor
 /// `walk_*` provides default implementations
 /// override `visit_*`
-trait Visitor<'tcx> {
+pub trait Visitor<'tcx> {
     fn visit_mir(&mut self, mir: &Mir<'tcx>) {
         self.walk_mir(mir)
     }
@@ -34,20 +34,20 @@ trait Visitor<'tcx> {
         }
     }
 
-    fn visit_assignment(&mut self, lvalue: &Lvalue, rvalue: &Rvalue) {
+    fn visit_assignment(&mut self, lvalue: &Lvalue<'tcx>, rvalue: &Rvalue<'tcx>) {
         self.walk_assignment(lvalue, rvalue);
     }
 
-    fn walk_assignment(&mut self, lvalue: &Lvalue, rvalue: &Rvalue) {
+    fn walk_assignment(&mut self, lvalue: &Lvalue<'tcx>, rvalue: &Rvalue<'tcx>) {
         self.visit_lvalue(lvalue);
         self.visit_rvalue(rvalue);
     }
 
-    fn visit_lvalue(&mut self, lvalue: &Lvalue) {
+    fn visit_lvalue(&mut self, lvalue: &Lvalue<'tcx>) {
         self.walk_lvalue(lvalue);
     }
 
-    fn walk_lvalue(&mut self, lvalue: &Lvalue) {
+    fn walk_lvalue(&mut self, lvalue: &Lvalue<'tcx>) {
         todo!()
     }
 

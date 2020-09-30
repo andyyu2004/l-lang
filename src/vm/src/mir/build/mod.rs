@@ -45,7 +45,7 @@ pub fn build_fn<'a, 'tcx>(
     let _ = builder.build_body();
     let mir = builder.complete();
     mir::analyse(&mir, &ctx);
-    mir::validate(&mir, &ctx);
+    // mir::validate(&mir, &ctx);
     // eprintln!("{}", mir);
     mir
 }

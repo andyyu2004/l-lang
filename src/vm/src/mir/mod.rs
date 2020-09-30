@@ -23,6 +23,7 @@ use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
+use visit::Visitor;
 
 newtype_index!(BlockId);
 

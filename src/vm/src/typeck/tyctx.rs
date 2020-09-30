@@ -119,6 +119,14 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Param(ty::ParamTy { def_id, idx }))
     }
 
+    /// returns the new type after applying a projection
+    pub fn apply_projection(self, ty: Ty<'tcx>, proj: Projection<'tcx>) -> Ty<'tcx> {
+        match proj {
+            Projection::Deref => ty.deref_ty(),
+            Projection::Field(_, ty) => ty,
+        }
+    }
+
     pub fn mk_prim_ty(self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
         match prim_ty {
             ir::PrimTy::Char => self.types.character,

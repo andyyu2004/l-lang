@@ -83,7 +83,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     /// writes a unit into `lvalue`
     pub fn push_assign_unit(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
-        let unit = self.tcx.intern_const(Const::unit());
+        let unit = self.tcx.intern_const(Const::unit(self.tcx));
         self.push_assignment(info, block, lvalue, Rvalue::Operand(Operand::Const(unit)));
     }
 

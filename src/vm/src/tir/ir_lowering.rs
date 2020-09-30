@@ -339,9 +339,9 @@ impl<'tcx> Tir<'tcx> for Lit {
 
     fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
         match *self {
-            Lit::Float(n) => Const::new(ConstKind::Float(n)),
-            Lit::Bool(b) => Const::new(ConstKind::Bool(b)),
-            Lit::Int(i) => Const::new(ConstKind::Int(i)),
+            Lit::Float(n) => Const::new(ConstKind::Float(n), ctx.tcx.types.float),
+            Lit::Bool(b) => Const::new(ConstKind::Bool(b), ctx.tcx.types.boolean),
+            Lit::Int(i) => Const::new(ConstKind::Int(i), ctx.tcx.types.int),
         }
     }
 

@@ -387,28 +387,16 @@ impl<'tcx> Display for TyS<'tcx> {
 #[derive(Debug, Hash, PartialEq, Clone, Eq)]
 pub struct Const<'tcx> {
     pub kind: ConstKind,
-    marker: PhantomData<&'tcx ()>,
+    pub ty: Ty<'tcx>,
 }
 
 impl<'tcx> Const<'tcx> {
-    pub fn new(kind: ConstKind) -> Self {
-        Self { kind, marker: PhantomData }
+    pub fn new(kind: ConstKind, ty: Ty<'tcx>) -> Self {
+        Self { kind, ty }
     }
 
-    pub fn unit() -> Self {
-        Self::new(ConstKind::Unit)
-    }
-}
-
-impl<'tcx> std::ops::Add for Const<'tcx> {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self.kind, rhs.kind) {
-            (ConstKind::Float(x), ConstKind::Float(y)) => Self::new(ConstKind::Float(x + y)),
-            (ConstKind::Int(x), ConstKind::Int(y)) => Self::new(ConstKind::Int(x + y)),
-            _ => panic!(),
-        }
+    pub fn unit(tcx: TyCtx<'tcx>) -> Self {
+        Self::new(ConstKind::Unit, tcx.types.unit)
     }
 }
 
