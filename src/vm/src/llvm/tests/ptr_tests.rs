@@ -49,5 +49,28 @@ fn test_double_pointers() {
         box box 5
     }"#;
 
-    dbg!(llvm_exec!(src));
+    assert_eq!(llvm_exec!(src), 5);
+}
+
+#[test]
+fn multi_deref_across_functions() {
+    let src = r#"
+    fn main() -> int {
+        let ptr = f1();
+        ***ptr
+    }
+
+    fn f1() -> &&&int {
+        box f2()
+    }
+
+    fn f2() -> &&int {
+        box f3()
+    }
+
+    fn f3() -> &int {
+        box 20
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 20);
 }
