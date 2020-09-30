@@ -53,6 +53,7 @@ pub struct CommonTypes<'tcx> {
     pub byte: IntType<'tcx>,
     pub float: FloatType<'tcx>,
     pub boolean: IntType<'tcx>,
+    pub i8ptr: PointerType<'tcx>,
     pub i32ptr: PointerType<'tcx>,
     pub i64ptr: PointerType<'tcx>,
     // using a fix sized discriminant for ease for now
@@ -67,23 +68,34 @@ impl<'tcx> NativeFunctions<'tcx> {
     pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
         let rc_release = module.add_function(
             "rc_release",
-            llctx
-                .void_type()
-                .fn_type(&[llctx.i32_type().ptr_type(AddressSpace::Generic).into()], false),
+            llctx.void_type().fn_type(
+                &[
+                    llctx.i8_type().ptr_type(AddressSpace::Generic).into(),
+                    llctx.i32_type().ptr_type(AddressSpace::Generic).into(),
+                ],
+                false,
+            ),
             None,
         );
 
         // build the function
         let builder = llctx.create_builder();
         let block = llctx.append_basic_block(rc_release, "rc_release");
-        // this should be a pointer to the refcount itself
+        // this is the pointer to be freed
         let ptr = rc_release.get_first_param().unwrap().into_pointer_value();
+        // this should be a pointer to the refcount itself
+        let rc_ptr = rc_release.get_nth_param(1).unwrap().into_pointer_value();
         builder.position_at_end(block);
         // the refcount is an i32
         // partially because i64 is too large and it helps a lot with catching type errors
         let one = llctx.i32_type().const_int(1, false);
         let ref_count = builder
-            .build_atomicrmw(AtomicRMWBinOp::Sub, ptr, one, AtomicOrdering::SequentiallyConsistent)
+            .build_atomicrmw(
+                AtomicRMWBinOp::Sub,
+                rc_ptr,
+                one,
+                AtomicOrdering::SequentiallyConsistent,
+            )
             .unwrap();
         let then = llctx.append_basic_block(rc_release, "free");
         let els = llctx.append_basic_block(rc_release, "ret");
@@ -127,6 +139,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             float: llctx.f64_type(),
             byte: llctx.i8_type(),
             boolean: llctx.bool_type(),
+            i8ptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             i32ptr: llctx.i32_type().ptr_type(AddressSpace::Generic),
             i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
             discr: llctx.i8_type(),

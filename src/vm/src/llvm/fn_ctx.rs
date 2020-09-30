@@ -124,9 +124,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 )
                 .unwrap();
             }
-            mir::StmtKind::Release(var) => {
-                let rc = self.build_get_rc(var);
-                self.build_call(self.native_functions.rc_release, &[rc.into()], "rc_release");
+            mir::StmtKind::Release(var_id) => {
+                let ptr = self.vars[var_id].ptr;
+                // we cast it pointer to an i8* as that is what `rc_release` expects
+                let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "free_cast").into();
+                let rc = self.build_get_rc(var_id);
+                self.build_call(self.native_functions.rc_release, &[cast, rc.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }
