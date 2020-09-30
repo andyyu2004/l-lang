@@ -195,7 +195,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         })
     }
 
-    pub fn codegen_body(&self, fn_name: &str, body: &'tcx mir::Body<'tcx>) -> FunctionValue<'tcx> {
+    pub fn codegen_body(&self, fn_name: &str, body: &'tcx mir::Mir<'tcx>) -> FunctionValue<'tcx> {
         let llfn = self.module.get_function(fn_name).unwrap();
         let mut fcx = FnCtx::new(&self, llfn, body);
         fcx.codegen();

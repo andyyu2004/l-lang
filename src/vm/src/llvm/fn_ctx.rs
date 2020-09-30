@@ -15,7 +15,7 @@ use std::ops::Deref;
 
 pub struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
-    body: &'tcx mir::Body<'tcx>,
+    body: &'tcx mir::Mir<'tcx>,
     llfn: FunctionValue<'tcx>,
     vars: IndexVec<mir::VarId, LvalueRef<'tcx>>,
     /// map from mir block to llvm block
@@ -43,7 +43,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(
         cctx: &'a CodegenCtx<'tcx>,
         llfn: FunctionValue<'tcx>,
-        body: &'tcx mir::Body<'tcx>,
+        body: &'tcx mir::Mir<'tcx>,
     ) -> Self {
         let blocks = body
             .basic_blocks
@@ -99,7 +99,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// generates the code to retrieve the reference count for a given variable
     /// the variable must refer to a box to be valid
-    /// returns the i64 pointer to the refcount itself
+    /// returns the i32 pointer to the refcount itself
     fn build_get_rc(&mut self, var: VarId) -> PointerValue<'tcx> {
         let lvalue = self.vars[var];
         // `ptr` is a pointer into the boxed content (not including the rc header)
@@ -127,7 +127,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::StmtKind::Release(var_id) => {
                 let ptr = self.vars[var_id].ptr;
                 // we cast it pointer to an i8* as that is what `rc_release` expects
-                let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "free_cast").into();
+                let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "rc_release_cast").into();
                 let rc = self.build_get_rc(var_id);
                 self.build_call(self.native_functions.rc_release, &[cast, rc.into()], "rc_release");
             }

@@ -2,13 +2,13 @@ use super::*;
 use rustc_hash::FxHashSet;
 
 pub struct Preorder<'a, 'tcx> {
-    body: &'a Body<'tcx>,
+    body: &'a Mir<'tcx>,
     stack: Vec<BlockId>,
     visited: FxHashSet<BlockId>,
 }
 
 impl<'a, 'tcx> Preorder<'a, 'tcx> {
-    pub fn new(body: &'a Body<'tcx>, start: BlockId) -> Self {
+    pub fn new(body: &'a Mir<'tcx>, start: BlockId) -> Self {
         Self { body, visited: Default::default(), stack: vec![start] }
     }
 }

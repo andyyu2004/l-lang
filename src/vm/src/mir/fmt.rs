@@ -1,7 +1,7 @@
 //! mir formatter
 
 use crate::ast::BinOp;
-use crate::mir::{self, BasicBlock, Body, VarId};
+use crate::mir::{self, BasicBlock, Mir, VarId};
 use crate::{ty::Projection, util};
 use std::fmt;
 use std::fmt::Write;
@@ -9,7 +9,7 @@ use std::fmt::Write;
 /// indentation constant
 const INDENT: &str = "    ";
 
-impl<'tcx> Body<'tcx> {
+impl<'tcx> Mir<'tcx> {
     pub fn var_name(&self, var: VarId) -> String {
         let mut s = String::new();
         var.mir_fmt(&mut Formatter::new(&mut s, self)).unwrap();
@@ -19,7 +19,7 @@ impl<'tcx> Body<'tcx> {
 
 pub struct Formatter<'a, 'tcx> {
     writer: &'a mut dyn Write,
-    mir: &'a mir::Body<'tcx>,
+    mir: &'a mir::Mir<'tcx>,
 }
 
 impl<'a, 'tcx> Write for Formatter<'a, 'tcx> {
@@ -33,7 +33,7 @@ pub trait MirFmt<'tcx> {
 }
 
 impl<'a, 'tcx> Formatter<'a, 'tcx> {
-    pub fn new(writer: &'a mut dyn Write, body: &'a mir::Body<'tcx>) -> Self {
+    pub fn new(writer: &'a mut dyn Write, body: &'a mir::Mir<'tcx>) -> Self {
         Self { writer, mir: body }
     }
 

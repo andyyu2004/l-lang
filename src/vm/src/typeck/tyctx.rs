@@ -291,7 +291,7 @@ impl<'tcx> TyCtx<'tcx> {
         sig: &ir::FnSig<'tcx>,
         generics: &ir::Generics<'tcx>,
         body: &'tcx ir::Body<'tcx>,
-    ) -> LResult<&'tcx mir::Body<'tcx>> {
+    ) -> LResult<&'tcx mir::Mir<'tcx>> {
         self.typeck_fn(def_id, sig, generics, body, |mut lctx| lctx.build_mir(body))
     }
 

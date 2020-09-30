@@ -13,7 +13,7 @@ use std::ops::Deref;
 
 pub struct Fcx<'a, 'tcx, G> {
     jit: &'a JitCtx<'a, 'tcx, G>,
-    body: &'tcx mir::Body<'tcx>,
+    body: &'tcx mir::Mir<'tcx>,
     llfn: FunctionValue<'tcx>,
     vars: IndexVec<mir::VarId, LvalueRef<'tcx>>,
     /// map from mir block to llvm block
@@ -39,7 +39,7 @@ where
     pub fn new(
         jit: &'a JitCtx<'a, 'tcx, G>,
         llfn: FunctionValue<'tcx>,
-        body: &'tcx mir::Body<'tcx>,
+        body: &'tcx mir::Mir<'tcx>,
     ) -> Self {
         let blocks = body
             .basic_blocks

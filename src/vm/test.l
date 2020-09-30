@@ -7,11 +7,8 @@ struct S {
 
 fn main() -> int {
     let ptr = f2();
-    **ptr
-}
-
-fn f1() -> &&&int {
-    box f2()
+    /* **ptr */
+    5
 }
 
 fn f2() -> &&int {

@@ -40,10 +40,11 @@ macro_rules! set {
 pub fn build_fn<'a, 'tcx>(
     ctx: &'a TirCtx<'a, 'tcx>,
     body: &'tcx tir::Body<'tcx>,
-) -> mir::Body<'tcx> {
+) -> mir::Mir<'tcx> {
     let mut builder = Builder::new(ctx, body);
     let _ = builder.build_body();
     let mir = builder.complete();
+    mir::analyse(&mir, &ctx);
     mir::validate(&mir, &ctx);
     // eprintln!("{}", mir);
     mir
@@ -54,7 +55,7 @@ pub fn build_fn<'a, 'tcx>(
 pub fn build_enum_ctors<'tcx>(
     tcx: TyCtx<'tcx>,
     item: &ir::Item,
-) -> FxHashMap<DefId, (Ident, &'tcx mir::Body<'tcx>)> {
+) -> FxHashMap<DefId, (Ident, &'tcx mir::Mir<'tcx>)> {
     // TODO deal with generics
     let scheme = tcx.collected_ty(item.id.def);
     let (_forall, ty) = scheme.expect_scheme();
@@ -81,7 +82,7 @@ fn build_variant_ctor<'tcx>(
     ty: Ty<'tcx>,
     variant_idx: VariantIdx,
     variant: &VariantTy<'tcx>,
-) -> Option<&'tcx mir::Body<'tcx>> {
+) -> Option<&'tcx mir::Mir<'tcx>> {
     // don't construct any mir for a constructor that is not a function
     if !variant.ctor_kind.is_function() {
         return None;
@@ -114,7 +115,7 @@ fn build_variant_ctor<'tcx>(
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
     cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
     cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
-    let body = mir::Body { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() };
+    let body = mir::Mir { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() };
     Some(tcx.alloc(body))
 }
 
@@ -136,8 +137,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         builder
     }
 
-    fn complete(self) -> mir::Body<'tcx> {
-        mir::Body { basic_blocks: self.cfg.basic_blocks, vars: self.vars, argc: self.argc }
+    fn complete(self) -> mir::Mir<'tcx> {
+        mir::Mir { basic_blocks: self.cfg.basic_blocks, vars: self.vars, argc: self.argc }
     }
 
     /// entry point to building

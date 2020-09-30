@@ -6,6 +6,8 @@ mod interpret;
 mod opt;
 mod refcount;
 pub mod traversal;
+mod typecheck;
+mod visit;
 
 pub use fmt::MirFmt;
 
@@ -28,18 +30,24 @@ pub const RETURN: usize = 0;
 
 /// mir analyses go here
 /// dataflow etc...
-pub fn validate<'a, 'tcx>(mir: &mir::Body<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
+pub fn analyse<'a, 'tcx>(mir: &mir::Mir<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
     dataflow::check_assignments(mir, ctx);
 }
 
+pub fn validate<'a, 'tcx>(mir: &mir::Mir<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
+    typecheck::check(mir, ctx);
+}
+
+/// top level mir structure
+/// approximately analogous to a tir::Body
 #[derive(Clone, Debug, PartialEq)]
-pub struct Body<'tcx> {
+pub struct Mir<'tcx> {
     pub basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
     pub vars: IndexVec<VarId, Var<'tcx>>,
     pub argc: usize,
 }
 
-impl<'tcx> Body<'tcx> {
+impl<'tcx> Mir<'tcx> {
     /// returns the `VarId` of all the parameters/arguments of the `Body`
     pub fn arg_iter(&self) -> impl Iterator<Item = VarId> + ExactSizeIterator {
         // 0 is reserved for returns
@@ -55,7 +63,7 @@ impl<'tcx> Body<'tcx> {
     }
 }
 
-impl<'tcx> std::fmt::Display for Body<'tcx> {
+impl<'tcx> std::fmt::Display for Mir<'tcx> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         fmt::Formatter::new(f, self).fmt()
     }
@@ -164,7 +172,7 @@ pub enum Rvalue<'tcx> {
     Box(Ty<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
-    Closure(Ty<'tcx>, mir::Body<'tcx>),
+    Closure(Ty<'tcx>, mir::Mir<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,

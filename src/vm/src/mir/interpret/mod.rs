@@ -8,7 +8,7 @@ struct Interpreter<'mir, 'tcx> {
 }
 
 impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
-    pub fn new(body: &'mir mir::Body<'tcx>) -> Self {
+    pub fn new(body: &'mir mir::Mir<'tcx>) -> Self {
         Self { stack: vec![Frame::new(body)], sp: 0 }
     }
 
@@ -72,24 +72,24 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
         }
     }
 
-    fn interpret_body(body: &mir::Body<'tcx>) {
+    fn interpret_body(body: &mir::Mir<'tcx>) {
     }
 }
 
 enum Value<'tcx> {
     Int(i64),
     Bool(bool),
-    Function(mir::Body<'tcx>),
+    Function(mir::Mir<'tcx>),
 }
 
 struct Frame<'mir, 'tcx> {
-    body: &'mir mir::Body<'tcx>,
+    body: &'mir mir::Mir<'tcx>,
     /// (block, stmt_idx)
     ip: (BlockId, usize),
 }
 
 impl<'mir, 'tcx> Frame<'mir, 'tcx> {
-    pub fn new(body: &'mir mir::Body<'tcx>) -> Self {
+    pub fn new(body: &'mir mir::Mir<'tcx>) -> Self {
         Self { body, ip: (ENTRY_BLOCK, 0) }
     }
 }

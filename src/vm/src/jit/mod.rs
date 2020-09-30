@@ -39,11 +39,11 @@ where
         }
     }
 
-    pub fn jit_compile_fn(&self, body: &mir::Body<'tcx>) -> FunctionValue<'tcx> {
+    pub fn jit_compile_fn(&self, body: &mir::Mir<'tcx>) -> FunctionValue<'tcx> {
         todo!()
     }
 
-    pub fn jit_body(&self, llfn: FunctionValue<'tcx>, body: &'tcx mir::Body<'tcx>) {
+    pub fn jit_body(&self, llfn: FunctionValue<'tcx>, body: &'tcx mir::Mir<'tcx>) {
         let mut fcx = Fcx::new(self, llfn, body);
         fcx.codegen();
     }
