@@ -1,13 +1,12 @@
 use super::util::LLVMAsPtrVal;
 use super::CodegenCtx;
-use crate::ast;
+use crate::ast::BinOp;
 use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection, Ty};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
-use inkwell::{
-    values::*, AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate
-};
+use inkwell::values::*;
+use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use mir::Lvalue;
 use rustc_hash::FxHashMap;
@@ -316,18 +315,21 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_int_op(
         &mut self,
-        op: ast::BinOp,
+        op: BinOp,
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
         let l = lhs.val.into_int_value();
         let r = rhs.val.into_int_value();
         let val = match op {
-            ast::BinOp::Mul => self.build_int_mul(l, r, "tmpimul").into(),
-            ast::BinOp::Div => self.build_int_signed_div(l, r, "tmpidiv").into(),
-            ast::BinOp::Add => self.build_int_add(l, r, "tmpidd").into(),
-            ast::BinOp::Sub => self.build_int_sub(l, r, "tmpisub").into(),
-            ast::BinOp::Lt | ast::BinOp::Gt => return self.compile_icmp(op, lhs, rhs),
+            BinOp::Mul => self.build_int_mul(l, r, "imul").into(),
+            BinOp::Div => self.build_int_signed_div(l, r, "idiv").into(),
+            BinOp::Add => self.build_int_add(l, r, "iadd").into(),
+            BinOp::Sub => self.build_int_sub(l, r, "isub").into(),
+            BinOp::And => self.build_and(l, r, "and").into(),
+            BinOp::Or => self.build_or(l, r, "or").into(),
+            BinOp::Eq | BinOp::Neq | BinOp::Lt | BinOp::Gt =>
+                return self.compile_icmp(op, lhs, rhs),
         };
         assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val, ty: self.tcx.types.int }
@@ -335,18 +337,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_float_op(
         &mut self,
-        op: ast::BinOp,
+        op: BinOp,
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
         let l = lhs.val.into_float_value();
         let r = rhs.val.into_float_value();
         let val = match op {
-            ast::BinOp::Mul => self.build_float_mul(l, r, "tmpfmul"),
-            ast::BinOp::Div => self.build_float_div(l, r, "tmpfdiv"),
-            ast::BinOp::Add => self.build_float_add(l, r, "tmpadd"),
-            ast::BinOp::Sub => self.build_float_sub(l, r, "tmpfsub"),
-            ast::BinOp::Lt | ast::BinOp::Gt => return self.compile_fcmp(op, lhs, rhs),
+            BinOp::Mul => self.build_float_mul(l, r, "tmpfmul"),
+            BinOp::Div => self.build_float_div(l, r, "tmpfdiv"),
+            BinOp::Add => self.build_float_add(l, r, "tmpadd"),
+            BinOp::Sub => self.build_float_sub(l, r, "tmpfsub"),
+            BinOp::And | BinOp::Or => unreachable!(),
+            BinOp::Lt | BinOp::Gt | BinOp::Eq | BinOp::Neq =>
+                return self.compile_fcmp(op, lhs, rhs),
         };
         assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val: val.into(), ty: self.tcx.types.float }
@@ -354,16 +358,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn compile_icmp(
         &mut self,
-        op: ast::BinOp,
+        op: BinOp,
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
         let l = lhs.val.into_int_value();
         let r = rhs.val.into_int_value();
         let val = match op {
-            ast::BinOp::Lt => self.builder.build_int_compare(IntPredicate::SLT, l, r, "icmp_lt"),
-            ast::BinOp::Gt => self.builder.build_int_compare(IntPredicate::SGT, l, r, "icmp_gt"),
-            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
+            BinOp::Lt => self.builder.build_int_compare(IntPredicate::SLT, l, r, "icmp_lt"),
+            BinOp::Gt => self.builder.build_int_compare(IntPredicate::SGT, l, r, "icmp_gt"),
+            BinOp::Eq => self.builder.build_int_compare(IntPredicate::EQ, l, r, "icmp_eq"),
+            BinOp::Neq => self.build_int_compare(IntPredicate::NE, l, r, "icmp_neq"),
+            BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
+                unreachable!(),
         };
         assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val: val.into(), ty: self.tcx.types.boolean }
@@ -371,18 +378,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn compile_fcmp(
         &mut self,
-        op: ast::BinOp,
+        op: BinOp,
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
         let l = lhs.val.into_float_value();
         let r = lhs.val.into_float_value();
         let val = match op {
-            ast::BinOp::Lt =>
-                self.builder.build_float_compare(FloatPredicate::OLT, l, r, "fcmp_lt"),
-            ast::BinOp::Gt =>
-                self.builder.build_float_compare(FloatPredicate::OGT, l, r, "fcmp_gt"),
-            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => unreachable!(),
+            BinOp::Lt => self.builder.build_float_compare(FloatPredicate::OLT, l, r, "fcmp_lt"),
+            BinOp::Gt => self.builder.build_float_compare(FloatPredicate::OGT, l, r, "fcmp_gt"),
+            BinOp::Eq => self.build_float_compare(FloatPredicate::OEQ, l, r, "fcmp_oeq"),
+            BinOp::Neq => self.build_float_compare(FloatPredicate::UNE, l, r, "fcmp_une"),
+            BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
+                unreachable!(),
         };
         assert_eq!(l, r);
         ValueRef { val: val.into(), ty: self.tcx.types.boolean }

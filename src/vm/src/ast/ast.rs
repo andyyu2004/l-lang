@@ -273,17 +273,27 @@ pub enum BinOp {
     Sub,
     Lt,
     Gt,
+    Eq,
+    Neq,
+    /// bitwise and
+    And,
+    /// bitwise or
+    Or,
 }
 
 impl Display for BinOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Mul => write!(f, "*"),
-            Self::Div => write!(f, "/"),
-            Self::Add => write!(f, "+"),
-            Self::Sub => write!(f, "-"),
+            BinOp::Mul => write!(f, "*"),
+            BinOp::Div => write!(f, "/"),
+            BinOp::Add => write!(f, "+"),
+            BinOp::Sub => write!(f, "-"),
             BinOp::Lt => write!(f, "<"),
             BinOp::Gt => write!(f, ">"),
+            BinOp::Or => write!(f, "&"),
+            BinOp::And => write!(f, "|"),
+            BinOp::Eq => write!(f, "=="),
+            BinOp::Neq => write!(f, "!="),
         }
     }
 }

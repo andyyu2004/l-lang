@@ -3,6 +3,7 @@ mod codegen_ctx;
 mod fn_ctx;
 mod native;
 #[cfg(test)]
+// llvm broken atm so ignore tests for now
 mod tests;
 pub mod util;
 

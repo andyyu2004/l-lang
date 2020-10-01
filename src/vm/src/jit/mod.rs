@@ -1,11 +1,9 @@
-mod fcx;
 mod native;
 
 use crate::gc::*;
 use crate::lexer::symbol;
 use crate::llvm;
 use crate::mir;
-use fcx::Fcx;
 use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
 use inkwell::types::{BasicTypeEnum, PointerType};
@@ -44,8 +42,7 @@ where
     }
 
     pub fn jit_body(&self, llfn: FunctionValue<'tcx>, body: &'tcx mir::Mir<'tcx>) {
-        let mut fcx = Fcx::new(self, llfn, body);
-        fcx.codegen();
+        todo!()
     }
 
     fn jit_operand(&mut self, operand: &mir::Operand<'tcx>) -> Value<'tcx> {

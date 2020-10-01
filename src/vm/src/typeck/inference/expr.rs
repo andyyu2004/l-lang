@@ -1,4 +1,5 @@
 use super::FnCtx;
+use crate::ast::{BinOp, Lit};
 use crate::error::{TypeError, TypeResult};
 use crate::ir::{CtorKind, DefId, DefKind};
 use crate::span::Span;
@@ -326,25 +327,33 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {
-            // only allow these operations on ints for now
-            ast::BinOp::Mul | ast::BinOp::Div | ast::BinOp::Add | ast::BinOp::Sub => {
+            // TODO deal with floats
+            BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub => {
                 self.unify(l.span, self.tcx.types.int, tl);
                 self.unify(r.span, tl, tr);
                 tl
             }
-            ast::BinOp::Lt | ast::BinOp::Gt => {
+            BinOp::Lt | BinOp::Gt => {
+                // TODO deal with floats
                 self.unify(l.span, self.tcx.types.int, tl);
                 self.unify(r.span, tl, tr);
                 self.tcx.types.boolean
+            }
+            BinOp::Eq => todo!(),
+            BinOp::Neq => todo!(),
+            BinOp::And | BinOp::Or => {
+                self.unify(l.span, self.tcx.types.int, tl);
+                self.unify(r.span, tl, tr);
+                tl
             }
         }
     }
 
     fn check_lit(&self, lit: &ast::Lit) -> Ty<'tcx> {
         match lit {
-            ast::Lit::Float(_) => self.tcx.types.float,
-            ast::Lit::Bool(_) => self.tcx.types.boolean,
-            ast::Lit::Int(_) => self.tcx.types.int,
+            Lit::Float(_) => self.tcx.types.float,
+            Lit::Bool(_) => self.tcx.types.boolean,
+            Lit::Int(_) => self.tcx.types.int,
         }
     }
 }

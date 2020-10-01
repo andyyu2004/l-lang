@@ -170,6 +170,10 @@ impl<'tcx> Compiler<'tcx> {
             ast::BinOp::Sub => Op::dsub,
             ast::BinOp::Lt => Op::dcmplt,
             ast::BinOp::Gt => Op::dcmpgt,
+            ast::BinOp::And => todo!(),
+            ast::BinOp::Or => todo!(),
+            ast::BinOp::Eq => todo!(),
+            ast::BinOp::Neq => todo!(),
         };
         self.emit_op(opcode);
     }
