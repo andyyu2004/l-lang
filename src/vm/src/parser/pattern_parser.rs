@@ -42,8 +42,10 @@ impl<'a> Parse<'a> for PatParser {
                 let (span, patterns) = parser.parse_tuple_pat()?;
                 Ok(parser.mk_pat(span, PatternKind::Tuple(patterns)))
             }
+        } else if let Some((kind, span)) = parser.accept_literal() {
+            let expr = LiteralParser { kind, span }.parse(parser)?;
+            Ok(parser.mk_pat(span, PatternKind::Lit(expr)))
         } else {
-            // otherwise try parse a path
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
     }

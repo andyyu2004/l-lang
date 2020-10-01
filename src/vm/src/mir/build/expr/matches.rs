@@ -68,14 +68,18 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     Operand::Lvalue(scrut),
                 );
                 let cmp_rvalue = self.alloc_tmp(info, self.tcx.types.boolean).into();
-                let eq = self.build_binary_op(
-                    block,
-                    expr.span,
-                    self.tcx.types.boolean,
-                    BinOp::And,
-                    Operand::Lvalue(cmp_rvalue),
-                    Operand::Lvalue(predicate),
+                // `and` the predicate
+                let and = set!(
+                    block = self.build_binary_op(
+                        block,
+                        pat.span,
+                        self.tcx.types.boolean,
+                        BinOp::And,
+                        Operand::Lvalue(cmp_rvalue),
+                        Operand::Lvalue(predicate),
+                    )
                 );
+                self.push_assignment(info, block, predicate, and);
             }
             tir::PatternKind::Variant(_, _, _) => {}
         }

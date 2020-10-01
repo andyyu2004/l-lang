@@ -1,8 +1,8 @@
-use super::{Ident, NodeId, Path, P};
+use super::{Expr, Ident, Lit, NodeId, Path, P};
 use crate::span::Span;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Pattern {
     pub span: Span,
     pub id: NodeId,
@@ -24,7 +24,7 @@ impl Display for Mutability {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum PatternKind {
     /// _
     Wildcard,
@@ -32,6 +32,7 @@ pub enum PatternKind {
     Ident(Ident, Option<P<Pattern>>, Mutability),
     Paren(P<Pattern>),
     Tuple(Vec<P<Pattern>>),
+    Lit(P<Expr>),
     /// Adt::Variant(..)
     /// also matches tuple structs
     Variant(Path, Vec<P<Pattern>>),

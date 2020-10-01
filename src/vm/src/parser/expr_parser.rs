@@ -148,7 +148,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
                 Ok(parser.mk_expr(span, ExprKind::Tuple(elements)))
             }
         } else if let Some((kind, span)) = parser.accept_literal() {
-            LiteralExprParser { kind, span }.parse(parser)
+            LiteralParser { kind, span }.parse(parser)
         } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
             RetParser { ret_kw }.parse(parser)
         } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
@@ -173,31 +173,6 @@ impl<'a> Parse<'a> for PrimaryExprParser {
         } else {
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
-    }
-}
-
-struct LiteralExprParser {
-    kind: LiteralKind,
-    span: Span,
-}
-
-impl<'a> Parse<'a> for LiteralExprParser {
-    type Output = P<Expr>;
-
-    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let slice = with_source_map(|map| map.main_file()[self.span].to_owned());
-        let literal = match self.kind {
-            LiteralKind::Float { base, .. } => {
-                if base != Base::Decimal {
-                    panic!("only decimal float literals are supported")
-                }
-                Lit::Float(slice.parse().unwrap())
-            }
-            LiteralKind::Int { base, .. } =>
-                Lit::Int(i64::from_str_radix(&slice, base as u32).unwrap()),
-            _ => todo!(),
-        };
-        Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))
     }
 }
 

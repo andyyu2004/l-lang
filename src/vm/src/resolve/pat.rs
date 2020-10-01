@@ -30,7 +30,10 @@ impl<'a, 'b, 'r, 'ast> PatternResolutionCtx<'a, 'b, 'r, 'ast> {
             }
             PatternKind::Path(path) | PatternKind::Variant(path, _) =>
                 self.resolve_path(path, NS::Value),
-            PatternKind::Wildcard | PatternKind::Tuple(..) | PatternKind::Paren(..) => {}
+            PatternKind::Lit(_)
+            | PatternKind::Wildcard
+            | PatternKind::Tuple(..)
+            | PatternKind::Paren(..) => {}
         }
         ast::walk_pat(self, pat);
     }

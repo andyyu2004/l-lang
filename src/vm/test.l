@@ -16,6 +16,10 @@ struct S {
 
 fn main() -> int {
     let x = Option::None;
-    9
+    let i = 5;
+    match i {
+	5 => 99,
+	_ => 69,
+    }
 }
 

@@ -145,13 +145,13 @@ impl Display for Block {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Generics {
     pub span: Span,
     pub params: Vec<TyParam>,
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TyParam {
     pub span: Span,
     pub id: NodeId,
@@ -159,7 +159,7 @@ pub struct TyParam {
     pub default: Option<P<Ty>>,
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FnSig {
     pub params: Vec<Param>,
     pub ret_ty: Option<P<Ty>>,
@@ -171,7 +171,7 @@ impl Display for FnSig {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Param {
     pub span: Span,
     pub id: NodeId,
@@ -248,7 +248,7 @@ impl Display for PathSegment {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Lit {
     Float(f64),
     Int(i64),

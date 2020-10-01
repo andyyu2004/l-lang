@@ -3,8 +3,8 @@
 use super::*;
 use crate::ast::*;
 use crate::error::{ParseError, ParseResult};
-use crate::lexer::{LiteralKind, Tok, TokenType};
-use crate::span::Span;
+use crate::lexer::{Base, LiteralKind, Tok, TokenType};
+use crate::span::{with_source_map, Span};
 
 /// parses an ident for a field access
 pub struct FieldAccessParser {
@@ -268,7 +268,7 @@ impl<'a> Parse<'a> for StructExprParser {
             Ok(Field { ident, expr, span, id: parser.mk_id() })
         };
         let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Comma }
-            .spanned(false)
+            .spanned(true)
             .parse(parser)?;
         parser.expect(TokenType::CloseBrace)?;
         let path = std::mem::take(&mut self.path);
@@ -296,7 +296,9 @@ impl<'a> Parse<'a> for PathExprParser {
                 Some(struct_expr) => Ok(struct_expr),
                 None => {
                     // need to backtrack past the open brace
+                    // try_parse will handle the rest of the backtracking
                     parser.backtrack(1);
+                    parser.dump_token_stream();
                     Ok(parser.mk_expr(span, ExprKind::Path(struct_parser.path)))
                 }
             }
@@ -468,6 +470,30 @@ impl<'a> Parse<'a> for ClosureParser {
     }
 }
 
+pub struct LiteralParser {
+    pub kind: LiteralKind,
+    pub span: Span,
+}
+
+impl<'a> Parse<'a> for LiteralParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let slice = with_source_map(|map| map.main_file()[self.span].to_owned());
+        let literal = match self.kind {
+            LiteralKind::Float { base, .. } => {
+                if base != Base::Decimal {
+                    panic!("only decimal float literals are supported")
+                }
+                Lit::Float(slice.parse().unwrap())
+            }
+            LiteralKind::Int { base, .. } =>
+                Lit::Int(i64::from_str_radix(&slice, base as u32).unwrap()),
+            _ => todo!(),
+        };
+        Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))
+    }
+}
 pub struct ArmParser;
 
 impl<'a> Parse<'a> for ArmParser {

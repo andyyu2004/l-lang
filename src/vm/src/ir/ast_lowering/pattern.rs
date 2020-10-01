@@ -25,6 +25,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 let sub = sub.as_ref().map(|pat| self.lower_pattern(pat));
                 ir::PatternKind::Binding(*ident, sub, *m)
             }
+            PatternKind::Lit(expr) => ir::PatternKind::Lit(self.lower_expr(expr)),
         };
         ir::Pattern { id: self.lower_node_id(id), span, kind }
     }

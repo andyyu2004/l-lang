@@ -230,6 +230,7 @@ pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
             visitor.visit_path(path);
             pats.iter().for_each(|p| visitor.visit_pattern(p));
         }
+        PatternKind::Lit(expr) => visitor.visit_expr(expr),
     }
 }
 
