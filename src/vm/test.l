@@ -15,11 +15,9 @@ struct S {
 
 
 fn main() -> int {
-    let x = Option::None;
-    let i = 5;
-    match i {
-	5 => 99,
-	_ => 69,
-    }
+    fib(5)
 }
 
+fn fib(n: int) -> int {
+    if n < 2 { 1 } else { n * fib(n-1) }
+}

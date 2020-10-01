@@ -69,6 +69,7 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
             mir::TerminatorKind::Unreachable => {}
             mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {}
             mir::TerminatorKind::Switch { discr, arms, default } => {}
+            mir::TerminatorKind::Cond(_, _, _) => {}
         }
     }
 

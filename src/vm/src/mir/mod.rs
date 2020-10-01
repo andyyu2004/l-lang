@@ -203,6 +203,7 @@ impl<'tcx> Terminator<'tcx> {
             | TerminatorKind::Call { target: block, unwind: None, .. } => vec![block],
             TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
             TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
+            TerminatorKind::Cond(_, a, b) => vec![a, b],
             TerminatorKind::Switch { ref arms, default, .. } =>
                 arms.iter().map(|(_, b)| *b).collect(),
         }
@@ -217,7 +218,10 @@ pub struct SpanInfo {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TerminatorKind<'tcx> {
+    /// unconditional branch
     Branch(BlockId),
+    /// conditional branch
+    Cond(Operand<'tcx>, BlockId, BlockId),
     Return,
     Unreachable,
     Call {

@@ -4,7 +4,8 @@ fn main() -> int {
     /* }; */
     /* fn () => 5; */
     /* f(5); */
-    *boxed_fib(40)
+    fac(0)
+    /* fib(40) */
 }
 
 fn fac(n: int) -> int {
@@ -15,6 +16,3 @@ fn fib(n: int) -> int {
     if n < 2 { n } else { fib(n-1) + fib(n-2) }
 }
 
-fn boxed_fib(n: int) -> &int {
-    if n < 2 { box n } else { box (*boxed_fib(n-1) + *boxed_fib(n-2)) }
-}

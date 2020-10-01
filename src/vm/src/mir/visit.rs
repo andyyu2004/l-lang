@@ -70,6 +70,7 @@ pub trait Visitor<'tcx> {
             TerminatorKind::Unreachable => {}
             TerminatorKind::Call { f, args, lvalue, target, unwind } => {}
             TerminatorKind::Switch { discr, arms, default } => {}
+            TerminatorKind::Cond(_, _, _) => {}
         };
         todo!()
     }

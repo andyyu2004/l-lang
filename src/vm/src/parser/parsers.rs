@@ -298,7 +298,6 @@ impl<'a> Parse<'a> for PathExprParser {
                     // need to backtrack past the open brace
                     // try_parse will handle the rest of the backtracking
                     parser.backtrack(1);
-                    parser.dump_token_stream();
                     Ok(parser.mk_expr(span, ExprKind::Path(struct_parser.path)))
                 }
             }

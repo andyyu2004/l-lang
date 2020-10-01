@@ -242,6 +242,12 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
 
                 writeln!(fmt, "{}}}", INDENT)
             }
+            mir::TerminatorKind::Cond(cond, a, b) => {
+                write!(fmt, "if ")?;
+                cond.mir_fmt(fmt)?;
+                write!(fmt, " then {:?}", a)?;
+                write!(fmt, " else {:?}", b)
+            }
         }?;
         writeln!(fmt)
     }

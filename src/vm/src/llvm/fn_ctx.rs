@@ -420,6 +420,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::TerminatorKind::Switch { discr, arms, default } =>
                 self.codegen_switch(discr, arms, *default),
+            mir::TerminatorKind::Cond(cond, then, els) => {
+                let cond = self.codegen_operand(cond);
+                self.build_conditional_branch(
+                    cond.val.into_int_value(),
+                    self.blocks[*then],
+                    self.blocks[*els],
+                );
+            }
         }
     }
 

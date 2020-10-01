@@ -290,8 +290,8 @@ impl Display for BinOp {
             BinOp::Sub => write!(f, "-"),
             BinOp::Lt => write!(f, "<"),
             BinOp::Gt => write!(f, ">"),
-            BinOp::Or => write!(f, "&"),
-            BinOp::And => write!(f, "|"),
+            BinOp::Or => write!(f, "|"),
+            BinOp::And => write!(f, "&"),
             BinOp::Eq => write!(f, "=="),
             BinOp::Neq => write!(f, "!="),
         }

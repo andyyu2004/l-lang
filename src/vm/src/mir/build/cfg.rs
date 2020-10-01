@@ -59,7 +59,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     /// branch inst
-    pub fn br(&mut self, info: SpanInfo, from: BlockId, to: BlockId) {
+    pub fn branch(&mut self, info: SpanInfo, from: BlockId, to: BlockId) {
         self.terminate(info, from, TerminatorKind::Branch(to))
     }
 

@@ -62,6 +62,7 @@ where
                 self.stack.push(ret);
             }
             mir::TerminatorKind::Switch { discr, arms, default } => {}
+            mir::TerminatorKind::Cond(_, _, _) => {}
         }
     }
 }
