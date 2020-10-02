@@ -31,6 +31,9 @@ impl<'tcx> TypeFolder<'tcx> for SubstsFolder<'tcx> {
     }
 
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        if !ty.has_ty_params() {
+            return ty;
+        }
         match ty.kind {
             TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
             _ => ty.inner_fold_with(self),
@@ -107,6 +110,9 @@ impl<'tcx> InferenceVarSubstFolder<'tcx> {
 
 impl<'tcx> TypeFolder<'tcx> for InferenceVarSubstFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
+        if !ty.has_infer_vars() {
+            return ty;
+        }
         match ty.kind {
             TyKind::Infer(InferTy::TyVar(tyvid)) => self.substs[tyvid.index as usize],
             _ => ty.inner_fold_with(self),
