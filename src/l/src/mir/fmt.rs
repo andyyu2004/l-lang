@@ -250,7 +250,7 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
                 write!(fmt, "if ")?;
                 cond.mir_fmt(fmt)?;
                 write!(fmt, " then {:?}", a)?;
-                write!(fmt, " else {:?}", b)
+                writeln!(fmt, " else {:?}", b)
             }
         }?;
         writeln!(fmt)

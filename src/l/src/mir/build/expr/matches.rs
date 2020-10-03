@@ -117,6 +117,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
             tir::PatternKind::Binding(m, ident, sub) => {
                 assert!(sub.is_none());
                 // TODO bind the names
+                set!(pblock = self.bind_pat_to_lvalue(pblock, pat, scrut));
             }
             tir::PatternKind::Field(_) => todo!(),
             tir::PatternKind::Lit(expr) => {
@@ -186,6 +187,19 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     )
                 );
                 self.push_assignment(info, pblock, predicate, and);
+
+                // TODO this isn't quite right
+                // possibly because it needs to project once past the discriminant
+                // into the enum content, and the then project that one for its fields
+                for (i, pat) in pats.iter().enumerate() {
+                    set!(
+                        pblock = self.build_arm_predicate(
+                            pblock,
+                            tcx.project_field(scrut, FieldIdx::new(i), pat.ty),
+                            pat
+                        )
+                    );
+                }
             }
         };
         pblock.and(predicate)

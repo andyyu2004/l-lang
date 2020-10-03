@@ -1,6 +1,37 @@
 use super::*;
 
 #[test]
+fn llvm_match_simple_enum() {
+    let src = r#"
+    enum E {
+       A, B
+    }
+
+    fn main() -> int {
+        match E::A {
+            E::A => 555,
+            E::B => 999,
+        }
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 555);
+
+    let src = r#"
+    enum E {
+       A, B
+    }
+
+    fn main() -> int {
+        match E::B {
+            E::A => 555,
+            E::B => 999,
+        }
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 999);
+}
+
+#[test]
 fn llvm_construct_enums() {
     let src = r#"
     enum Option {

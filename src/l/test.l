@@ -15,10 +15,9 @@ struct S {
 
 
 fn main() -> int {
-    let opt = Option::None;
-    let opt = Option::Some(5);
+    let opt = Option::Some(9);
     match opt {
-	Option::Some(_) => 99,
+	Option::Some(x) => x,
 	Option::None => 77,
     }
 }

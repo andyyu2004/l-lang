@@ -161,7 +161,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Error)
     }
 
-    pub fn lvalue_project_field(
+    pub fn project_field(
         self,
         lvalue: mir::Lvalue<'tcx>,
         field: FieldIdx,
