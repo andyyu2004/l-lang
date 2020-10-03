@@ -1,5 +1,5 @@
 [package]
-name = "vm-derive"
+name = "l-derive"
 version = "0.1.0"
 authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"

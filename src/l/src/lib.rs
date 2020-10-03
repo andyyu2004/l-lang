@@ -42,7 +42,7 @@ extern crate derive_deref;
 #[macro_use]
 extern crate indexed_vec;
 #[macro_use]
-extern crate vm_derive;
+extern crate l_derive;
 #[macro_use]
 extern crate log;
 

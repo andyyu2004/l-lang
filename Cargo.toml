@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "src/vm",
-    "src/vm-derive"
+    "src/l",
+    "src/l-derive"
 ]
 
 

@@ -292,8 +292,8 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
-            TyKind::Infer(_) => TyFlags::HAS_INFER,
-            TyKind::Param(_) => TyFlags::HAS_PARAM,
+            TyKind::Infer(..) => TyFlags::HAS_INFER,
+            TyKind::Param(..) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
             TyKind::Adt(_, substs) => substs.ty_flags(),
             TyKind::Float | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Int =>

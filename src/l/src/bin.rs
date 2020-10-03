@@ -1,5 +1,5 @@
 use clap::App;
-use libvm;
+use libl;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -16,13 +16,13 @@ fn main() {
     if let Some(path) = matches.value_of("INPUT") {
         let src = std::fs::read_to_string(path).unwrap();
         return if emit_mir {
-            libvm::dump_mir(&src).ok().unwrap_or_else(|| std::process::exit(1));
+            libl::dump_mir(&src).ok().unwrap_or_else(|| std::process::exit(1));
         } else if emit_tir {
-            libvm::dump_tir(&src).ok().unwrap_or_else(|| std::process::exit(1));
+            libl::dump_tir(&src).ok().unwrap_or_else(|| std::process::exit(1));
         } else if check {
-            libvm::check(&src).ok().unwrap_or_else(|| std::process::exit(1));
+            libl::check(&src).ok().unwrap_or_else(|| std::process::exit(1));
         } else {
-            println!("{}", libvm::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
+            println!("{}", libl::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
         };
     }
 
@@ -36,7 +36,7 @@ fn main() {
                     continue;
                 }
                 rl.add_history_entry(line.as_str());
-                libvm::llvm_exec_expr(&line).unwrap_or_else(|_| std::process::exit(1));
+                libl::llvm_exec_expr(&line).unwrap_or_else(|_| std::process::exit(1));
             }
             Err(ReadlineError::Interrupted) => break,
             Err(ReadlineError::Eof) => break,
