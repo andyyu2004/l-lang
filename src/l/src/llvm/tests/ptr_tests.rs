@@ -22,6 +22,19 @@ fn test_box_deref() {
 }
 
 #[test]
+fn struct_field_box_autoderef() {
+    let src = r#"
+    struct S { x: int };
+
+    fn main() -> int {
+        let s = box box box box box box box S { x: 5 };
+        s.x
+    }
+    "#;
+    assert_eq!(llvm_exec!(src), 5);
+}
+
+#[test]
 fn test_box_deref_assign() {
     let src = r#"
     fn main() -> int {

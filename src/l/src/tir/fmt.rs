@@ -99,7 +99,7 @@ where
             tir::ExprKind::Unary(op, expr) => indent!(self, "({}{})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
-            tir::ExprKind::Field(expr, field_idx) => indent!(self, "{}->{:?}", expr, field_idx),
+            tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
             tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),

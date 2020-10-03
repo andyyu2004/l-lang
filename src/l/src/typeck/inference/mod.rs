@@ -1,4 +1,5 @@
 mod at;
+mod autoderef;
 mod equate;
 mod expr;
 mod fn_ctx;
@@ -11,6 +12,7 @@ mod unify;
 mod upvars;
 
 pub(super) use at::At;
+pub(super) use autoderef::Autoderef;
 pub(super) use equate::Equate;
 pub(super) use fn_ctx::{FnCtx, InheritedCtx, InheritedCtxBuilder};
 pub use infer_ctx::{InferCtx, InferCtxBuilder};

@@ -2,7 +2,7 @@
 //! variables with their actual values
 
 use super::inference::FnCtx;
-use super::TypeckOutputs;
+use super::TypeckTables;
 use crate::error::TypeError;
 use crate::ir::{self, Visitor};
 use crate::span::Span;
@@ -13,7 +13,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn resolve_inference_variables(
         &self,
         body: &'tcx ir::Body<'tcx>,
-    ) -> &'tcx TypeckOutputs<'tcx> {
+    ) -> &'tcx TypeckTables<'tcx> {
         let mut wbctx = WritebackCtx::new(self, body);
         wbctx.visit_body(body);
         self.tcx.arena.alloc(wbctx.tables)
@@ -22,7 +22,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
 struct WritebackCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
-    tables: TypeckOutputs<'tcx>,
+    tables: TypeckTables<'tcx>,
     subst_folder: InferenceVarSubstFolder<'tcx>,
     body: &'tcx ir::Body<'tcx>,
 }
@@ -39,6 +39,7 @@ impl<'a, 'tcx> WritebackCtx<'a, 'tcx> {
         // just clone as most of the stuff is the same
         // currently only node_types needs to be overwritten
         let mut tables = fcx.tables.borrow().clone();
+        // we clear the `node_types` as we wish to overwrite them with the resolved types
         tables.node_types_mut().clear();
         Self { fcx, tables, body, subst_folder }
     }

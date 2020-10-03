@@ -3,7 +3,7 @@ use crate::error::{DiagnosticBuilder, TypeError, TypeResult};
 use crate::ir::{DefId, FieldIdx};
 use crate::span::Span;
 use crate::ty::*;
-use crate::typeck::{TyCtx, TypeckOutputs};
+use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 use indexed_vec::Idx;
 use std::cell::{Cell, RefCell};
@@ -14,12 +14,12 @@ pub struct InferCtxBuilder<'tcx> {
     /// `DefId` of the item being typechecked
     def_id: DefId,
     tcx: TyCtx<'tcx>,
-    tables: RefCell<TypeckOutputs<'tcx>>,
+    tables: RefCell<TypeckTables<'tcx>>,
 }
 
 impl<'tcx> InferCtxBuilder<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, def_id: DefId) -> Self {
-        Self { tcx, def_id, tables: RefCell::new(TypeckOutputs::new(def_id)) }
+        Self { tcx, def_id, tables: RefCell::new(TypeckTables::new(def_id)) }
     }
 
     pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(InferCtx<'a, 'tcx>) -> R) -> R {
@@ -42,7 +42,7 @@ impl<'tcx> InferCtxInner<'tcx> {
 pub struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
-    crate tables: &'a RefCell<TypeckOutputs<'tcx>>,
+    crate tables: &'a RefCell<TypeckTables<'tcx>>,
     has_error: Cell<bool>,
 }
 
@@ -55,7 +55,7 @@ impl<'tcx> Deref for InferCtx<'_, 'tcx> {
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckOutputs<'tcx>>) -> Self {
+    pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
         Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
     }
 
@@ -130,6 +130,10 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         info!("fcx write ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
+    }
+
+    pub fn write_adjustments(&self, id: ir::Id, adjustments: Vec<Adjustment<'tcx>>) {
+        self.tables.borrow_mut().adjustments_mut().insert(id, adjustments);
     }
 
     pub fn write_field_index(&self, id: ir::Id, idx: usize) {

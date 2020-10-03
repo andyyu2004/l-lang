@@ -5,7 +5,7 @@ use crate::mir;
 use crate::tir;
 use crate::ty::*;
 use crate::typeck::inference::InferCtx;
-use crate::typeck::{TyCtx, TypeckOutputs};
+use crate::typeck::{TyCtx, TypeckTables};
 use indexed_vec::Idx;
 use smallvec::SmallVec;
 use std::marker::PhantomData;
@@ -15,7 +15,7 @@ use std::ops::Deref;
 pub struct TirCtx<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     infcx: &'a InferCtx<'a, 'tcx>,
-    tables: &'a TypeckOutputs<'tcx>,
+    tables: &'a TypeckTables<'tcx>,
 }
 
 impl<'a, 'tcx> Deref for TirCtx<'a, 'tcx> {
@@ -27,7 +27,7 @@ impl<'a, 'tcx> Deref for TirCtx<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> TirCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckOutputs<'tcx>) -> Self {
+    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckTables<'tcx>) -> Self {
         Self { infcx, tcx: infcx.tcx, tables }
     }
 
@@ -290,47 +290,80 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
     fn to_tir(&self, ctx: &mut TirCtx<'_, 'tcx>) -> Self::Output {
-        let &Self { span, id, ref kind } = self;
-        let ty = ctx.node_type(self.id);
+        ctx.lower_expr(self)
+    }
+}
+
+impl<'a, 'tcx> TirCtx<'a, 'tcx> {
+    fn lower_expr_no_adjust(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+        let &ir::Expr { span, id, ref kind } = expr;
+        let ty = self.node_type(expr.id);
         let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
-                tir::ExprKind::Bin(*op, l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
+                tir::ExprKind::Bin(*op, l.to_tir_alloc(self), r.to_tir_alloc(self)),
             ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
-                tir::ExprKind::Deref(expr.to_tir_alloc(ctx)),
-            ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(expr.to_tir_alloc(ctx)),
-            ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(ctx)),
-            ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(ctx)),
-            ir::ExprKind::Path(path) => ctx.lower_path(self, path),
-            ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(ctx)),
-            ir::ExprKind::Closure(_sig, body) => ctx.lower_closure(self, body),
+                tir::ExprKind::Deref(expr.to_tir_alloc(self)),
+            ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(expr.to_tir_alloc(self)),
+            ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, expr.to_tir_alloc(self)),
+            ir::ExprKind::Block(block) => tir::ExprKind::Block(block.to_tir_alloc(self)),
+            ir::ExprKind::Path(path) => self.lower_path(expr, path),
+            ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(self)),
+            ir::ExprKind::Closure(_sig, body) => self.lower_closure(expr, body),
             ir::ExprKind::Call(f, args) =>
-                tir::ExprKind::Call(f.to_tir_alloc(ctx), args.to_tir(ctx)),
-            ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(ctx)),
+                tir::ExprKind::Call(f.to_tir_alloc(self), args.to_tir(self)),
+            ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir_alloc(self)),
             ir::ExprKind::Match(expr, arms, _) =>
-                tir::ExprKind::Match(expr.to_tir_alloc(ctx), arms.to_tir(ctx)),
+                tir::ExprKind::Match(expr.to_tir_alloc(self), arms.to_tir(self)),
             ir::ExprKind::Struct(path, fields) => match ty.kind {
                 TyKind::Adt(adt, substs) => match adt.kind {
                     AdtKind::Struct => tir::ExprKind::Adt {
                         adt,
                         substs,
                         variant_idx: VariantIdx::new(0),
-                        fields: fields.to_tir(ctx),
+                        fields: fields.to_tir(self),
                     },
                     AdtKind::Enum => {
                         let variant_idx = adt.variant_idx_with_res(path.res);
-                        tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(ctx) }
+                        tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(self) }
                     }
                 },
                 _ => unreachable!(),
             },
-            ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| expr.to_tir_alloc(ctx))),
+            ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| expr.to_tir_alloc(self))),
             ir::ExprKind::Assign(l, r) =>
-                tir::ExprKind::Assign(l.to_tir_alloc(ctx), r.to_tir_alloc(ctx)),
-            ir::ExprKind::Field(expr, _) =>
-                tir::ExprKind::Field(expr.to_tir_alloc(ctx), ctx.tables.field_index(self.id)),
-            ir::ExprKind::Box(expr) => tir::ExprKind::Box(expr.to_tir_alloc(ctx)),
+                tir::ExprKind::Assign(l.to_tir_alloc(self), r.to_tir_alloc(self)),
+            ir::ExprKind::Field(base, _) =>
+                tir::ExprKind::Field(base.to_tir_alloc(self), self.tables.field_index(expr.id)),
+            ir::ExprKind::Box(expr) => tir::ExprKind::Box(expr.to_tir_alloc(self)),
         };
         tir::Expr { span, kind, ty }
+    }
+
+    fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+        let tir = self.lower_expr_no_adjust(expr);
+        let adjustments = self.tables.adjustments_for_expr(expr);
+        self.apply_adjustments(tir, adjustments)
+    }
+
+    fn apply_adjustments(
+        &mut self,
+        expr: tir::Expr<'tcx>,
+        adjustments: &[Adjustment<'tcx>],
+    ) -> tir::Expr<'tcx> {
+        adjustments.iter().fold(expr, |expr, adj| self.apply_adjustment(expr, adj))
+    }
+
+    fn apply_adjustment(
+        &mut self,
+        expr: tir::Expr<'tcx>,
+        adjustment: &Adjustment<'tcx>,
+    ) -> tir::Expr<'tcx> {
+        let span = expr.span;
+        let kind = match adjustment.kind {
+            AdjustmentKind::Deref => tir::ExprKind::Deref(self.alloc_tir(expr)),
+            AdjustmentKind::NeverToAny => todo!(),
+        };
+        tir::Expr { ty: adjustment.ty, span, kind }
     }
 }
 

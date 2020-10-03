@@ -1,24 +1,27 @@
 use crate::ir::{self, DefId, FieldIdx, LocalId};
+use crate::ty::Adjustment;
 use crate::ty::{Ty, UpvarId};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry;
 
 /// the outputs of typechecking
 #[derive(Debug, Clone)]
-pub struct TypeckOutputs<'tcx> {
+pub struct TypeckTables<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
     def_id: DefId,
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
+    adjustments: FxHashMap<LocalId, Vec<Adjustment<'tcx>>>,
     upvar_captures: FxHashMap<ir::Id, FxHashSet<UpvarId>>,
 }
 
-impl<'tcx> TypeckOutputs<'tcx> {
+impl<'tcx> TypeckTables<'tcx> {
     pub fn new(def_id: DefId) -> Self {
         Self {
             def_id,
             node_types: Default::default(),
+            adjustments: Default::default(),
             field_indices: Default::default(),
             upvar_captures: Default::default(),
         }
@@ -77,6 +80,20 @@ impl<'tcx> TypeckOutputs<'tcx> {
 
     pub fn field_indices_mut(&mut self) -> TableDefIdValidatorMut<FieldIdx> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.field_indices }
+    }
+
+    pub fn adjustments_for_expr(&self, expr: &ir::Expr) -> &[Adjustment<'tcx>] {
+        // can't use `self.adjustments()` due to lifetime issues
+        validate_id(self.def_id, expr.id);
+        self.adjustments.get(&expr.id.local).map_or(&[], |xs| &xs[..])
+    }
+
+    pub fn adjustments(&self) -> TableDefIdValidator<Vec<Adjustment<'tcx>>> {
+        TableDefIdValidator { def_id: self.def_id, table: &self.adjustments }
+    }
+
+    pub fn adjustments_mut(&mut self) -> TableDefIdValidatorMut<Vec<Adjustment<'tcx>>> {
+        TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.adjustments }
     }
 }
 

@@ -6,7 +6,7 @@ use crate::lexer::symbol;
 use crate::span::Span;
 use crate::tir;
 use crate::ty::{SubstsRef, Ty, TyConv, TyKind};
-use crate::typeck::{TyCtx, TypeckOutputs};
+use crate::typeck::{TyCtx, TypeckTables};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;

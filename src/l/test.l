@@ -15,7 +15,8 @@ struct S {
 
 
 fn main() -> int {
-    fib(5)
+    let s = box box S { x: 5, k: false };
+    s.x
 }
 
 fn fib(n: int) -> int {

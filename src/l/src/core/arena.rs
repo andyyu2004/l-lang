@@ -1,7 +1,7 @@
 use crate::arena::{DropArena, DroplessArena, TypedArena};
 use crate::ir::{self, Definitions};
 use crate::ty::{Const, List, SubstsRef, Ty, TyFlag, TyKind, TyS};
-use crate::typeck::TypeckOutputs;
+use crate::typeck::TypeckTables;
 use std::alloc::Layout;
 use std::marker::PhantomData;
 
@@ -18,7 +18,7 @@ pub struct Arena<'tcx> {
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
     prog_marker: PhantomData<ir::IR<'tcx>>,
-    typeck_outputs_marker: PhantomData<TypeckOutputs<'tcx>>,
+    typeck_outputs_marker: PhantomData<TypeckTables<'tcx>>,
 }
 
 impl<'tcx> Arena<'tcx> {

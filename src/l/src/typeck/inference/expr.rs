@@ -1,10 +1,11 @@
+use super::autoderef::Autoderef;
 use super::FnCtx;
 use crate::ast::{BinOp, Lit};
 use crate::error::{TypeError, TypeResult};
 use crate::ir::{CtorKind, DefId, DefKind};
 use crate::span::Span;
 use crate::ty::*;
-use crate::typeck::{TyCtx, TypeckOutputs};
+use crate::typeck::{TyCtx, TypeckTables};
 use crate::{ast, ir, tir};
 use ast::{Ident, Mutability, UnaryOp};
 use itertools::Itertools;
@@ -56,35 +57,52 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {
+        let (autoderef, ty) = self.check_field_expr_inner(expr, base, ident);
+        let adjustments = autoderef.get_adjustments();
+        self.write_adjustments(base.id, adjustments);
+        ty
+    }
+
+    fn check_field_expr_inner(
+        &mut self,
+        expr: &ir::Expr,
+        base: &ir::Expr,
+        ident: Ident,
+    ) -> (Autoderef<'_, 'tcx>, Ty<'tcx>) {
         let base_ty = self.check_expr(base);
-        // autoderef?
-        match base_ty.kind {
-            Adt(adt, substs) if adt.kind != AdtKind::Enum => {
-                let variant = adt.single_variant();
-                if let Some((idx, field)) =
-                    variant.fields.iter().find_position(|f| f.ident == ident)
-                {
-                    // note the id belongs is the id of the entire field expression
-                    // not just the identifier or base
+        let mut autoderef = self.autoderef(expr.span, base_ty);
+        for ty in &mut autoderef {
+            match ty.kind {
+                Adt(adt, substs) if adt.kind != AdtKind::Enum => {
+                    let variant = adt.single_variant();
+                    let ty = if let Some((idx, field)) =
+                        variant.fields.iter().find_position(|f| f.ident == ident)
+                    {
+                        // note the id belongs is the id of the entire field expression
+                        // not just the identifier or base
+                        self.write_field_index(expr.id, idx);
+                        field.ty(self.tcx, substs)
+                    } else {
+                        self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
+                    };
+                    return (autoderef, ty);
+                }
+                Tuple(tys) => {
+                    // `tuple.i` literally means the i'th element of tuple
+                    // so we can weirdly parse the identifier as the actual index
+                    let idx = ident.as_str().parse::<usize>().unwrap();
                     self.write_field_index(expr.id, idx);
-                    field.ty(self.tcx, substs)
-                } else {
-                    self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
+                    let ty = match tys.get(idx) {
+                        Some(ty) => ty,
+                        None =>
+                            self.emit_ty_err(expr.span, TypeError::TupleOutOfBounds(idx, tys.len())),
+                    };
+                    return (autoderef, ty);
                 }
+                _ => continue,
             }
-            Tuple(tys) => {
-                // tuple.i literally means the i'th element of tuple
-                // so we can weirdly parse the ident as a literal index
-                let idx = ident.as_str().parse::<usize>().unwrap();
-                self.write_field_index(expr.id, idx);
-                match tys.get(idx) {
-                    Some(ty) => ty,
-                    None =>
-                        self.emit_ty_err(expr.span, TypeError::TupleOutOfBounds(idx, tys.len())),
-                }
-            }
-            _ => panic!("bad field access, todo proper error msg"),
         }
+        panic!("bad field access, todo proper error msg");
     }
 
     /// return expressions have the type of the expression that follows the return

@@ -1,9 +1,11 @@
+mod adjustments;
 mod list;
 mod subst;
 mod ty;
 mod ty_conv;
 mod type_fold;
 
+pub use adjustments::*;
 pub use list::List;
 pub use subst::{InferenceVarSubstFolder, InstantiationFolder, Subst, Substs, SubstsRef};
 pub use ty::InferTy::*;
