@@ -268,6 +268,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
+            mir::Rvalue::Discriminant(lvalue) => {
+                let lvalue_ref = self.codegen_lvalue(*lvalue);
+                let discr_ptr = self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
+                let val = self.build_load(discr_ptr, "load_discr");
+                ValueRef { val, ty: self.tcx.types.int }
+            }
             mir::Rvalue::Unary(_, _) => todo!(),
             // handle these cases in `codegen_assignment`
             mir::Rvalue::Adt { .. } => unreachable!(),

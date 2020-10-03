@@ -46,6 +46,7 @@ impl<'mir, 'tcx> Interpreter<'mir, 'tcx> {
             mir::Rvalue::Ref(_) => {}
             mir::Rvalue::Closure(_, _) => {}
             mir::Rvalue::Adt { adt, variant_idx, substs, fields } => {}
+            mir::Rvalue::Discriminant(_) => {}
         }
     }
 

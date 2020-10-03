@@ -85,14 +85,14 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         arm: &tir::Arm<'tcx>,
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
-        let predicate = set!(pblock = self.build_arm_predicate(pblock, scrut, arm.pat));
         let dest = self.dest;
+        let predicate = set!(pblock = self.build_arm_predicate(pblock, scrut, arm.pat));
         self.terminate(
             info,
             pblock,
             TerminatorKind::Cond(Operand::Lvalue(predicate), body_block, next_block),
         );
-        // this must come after the termination statement above
+        // the next statement must come after the termination statement above
         // as we wish to branch to the start of the `body_block`
         set!(body_block = self.write_expr(body_block, dest, arm.body));
         body_block.unit()
@@ -135,6 +135,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 );
                 let cmp_lvalue = self.alloc_tmp(info, tcx.types.boolean).into();
                 self.push_assignment(info, pblock, cmp_lvalue, cmp_rvalue);
+                // TODO factor this out somehow
                 // `and` the predicate
                 let and = set!(
                     pblock = self.build_binary_op(
@@ -148,7 +149,44 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 );
                 self.push_assignment(info, pblock, predicate, and);
             }
-            tir::PatternKind::Variant(_, _, _) => todo!(),
+            tir::PatternKind::Variant(adt, idx, pats) => {
+                let discriminant_lvalue = self.alloc_tmp(info, tcx.types.int).into();
+                self.push_assignment(
+                    info,
+                    pblock,
+                    discriminant_lvalue,
+                    Rvalue::Discriminant(scrut),
+                );
+                // recall `idx` is the discriminant
+                // so we compare this with the discriminant of the scrutinee
+                let discr = self.mk_const_int(idx.index() as i64);
+                let cmp_rvalue = set!(
+                    pblock = self.build_binary_op(
+                        pblock,
+                        pat.span,
+                        tcx.types.boolean,
+                        BinOp::Eq,
+                        Operand::Const(discr),
+                        Operand::Lvalue(discriminant_lvalue),
+                    )
+                );
+
+                // TODO factor this out somehow
+                // `and` the predicate
+                let cmp_lvalue = self.alloc_tmp(info, tcx.types.boolean).into();
+                self.push_assignment(info, pblock, cmp_lvalue, cmp_rvalue);
+                let and = set!(
+                    pblock = self.build_binary_op(
+                        pblock,
+                        pat.span,
+                        tcx.types.boolean,
+                        BinOp::And,
+                        Operand::Lvalue(cmp_lvalue),
+                        Operand::Lvalue(predicate),
+                    )
+                );
+                self.push_assignment(info, pblock, predicate, and);
+            }
         };
         pblock.and(predicate)
     }

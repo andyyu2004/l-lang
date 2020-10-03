@@ -173,6 +173,8 @@ pub enum Rvalue<'tcx> {
     Box(Ty<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
+    /// reads the discriminant of an enum
+    Discriminant(Lvalue<'tcx>),
     Closure(Ty<'tcx>, mir::Mir<'tcx>),
     Adt {
         adt: &'tcx AdtTy<'tcx>,

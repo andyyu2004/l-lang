@@ -186,6 +186,10 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 operand.mir_fmt(f)
             }
             mir::Rvalue::Closure(_, body) => write!(f, "<closure>"),
+            mir::Rvalue::Discriminant(lvalue) => {
+                write!(f, "discr ")?;
+                lvalue.mir_fmt(f)
+            }
         }
     }
 }

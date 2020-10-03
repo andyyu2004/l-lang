@@ -37,6 +37,7 @@ impl<'a, 'tcx> Typechecker<'a, 'tcx> {
             Rvalue::Ref(_) => todo!(),
             Rvalue::Closure(_, _) => todo!(),
             Rvalue::Adt { adt, variant_idx, substs, fields } => todo!(),
+            Rvalue::Discriminant(_) => todo!(),
         }
     }
 

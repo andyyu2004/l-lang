@@ -73,6 +73,6 @@ pub enum PatternKind<'tcx> {
     /// a single variant.
     Field(&'tcx [tir::FieldPat<'tcx>]),
     Lit(&'tcx tir::Expr<'tcx>),
-    /// `Foo(...)` or `Foo{...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
+    /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
     Variant(&'tcx AdtTy<'tcx>, VariantIdx, &'tcx [tir::Pattern<'tcx>]),
 }

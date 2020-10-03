@@ -83,7 +83,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             i8ptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             i32ptr: llctx.i32_type().ptr_type(AddressSpace::Generic),
             i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
-            discr: llctx.i8_type(),
+            // this is obviously quite wasteful but whatever for now
+            discr: llctx.i64_type(),
         };
 
         let vals = CommonValues {

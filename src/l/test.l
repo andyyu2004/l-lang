@@ -15,13 +15,12 @@ struct S {
 
 
 fn main() -> int {
-    let s = box box S { x: 5, k: false };
-    fib(0)
+    let opt = Option::None;
+    let opt = Option::Some(5);
+    match opt {
+	Option::Some(_) => 99,
+	Option::None => 77,
+    }
 }
 
-fn fib(n: int) -> int {
-    if n < 2 { f() } else { g() }
-}
 
-fn f() -> int { 5 }
-fn g() -> int { 99 }
