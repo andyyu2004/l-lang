@@ -12,11 +12,13 @@ struct PatternBuilder<'a, 'b, 'tcx> {
     /// predicate blocks
     pblocks: Vec<BlockId>,
     body_blocks: Vec<BlockId>,
+    /// the lvalue to write the match expressions value into
+    dest: Lvalue<'tcx>,
 }
 
 impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
-    pub fn new(builder: &'b mut Builder<'a, 'tcx>) -> Self {
-        Self { builder, pblocks: Default::default(), body_blocks: Default::default() }
+    pub fn new(builder: &'b mut Builder<'a, 'tcx>, dest: Lvalue<'tcx>) -> Self {
+        Self { builder, dest, pblocks: Default::default(), body_blocks: Default::default() }
     }
 }
 
@@ -29,7 +31,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         scrut: &tir::Expr<'tcx>,
         arms: &[tir::Arm<'tcx>],
     ) -> BlockAnd<()> {
-        PatternBuilder::new(self).build(block, dest, expr, scrut, arms)
+        PatternBuilder::new(self, dest).build(block, expr, scrut, arms)
     }
 }
 
@@ -38,7 +40,6 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
     pub fn build(
         &mut self,
         mut block: BlockId,
-        dest: Lvalue<'tcx>,
         expr: &tir::Expr<'tcx>,
         scrut: &tir::Expr<'tcx>,
         arms: &[tir::Arm<'tcx>],
@@ -54,8 +55,8 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         });
 
         let scrut = set!(block = self.as_lvalue(block, scrut));
-        let initial_block = self.pblocks[0];
-        self.branch(info, block, initial_block);
+        let initial_pblock = self.pblocks[0];
+        self.branch(info, block, initial_pblock);
 
         let final_block = self.append_basic_block();
 
@@ -65,8 +66,8 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
             let pblock = self.pblocks[i];
             let mut body_block = self.body_blocks[i];
             set!(
-                body_block = self
-                    .build_match_arm(pblock, body_block, next_block, dest, expr, scrut, &arms[i])
+                body_block =
+                    self.build_match_arm(pblock, body_block, next_block, expr, scrut, &arms[i])
             );
             self.terminate(info, body_block, TerminatorKind::Branch(final_block));
         }
@@ -79,19 +80,21 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         mut pblock: BlockId,
         mut body_block: BlockId,
         next_block: BlockId,
-        dest: Lvalue<'tcx>,
         expr: &tir::Expr<'tcx>,
         scrut: Lvalue<'tcx>,
         arm: &tir::Arm<'tcx>,
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
         let predicate = set!(pblock = self.build_arm_predicate(pblock, scrut, arm.pat));
-        set!(body_block = self.write_expr(body_block, dest, arm.body));
+        let dest = self.dest;
         self.terminate(
             info,
             pblock,
             TerminatorKind::Cond(Operand::Lvalue(predicate), body_block, next_block),
         );
+        // this must come after the termination statement above
+        // as we wish to branch to the start of the `body_block`
+        set!(body_block = self.write_expr(body_block, dest, arm.body));
         body_block.unit()
     }
 

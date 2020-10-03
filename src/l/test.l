@@ -16,9 +16,12 @@ struct S {
 
 fn main() -> int {
     let s = box box S { x: 5, k: false };
-    s.x
+    fib(0)
 }
 
 fn fib(n: int) -> int {
-    if n < 2 { 1 } else { n * fib(n-1) }
+    if n < 2 { f() } else { g() }
 }
+
+fn f() -> int { 5 }
+fn g() -> int { 99 }

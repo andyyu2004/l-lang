@@ -35,8 +35,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Block(ir) => self.ir_block(block, dest, expr, ir),
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => {
-                // self.build_naive_match(block, dest, expr, scrut, arms);
-                self.build_match(block, dest, expr, scrut, arms)
+                self.build_naive_match(block, dest, expr, scrut, arms)
+                // self.build_match(block, dest, expr, scrut, arms)
             }
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
             tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, xs),
