@@ -48,7 +48,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Adt(adt, substs) => match adt.kind {
                 AdtKind::Struct => {
                     let opaque_ty = self.llctx.opaque_struct_type("opaque");
-                    // llty.set_body();
                     self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
                     let variant = adt.single_variant();
                     let tys = variant
@@ -60,6 +59,8 @@ impl<'tcx> CodegenCtx<'tcx> {
                     return opaque_ty.into();
                 }
                 AdtKind::Enum => {
+                    let opaque_ty = self.llctx.opaque_struct_type("opaque");
+                    self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
                     // it is fine to unwrap here as if the enum has no variants it is not
                     // constructable and this will never be called
                     let largest_variant = adt.variants.iter().max_by(|s, t| {
@@ -68,7 +69,8 @@ impl<'tcx> CodegenCtx<'tcx> {
                     let llvariant =
                         self.variant_ty_to_llvm_ty(ty, largest_variant.unwrap(), substs).into();
                     assert!(adt.variants.len() < 256, "too many variants");
-                    self.llctx.struct_type(&[self.types.discr.into(), llvariant], false).into()
+                    opaque_ty.set_body(&[self.types.discr.into(), llvariant], false);
+                    return opaque_ty.into();
                 }
             },
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),

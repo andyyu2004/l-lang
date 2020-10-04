@@ -23,26 +23,21 @@ enum Either {
     Right(int),
 }
 
-// enum Expr {
-//     Int(int),
-//     Add(&Expr, &Expr)
-// }
+enum Expr {
+    Int(int),
+    Add(&Expr, &Expr)
+}
 
 
 fn main() -> int {
-    let node = Node {
-	val: 9,
-	next: NodeOption::None,
-    };
+    let expr = box Expr::Int(5);
+    eval(expr)
+}
 
-    let head = Node {
-	val: 4,
-	next: NodeOption::Some(box node),
-    };
-
-    match head.next {
-	NodeOption::Some(n) => n.val,
-	NodeOption::None => 0,
+fn eval(expr: &Expr) -> int {
+    match *expr {
+	Expr::Int(i) => i,
+	Expr::Add(l, r) => eval(l) + eval(r),
     }
 }
 

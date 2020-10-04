@@ -190,6 +190,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
 
                 // project past the discriminant into the enum content
                 let adt_ty = self.vars[scrut.id].ty;
+                // TODO do some casts so the enum content is of the right type
                 let enum_content_lvalue = self.tcx.project_field(scrut, FieldIdx::new(1), adt_ty);
                 for (i, pat) in pats.iter().enumerate() {
                     set!(
