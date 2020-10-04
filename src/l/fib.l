@@ -4,8 +4,7 @@ fn main() -> int {
     /* }; */
     /* fn () => 5; */
     /* f(5); */
-    fac(4)
-    /* fib(40) */
+    fib(40)
 }
 
 fn fac(n: int) -> int {
