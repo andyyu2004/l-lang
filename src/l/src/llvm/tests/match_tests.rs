@@ -10,6 +10,25 @@ fn simple_conditionals() {
 }
 
 #[test]
+fn simple_enum_match() {
+    let src = r#"
+    enum Option {
+        Some(int),
+        None,
+    }
+
+    fn main() -> int {
+        let opt = Option::Some(9);
+        match opt {
+            Option::Some(x) => x,
+            Option::None => 77,
+        }
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 9);
+}
+
+#[test]
 fn simple_literal_match() {
     let src = r#"
     fn main() -> int {

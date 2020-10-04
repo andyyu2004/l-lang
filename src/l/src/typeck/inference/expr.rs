@@ -102,7 +102,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 _ => continue,
             }
         }
-        panic!("bad field access, todo proper error msg");
+        panic!("bad field access, todo proper error msg {}", base_ty);
     }
 
     /// return expressions have the type of the expression that follows the return

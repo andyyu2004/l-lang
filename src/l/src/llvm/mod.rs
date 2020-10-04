@@ -1,6 +1,7 @@
 mod codegen;
 mod codegen_ctx;
 mod fn_ctx;
+mod lltypes;
 mod native;
 #[cfg(test)]
 // llvm broken atm so ignore tests for now

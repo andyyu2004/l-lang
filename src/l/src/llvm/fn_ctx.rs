@@ -159,7 +159,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         let discr_ptr = self.build_struct_gep(var.ptr, 0, "discr_gep").unwrap();
                         self.build_store(discr_ptr, self.types.discr.const_int(idx, false));
                         let content_ptr = self.build_struct_gep(var.ptr, 1, "enum_gep").unwrap();
-                        let llty = self.variant_ty_to_llvm_ty(&adt.variants[*variant_idx], substs);
+                        let llty =
+                            self.variant_ty_to_llvm_ty(ty, &adt.variants[*variant_idx], substs);
                         let content_ptr = self.build_pointer_cast(
                             content_ptr,
                             llty.ptr_type(AddressSpace::Generic),
@@ -337,7 +338,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::Eq | BinOp::Neq | BinOp::Lt | BinOp::Gt =>
                 return self.compile_icmp(op, lhs, rhs),
         };
-        assert_eq!(lhs.ty, rhs.ty);
+        debug_assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val, ty: self.tcx.types.int }
     }
 
@@ -347,6 +348,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
+        debug_assert_eq!(lhs.ty, rhs.ty);
         let l = lhs.val.into_float_value();
         let r = rhs.val.into_float_value();
         let val = match op {
@@ -358,7 +360,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::Lt | BinOp::Gt | BinOp::Eq | BinOp::Neq =>
                 return self.compile_fcmp(op, lhs, rhs),
         };
-        assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val: val.into(), ty: self.tcx.types.float }
     }
 
@@ -368,6 +369,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
+        debug_assert_eq!(lhs.ty, rhs.ty);
         let l = lhs.val.into_int_value();
         let r = rhs.val.into_int_value();
         let val = match op {
@@ -378,7 +380,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
                 unreachable!(),
         };
-        assert_eq!(lhs.ty, rhs.ty);
         ValueRef { val: val.into(), ty: self.tcx.types.boolean }
     }
 
@@ -388,6 +389,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
+        debug_assert_eq!(lhs.ty, rhs.ty);
         let l = lhs.val.into_float_value();
         let r = lhs.val.into_float_value();
         let val = match op {
@@ -398,7 +400,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
                 unreachable!(),
         };
-        assert_eq!(l, r);
         ValueRef { val: val.into(), ty: self.tcx.types.boolean }
     }
 

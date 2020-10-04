@@ -74,7 +74,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         fpm.add_reassociate_pass();
         fpm.initialize();
         let types = CommonTypes {
-            unit: llctx.struct_type(&[], true),
+            unit: llctx.struct_type(&[], false),
             int: llctx.i64_type(),
             int32: llctx.i32_type(),
             float: llctx.f64_type(),
@@ -145,81 +145,21 @@ impl<'tcx> CodegenCtx<'tcx> {
         llfn
     }
 
-    pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
-        let (params, ret) = ty.expect_fn();
-        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
-    }
-
-    pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {
-        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
-    }
-
-    /// wraps a `Ty` with refcount info (place the refcount in the second field instead of the first
-    /// to allows for easier geps)
-    pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
-        let llty = self.llvm_ty(ty);
-        self.llctx.struct_type(&[llty, self.types.int32.into()], true)
-    }
-
-    /// converts a L type into a llvm representation
-    pub fn llvm_ty(&self, ty: Ty<'tcx>) -> BasicTypeEnum<'tcx> {
-        if let Some(&llty) = self.lltypes.borrow().get(ty) {
-            return llty;
-        }
-        let llty = match ty.kind {
-            TyKind::Bool => self.types.boolean.into(),
-            TyKind::Int => self.types.int.into(),
-            TyKind::Float => self.types.float.into(),
-            TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
-            TyKind::Char => todo!(),
-            TyKind::Array(ty, n) => todo!(),
-            TyKind::Fn(params, ret) =>
-                self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Tuple(tys) => {
-                // tuples are represented as anonymous structs
-                let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
-                self.llctx.struct_type(&lltys, true).into()
-            }
-            TyKind::Adt(adt, substs) => match adt.kind {
-                AdtKind::Struct => {
-                    let variant = adt.single_variant();
-                    self.variant_ty_to_llvm_ty(variant, substs).into()
-                }
-                AdtKind::Enum => {
-                    // it is fine to unwrap here as if the enum has no variants it is not
-                    // constructable and this will never be called
-                    let largest_variant = adt.variants.iter().max_by(|s, t| {
-                        self.variant_size(s, substs).cmp(&self.variant_size(t, substs))
-                    });
-                    let llvariant =
-                        self.variant_ty_to_llvm_ty(largest_variant.unwrap(), substs).into();
-                    assert!(adt.variants.len() < 256, "too many variants");
-                    self.llctx.struct_type(&[self.types.discr.into(), llvariant], false).into()
-                }
-            },
-            TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
-            TyKind::Opaque(..) => todo!(),
-            TyKind::Param(..)
-            | TyKind::Scheme(..)
-            | TyKind::Never
-            | TyKind::Error
-            | TyKind::Infer(_) => unreachable!(),
-        };
-        self.lltypes.borrow_mut().insert(ty, llty);
-        llty
-    }
-
     fn const_size_of(&self, llty: BasicTypeEnum<'tcx>) {
         let idx = self.types.int32.const_int(1, false);
     }
 
-    fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
+    pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
         // this works for both enums and structs
         // as structs by definition only have one variant the max is essentially redundant
         adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap()
     }
 
-    fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
+    pub fn variant_size(
+        &self,
+        variant_ty: &'tcx VariantTy<'tcx>,
+        substs: SubstsRef<'tcx>,
+    ) -> usize {
         variant_ty
             .fields
             .iter()
@@ -249,17 +189,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
         info!("sizeof({}) = {}", ty, size);
         size
-    }
-
-    pub fn variant_ty_to_llvm_ty(
-        &self,
-        variant: &VariantTy<'tcx>,
-        substs: SubstsRef<'tcx>,
-    ) -> StructType<'tcx> {
-        // TODO cache results
-        // note we preserve the field declaration order of the struct
-        let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty(self.tcx, substs))).collect_vec();
-        self.llctx.struct_type(&tys, true)
     }
 }
 

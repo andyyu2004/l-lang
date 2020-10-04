@@ -1,24 +1,48 @@
 enum Option {
+    None,
     Some(int),
-    None
 }
 
-// struct Node {
-//     val: int,
-//     next: Option<Node>,
-// }
+enum NodeOption {
+    None,
+    Some(&Node),
+}
+
+struct Node {
+    val: int,
+    next: NodeOption,
+}
 
 struct S {
     x: int,
     k: bool,
 }
 
+enum Either {
+    Left(int),
+    Right(int),
+}
+
+// enum Expr {
+//     Int(int),
+//     Add(&Expr, &Expr)
+// }
+
 
 fn main() -> int {
-    let opt = Option::Some(9);
-    match opt {
-	Option::Some(x) => x,
-	Option::None => 77,
+    let node = Node {
+	val: 9,
+	next: NodeOption::None,
+    };
+
+    let head = Node {
+	val: 4,
+	next: NodeOption::Some(box node),
+    };
+
+    match head.next {
+	NodeOption::Some(n) => n.val,
+	NodeOption::None => 0,
     }
 }
 

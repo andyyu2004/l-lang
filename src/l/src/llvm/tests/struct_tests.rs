@@ -75,3 +75,36 @@ fn llvm_struct_field_assign() {
     }"#;
     assert_eq!(llvm_exec!(src), 9)
 }
+
+#[test]
+fn llvm_recursive_struct() {
+    let src = r#"
+    struct Node {
+        val: int,
+        next: NodeOption,
+    }
+
+    enum NodeOption {
+        None,
+        Some(&Node),
+    }
+
+    fn main() -> int {
+        let node = Node {
+            val: 9,
+            next: NodeOption::None,
+        };
+
+        let head = Node {
+            val: 4,
+            next: NodeOption::Some(box node),
+        };
+
+        match head.next {
+            NodeOption::Some(n) => n.val,
+            NodeOption::None => 0,
+        }
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 9)
+}

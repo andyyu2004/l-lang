@@ -188,16 +188,14 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 );
                 self.push_assignment(info, pblock, predicate, and);
 
-                // TODO this isn't quite right
-                // possibly because it needs to project once past the discriminant
-                // into the enum content, and the then project that one for its fields
+                // project past the discriminant into the enum content
                 let adt_ty = self.vars[scrut.id].ty;
-                let enum_content = self.tcx.project_field(scrut, FieldIdx::new(1), adt_ty);
+                let enum_content_lvalue = self.tcx.project_field(scrut, FieldIdx::new(1), adt_ty);
                 for (i, pat) in pats.iter().enumerate() {
                     set!(
                         pblock = self.build_arm_predicate(
                             pblock,
-                            tcx.project_field(enum_content, FieldIdx::new(i), pat.ty),
+                            tcx.project_field(enum_content_lvalue, FieldIdx::new(i), pat.ty),
                             pat
                         )
                     );
