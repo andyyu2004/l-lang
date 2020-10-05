@@ -1,0 +1,5 @@
+digraph "CFG for 'Option::Some' function" {
+	label="CFG for 'Option::Some' function";
+
+	Node0x22e60e0 [shape=record,label="{basic_block0:\l  %retvar = alloca %opaque\l  %1 = alloca i64\l  store i64 %0, i64* %1\l  %discr_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 0\l  store i64 1, i64* %discr_gep\l  %enum_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 1\l  %load = load i64, i64* %1\l  %enum_content_gep = getelementptr inbounds \{ i64 \}, \{ i64 \}* %enum_gep, i32\l... 0, i32 0\l  store i64 %load, i64* %enum_content_gep\l  %load_ret = load %opaque, %opaque* %retvar\l  ret %opaque %load_ret\l}"];
+}

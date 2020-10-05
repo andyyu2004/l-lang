@@ -203,11 +203,11 @@ impl<'tcx> Terminator<'tcx> {
         match self.kind {
             TerminatorKind::Branch(block)
             | TerminatorKind::Call { target: block, unwind: None, .. } => vec![block],
-            TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
             TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
             TerminatorKind::Cond(_, a, b) => vec![a, b],
             TerminatorKind::Switch { ref arms, default, .. } =>
                 arms.iter().map(|(_, b)| *b).collect(),
+            TerminatorKind::Abort | TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
         }
     }
 }
@@ -226,6 +226,7 @@ pub enum TerminatorKind<'tcx> {
     Cond(Operand<'tcx>, BlockId, BlockId),
     Return,
     Unreachable,
+    Abort,
     Call {
         f: Operand<'tcx>,
         args: Vec<Operand<'tcx>>,

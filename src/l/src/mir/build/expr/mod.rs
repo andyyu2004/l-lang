@@ -106,8 +106,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let end_block = self.append_basic_block();
         let (arm_blocks, default) = self.build_arms(info, lvalue, &scrut_operand, arms, end_block);
 
-        // if there is no default block, just create an unreachable one
-        let default = default.unwrap_or_else(|| self.mk_unreachable(info));
+        // if there is no default block, just create an abort block (as we don't check for exhaustive patterns)
+        let default = default.unwrap_or_else(|| self.mk_abort(info));
 
         self.terminate(
             info,
@@ -118,9 +118,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         end_block.unit()
     }
 
-    fn mk_unreachable(&mut self, info: SpanInfo) -> BlockId {
+    fn mk_abort(&mut self, info: SpanInfo) -> BlockId {
         let block = self.append_basic_block();
-        self.terminate(info, block, TerminatorKind::Unreachable);
+        self.terminate(info, block, TerminatorKind::Abort);
         block
     }
 

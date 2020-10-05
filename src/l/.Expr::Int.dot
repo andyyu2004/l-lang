@@ -1,0 +1,5 @@
+digraph "CFG for 'Expr::Int' function" {
+	label="CFG for 'Expr::Int' function";
+
+	Node0x22e8520 [shape=record,label="{basic_block0:\l  %retvar = alloca %opaque.3\l  %1 = alloca i64\l  store i64 %0, i64* %1\l  %discr_gep = getelementptr inbounds %opaque.3, %opaque.3* %retvar, i32 0,\l... i32 0\l  store i64 0, i64* %discr_gep\l  %enum_gep = getelementptr inbounds %opaque.3, %opaque.3* %retvar, i32 0, i32\l... 1\l  %enum_ptr_cast = bitcast \{ %opaque.3*, %opaque.3* \}* %enum_gep to \{ i64 \}*\l  %load = load i64, i64* %1\l  %enum_content_gep = getelementptr inbounds \{ i64 \}, \{ i64 \}* %enum_ptr_cast,\l... i32 0, i32 0\l  store i64 %load, i64* %enum_content_gep\l  %load_ret = load %opaque.3, %opaque.3* %retvar\l  ret %opaque.3 %load_ret\l}"];
+}

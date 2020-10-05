@@ -129,7 +129,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
         self.declare_items();
         self.codegen_items();
-        self.module.print_to_stderr();
+        // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
         self.module.get_function(symbol::MAIN.as_str()).or_else(|| {

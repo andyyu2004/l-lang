@@ -71,6 +71,7 @@ pub trait Visitor<'tcx> {
             TerminatorKind::Call { f, args, lvalue, target, unwind } => {}
             TerminatorKind::Switch { discr, arms, default } => {}
             TerminatorKind::Cond(_, _, _) => {}
+            TerminatorKind::Abort => {}
         };
         todo!()
     }

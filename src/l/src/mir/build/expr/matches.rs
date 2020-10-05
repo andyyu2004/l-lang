@@ -62,7 +62,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
 
         for i in 0..arms.len() {
             let next_block_opt = self.pblocks.get(i + 1).copied();
-            let next_block = next_block_opt.unwrap_or_else(|| self.mk_unreachable(info));
+            let next_block = next_block_opt.unwrap_or_else(|| self.mk_abort(info));
             let pblock = self.pblocks[i];
             let mut body_block = self.body_blocks[i];
             set!(
@@ -99,6 +99,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
     }
 
     /// builds to code to test whether an arm's pattern matches
+    // BIG TODO clean this up
     fn build_arm_predicate(
         &mut self,
         mut pblock: BlockId,

@@ -70,6 +70,13 @@ impl<'tcx> TyS<'tcx> {
         }
     }
 
+    pub fn is_ptr(&self) -> bool {
+        match self.kind {
+            TyKind::Ptr(..) => true,
+            _ => false,
+        }
+    }
+
     pub fn deref_ty(&self) -> Ty<'tcx> {
         match self.kind {
             TyKind::Ptr(_, ty) => ty,

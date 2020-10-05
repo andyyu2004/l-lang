@@ -63,6 +63,7 @@ where
             }
             mir::TerminatorKind::Switch { discr, arms, default } => {}
             mir::TerminatorKind::Cond(_, _, _) => {}
+            mir::TerminatorKind::Abort => {}
         }
     }
 }

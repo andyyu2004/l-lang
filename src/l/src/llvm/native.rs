@@ -1,4 +1,5 @@
 use inkwell::context::Context;
+use inkwell::module::Linkage;
 use inkwell::module::Module;
 use inkwell::values::*;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, IntPredicate};
@@ -6,6 +7,9 @@ use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, IntPredicate};
 pub struct NativeFunctions<'tcx> {
     pub rc_release: FunctionValue<'tcx>,
     pub print_int: FunctionValue<'tcx>,
+    pub abort: FunctionValue<'tcx>,
+    pub exit: FunctionValue<'tcx>,
+    pub printf: FunctionValue<'tcx>,
 }
 
 #[no_mangle]
@@ -17,7 +21,26 @@ impl<'tcx> NativeFunctions<'tcx> {
     pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
         let rc_release = Self::build_rc_release(llctx, module);
         let iprintln = Self::build_iprintln(llctx, module);
-        Self { rc_release, print_int: iprintln }
+        let printf = Self::build_printf(llctx, module);
+        let abort = Self::build_abort(llctx, module);
+        let exit = Self::build_exit(llctx, module);
+        Self { rc_release, print_int: iprintln, abort, printf, exit }
+    }
+
+    fn build_printf(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        module.add_function("printf", llctx.i32_type().fn_type(&[], false), Some(Linkage::External))
+    }
+
+    fn build_exit(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        module.add_function(
+            "exit",
+            llctx.void_type().fn_type(&[llctx.i32_type().into()], false),
+            Some(Linkage::External),
+        )
+    }
+
+    fn build_abort(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        module.add_function("abort", llctx.void_type().fn_type(&[], false), Some(Linkage::External))
     }
 
     fn build_iprintln(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {

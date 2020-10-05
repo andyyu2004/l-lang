@@ -108,7 +108,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // we need to deref as `lvalue.ty` is the type of the pointer to the box
         let llty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
         let cast = self.build_pointer_cast(ptr, llty, "rc_cast");
-        // finally the reference count itself
+        // finally gep the reference count itself
         self.build_struct_gep(cast, 1, "rc").unwrap()
     }
 
@@ -126,8 +126,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 .unwrap();
             }
             mir::StmtKind::Release(var_id) => {
-                return;
-                let ptr = self.vars[var_id].ptr;
+                let var = self.vars[var_id];
+                let ptr = var.ptr;
+                // check that the ptr actually points to a box
+                debug_assert!(var.ty.is_ptr());
                 // we cast it pointer to an i8* as that is what `rc_release` expects
                 let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "rc_release_cast").into();
                 let rc = self.build_get_rc(var_id);
@@ -417,6 +419,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let val = self.build_load(var.ptr, "load_ret");
                 let dyn_val = &val as &dyn BasicValue;
                 self.build_return(Some(dyn_val));
+            }
+            mir::TerminatorKind::Abort => {
+                // self.build_call(self.native_functions.abort, &[], "abort");
+                self.build_call(self.native_functions.exit, &[self.vals.one32.into()], "exit");
+                self.builder.build_unreachable();
             }
             mir::TerminatorKind::Unreachable => {
                 self.builder.build_unreachable();

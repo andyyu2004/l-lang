@@ -254,6 +254,7 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
                 write!(fmt, " then {:?}", a)?;
                 writeln!(fmt, " else {:?}", b)
             }
+            mir::TerminatorKind::Abort => writeln!(fmt, "abort"),
         }?;
         writeln!(fmt)
     }

@@ -1,0 +1,5 @@
+digraph "CFG for 'Either::Left' function" {
+	label="CFG for 'Either::Left' function";
+
+	Node0x22e72d0 [shape=record,label="{basic_block0:\l  %retvar = alloca %opaque.2\l  %1 = alloca i64\l  store i64 %0, i64* %1\l  %discr_gep = getelementptr inbounds %opaque.2, %opaque.2* %retvar, i32 0,\l... i32 0\l  store i64 0, i64* %discr_gep\l  %enum_gep = getelementptr inbounds %opaque.2, %opaque.2* %retvar, i32 0, i32\l... 1\l  %load = load i64, i64* %1\l  %enum_content_gep = getelementptr inbounds \{ i64 \}, \{ i64 \}* %enum_gep, i32\l... 0, i32 0\l  store i64 %load, i64* %enum_content_gep\l  %load_ret = load %opaque.2, %opaque.2* %retvar\l  ret %opaque.2 %load_ret\l}"];
+}

@@ -25,6 +25,12 @@ declare void @free(i8*)
 
 declare void @iprintln(i64)
 
+declare i32 @printf()
+
+declare void @abort()
+
+declare void @exit(i32)
+
 define %opaque @"Option::Some"(i64 %0) {
 basic_block0:
   %retvar = alloca %opaque
@@ -318,6 +324,7 @@ basic_block5:                                     ; preds = %basic_block8, %basi
   ret i64 %load_ret
 
 basic_block6:                                     ; preds = %basic_block3
+  call void @exit(i32 1)
   unreachable
 
 basic_block7:                                     ; preds = %basic_block4

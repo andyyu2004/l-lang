@@ -1,0 +1,5 @@
+digraph "CFG for 'Expr::Add' function" {
+	label="CFG for 'Expr::Add' function";
+
+	Node0x22e9720 [shape=record,label="{basic_block0:\l  %retvar = alloca %opaque.3\l  %2 = alloca %opaque.3*\l  store %opaque.3* %0, %opaque.3** %2\l  %3 = alloca %opaque.3*\l  store %opaque.3* %1, %opaque.3** %3\l  %discr_gep = getelementptr inbounds %opaque.3, %opaque.3* %retvar, i32 0,\l... i32 0\l  store i64 1, i64* %discr_gep\l  %enum_gep = getelementptr inbounds %opaque.3, %opaque.3* %retvar, i32 0, i32\l... 1\l  %load = load %opaque.3*, %opaque.3** %2\l  %enum_content_gep = getelementptr inbounds \{ %opaque.3*, %opaque.3* \}, \{\l... %opaque.3*, %opaque.3* \}* %enum_gep, i32 0, i32 0\l  store %opaque.3* %load, %opaque.3** %enum_content_gep\l  %load1 = load %opaque.3*, %opaque.3** %3\l  %enum_content_gep2 = getelementptr inbounds \{ %opaque.3*, %opaque.3* \}, \{\l... %opaque.3*, %opaque.3* \}* %enum_gep, i32 0, i32 1\l  store %opaque.3* %load1, %opaque.3** %enum_content_gep2\l  %load_ret = load %opaque.3, %opaque.3* %retvar\l  ret %opaque.3 %load_ret\l}"];
+}
