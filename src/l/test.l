@@ -28,13 +28,29 @@ enum Expr {
     Add(&Expr, &Expr)
 }
 
-
 fn main() -> int {
+    /* "string"; */
     let expr = box Expr::Add(
 	box Expr::Int(5),
 	box Expr::Int(9),
     );
     eval(expr)
+    /* let next = box Node { */
+    /*     val: 9, */
+    /*     next: NodeOption::None, */
+    /* }; */
+    /* let node = box Node { */
+    /*     val: 6, */
+    /*     next: NodeOption::Some(next), */
+    /* }; */
+    /* last(node) */
+}
+
+fn last(node: &Node) -> int {
+    match node.next {
+	NodeOption::Some(next) => last(next),
+	NodeOption::None => node.val,
+    }
 }
 
 fn eval(expr: &Expr) -> int {

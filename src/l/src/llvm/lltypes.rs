@@ -23,7 +23,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     /// to allows for easier geps)
     pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
         let llty = self.llvm_ty(ty);
-        self.llctx.struct_type(&[llty, self.types.int32.into()], true)
+        self.llctx.struct_type(&[llty, self.types.int32.into()], false)
     }
 
     /// converts a L type into a llvm representation

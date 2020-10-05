@@ -74,7 +74,7 @@ impl<'tcx> NativeFunctions<'tcx> {
         let rc_ptr = rc_release.get_nth_param(1).unwrap().into_pointer_value();
         builder.position_at_end(block);
         // the refcount is an i32 partially because i64 is too large and it helps a lot with
-        // catching type errors
+        // catching type errors as to not confuse it with the i64 type used in l itself
         let one = llctx.i32_type().const_int(1, false);
         let ref_count = builder
             .build_atomicrmw(

@@ -101,13 +101,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// generates the code to retrieve the reference count for a given variable
     /// the variable must refer to a box to be valid
     /// returns the i32 pointer to the refcount itself
-    fn build_get_rc(&mut self, var: VarId) -> PointerValue<'tcx> {
-        let lvalue = self.vars[var];
-        // `ptr` is a pointer into the boxed content (not including the rc header)
-        let ptr = self.build_load(lvalue.ptr, "load_box").into_pointer_value();
+    fn build_get_rc(&mut self, lvalue: LvalueRef<'tcx>) -> PointerValue<'tcx> {
+        debug_assert!(lvalue.ty.is_ptr());
+        // `box_ptr` is a pointer into the boxed content (not including the rc header)
+        let box_ptr = self.build_load(lvalue.ptr, "load_box").into_pointer_value();
         // we need to deref as `lvalue.ty` is the type of the pointer to the box
-        let llty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
-        let cast = self.build_pointer_cast(ptr, llty, "rc_cast");
+        let boxed_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
+        let cast = self.build_pointer_cast(box_ptr, boxed_ty, "rc_cast");
         // finally gep the reference count itself
         self.build_struct_gep(cast, 1, "rc").unwrap()
     }
@@ -115,8 +115,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
-            mir::StmtKind::Retain(var) => {
-                let rc = self.build_get_rc(var);
+            mir::StmtKind::Retain(lvalue) => {
+                let lvalue_ref = self.codegen_lvalue(lvalue);
+                let rc = self.build_get_rc(lvalue_ref);
                 self.build_atomicrmw(
                     AtomicRMWBinOp::Add,
                     rc,
@@ -125,15 +126,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 )
                 .unwrap();
             }
-            mir::StmtKind::Release(var_id) => {
-                let var = self.vars[var_id];
-                let ptr = var.ptr;
+            mir::StmtKind::Release(lvalue) => {
+                let lvalue_ref = self.codegen_lvalue(lvalue);
                 // check that the ptr actually points to a box
-                debug_assert!(var.ty.is_ptr());
+                debug_assert!(lvalue_ref.ty.is_ptr());
                 // we cast it pointer to an i8* as that is what `rc_release` expects
-                let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "rc_release_cast").into();
-                let rc = self.build_get_rc(var_id);
-                self.build_call(self.native_functions.rc_release, &[cast, rc.into()], "rc_release");
+                let cast =
+                    self.build_pointer_cast(lvalue_ref.ptr, self.types.i8ptr, "rc_release_cast");
+                let rc = self.build_get_rc(lvalue_ref);
+                self.build_call(
+                    self.native_functions.rc_release,
+                    &[cast.into(), rc.into()],
+                    "rc_release",
+                );
             }
             mir::StmtKind::Nop => {}
         }

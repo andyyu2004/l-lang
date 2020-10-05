@@ -18,6 +18,7 @@ use crate::mir;
 use crate::span::Span;
 use crate::tir::{self, TirCtx};
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
+use crate::typeck::TyCtx;
 pub use build::{build_enum_ctors, build_fn};
 use indexed_vec::{Idx, IndexVec};
 use rustc_hash::FxHashMap;
@@ -96,8 +97,8 @@ pub struct Stmt<'tcx> {
 #[derive(Clone, Debug, PartialEq)]
 pub enum StmtKind<'tcx> {
     Assign(Lvalue<'tcx>, Rvalue<'tcx>),
-    Retain(VarId),
-    Release(VarId),
+    Retain(Lvalue<'tcx>),
+    Release(Lvalue<'tcx>),
     Nop,
 }
 
@@ -109,6 +110,19 @@ newtype_index!(VarId);
 pub struct Lvalue<'tcx> {
     pub id: VarId,
     pub projs: &'tcx List<Projection<'tcx>>,
+}
+
+pub trait LvalueTy<'tcx> {
+    fn tcx(&self) -> TyCtx<'tcx>;
+    fn locals(&self) -> &IndexVec<VarId, Var<'tcx>>;
+}
+
+impl<'tcx> Lvalue<'tcx> {
+    pub fn ty(&self, ctx: &impl LvalueTy<'tcx>) -> Ty<'tcx> {
+        let base = ctx.locals()[self.id].ty;
+        let tcx = ctx.tcx();
+        self.projs.iter().fold(base, |ty, proj| tcx.apply_projection(ty, proj))
+    }
 }
 
 impl<'tcx> Ord for Lvalue<'tcx> {

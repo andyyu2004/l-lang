@@ -1,9 +1,0 @@
-digraph "CFG for 'rc_release' function" {
-	label="CFG for 'rc_release' function";
-
-	Node0x22e5030 [shape=record,label="{rc_release:\l  %2 = atomicrmw sub i32* %1, i32 1 seq_cst\l  %rc_cmp = icmp ule i32 %2, 1\l  br i1 %rc_cmp, label %free, label %ret\l|{<s0>T|<s1>F}}"];
-	Node0x22e5030:s0 -> Node0x22e5950;
-	Node0x22e5030:s1 -> Node0x22e59a0;
-	Node0x22e5950 [shape=record,label="{free:                                             \l  tail call void @free(i8* %0)\l  ret void\l}"];
-	Node0x22e59a0 [shape=record,label="{ret:                                              \l  ret void\l}"];
-}

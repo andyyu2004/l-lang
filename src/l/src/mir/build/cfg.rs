@@ -67,13 +67,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.cfg.terminate(info, block, kind)
     }
 
-    pub fn push_release(&mut self, block: BlockId, release: ReleaseInfo) {
-        let ReleaseInfo { info, var } = release;
-        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Release(var) })
+    pub fn push_release(&mut self, block: BlockId, release: ReleaseInfo<'tcx>) {
+        let ReleaseInfo { info, lvalue } = release;
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Release(lvalue) })
     }
 
-    pub fn push_retain(&mut self, info: SpanInfo, block: BlockId, var: VarId) {
-        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Retain(var) })
+    pub fn push_retain(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
+        self.push(block, mir::Stmt { info, kind: mir::StmtKind::Retain(lvalue) })
     }
 
     /// push a statement onto the given block
@@ -94,12 +94,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         lvalue: Lvalue<'tcx>,
         rvalue: Rvalue<'tcx>,
     ) {
-        let var_id = lvalue.id;
-        let var = self.vars[var_id];
         self.cfg.push_assignment(info, block, lvalue, rvalue);
-        if let TyKind::Ptr(..) = var.ty.kind {
-            self.push_retain(info, block, var_id);
-            self.schedule_release(info, var_id);
+        // if the type is pointer, then it is a box and we need to do refcounting
+        if lvalue.ty(self).is_ptr() {
+            self.push_retain(info, block, lvalue);
+            self.schedule_release(info, lvalue);
         }
     }
 }

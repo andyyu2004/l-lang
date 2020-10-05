@@ -163,7 +163,7 @@ struct Builder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     ctx: &'a TirCtx<'a, 'tcx>,
     body: &'tcx tir::Body<'tcx>,
-    scopes: Scopes,
+    scopes: Scopes<'tcx>,
     cfg: Cfg<'tcx>,
     vars: IndexVec<VarId, Var<'tcx>>,
     var_ir_map: FxHashMap<ir::Id, VarId>,
@@ -207,6 +207,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // make it mutable by default, this can be unset later
         let var = Var { mtbl: Mutability::Mut, info, kind, ty };
         self.vars.push(var)
+    }
+}
+
+impl<'tcx> LvalueTy<'tcx> for Builder<'_, 'tcx> {
+    fn tcx(&self) -> TyCtx<'tcx> {
+        self.tcx
+    }
+
+    fn locals(&self) -> &IndexVec<VarId, Var<'tcx>> {
+        &self.vars
     }
 }
 

@@ -1,5 +1,0 @@
-digraph "CFG for 'NodeOption::Some' function" {
-	label="CFG for 'NodeOption::Some' function";
-
-	Node0x22e6a10 [shape=record,label="{basic_block0:\l  %retvar = alloca %opaque.0\l  %1 = alloca %opaque.1*\l  store %opaque.1* %0, %opaque.1** %1\l  %discr_gep = getelementptr inbounds %opaque.0, %opaque.0* %retvar, i32 0,\l... i32 0\l  store i64 1, i64* %discr_gep\l  %enum_gep = getelementptr inbounds %opaque.0, %opaque.0* %retvar, i32 0, i32\l... 1\l  %load = load %opaque.1*, %opaque.1** %1\l  %enum_content_gep = getelementptr inbounds \{ %opaque.1* \}, \{ %opaque.1* \}*\l... %enum_gep, i32 0, i32 0\l  store %opaque.1* %load, %opaque.1** %enum_content_gep\l  %load_ret = load %opaque.0, %opaque.0* %retvar\l  ret %opaque.0 %load_ret\l}"];
-}
