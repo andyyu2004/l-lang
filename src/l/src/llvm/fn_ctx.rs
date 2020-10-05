@@ -5,6 +5,7 @@ use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection, Ty};
 use indexed_vec::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
+use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 use itertools::Itertools;
@@ -125,6 +126,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 .unwrap();
             }
             mir::StmtKind::Release(var_id) => {
+                return;
                 let ptr = self.vars[var_id].ptr;
                 // we cast it pointer to an i8* as that is what `rc_release` expects
                 let cast = self.build_pointer_cast(ptr, self.types.i8ptr, "rc_release_cast").into();
@@ -207,6 +209,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     Projection::Deref => {
                         let ptr = self.build_load(var.ptr, "load_deref").into_pointer_value();
                         let ty = var.ty.deref_ty();
+                        LvalueRef { ptr, ty }
+                    }
+                    Projection::PointerCast(ty) => {
+                        let llty = self.llvm_ty(ty).ptr_type(AddressSpace::Generic);
+                        let ptr = self.build_pointer_cast(var.ptr, llty, "lvalue_pointer_cast");
                         LvalueRef { ptr, ty }
                     }
                 }

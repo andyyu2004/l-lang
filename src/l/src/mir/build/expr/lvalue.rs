@@ -21,12 +21,22 @@ impl<'tcx> LvalueBuilder<'tcx> {
         self
     }
 
+    pub fn project_cast(self, ty: Ty<'tcx>) -> Self {
+        self.project(Projection::PointerCast(ty))
+    }
+
     pub fn project_deref(self) -> Self {
         self.project(Projection::Deref)
     }
 
     pub fn project_field(self, field: FieldIdx, ty: Ty<'tcx>) -> Self {
         self.project(Projection::Field(field, ty))
+    }
+}
+
+impl<'tcx> From<Lvalue<'tcx>> for LvalueBuilder<'tcx> {
+    fn from(lvalue: Lvalue<'tcx>) -> Self {
+        Self { id: lvalue.id, projs: lvalue.projs.to_vec() }
     }
 }
 

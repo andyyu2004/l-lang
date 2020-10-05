@@ -2,7 +2,7 @@ use crate::ast::{Ident, Mutability};
 use crate::ir::{self, FieldIdx, VariantIdx};
 use crate::span::Span;
 use crate::tir;
-use crate::ty::{AdtTy, Const, Ty};
+use crate::ty::{AdtTy, Const, SubstsRef, Ty};
 use crate::util;
 use std::fmt::{self, Display, Formatter};
 
@@ -32,7 +32,7 @@ impl<'tcx> Pattern<'tcx> {
             PatternKind::Wildcard | PatternKind::Binding(..) => false,
             PatternKind::Field(fs) => fs.iter().any(|f| f.pat.is_refutable()),
             PatternKind::Lit(..) => true,
-            PatternKind::Variant(_, _, pats) => pats.iter().any(|p| p.is_refutable()),
+            PatternKind::Variant(.., pats) => pats.iter().any(|p| p.is_refutable()),
         }
     }
 }
@@ -51,11 +51,12 @@ impl<'tcx> Display for Pattern<'tcx> {
                 return write!(f, "{}", expr);
             }
             PatternKind::Wildcard => write!(f, "_"),
-            PatternKind::Variant(adt_ty, variant_idx, pats) => write!(
+            PatternKind::Variant(adt_ty, substs, variant_idx, pats) => write!(
                 f,
-                "{}::{}({})",
+                "{}::{}<{}>({})",
                 adt_ty.ident,
                 adt_ty.variants[variant_idx].ident,
+                substs,
                 util::join2(pats.iter(), ","),
             ),
         }?;
@@ -74,5 +75,5 @@ pub enum PatternKind<'tcx> {
     Field(&'tcx [tir::FieldPat<'tcx>]),
     Lit(&'tcx tir::Expr<'tcx>),
     /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
-    Variant(&'tcx AdtTy<'tcx>, VariantIdx, &'tcx [tir::Pattern<'tcx>]),
+    Variant(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>, VariantIdx, &'tcx [tir::Pattern<'tcx>]),
 }

@@ -124,6 +124,7 @@ impl<'tcx> TyCtx<'tcx> {
         match proj {
             Projection::Deref => ty.deref_ty(),
             Projection::Field(_, ty) => ty,
+            Projection::PointerCast(ty) => ty,
         }
     }
 

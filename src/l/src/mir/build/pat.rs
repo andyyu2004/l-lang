@@ -45,7 +45,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.unit()
             }
             tir::PatternKind::Lit(_) => panic!("refutable binding"),
-            tir::PatternKind::Variant(_, _, _) => todo!(),
+            tir::PatternKind::Variant(..) => todo!(),
         }
     }
 }

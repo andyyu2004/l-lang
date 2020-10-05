@@ -167,7 +167,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::PatternKind::Field(_) => todo!(),
             tir::PatternKind::Lit(c) => self.as_operand(block, c),
-            tir::PatternKind::Variant(adt, idx, pats) => todo!(),
+            tir::PatternKind::Variant(adt, substs, idx, pats) => todo!(),
         }
     }
 

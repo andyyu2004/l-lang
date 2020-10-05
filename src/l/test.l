@@ -30,7 +30,10 @@ enum Expr {
 
 
 fn main() -> int {
-    let expr = box Expr::Int(5);
+    let expr = box Expr::Add(
+	box Expr::Int(5),
+	box Expr::Int(9),
+    );
     eval(expr)
 }
 

@@ -139,7 +139,7 @@ impl<'tcx> TirCtx<'_, 'tcx> {
         let ty = self.node_type(pat.id);
         let (adt, substs) = ty.expect_adt();
         let idx = adt.variant_idx_with_res(path.res);
-        tir::PatternKind::Variant(adt, idx, pats.to_tir(self))
+        tir::PatternKind::Variant(adt, substs, idx, pats.to_tir(self))
     }
 
     // useful impl ideas

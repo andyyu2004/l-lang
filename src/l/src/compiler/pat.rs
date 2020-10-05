@@ -23,7 +23,7 @@ impl<'tcx> Compiler<'tcx> {
                 self.emit_op(Op::dup);
             }
             tir::PatternKind::Field(fields) => todo!(),
-            tir::PatternKind::Variant(_, _, _) => todo!(),
+            tir::PatternKind::Variant(..) => todo!(),
         };
     }
 
@@ -42,7 +42,7 @@ impl<'tcx> Compiler<'tcx> {
                 _ => todo!(),
             },
             tir::PatternKind::Lit(_) => unreachable!("literal pattern is refutable"),
-            tir::PatternKind::Variant(_, _, _) => todo!(),
+            tir::PatternKind::Variant(..) => todo!(),
         }
     }
 }

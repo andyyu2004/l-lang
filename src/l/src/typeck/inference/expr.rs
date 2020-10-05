@@ -252,9 +252,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let expected_ty = self.check_expr(arms[n].body);
         arms[..n].iter().for_each(|arm| {
             let arm_ty = self.check_expr(arm.body);
-            arm.guard.iter().for_each(|expr| {
-                let guard_ty = self.check_expr(expr);
-                self.unify(expr.span, self.tcx.types.boolean, guard_ty);
+            arm.guard.iter().for_each(|guard| {
+                let guard_ty = self.check_expr(guard);
+                self.unify(guard.span, self.tcx.types.boolean, guard_ty);
             });
             self.unify(arm.span, expected_ty, arm_ty);
         });

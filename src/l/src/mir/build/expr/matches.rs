@@ -1,4 +1,4 @@
-use super::{BlockAnd, Builder};
+use super::{BlockAnd, Builder, LvalueBuilder};
 use crate::ast::BinOp;
 use crate::mir::*;
 use crate::set;
@@ -150,7 +150,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 );
                 self.push_assignment(info, pblock, predicate, and);
             }
-            tir::PatternKind::Variant(adt, idx, pats) => {
+            tir::PatternKind::Variant(adt, substs, idx, pats) => {
                 let discriminant_lvalue = self.alloc_tmp(info, tcx.types.int).into();
                 self.push_assignment(
                     info,
@@ -189,9 +189,12 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 self.push_assignment(info, pblock, predicate, and);
 
                 // project past the discriminant into the enum content
-                let adt_ty = self.vars[scrut.id].ty;
-                // TODO do some casts so the enum content is of the right type
-                let enum_content_lvalue = self.tcx.project_field(scrut, FieldIdx::new(1), adt_ty);
+                let variant_ty =
+                    tcx.mk_tup_iter(adt.variants[idx].fields.iter().map(|f| f.ty(tcx, substs)));
+                let enum_content_lvalue = LvalueBuilder::from(scrut)
+                    .project_field(FieldIdx::new(1), tcx.mk_adt_ty(adt, substs))
+                    .project_cast(variant_ty)
+                    .lvalue(tcx);
                 for (i, pat) in pats.iter().enumerate() {
                     set!(
                         pblock = self.build_arm_predicate(

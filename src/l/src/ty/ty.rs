@@ -153,6 +153,7 @@ pub enum Projection<'tcx> {
     /// s.x :: int
     /// so the projection from `s` would be `Projection::Field(0, int)`
     Field(FieldIdx, Ty<'tcx>),
+    PointerCast(Ty<'tcx>),
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]

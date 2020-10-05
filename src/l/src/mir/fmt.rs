@@ -129,6 +129,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
             match p {
                 Projection::Field(field, _) => write!(f, ".{:?}", field)?,
                 Projection::Deref => write!(f, ".*")?,
+                Projection::PointerCast(ty) => write!(f, " as {}", ty)?,
             }
         }
         if !self.projs.is_empty() {
@@ -138,6 +139,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Lvalue<'tcx> {
                 match p {
                     Projection::Field(_, ty) => write!(f, "->{}", ty)?,
                     Projection::Deref => {}
+                    Projection::PointerCast(_) => {}
                 };
             }
             write!(f, ")")?;
