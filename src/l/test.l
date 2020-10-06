@@ -30,20 +30,23 @@ enum Expr {
 
 fn main() -> int {
     /* "string"; */
-    let expr = box Expr::Add(
-	box Expr::Int(5),
-	box Expr::Int(9),
-    );
-    eval(expr)
-    /* let next = box Node { */
-    /*     val: 9, */
-    /*     next: NodeOption::None, */
-    /* }; */
-    /* let node = box Node { */
-    /*     val: 6, */
-    /*     next: NodeOption::Some(next), */
-    /* }; */
-    /* last(node) */
+    /* let expr = box Expr::Add( */
+    /*     box Expr::Int(5), */
+    /*     box Expr::Int(9), */
+    /* ); */
+    /* eval(expr) */
+
+    let next = box Node {
+	val: 22,
+	next: NodeOption::None,
+    };
+    let node = box Node {
+	val: 6,
+	next: NodeOption::Some(next),
+    };
+    last(node);
+    let x = box 5;
+    *x
 }
 
 fn last(node: &Node) -> int {
@@ -53,11 +56,11 @@ fn last(node: &Node) -> int {
     }
 }
 
-fn eval(expr: &Expr) -> int {
-    match *expr {
-	Expr::Int(i) => i,
-	Expr::Add(l, r) => eval(l) + eval(r),
-    }
-}
+/* fn eval(expr: &Expr) -> int { */
+/*     match *expr { */
+/*         Expr::Int(i) => i, */
+/*         Expr::Add(l, r) => eval(l) + eval(r), */
+/*     } */
+/* } */
 
 

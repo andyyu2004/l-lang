@@ -1,6 +1,6 @@
 use super::util::LLVMAsPtrVal;
 use super::CodegenCtx;
-use crate::ast::BinOp;
+use crate::ast::{BinOp, Mutability};
 use crate::mir::{self, BlockId, VarId};
 use crate::ty::{AdtKind, ConstKind, Projection, Ty};
 use indexed_vec::{Idx, IndexVec};
@@ -112,40 +112,98 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.build_struct_gep(cast, 1, "rc").unwrap()
     }
 
+    /// builds generic `rc_retain`
+    fn build_rc_retain(&mut self, lvalue: LvalueRef<'tcx>) -> FunctionValue<'tcx> {
+        let name = format!("rc_retain_{}", lvalue.ty.deref_ty());
+        if let Some(f) = self.module.get_function(&name) {
+            return f;
+        }
+        let llty = self
+            .llctx
+            .void_type()
+            .fn_type(&[self.llvm_ty(lvalue.ty).ptr_type(AddressSpace::Generic).into()], false);
+        let rc_retain = self.module.add_function(&name, llty, None);
+
+        let builder = self.llctx.create_builder();
+        let block = self.llctx.append_basic_block(rc_retain, "rc_retain_start");
+        builder.position_at_end(block);
+
+        let alloca_ptr = rc_retain.get_first_param().unwrap().into_pointer_value();
+        let malloc_ptr = builder.build_load(alloca_ptr, "load_box").into_pointer_value();
+        let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
+        let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_retain_box_cast");
+        let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
+        let ref_count = builder.build_load(rc_ptr, "load_rc").into_int_value();
+        let increment = builder.build_int_add(ref_count, self.vals.one32, "increment_rc");
+        builder.build_store(rc_ptr, increment);
+        builder.build_return(None);
+        rc_retain
+    }
+
+    /// builds generic `rc_release`
+    fn build_rc_release(&mut self, lvalue: LvalueRef<'tcx>) -> FunctionValue<'tcx> {
+        let name = format!("rc_release_{}", lvalue.ty.deref_ty());
+        if let Some(f) = self.module.get_function(&name) {
+            return f;
+        }
+        let llty = self
+            .llctx
+            .void_type()
+            .fn_type(&[self.llvm_ty(lvalue.ty).ptr_type(AddressSpace::Generic).into()], false);
+        let rc_release = self.module.add_function(&name, llty, None);
+
+        let builder = self.llctx.create_builder();
+        let block = self.llctx.append_basic_block(rc_release, "rc_release_start");
+        let then_block = self.llctx.append_basic_block(rc_release, "rc_release_free");
+        let else_block = self.llctx.append_basic_block(rc_release, "rc_release_ret");
+        builder.position_at_end(block);
+
+        let alloca_ptr = rc_release.get_first_param().unwrap().into_pointer_value();
+        let malloc_ptr = builder.build_load(alloca_ptr, "load_box").into_pointer_value();
+        let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
+        let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_release_box_cast");
+        let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
+        let ref_count = builder
+            .build_atomicrmw(
+                AtomicRMWBinOp::Sub,
+                rc_ptr,
+                self.vals.one32,
+                AtomicOrdering::SequentiallyConsistent,
+            )
+            .unwrap();
+
+        // this ref_count is the count before decrement. therefore, if refcount == 1 then this the last ref
+        let cmp = builder.build_int_compare(IntPredicate::EQ, ref_count, self.vals.one32, "rc_cmp");
+        builder.build_conditional_branch(cmp, then_block, else_block);
+
+        builder.position_at_end(then_block);
+        // builder.build_free(cast);
+        builder.build_return(None);
+
+        builder.position_at_end(else_block);
+        builder.build_return(None);
+        rc_release
+    }
+
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(lvalue) => {
                 let lvalue_ref = self.codegen_lvalue(lvalue);
-                let rc = self.build_get_rc(lvalue_ref);
-                self.build_atomicrmw(
-                    AtomicRMWBinOp::Add,
-                    rc,
-                    self.vals.one32,
-                    AtomicOrdering::SequentiallyConsistent,
-                )
-                .unwrap();
+                let rc_retain = self.build_rc_retain(lvalue_ref);
+                self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(lvalue) => {
                 let lvalue_ref = self.codegen_lvalue(lvalue);
-                // check that the ptr actually points to a box
-                debug_assert!(lvalue_ref.ty.is_ptr());
-                // we cast it pointer to an i8* as that is what `rc_release` expects
-                let cast =
-                    self.build_pointer_cast(lvalue_ref.ptr, self.types.i8ptr, "rc_release_cast");
-                let rc = self.build_get_rc(lvalue_ref);
-                self.build_call(
-                    self.native_functions.rc_release,
-                    &[cast.into(), rc.into()],
-                    "rc_release",
-                );
+                let rc_release = self.build_rc_release(lvalue_ref);
+                self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }
     }
 
     fn codegen_assignment(&mut self, lvalue: mir::Lvalue<'tcx>, rvalue: &'tcx mir::Rvalue<'tcx>) {
-        let var = self.codegen_lvalue(lvalue);
+        let lvalue_ref = self.codegen_lvalue(lvalue);
         // certain aggregate rvalues require special treatment as
         // llvm doesn't like recursively building these values (with temporaries)
         // instead, we use geps to set the fields directly
@@ -158,16 +216,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         assert_eq!(variant_idx.index(), 0);
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
-                            let field_ptr =
-                                self.build_struct_gep(var.ptr, i as u32, "struct_gep").unwrap();
+                            let field_ptr = self
+                                .build_struct_gep(lvalue_ref.ptr, i as u32, "struct_gep")
+                                .unwrap();
                             self.build_store(field_ptr, operand.val);
                         }
                     }
                     AdtKind::Enum => {
                         let idx = variant_idx.index() as u64;
-                        let discr_ptr = self.build_struct_gep(var.ptr, 0, "discr_gep").unwrap();
+                        let discr_ptr =
+                            self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
                         self.build_store(discr_ptr, self.types.discr.const_int(idx, false));
-                        let content_ptr = self.build_struct_gep(var.ptr, 1, "enum_gep").unwrap();
+                        let content_ptr =
+                            self.build_struct_gep(lvalue_ref.ptr, 1, "enum_gep").unwrap();
                         let llty =
                             self.variant_ty_to_llvm_ty(ty, &adt.variants[*variant_idx], substs);
                         let content_ptr = self.build_pointer_cast(
@@ -187,7 +248,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             _ => {
                 let value = self.codegen_rvalue(rvalue);
-                self.build_store(var.ptr, value.val);
+                self.build_store(lvalue_ref.ptr, value.val);
             }
         }
     }
@@ -255,18 +316,17 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let llty = self.llvm_boxed_ty(ty);
                 let ptr = self.build_malloc(llty, "box").unwrap();
                 // the refcount is at index `1` in the implicit struct
-                let rc = self.build_struct_gep(ptr, 1, "rc").unwrap();
-                // set the rc to `1` initially
+                let rc_ptr = self.build_struct_gep(ptr, 1, "rc").unwrap();
                 self.build_atomicrmw(
                     AtomicRMWBinOp::Xchg,
-                    rc,
-                    self.vals.one32,
+                    rc_ptr,
+                    self.vals.zero32,
                     AtomicOrdering::SequentiallyConsistent,
                 )
                 .unwrap();
                 // gep the returned pointer to point to the content only and return that
-                let val = self.build_struct_gep(ptr, 0, "rc_gep").unwrap().into();
-                ValueRef { ty, val }
+                let val = self.build_struct_gep(ptr, 0, "box_gep").unwrap().into();
+                ValueRef { ty: self.tcx.mk_ptr_ty(Mutability::Mut, ty), val }
             }
             mir::Rvalue::Ref(lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },

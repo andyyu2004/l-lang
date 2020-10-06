@@ -36,6 +36,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     None => self.push_assign_unit(info, block, ret_lvalue),
                 }
                 self.terminate(info, block, TerminatorKind::Return);
+                // TODO exit scope and do ref counting properly
                 self.append_basic_block().unit()
             }
             tir::ExprKind::Assign(l, r) => {

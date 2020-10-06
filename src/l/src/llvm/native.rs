@@ -3,8 +3,10 @@ use inkwell::module::Linkage;
 use inkwell::module::Module;
 use inkwell::values::*;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, IntPredicate};
+use rustc_hash::FxHashMap;
 
 pub struct NativeFunctions<'tcx> {
+    pub rc_retain: FxHashMap<(), ()>,
     pub rc_release: FunctionValue<'tcx>,
     pub print_int: FunctionValue<'tcx>,
     pub abort: FunctionValue<'tcx>,
@@ -24,7 +26,7 @@ impl<'tcx> NativeFunctions<'tcx> {
         let printf = Self::build_printf(llctx, module);
         let abort = Self::build_abort(llctx, module);
         let exit = Self::build_exit(llctx, module);
-        Self { rc_release, print_int: iprintln, abort, printf, exit }
+        Self { rc_retain: Default::default(), rc_release, print_int: iprintln, abort, printf, exit }
     }
 
     fn build_printf(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
@@ -51,6 +53,20 @@ impl<'tcx> NativeFunctions<'tcx> {
         );
         // TODO
         iprintln
+    }
+
+    fn build_rc_retain(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let rc_retain = module.add_function(
+            "rc_retain",
+            llctx
+                .void_type()
+                .fn_type(&[llctx.i8_type().ptr_type(AddressSpace::Generic).into()], false),
+            None,
+        );
+
+        let ptr = rc_retain.get_first_param().unwrap().into_pointer_value();
+
+        rc_retain
     }
 
     fn build_rc_release(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
