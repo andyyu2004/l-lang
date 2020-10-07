@@ -1,7 +1,25 @@
 [workspace]
 members = [
     "src/l",
-    "src/l-derive"
+    "src/infer",
+    "src/ldriver",
+    "src/span",
+    "src/lex",
+    "src/parse",
+    "src/ast",
+    "src/lcore",
+    "src/ir",
+    "src/arena",
+    "src/error",
+    "src/index",
+    "src/util",
+    "src/session",
+    "src/resolve",
+    "src/ast_lowering",
+    "src/typeck",
+    "src/tir",
+    "src/mir",
+    "src/llvm",
 ]
 
 
