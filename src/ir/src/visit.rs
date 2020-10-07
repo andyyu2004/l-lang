@@ -1,8 +1,8 @@
-use crate as ir;
+use crate::*;
 use ast::{Ident, Visibility};
 
 pub trait Visitor<'ir>: Sized {
-    fn visit_prog(&mut self, prog: &'ir ir::IR<'ir>) {
+    fn visit_prog(&mut self, prog: &'ir IR<'ir>) {
         walk_prog(self, prog)
     }
 
@@ -14,12 +14,20 @@ pub trait Visitor<'ir>: Sized {
         walk_body(self, body)
     }
 
+    fn visit_foreign_item(&mut self, item: &'ir ir::ForeignItem<'ir>) {
+        walk_foreign_item(self, item);
+    }
+
     fn visit_param(&mut self, param: &'ir ir::Param<'ir>) {
         walk_param(self, param)
     }
 
     fn visit_expr(&mut self, expr: &'ir ir::Expr<'ir>) {
         walk_expr(self, expr)
+    }
+
+    fn visit_ty_param(&mut self, param: &'ir ir::TyParam<'ir>) {
+        walk_ty_param(self, param)
     }
 
     fn visit_vis(&mut self, _vis: Visibility) {
@@ -107,6 +115,15 @@ pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplIt
     }
 }
 
+fn walk_foreign_item<'ir>(v: &mut impl Visitor<'ir>, item: &'ir ForeignItem<'ir>) {
+    match item.kind {
+        ForeignItemKind::Fn(sig, generics) => {
+            v.visit_fn_sig(sig);
+            v.visit_generics(generics);
+        }
+    }
+}
+
 pub fn walk_variant<'ir>(v: &mut impl Visitor<'ir>, variant: &'ir ir::Variant<'ir>) {
     v.visit_ident(variant.ident);
     v.visit_variant_kind(&variant.kind);
@@ -126,8 +143,12 @@ pub fn walk_variant_kind<'ir>(v: &mut impl Visitor<'ir>, kind: &'ir ir::VariantK
     }
 }
 
+pub fn walk_ty_param<'ir>(v: &mut impl Visitor<'ir>, param: &'ir ir::TyParam<'ir>) {
+    param.default.iter().for_each(|ty| v.visit_ty(ty));
+}
+
 pub fn walk_generics<'ir>(v: &mut impl Visitor<'ir>, generics: &'ir ir::Generics<'ir>) {
-    // TODO
+    generics.params.iter().for_each(|param| v.visit_ty_param(param));
 }
 
 pub fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
@@ -141,6 +162,7 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
     match &item.kind {
         ir::ItemKind::Fn(sig, generics, body) => {
             v.visit_fn_sig(sig);
+            v.visit_generics(generics);
             v.visit_body(body);
         }
         ir::ItemKind::Enum(generics, variants) => {
@@ -151,6 +173,7 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_generics(generics);
             v.visit_variant_kind(kind);
         }
+        ir::ItemKind::Extern(items) => items.iter().for_each(|item| v.visit_foreign_item(item)),
         ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
             v.visit_generics(generics);
             trait_path.iter().for_each(|path| v.visit_path(path));
@@ -246,6 +269,9 @@ pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
         ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
         ir::TyKind::Fn(params, ret) => {
             params.iter().for_each(|ty| v.visit_ty(ty));
+            if let Some(ty) = ret {
+                v.visit_ty(ty);
+            }
             v.visit_ty(ty);
         }
         ir::TyKind::Infer => {}
@@ -272,7 +298,7 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
         ir::PatternKind::Wildcard => {}
         ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
         ir::PatternKind::Lit(expr) => v.visit_expr(expr),
-        ir::PatternKind::Binding(ident, subpat, m) => {
+        ir::PatternKind::Binding(ident, subpat, _m) => {
             v.visit_ident(*ident);
             subpat.iter().for_each(|p| v.visit_pat(p));
         }

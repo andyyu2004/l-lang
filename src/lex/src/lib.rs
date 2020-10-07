@@ -53,7 +53,8 @@ impl Lexer {
         let mut span_index = 0;
 
         // note: it is important to filter after so that the spans are correct
-        let tokens = lexing::tokenize(&src).collect_vec();
+        let n = lexing::strip_shebang(&src).unwrap_or(0);
+        let tokens = lexing::tokenize(&src[n..]).collect_vec();
         let mut i = 0;
         let mut vec = vec![];
 
@@ -110,7 +111,7 @@ impl Lexer {
                     TokenKind::RawIdent => todo!(),
                     TokenKind::Literal { kind, suffix_start } =>
                         TokenType::Literal { kind, suffix_start },
-                    TokenKind::Lifetime { starts_with_number } =>
+                    TokenKind::Lifetime { .. } =>
                         todo!("maybe use lifetime syntax as generic parameter (like ocaml)"),
                     TokenKind::Semi => TokenType::Semi,
                     TokenKind::Underscore => TokenType::Underscore,

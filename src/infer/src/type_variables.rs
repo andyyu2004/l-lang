@@ -4,7 +4,6 @@ use ena::unify as ut;
 use lcore::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};
 use rustc_hash::FxHashMap;
 use span::Span;
-use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 
 #[derive(Default)]
@@ -18,13 +17,13 @@ impl<'tcx, T> UndoLogs<T> for InferCtxUndoLogs<'tcx> {
         0
     }
 
-    fn push(&mut self, undo: T) {
+    fn push(&mut self, _undo: T) {
     }
 
     fn clear(&mut self) {
     }
 
-    fn extend<J>(&mut self, undos: J)
+    fn extend<J>(&mut self, _undos: J)
     where
         Self: Sized,
         J: IntoIterator<Item = T>,
@@ -149,7 +148,7 @@ impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
 
     fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
         match (s, t) {
-            (&Self::Known(a), &Self::Known(b)) => panic!("unifying two known type variables"),
+            (&Self::Known(_), &Self::Known(_)) => panic!("unifying two known type variables"),
             (&Self::Known(_), _) => Ok(*s),
             (_, &Self::Known(_)) => Ok(*t),
             (&Self::Unknown, &Self::Unknown) => Ok(TyVarValue::Unknown),

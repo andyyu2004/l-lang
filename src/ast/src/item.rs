@@ -71,7 +71,7 @@ pub type ForeignItem = Item<ForeignItemKind>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ForeignItemKind {
-    Fn(FnSig, Generics, Option<P<Expr>>),
+    Fn(FnSig, Generics),
 }
 
 impl TryFrom<ItemKind> for ForeignItemKind {
@@ -79,11 +79,8 @@ impl TryFrom<ItemKind> for ForeignItemKind {
 
     fn try_from(kind: ItemKind) -> Result<Self, Self::Error> {
         match kind {
-            ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
-            ItemKind::Extern(..)
-            | ItemKind::Enum(..)
-            | ItemKind::Struct(..)
-            | ItemKind::Impl { .. } => Err(kind),
+            ItemKind::Fn(sig, generics, expr) if expr.is_none() => Ok(Self::Fn(sig, generics)),
+            _ => Err(kind),
         }
     }
 }

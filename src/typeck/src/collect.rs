@@ -12,7 +12,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
     fn visit_item(&mut self, item: &ir::Item<'tcx>) {
         let tcx = self.tcx;
         let ty = match &item.kind {
-            ir::ItemKind::Fn(sig, generics, _body) => {
+            ir::ItemKind::Fn(sig, generics, _) => {
                 let fn_ty = tcx.fn_sig_to_ty(sig);
                 tcx.generalize(generics, fn_ty)
             }
@@ -39,6 +39,18 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
                 for impl_item_ref in *impl_item_refs {
                     tcx.collect_impl_item(impl_item_ref);
+                }
+                return;
+            }
+            ir::ItemKind::Extern(foreign_items) => {
+                for item in *foreign_items {
+                    match item.kind {
+                        ir::ForeignItemKind::Fn(sig, generics) => {
+                            let fn_ty = tcx.fn_sig_to_ty(sig);
+                            let ty = tcx.generalize(generics, fn_ty);
+                            tcx.collect_ty(item.id.def, ty);
+                        }
+                    }
                 }
                 return;
             }

@@ -234,7 +234,7 @@ impl<'tcx> AdtTy<'tcx> {
     }
 
     pub fn variant_idx_with_ctor(&self, ctor_id: DefId) -> VariantIdx {
-        self.variants.iter_enumerated().find(|(i, v)| v.ctor == Some(ctor_id)).unwrap().0
+        self.variants.iter_enumerated().find(|(_, v)| v.ctor == Some(ctor_id)).unwrap().0
     }
 
     // find the variant who has the constructor that matches the `ctor_id`

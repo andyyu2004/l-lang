@@ -1,7 +1,6 @@
 //! conversion of ir::Ty to ty::Ty
 
-use ir::{self, Res};
-use lcore::ty::{Generics, List, Subst, Ty, TyParam, TypeError};
+use lcore::ty::{Generics, Subst, Ty, TyParam, TypeError};
 use lcore::TyCtx;
 use span::Span;
 
@@ -13,7 +12,7 @@ pub trait TyConv<'tcx> {
     fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
-            ir::TyKind::Array(ty) => {
+            ir::TyKind::Array(_ty) => {
                 // tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
                 todo!();
             }

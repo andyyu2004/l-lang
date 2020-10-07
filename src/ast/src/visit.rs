@@ -7,6 +7,10 @@ pub trait Visitor<'ast>: Sized {
         walk_item(self, item)
     }
 
+    fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {
+        walk_foreign_item(self, item);
+    }
+
     fn visit_prog(&mut self, prog: &'ast Prog) {
         prog.items.iter().for_each(|item| self.visit_item(item));
     }
@@ -107,6 +111,15 @@ pub trait Visitor<'ast>: Sized {
 
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         walk_assoc_item(self, item)
+    }
+}
+
+fn walk_foreign_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast ForeignItem) {
+    match &item.kind {
+        ForeignItemKind::Fn(sig, generics) => {
+            visitor.visit_fn_sig(sig);
+            visitor.visit_generics(generics);
+        }
     }
 }
 
@@ -275,7 +288,7 @@ pub fn walk_assoc_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Assoc
     let Item { vis, ident, kind, .. } = &item;
     visitor.visit_vis(vis);
     visitor.visit_ident(*ident);
-    match &item.kind {
+    match kind {
         AssocItemKind::Fn(sig, generics, body) => {
             visitor.visit_generics(generics);
             visitor.visit_fn(sig, body.as_deref());
@@ -306,6 +319,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_ty(self_ty);
             items.iter().for_each(|item| visitor.visit_assoc_item(item));
         }
-        ItemKind::Extern(_) => todo!(),
+        ItemKind::Extern(items) => items.iter().for_each(|item| visitor.visit_foreign_item(item)),
     }
 }

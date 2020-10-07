@@ -14,7 +14,6 @@ pub struct CoreArenas<'tcx> {
     dropless: DroplessArena,
     tys: TypedArena<TyS<'tcx>>,
     consts: TypedArena<Const<'tcx>>,
-    substs: TypedArena<SubstsRef<'tcx>>,
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
     prog_marker: PhantomData<ir::IR<'tcx>>,

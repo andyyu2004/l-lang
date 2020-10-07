@@ -2,10 +2,6 @@ use super::AstLoweringCtx;
 use ast::*;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
-    fn lower_stmts(&mut self, stmts: &[Box<Stmt>]) -> &'ir [ir::Stmt<'ir>] {
-        self.arena.alloc_from_iter(stmts.iter().map(|x| self.lower_stmt_inner(x)))
-    }
-
     pub fn lower_stmt(&mut self, stmt: &Stmt) -> &'ir ir::Stmt<'ir> {
         self.arena.alloc(self.lower_stmt_inner(stmt))
     }

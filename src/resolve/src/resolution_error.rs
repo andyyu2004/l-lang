@@ -1,7 +1,5 @@
 use ast::{Ident, Path, PathSegment};
 use ir::DefKind;
-use span::Span;
-use std::fmt::{self, Display, Formatter};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

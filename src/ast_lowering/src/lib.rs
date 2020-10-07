@@ -47,11 +47,6 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.mk_pat(span, ir::PatternKind::Lit(expr))
     }
 
-    fn mk_ty(&mut self, span: Span, kind: ir::TyKind<'ir>) -> &'ir ir::Ty<'ir> {
-        let ty = ir::Ty { id: self.new_id(), span, kind };
-        self.arena.alloc(ty)
-    }
-
     fn mk_pat(&mut self, span: Span, kind: ir::PatternKind<'ir>) -> &'ir ir::Pattern<'ir> {
         self.arena.alloc(ir::Pattern { id: self.new_id(), span, kind })
     }
@@ -132,7 +127,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let def_id = self.resolver.def_id(owner);
         self.item_stack.push((def_id, 0));
         let ret = f(self);
-        let (popped_def_id, popped_counter) = self.item_stack.pop().unwrap();
+        let (popped_def_id, _popped_counter) = self.item_stack.pop().unwrap();
         debug_assert_eq!(popped_def_id, def_id);
         ret
     }

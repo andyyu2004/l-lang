@@ -1,16 +1,14 @@
 use crate::ty::*;
 use crate::*;
 use ast::{Ident, Mutability};
-use error::{LError, LResult};
-use index::{Idx, IndexVec};
+use index::IndexVec;
 use ir::CtorKind;
-use ir::{DefId, FieldIdx, FnVisitor, ItemVisitor, ParamIdx, VariantIdx};
+use ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
 use itertools::Itertools;
 use resolve::Resolutions;
 use rustc_hash::FxHashMap;
 use session::Session;
 use std::cell::RefCell;
-use std::io::Write;
 use std::ops::Deref;
 
 #[derive(Copy, Clone)]

@@ -47,6 +47,7 @@ pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
             ir::ItemKind::Fn(sig, generics, body) =>
                 self.visit_fn(item.id.def, item.ident, sig, generics, body),
             ir::ItemKind::Enum(..) => self.visit_enum(item),
+            ir::ItemKind::Extern(..) => todo!(),
             ir::ItemKind::Struct(..) => {}
             ir::ItemKind::Impl { .. } => {}
         }

@@ -67,6 +67,7 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
                     items.insert(item.id, tir);
                 }
             }
+            ir::ItemKind::Extern(_) => todo!(),
             ir::ItemKind::Struct(..) => {}
             // note that no tir is generated for enum constructors
             // the constructor code is generated at mir level only

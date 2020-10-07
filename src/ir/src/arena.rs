@@ -7,6 +7,7 @@ macro_rules! arena_types {
             [] bodies: ir::Body<$tcx>,
             [] arm: ir::Arm<$tcx>,
             [] block: ir::Block<$tcx>,
+            [] foreign_items: ir::ForeignItem<$tcx>,
             [] generic_args: ir::GenericArgs<$tcx>,
             [] generics: ir::Generics<$tcx>,
             // [] generic_bound: ir::GenericBound<$tcx>,

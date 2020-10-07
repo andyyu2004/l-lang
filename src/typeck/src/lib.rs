@@ -7,8 +7,6 @@ extern crate log;
 
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-pub mod tir;
 
 mod autoderef;
 mod check;

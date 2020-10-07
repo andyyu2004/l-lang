@@ -1,6 +1,5 @@
 use super::AstLoweringCtx;
 use ast::*;
-use span::Span;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     /// the id belongs to the `Expr` or the `Ty` or the `Pat`

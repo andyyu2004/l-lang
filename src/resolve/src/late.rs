@@ -85,11 +85,11 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(generics, trait_path.as_ref(), self_ty, items),
-            ItemKind::Extern(_) => todo!(),
+            ItemKind::Extern(_) => self.with_val_scope(|r| ast::walk_item(r, item)),
         }
     }
 
-    fn with_self_ty<R>(&mut self, ty: &'ast Ty, f: impl FnOnce(&mut Self) -> R) -> R {
+    fn with_self_ty<R>(&mut self, _ty: &'ast Ty, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
             this.scopes[NS::Type].def(Ident::unspanned(sym::USELF), Res::SelfTy);
             f(this)
@@ -251,7 +251,7 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
     fn visit_expr(&mut self, expr: &'ast Expr) {
         match &expr.kind {
             ExprKind::Struct(path, _) | ExprKind::Path(path) => self.resolve_path(path, NS::Value),
-            ExprKind::Closure(name, sig, body) =>
+            ExprKind::Closure(name, _sig, _body) =>
                 if let Some(ident) = name {
                     self.def_val(*ident, Res::Local(expr.id))
                 },
