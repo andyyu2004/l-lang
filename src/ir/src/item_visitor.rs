@@ -1,4 +1,4 @@
-use crate as ir;
+use crate::*;
 use ast::Ident;
 
 /// visits all items in the `IR`
@@ -39,15 +39,31 @@ pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
         body: &'ir ir::Body<'ir>,
     );
 
+    fn visit_foreign_fn(
+        &mut self,
+        def_id: DefId,
+        ident: Ident,
+        sig: &'ir FnSig<'ir>,
+        generics: &'ir Generics<'ir>,
+    ) {
+    }
+
+    fn visit_foreign_item(&mut self, item: &'ir ForeignItem<'ir>) {
+        match item.kind {
+            ForeignItemKind::Fn(sig, generics) =>
+                self.visit_foreign_fn(item.id.def, item.ident, sig, generics),
+        }
+    }
+
     fn visit_enum(&mut self, _item: &'ir ir::Item<'ir>) {
     }
 
-    fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
+    fn visit_item(&mut self, item: &'ir Item<'ir>) {
         match item.kind {
             ir::ItemKind::Fn(sig, generics, body) =>
                 self.visit_fn(item.id.def, item.ident, sig, generics, body),
             ir::ItemKind::Enum(..) => self.visit_enum(item),
-            ir::ItemKind::Extern(..) => todo!(),
+            ItemKind::Extern(items) => items.iter().for_each(|item| self.visit_foreign_item(item)),
             ir::ItemKind::Struct(..) => {}
             ir::ItemKind::Impl { .. } => {}
         }

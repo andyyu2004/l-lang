@@ -43,12 +43,12 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 return;
             }
             ir::ItemKind::Extern(foreign_items) => {
-                for item in *foreign_items {
-                    match item.kind {
+                for foreign_item in *foreign_items {
+                    match foreign_item.kind {
                         ir::ForeignItemKind::Fn(sig, generics) => {
                             let fn_ty = tcx.fn_sig_to_ty(sig);
                             let ty = tcx.generalize(generics, fn_ty);
-                            tcx.collect_ty(item.id.def, ty);
+                            tcx.collect_ty(foreign_item.id.def, ty);
                         }
                     }
                 }
@@ -80,7 +80,6 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
     }
 
     fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
-        let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
         let generics = self.lower_generics(generics);
         self.mk_ty_scheme(generics, ty)
     }
@@ -101,7 +100,7 @@ impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
         let tcx = self.tcx;
         let ty = tcx.collected_ty(variant.adt_def);
         let (forall, ty) = ty.expect_scheme();
-        let (adt_ty, substs) = ty.expect_adt();
+        let (adt_ty, _substs) = ty.expect_adt();
         let ctor_ty = match variant.kind {
             // these two constructor kinds are already of the enum type
             ir::VariantKind::Struct(..) | ir::VariantKind::Unit => ty,

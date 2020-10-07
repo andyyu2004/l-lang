@@ -9,7 +9,8 @@ pub struct Scopes<T> {
 
 impl<T> Default for Scopes<T> {
     fn default() -> Self {
-        Self { scopes: Default::default() }
+        // start with one top-level scope
+        Self { scopes: vec![Default::default()] }
     }
 }
 

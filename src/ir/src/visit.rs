@@ -115,7 +115,7 @@ pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplIt
     }
 }
 
-fn walk_foreign_item<'ir>(v: &mut impl Visitor<'ir>, item: &'ir ForeignItem<'ir>) {
+pub fn walk_foreign_item<'ir>(v: &mut impl Visitor<'ir>, item: &'ir ForeignItem<'ir>) {
     match item.kind {
         ForeignItemKind::Fn(sig, generics) => {
             v.visit_fn_sig(sig);

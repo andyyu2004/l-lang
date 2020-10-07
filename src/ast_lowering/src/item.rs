@@ -54,11 +54,13 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_foreign_item(&mut self, item: &ForeignItem) -> ir::ForeignItem<'ir> {
         let &ForeignItem { span, id, vis, ident, ref kind } = item;
-        let kind = match kind {
-            ForeignItemKind::Fn(sig, generics) =>
-                ir::ForeignItemKind::Fn(self.lower_fn_sig(sig), self.lower_generics(generics)),
-        };
-        ir::ForeignItem { id: self.lower_node_id(id), ident, span, vis, kind }
+        self.with_owner(id, |lctx| {
+            let kind = match kind {
+                ForeignItemKind::Fn(sig, generics) =>
+                    ir::ForeignItemKind::Fn(lctx.lower_fn_sig(sig), lctx.lower_generics(generics)),
+            };
+            ir::ForeignItem { id: lctx.lower_node_id(id), ident, span, vis, kind }
+        })
     }
 
     fn lower_impl(

@@ -114,7 +114,7 @@ pub trait Visitor<'ast>: Sized {
     }
 }
 
-fn walk_foreign_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast ForeignItem) {
+pub fn walk_foreign_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast ForeignItem) {
     match &item.kind {
         ForeignItemKind::Fn(sig, generics) => {
             visitor.visit_fn_sig(sig);

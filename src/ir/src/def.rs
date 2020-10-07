@@ -18,6 +18,15 @@ pub trait HasDefKind {
     fn def_kind(&self) -> DefKind;
 }
 
+impl HasDefKind for ast::ForeignItemKind {
+    fn def_kind(&self) -> DefKind {
+        match self {
+            // does a foreign function require its own defkind?
+            ast::ForeignItemKind::Fn(_, _) => DefKind::Fn,
+        }
+    }
+}
+
 impl HasDefKind for ast::AssocItemKind {
     fn def_kind(&self) -> DefKind {
         match self {

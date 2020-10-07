@@ -29,7 +29,8 @@ enum Expr {
 }
 
 extern {
-    fn rc<T>(t: &T);
+    /* fn rc<T>(t: &T); */
+    fn rc(t: &int) -> bool;
 }
 
 fn main() -> int {
@@ -39,6 +40,8 @@ fn main() -> int {
     /*     box Expr::Int(9), */
     /* ); */
     /* eval(expr); */
+
+    rc(box 5);
 
     let next = box Node {
 	val: 22,

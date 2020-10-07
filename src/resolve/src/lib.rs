@@ -105,7 +105,7 @@ impl<'a> Resolver<'a> {
     /// allocates a `DefId` for some given `NodeId`
     pub fn def(&mut self, _name: Ident, node_id: NodeId) -> DefId {
         let def_id = self.defs.alloc_def_id();
-        self.node_id_to_def_id.insert(node_id, def_id);
+        assert!(self.node_id_to_def_id.insert(node_id, def_id).is_none());
         def_id
     }
 

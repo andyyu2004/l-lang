@@ -9,14 +9,14 @@ pub struct LateResolver<'a, 'r, 'ast> {
     resolver: &'a mut Resolver<'r>,
     scopes: PerNS<Scopes<Res<NodeId>>>,
     current_module: Vec<ModuleId>,
-    pd: &'ast PhantomData<()>,
+    _pd: &'ast PhantomData<()>,
 }
 
 impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self {
             resolver,
-            pd: &PhantomData,
+            _pd: &PhantomData,
             scopes: Default::default(),
             current_module: vec![ROOT_MODULE],
         }
@@ -85,7 +85,14 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(generics, trait_path.as_ref(), self_ty, items),
-            ItemKind::Extern(_) => self.with_val_scope(|r| ast::walk_item(r, item)),
+            ItemKind::Extern(_) => ast::walk_item(self, item),
+        }
+    }
+
+    fn resolve_foreign_item(&mut self, item: &'ast ForeignItem) {
+        match &item.kind {
+            ForeignItemKind::Fn(_, generics) =>
+                self.with_generics(generics, |r| ast::walk_foreign_item(r, item)),
         }
     }
 
@@ -233,6 +240,10 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
 
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolve_item(item)
+    }
+
+    fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {
+        self.resolve_foreign_item(item);
     }
 
     fn visit_let(&mut self, l @ Let { init, .. }: &'ast Let) {
