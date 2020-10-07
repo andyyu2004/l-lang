@@ -1,0 +1,17 @@
+[package]
+name = "parse"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+index = { path = "../index" }
+span = { path = "../span" }
+lex = { path = "../lex" }
+ast = { path = "../ast" }
+session = { path = "../session" }
+error = { path = "../error" }
+thiserror = "1"
+
+[dev-dependencies]
+ldriver = { path = "../ldriver" }

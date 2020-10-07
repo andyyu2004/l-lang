@@ -1,8 +1,10 @@
 [package]
-name = "l"
+name = "span"
 version = "0.1.0"
 authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-ldriver = { path = "../ldriver" }
+arena = { path = "../arena" }
+rustc-hash = "1.1.0"
+

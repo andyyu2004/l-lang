@@ -1,0 +1,13 @@
+[package]
+name = "lex"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+span = { path = "../span" }
+maplit = "1"
+itertools = "0.9"
+lazy_static = "1"
+unicode-xid = "0.2.1"
