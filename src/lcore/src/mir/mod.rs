@@ -12,7 +12,7 @@ use span::Span;
 index::newtype_index! {
     pub struct BlockId {
         DEBUG_FORMAT = "bb{}",
-        const START_BLOCK = 0,
+        const ENTRY_BLOCK = 0,
     }
 }
 
@@ -217,7 +217,7 @@ impl<'tcx> Terminator<'tcx> {
 /// information of the original source code that was converted into the mir
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct SpanInfo {
-    span: Span,
+    pub span: Span,
 }
 
 #[derive(Clone, Debug, PartialEq)]

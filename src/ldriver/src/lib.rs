@@ -14,6 +14,7 @@ use error::{LError, LResult};
 use lcore::{CoreArenas, GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
 use log::LevelFilter;
+use mir::dump_mir;
 use parse::Parser;
 use resolve::Resolutions;
 use resolve::Resolver;
@@ -37,7 +38,7 @@ pub fn main() -> ! {
     let src = std::fs::read_to_string(path).unwrap();
 
     let driver = Driver::new(&src);
-    driver.gen_tir();
+    driver.dump_mir();
 
     // if let Some(path) = matches.value_of("INPUT") {
     //     let src = std::fs::read_to_string(path).unwrap();
@@ -136,13 +137,9 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ret)
     }
 
-    pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-        self.with_tcx(typeck::build_tir)
+    pub fn dump_mir(&'tcx self) -> LResult<()> {
+        self.with_tcx(|tcx| dump_mir(tcx, &mut std::io::stderr()))
     }
-
-    // pub fn dump_mir(&'tcx self) -> LResult<()> {
-    //     self.with_tcx(|tcx| tcx.dump_mir(&mut std::io::stderr()))
-    // }
 
     // pub fn check(&'tcx self) -> LResult<()> {
     //     self.with_tcx(|tcx| tcx.check())
@@ -195,4 +192,10 @@ impl<'tcx> Driver<'tcx> {
     // pub fn has_errors(&self) -> bool {
     //     self.sess.has_errors()
     // }
+}
+
+impl<'tcx> Driver<'tcx> {
+    pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
+        self.with_tcx(mir::build_tir)?
+    }
 }

@@ -48,7 +48,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
     }
 }
 
-trait TcxCollectExt<'tcx> {
+pub trait TcxCollectExt<'tcx> {
     fn collect_item_types(self);
     fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef);
     fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx>;

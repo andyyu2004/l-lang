@@ -1,42 +1,13 @@
 use crate::TyConv;
-use ast::{Ident, Mutability};
-use error::{LError, LResult};
-use infer::TyCtxtInferExt;
-use infer::{InferCtx, InferCtxBuilder};
-use ir::{self, DefId, FnVisitor, ItemVisitor};
+use ast::Mutability;
+use infer::{InferCtx, InferCtxBuilder, TyCtxtInferExt};
+use ir::{self, DefId};
 use lcore::ty::*;
 use lcore::TyCtx;
 use rustc_hash::FxHashMap;
 use span::Span;
 use std::cell::RefCell;
-use std::io::Write;
 use std::ops::Deref;
-use tir::TirCtx;
-
-macro halt_on_error($tcx:expr) {{
-    if $tcx.sess.has_errors() {
-        return Err(LError::ErrorReported);
-    }
-}}
-
-pub fn typeck_fn<'tcx, R>(
-    tcx: TyCtx<'tcx>,
-    def_id: DefId,
-    sig: &ir::FnSig<'tcx>,
-    generics: &ir::Generics<'tcx>,
-    body: &'tcx ir::Body<'tcx>,
-    f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
-) -> LResult<R> {
-    InheritedCtx::build(tcx, def_id).enter(|inherited| {
-        let fcx = inherited.check_fn_item(def_id, sig, generics, body);
-        // don't bother continuing if typeck failed
-        // note that the failure to typeck could also come from resolution errors
-        halt_on_error!(tcx);
-        let tables = fcx.resolve_inference_variables(body);
-        let lctx = TirCtx::new(&inherited, tables);
-        Ok(f(lctx))
-    })
-}
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a InheritedCtx<'a, 'tcx>,
@@ -162,29 +133,5 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     pub fn local_ty(&self, id: ir::Id) -> LocalTy<'tcx> {
         info!("lookup ty for local {:?}", id);
         self.locals.borrow().get(&id).cloned().expect("no entry for local variable")
-    }
-}
-pub fn dump_mir<'tcx>(tcx: TyCtx<'tcx>, writer: &mut dyn Write) {
-    MirDump { writer, tcx }.visit_ir(tcx.ir);
-}
-
-struct MirDump<'a, 'tcx> {
-    tcx: TyCtx<'tcx>,
-    writer: &'a mut dyn Write,
-}
-
-impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
-    fn visit_fn(
-        &mut self,
-        def_id: DefId,
-        _ident: Ident,
-        sig: &'tcx ir::FnSig<'tcx>,
-        generics: &'tcx ir::Generics<'tcx>,
-        body: &'tcx ir::Body<'tcx>,
-    ) {
-        let _ = typeck_fn(self.tcx, def_id, sig, generics, body, |mut lctx| {
-            let mir = lctx.build_mir(body);
-            write!(self.writer, "\n{}", mir).unwrap();
-        });
     }
 }

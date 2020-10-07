@@ -11,6 +11,7 @@ parse = { path = "../parse" }
 ast = { path = "../ast" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }
+mir = { path = "../mir" }
 lcore = { path = "../lcore" }
 ast_lowering = { path = "../ast_lowering" }
 session = { path = "../session" }

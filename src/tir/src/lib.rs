@@ -18,7 +18,6 @@ mod visitor;
 
 pub use expr::{Expr, ExprKind};
 pub use fmt::Formatter;
-pub use ir_lowering::TirCtx;
 pub use item::{Item, ItemKind};
 pub use map::Map;
 pub use pattern::{FieldPat, Pattern, PatternKind};
