@@ -195,10 +195,9 @@ impl<'tcx> Driver<'tcx> {
     // //     Ok(value)
     // // }
 
-    // #[cfg(test)]
-    // pub fn has_errors(&self) -> bool {
-    //     self.sess.has_errors()
-    // }
+    pub fn has_errors(&self) -> bool {
+        self.sess.has_errors()
+    }
 }
 
 impl<'tcx> Driver<'tcx> {

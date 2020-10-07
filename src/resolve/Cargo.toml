@@ -17,3 +17,6 @@ ir = { path = "../ir" }
 thiserror = "1"
 rustc-hash = "1"
 log = "0.4.11"
+
+[dev-dependencies]
+ldriver = { path = "../ldriver" }

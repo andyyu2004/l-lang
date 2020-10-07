@@ -29,7 +29,7 @@ pub struct AstLoweringCtx<'a, 'ir> {
     entry_id: Option<DefId>,
     /// this counter counts backwards as to be sure not to not
     /// overlap with the ids that the parser assigned
-    node_id_counter: Cell<usize>,
+    new_node_id_counter: Cell<usize>,
 }
 
 /// methods for constructing `ir` for desugaring purposes
@@ -80,7 +80,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             items: Default::default(),
             impl_items: Default::default(),
             node_id_to_id: Default::default(),
-            node_id_counter: Cell::new(u32::MAX as usize - 1),
+            new_node_id_counter: Cell::new(0xffff_ff00),
         }
     }
 
@@ -142,8 +142,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn mk_node_id(&self) -> NodeId {
-        let c = self.node_id_counter.get();
-        self.node_id_counter.set(c - 1);
+        let c = self.new_node_id_counter.get();
+        self.new_node_id_counter.set(c - 1);
         NodeId::new(c)
     }
 

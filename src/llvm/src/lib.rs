@@ -1,9 +1,13 @@
+#![feature(decl_macro)]
+
 mod codegen;
 mod codegen_ctx;
 mod fcx;
 mod lltypes;
 mod llvm_error;
 mod native;
+
+#[cfg(test)]
 mod tests;
 
 use codegen::*;

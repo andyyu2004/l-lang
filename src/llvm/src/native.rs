@@ -8,25 +8,25 @@ use rustc_hash::FxHashMap;
 pub struct NativeFunctions<'tcx> {
     pub rc_retain: FxHashMap<(), ()>,
     pub rc_release: FunctionValue<'tcx>,
-    pub print_int: FunctionValue<'tcx>,
+    // pub print_int: FunctionValue<'tcx>,
     pub abort: FunctionValue<'tcx>,
     pub exit: FunctionValue<'tcx>,
     pub printf: FunctionValue<'tcx>,
 }
 
-#[no_mangle]
-pub extern "C" fn iprintln(i: i32) {
-    println!("{}", i);
-}
+// #[no_mangle]
+// pub extern "C" fn iprintln(i: i32) {
+//     println!("{}", i);
+// }
 
 impl<'tcx> NativeFunctions<'tcx> {
     pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
         let rc_release = Self::build_rc_release(llctx, module);
-        let iprintln = Self::build_iprintln(llctx, module);
+        // let iprintln = Self::build_iprintln(llctx, module);
         let printf = Self::build_printf(llctx, module);
         let abort = Self::build_abort(llctx, module);
         let exit = Self::build_exit(llctx, module);
-        Self { rc_retain: Default::default(), rc_release, print_int: iprintln, abort, printf, exit }
+        Self { rc_retain: Default::default(), rc_release, abort, printf, exit }
     }
 
     fn build_printf(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {

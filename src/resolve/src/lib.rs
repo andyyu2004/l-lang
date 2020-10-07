@@ -1,4 +1,8 @@
 #![feature(bindings_after_at)]
+#![feature(decl_macro)]
+
+#[cfg(test)]
+mod tests;
 
 mod def_visitor;
 mod late;
@@ -99,7 +103,7 @@ impl<'a> Resolver<'a> {
     }
 
     /// allocates a `DefId` for some given `NodeId`
-    pub fn def(&mut self, name: Ident, node_id: NodeId) -> DefId {
+    pub fn def(&mut self, _name: Ident, node_id: NodeId) -> DefId {
         let def_id = self.defs.alloc_def_id();
         self.node_id_to_def_id.insert(node_id, def_id);
         def_id
