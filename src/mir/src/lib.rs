@@ -7,11 +7,12 @@ mod build;
 #[macro_use]
 extern crate log;
 
-pub use build::{build_fn, MirCtx};
+pub use build::{build_enum_ctors, build_fn, MirCtx};
 
 use ast::Ident;
 use error::{LError, LResult};
 use ir::{DefId, FnVisitor, ItemVisitor};
+use lcore::mir::Mir;
 use lcore::TyCtx;
 use std::collections::BTreeMap;
 use std::io::Write;
@@ -40,6 +41,16 @@ pub fn with_mir_ctx<'tcx, R>(
         let lctx = MirCtx::new(&inherited, tables);
         Ok(f(lctx))
     })
+}
+
+pub fn build_mir<'tcx>(
+    tcx: TyCtx<'tcx>,
+    def_id: DefId,
+    sig: &ir::FnSig<'tcx>,
+    generics: &ir::Generics<'tcx>,
+    body: &'tcx ir::Body<'tcx>,
+) -> LResult<&'tcx Mir<'tcx>> {
+    with_mir_ctx(tcx, def_id, sig, generics, body, |mut lctx| lctx.build_mir(body))
 }
 
 pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {

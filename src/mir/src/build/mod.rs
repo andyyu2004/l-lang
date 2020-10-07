@@ -31,7 +31,7 @@ pub fn build_fn<'a, 'tcx>(ctx: &'a MirCtx<'a, 'tcx>, body: tir::Body<'tcx>) -> M
     mir
 }
 
-/// a bit of a hacky way to generate the mir for variant constructors
+// a bit of a hacky way to generate the mir for variant constructors
 /// `ty` should be the type of the enum adt
 pub fn build_enum_ctors<'tcx>(
     tcx: TyCtx<'tcx>,

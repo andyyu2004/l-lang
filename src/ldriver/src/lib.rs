@@ -11,8 +11,12 @@ use ast::P;
 use ast_lowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
+use inkwell::context::Context as LLVMCtx;
+use inkwell::values::FunctionValue;
+use inkwell::OptimizationLevel;
 use lcore::{CoreArenas, GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
+use llvm::CodegenCtx;
 use log::LevelFilter;
 use mir::dump_mir;
 use parse::Parser;
@@ -38,7 +42,10 @@ pub fn main() -> ! {
     let src = std::fs::read_to_string(path).unwrap();
 
     let driver = Driver::new(&src);
-    driver.dump_mir();
+    match driver.llvm_exec() {
+        Ok(i) => println!("{}", i),
+        Err(..) => std::process::exit(1),
+    }
 
     // if let Some(path) = matches.value_of("INPUT") {
     //     let src = std::fs::read_to_string(path).unwrap();
@@ -145,24 +152,24 @@ impl<'tcx> Driver<'tcx> {
     //     self.with_tcx(|tcx| tcx.check())
     // }
 
-    // pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
-    //     let llvm_ctx = LLVMCtx::create();
-    //     self.with_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))
-    // }
+    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
+        let llvm_ctx = LLVMCtx::create();
+        self.with_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))
+    }
 
-    // pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
-    //     let mut cctx = self.create_codegen_ctx()?;
-    //     let main_fn = cctx.codegen();
-    //     check_errors!(self, (cctx, main_fn.unwrap()))
-    // }
+    pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
+        let mut cctx = self.create_codegen_ctx()?;
+        let main_fn = cctx.codegen();
+        check_errors!(self, (cctx, main_fn.unwrap()))
+    }
 
-    // pub fn llvm_exec(&'tcx self) -> LResult<i32> {
-    //     let (cctx, main_fn) = self.llvm_compile()?;
-    //     dbg!("llvm codegen complete");
-    //     let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::Default).unwrap();
-    //     let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
-    //     Ok(val)
-    // }
+    pub fn llvm_exec(&'tcx self) -> LResult<i32> {
+        let (cctx, main_fn) = self.llvm_compile()?;
+        dbg!("llvm codegen complete");
+        let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::Default).unwrap();
+        let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
+        Ok(val)
+    }
 
     // pub fn llvm_jit(&'tcx self) -> LResult<i32> {
     //     let cctx = self.create_codegen_ctx()?;

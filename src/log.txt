@@ -1,6 +1,6 @@
-[00:00:00.001] (7ff8e6d05000) INFO   resolving node NodeId(1) to PrimTy(Int)
-[00:00:00.001] (7ff8e6d05000) INFO   resolving node NodeId(10) to Local(NodeId(5))
-[00:00:00.001] (7ff8e6d05000) INFO   IR {
+[00:00:00.001] (7fafc8589940) INFO   resolving node NodeId(1) to PrimTy(Int)
+[00:00:00.001] (7fafc8589940) INFO   resolving node NodeId(10) to Local(NodeId(5))
+[00:00:00.001] (7fafc8589940) INFO   IR {
     entry_id: Some(
         0,
     ),
@@ -185,22 +185,22 @@
     },
     impl_items: {},
 }
-[00:00:00.005] (7ff8e6d05000) INFO   collect item: TyS {
+[00:00:00.005] (7fafc8589940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.005] (7ff8e6d05000) INFO   fcx write ty 0.5 : int
-[00:00:00.005] (7ff8e6d05000) INFO   deflocal 0.4 : int
-[00:00:00.005] (7ff8e6d05000) INFO   fcx write ty 0.4 : int
-[00:00:00.005] (7ff8e6d05000) INFO   lookup ty for local 0.4
-[00:00:00.005] (7ff8e6d05000) INFO   fcx write ty 0.8 : int
-[00:00:00.005] (7ff8e6d05000) INFO   fcx write ty 0.11 : int
-[00:00:00.005] (7ff8e6d05000) INFO   fcx write ty 0.11 : int
-[00:00:00.005] (7ff8e6d05000) INFO   fcx query node type for 0.11
-[00:00:00.006] (7ff8e6d05000) INFO   fcx query node type for 0.5
-[00:00:00.006] (7ff8e6d05000) INFO   fcx query node type for 0.4
-[00:00:00.006] (7ff8e6d05000) INFO   fcx query node type for 0.8
-[00:00:00.006] (7ff8e6d05000) INFO   irloweringctx: query typeof 0.11
-[00:00:00.006] (7ff8e6d05000) INFO   irloweringctx: query typeof 0.4
-[00:00:00.006] (7ff8e6d05000) INFO   irloweringctx: query typeof 0.5
-[00:00:00.006] (7ff8e6d05000) INFO   irloweringctx: query typeof 0.8
+[00:00:00.006] (7fafc8589940) INFO   fcx write ty 0.5 : int
+[00:00:00.006] (7fafc8589940) INFO   deflocal 0.4 : int
+[00:00:00.006] (7fafc8589940) INFO   fcx write ty 0.4 : int
+[00:00:00.006] (7fafc8589940) INFO   lookup ty for local 0.4
+[00:00:00.006] (7fafc8589940) INFO   fcx write ty 0.8 : int
+[00:00:00.006] (7fafc8589940) INFO   fcx write ty 0.11 : int
+[00:00:00.006] (7fafc8589940) INFO   fcx write ty 0.11 : int
+[00:00:00.006] (7fafc8589940) INFO   fcx query node type for 0.11
+[00:00:00.006] (7fafc8589940) INFO   fcx query node type for 0.5
+[00:00:00.006] (7fafc8589940) INFO   fcx query node type for 0.4
+[00:00:00.006] (7fafc8589940) INFO   fcx query node type for 0.8
+[00:00:00.006] (7fafc8589940) INFO   irloweringctx: query typeof 0.11
+[00:00:00.006] (7fafc8589940) INFO   irloweringctx: query typeof 0.4
+[00:00:00.006] (7fafc8589940) INFO   irloweringctx: query typeof 0.5
+[00:00:00.006] (7fafc8589940) INFO   irloweringctx: query typeof 0.8
