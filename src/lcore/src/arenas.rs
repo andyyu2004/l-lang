@@ -15,7 +15,6 @@ pub struct CoreArenas<'tcx> {
     tys: TypedArena<TyS<'tcx>>,
     consts: TypedArena<Const<'tcx>>,
     substs: TypedArena<SubstsRef<'tcx>>,
-    tir: DroplessArena,
     // phantom data for each type that may be allocated in drop
     def_marker: PhantomData<Definitions>,
     prog_marker: PhantomData<ir::IR<'tcx>>,
@@ -51,16 +50,5 @@ impl<'tcx> CoreArenas<'tcx> {
 
     pub fn alloc_const(&'tcx self, c: Const<'tcx>) -> &'tcx Const<'tcx> {
         self.consts.alloc(c)
-    }
-
-    pub fn alloc_tir<T>(&self, tir: T) -> &T {
-        self.tir.alloc(tir)
-    }
-
-    pub fn alloc_tir_iter<I, T>(&self, iter: I) -> &[T]
-    where
-        I: IntoIterator<Item = T>,
-    {
-        self.tir.alloc_from_iter(iter)
     }
 }

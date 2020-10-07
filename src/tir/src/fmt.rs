@@ -68,8 +68,8 @@ where
     }
 
     pub fn fmt_item(&mut self, item: &tir::Item) -> fmt::Result {
-        match item.kind {
-            tir::ItemKind::Fn(ty, generics, body) => {
+        match &item.kind {
+            tir::ItemKind::Fn(ty, _generics, body) => {
                 let params = body.params.iter().map(|p| format!("{}", p.pat));
                 indentln!(self, "fn {} :: {}", item.ident, ty)?;
                 indentln!(
@@ -86,21 +86,21 @@ where
     }
 
     pub fn fmt_stmt(&mut self, stmt: &tir::Stmt) -> fmt::Result {
-        match stmt.kind {
+        match &stmt.kind {
             tir::StmtKind::Let(l) => indent!(self, "{}", l),
             tir::StmtKind::Expr(expr) => indent!(self, "{}", expr),
         }
     }
 
     pub fn fmt_expr(&mut self, expr: &tir::Expr) -> fmt::Result {
-        match expr.kind {
+        match &expr.kind {
             tir::ExprKind::Const(c) => indent!(self, "{}", c),
             tir::ExprKind::Bin(op, l, r) => indent!(self, "({} {} {})", op, l, r),
             tir::ExprKind::Unary(op, expr) => indent!(self, "({}{})", op, expr),
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
-            tir::ExprKind::ItemRef(def_id) => indent!(self, "{}", expr.span.to_string()),
+            tir::ExprKind::ItemRef(_def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),
             tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),
@@ -110,7 +110,7 @@ where
                 None => indent!(self, "return"),
             },
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
-            tir::ExprKind::Closure { upvars, body } =>
+            tir::ExprKind::Closure { upvars: _, body } =>
                 indent!(self, "(λ({}) {})", util::join2(body.params.iter(), ","), body),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
             tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
@@ -142,10 +142,10 @@ where
     fn fmt_block(&mut self, block: &tir::Block) -> fmt::Result {
         indentln!(self, "{{")?;
         self.with_indent(INDENT, |this| {
-            for stmt in block.stmts {
+            for stmt in &block.stmts {
                 indentln!(this, "{};", stmt)?;
             }
-            if let Some(expr) = block.expr {
+            if let Some(expr) = &block.expr {
                 indent!(this, "{}", expr)?;
             }
             Ok(())

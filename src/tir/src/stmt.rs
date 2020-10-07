@@ -18,6 +18,6 @@ impl<'tcx> Display for Stmt<'tcx> {
 
 #[derive(Debug)]
 pub enum StmtKind<'tcx> {
-    Let(&'tcx tir::Let<'tcx>),
-    Expr(&'tcx tir::Expr<'tcx>),
+    Let(tir::Let<'tcx>),
+    Expr(Box<tir::Expr<'tcx>>),
 }

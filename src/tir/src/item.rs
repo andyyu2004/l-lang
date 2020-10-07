@@ -13,7 +13,7 @@ pub struct Item<'tcx> {
 
 #[derive(Debug)]
 pub enum ItemKind<'tcx> {
-    Fn(Ty<'tcx>, &'tcx tir::Generics<'tcx>, &'tcx tir::Body<'tcx>),
+    Fn(Ty<'tcx>, tir::Generics<'tcx>, Box<tir::Body<'tcx>>),
 }
 
 impl<'tcx> Display for Item<'tcx> {

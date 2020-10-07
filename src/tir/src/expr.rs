@@ -15,40 +15,40 @@ pub struct Expr<'tcx> {
 #[derive(Debug)]
 pub enum ExprKind<'tcx> {
     Const(&'tcx Const<'tcx>),
-    Bin(ast::BinOp, &'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
-    Unary(ast::UnaryOp, &'tcx tir::Expr<'tcx>),
-    Block(&'tcx tir::Block<'tcx>),
+    Bin(ast::BinOp, Box<tir::Expr<'tcx>>, Box<tir::Expr<'tcx>>),
+    Unary(ast::UnaryOp, Box<tir::Expr<'tcx>>),
+    Block(Box<tir::Block<'tcx>>),
     /// reference to a local variable
     /// (reference not in the & sense, but just a usage of the variable)
     VarRef(ir::Id),
     /// reference to an item such as a function item or a constant
     ItemRef(DefId),
     /// (x, y)
-    Tuple(&'tcx [tir::Expr<'tcx>]),
+    Tuple(Vec<tir::Expr<'tcx>>),
     /// f(x)
-    Call(&'tcx tir::Expr<'tcx>, &'tcx [tir::Expr<'tcx>]),
-    Match(&'tcx tir::Expr<'tcx>, &'tcx [tir::Arm<'tcx>]),
+    Call(Box<tir::Expr<'tcx>>, Vec<tir::Expr<'tcx>>),
+    Match(Box<tir::Expr<'tcx>>, Vec<tir::Arm<'tcx>>),
     /// x = y
-    Assign(&'tcx tir::Expr<'tcx>, &'tcx tir::Expr<'tcx>),
+    Assign(Box<tir::Expr<'tcx>>, Box<tir::Expr<'tcx>>),
     /// s.x
-    Field(&'tcx tir::Expr<'tcx>, FieldIdx),
+    Field(Box<tir::Expr<'tcx>>, FieldIdx),
     /// return x
-    Ret(Option<&'tcx tir::Expr<'tcx>>),
+    Ret(Option<Box<tir::Expr<'tcx>>>),
     /// &x
-    Ref(&'tcx tir::Expr<'tcx>),
+    Ref(Box<tir::Expr<'tcx>>),
     /// *x
-    Deref(&'tcx tir::Expr<'tcx>),
+    Deref(Box<tir::Expr<'tcx>>),
     /// box x
-    Box(&'tcx tir::Expr<'tcx>),
+    Box(Box<tir::Expr<'tcx>>),
     Closure {
-        upvars: &'tcx [tir::Expr<'tcx>],
-        body: &'tcx tir::Body<'tcx>,
+        body: Box<tir::Body<'tcx>>,
+        upvars: Vec<tir::Expr<'tcx>>,
     },
     Adt {
         adt: &'tcx AdtTy<'tcx>,
         variant_idx: VariantIdx,
         substs: SubstsRef<'tcx>,
-        fields: &'tcx [tir::Field<'tcx>],
+        fields: Vec<tir::Field<'tcx>>,
     },
 }
 

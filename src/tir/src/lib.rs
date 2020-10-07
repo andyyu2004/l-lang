@@ -1,6 +1,7 @@
 //! typed ir
 
 #![feature(split_inclusive)]
+#![feature(box_syntax, box_patterns)]
 
 #[macro_use]
 extern crate log;
@@ -32,6 +33,43 @@ use lcore::ty::{List, SubstsRef, Ty};
 use span::Span;
 use std::marker::PhantomData;
 
+impl<'tcx> std::fmt::Display for Arm<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} => {}", self.pat, self.body)
+    }
+}
+
+impl<'tcx> std::fmt::Display for Body<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.expr)
+    }
+}
+
+impl<'tcx> std::fmt::Display for Param<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.pat)
+    }
+}
+
+impl<'tcx> std::fmt::Display for Block<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{{")?;
+        for stmt in &self.stmts {
+            writeln!(f, "\t{};", stmt)?;
+        }
+        self.expr.as_ref().map(|expr| writeln!(f, "\t{}", expr));
+        write!(f, "}}")
+    }
+}
+
+impl<'tcx> std::fmt::Display for Let<'tcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "let {}", self.pat)?;
+        self.init.as_ref().map(|init| write!(f, " = {}", init));
+        Ok(())
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 pub struct BodyId(ir::Id);
 
@@ -46,54 +84,36 @@ pub struct Generics<'tcx> {
 pub struct Field<'tcx> {
     pub index: FieldIdx,
     pub ident: Ident,
-    pub expr: &'tcx tir::Expr<'tcx>,
+    pub expr: Box<tir::Expr<'tcx>>,
 }
 
 #[derive(Debug)]
 pub struct Arm<'tcx> {
     pub id: ir::Id,
     pub span: Span,
-    pub pat: &'tcx tir::Pattern<'tcx>,
-    pub guard: Option<&'tcx tir::Expr<'tcx>>,
-    pub body: &'tcx tir::Expr<'tcx>,
-}
-
-impl<'tcx> std::fmt::Display for Arm<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} => {}", self.pat, self.body)
-    }
+    pub pat: Box<tir::Pattern<'tcx>>,
+    pub guard: Option<Box<tir::Expr<'tcx>>>,
+    pub body: Box<tir::Expr<'tcx>>,
 }
 
 #[derive(Debug)]
 pub struct Body<'tcx> {
-    pub params: &'tcx [tir::Param<'tcx>],
-    pub expr: &'tcx tir::Expr<'tcx>,
-}
-
-impl<'tcx> std::fmt::Display for Body<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.expr)
-    }
+    pub params: Vec<tir::Param<'tcx>>,
+    pub expr: Box<tir::Expr<'tcx>>,
 }
 
 #[derive(Debug)]
 pub struct Path<'tcx> {
     pub span: Span,
     pub res: Res,
-    pub segments: &'tcx [PathSegment<'tcx>],
+    pub segments: Vec<PathSegment<'tcx>>,
 }
 
 #[derive(Debug)]
 pub struct Param<'tcx> {
     pub id: ir::Id,
     pub span: Span,
-    pub pat: &'tcx tir::Pattern<'tcx>,
-}
-
-impl<'tcx> std::fmt::Display for Param<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.pat)
-    }
+    pub pat: Box<tir::Pattern<'tcx>>,
 }
 
 #[derive(Debug)]
@@ -105,32 +125,13 @@ pub struct PathSegment<'tcx> {
 #[derive(Debug)]
 pub struct Block<'tcx> {
     pub id: Id,
-    pub stmts: &'tcx [tir::Stmt<'tcx>],
-    pub expr: Option<&'tcx tir::Expr<'tcx>>,
-}
-
-impl<'tcx> std::fmt::Display for Block<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{{")?;
-        for stmt in self.stmts {
-            writeln!(f, "\t{};", stmt)?;
-        }
-        self.expr.map(|expr| writeln!(f, "\t{}", expr));
-        write!(f, "}}")
-    }
+    pub stmts: Vec<tir::Stmt<'tcx>>,
+    pub expr: Option<Box<tir::Expr<'tcx>>>,
 }
 
 #[derive(Debug)]
 pub struct Let<'tcx> {
     pub id: Id,
-    pub pat: &'tcx tir::Pattern<'tcx>,
-    pub init: Option<&'tcx tir::Expr<'tcx>>,
-}
-
-impl<'tcx> std::fmt::Display for Let<'tcx> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "let {}", self.pat)?;
-        self.init.map(|init| write!(f, " = {}", init));
-        Ok(())
-    }
+    pub pat: Box<tir::Pattern<'tcx>>,
+    pub init: Option<Box<tir::Expr<'tcx>>>,
 }

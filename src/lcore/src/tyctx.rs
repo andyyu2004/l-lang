@@ -40,17 +40,6 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_iter(iter)
     }
 
-    pub fn alloc_tir<T>(self, tir: T) -> &'tcx T {
-        self.interners.arena.alloc_tir(tir)
-    }
-
-    pub fn alloc_tir_iter<I, T>(self, iter: I) -> &'tcx [T]
-    where
-        I: IntoIterator<Item = T>,
-    {
-        self.interners.arena.alloc_tir_iter(iter)
-    }
-
     pub fn mk_struct_ty(
         self,
         def_id: DefId,

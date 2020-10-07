@@ -9,7 +9,7 @@ use util;
 #[derive(Debug)]
 pub struct FieldPat<'tcx> {
     pub field: FieldIdx,
-    pub pat: &'tcx Pattern<'tcx>,
+    pub pat: Box<Pattern<'tcx>>,
 }
 
 impl<'tcx> Display for FieldPat<'tcx> {
@@ -28,7 +28,7 @@ pub struct Pattern<'tcx> {
 
 impl<'tcx> Pattern<'tcx> {
     pub fn is_refutable(&self) -> bool {
-        match self.kind {
+        match &self.kind {
             PatternKind::Wildcard | PatternKind::Binding(..) => false,
             PatternKind::Field(fs) => fs.iter().any(|f| f.pat.is_refutable()),
             PatternKind::Lit(..) => true,
@@ -39,7 +39,7 @@ impl<'tcx> Pattern<'tcx> {
 
 impl<'tcx> Display for Pattern<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.kind {
+        match &self.kind {
             // we print out the `local_id` instead of the ident symbol number
             // as the identifier is referred to by id instead of name in the tir
             // in particular ExprKind::VarRef does not have access to the symbol only the `ir::Id`
@@ -55,7 +55,7 @@ impl<'tcx> Display for Pattern<'tcx> {
                 f,
                 "{}::{}<{}>({})",
                 adt_ty.ident,
-                adt_ty.variants[variant_idx].ident,
+                adt_ty.variants[*variant_idx].ident,
                 substs,
                 util::join2(pats.iter(), ","),
             ),
@@ -67,13 +67,13 @@ impl<'tcx> Display for Pattern<'tcx> {
 #[derive(Debug)]
 pub enum PatternKind<'tcx> {
     Wildcard,
-    Binding(Mutability, Ident, Option<&'tcx tir::Pattern<'tcx>>),
+    Binding(Mutability, Ident, Option<Box<tir::Pattern<'tcx>>>),
     /// generalization of tuple patterns
     /// used to match tuples, and single variant adts (i.e. structs)
     /// `(...)`, `Foo(...)`, `Foo{...}`, or `Foo`, where `Foo` is a variant name from an ADT with
     /// a single variant.
-    Field(&'tcx [tir::FieldPat<'tcx>]),
-    Lit(&'tcx tir::Expr<'tcx>),
+    Field(Vec<tir::FieldPat<'tcx>>),
+    Lit(Box<tir::Expr<'tcx>>),
     /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
-    Variant(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>, VariantIdx, &'tcx [tir::Pattern<'tcx>]),
+    Variant(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>, VariantIdx, Vec<tir::Pattern<'tcx>>),
 }
