@@ -37,6 +37,7 @@ pub fn main() -> ! {
     let src = std::fs::read_to_string(path).unwrap();
 
     let driver = Driver::new(&src);
+    driver.gen_tir();
 
     // if let Some(path) = matches.value_of("INPUT") {
     //     let src = std::fs::read_to_string(path).unwrap();
@@ -96,7 +97,6 @@ impl<'tcx> Driver<'tcx> {
     pub fn lex(&self) -> LResult<Vec<Tok>> {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex();
-        dbg!(&tokens);
         Ok(tokens)
     }
 
@@ -123,7 +123,6 @@ impl<'tcx> Driver<'tcx> {
         let ir = lctx.lower_prog(&ast);
         let resolutions = resolver.complete();
         info!("{:#?}", ir);
-        dbg!(&ir);
         Ok((ir, resolutions))
     }
 
@@ -133,16 +132,13 @@ impl<'tcx> Driver<'tcx> {
         let gcx = self
             .global_ctx
             .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
-        let ret = gcx.enter_tcx(|tcx| {
-            // tcx.run_typeck();
-            f(tcx)
-        });
+        let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }
 
-    // pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-    // self.with_tcx(|tcx| tcx.build_tir())
-    // }
+    pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
+        self.with_tcx(typeck::build_tir)
+    }
 
     // pub fn dump_mir(&'tcx self) -> LResult<()> {
     //     self.with_tcx(|tcx| tcx.dump_mir(&mut std::io::stderr()))

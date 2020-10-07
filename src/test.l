@@ -1,3 +1,5 @@
 fn main() -> int {
-    5
+    let f = fn(x) => x;
+    f(3)
 }
+

@@ -24,15 +24,13 @@ use std::error::Error;
 use std::ops::Deref;
 
 pub struct InferCtxBuilder<'tcx> {
-    /// `DefId` of the item being typechecked
-    def_id: DefId,
     tcx: TyCtx<'tcx>,
     tables: RefCell<TypeckTables<'tcx>>,
 }
 
 impl<'tcx> InferCtxBuilder<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, def_id: DefId) -> Self {
-        Self { tcx, def_id, tables: RefCell::new(TypeckTables::new(def_id)) }
+        Self { tcx, tables: RefCell::new(TypeckTables::new(def_id)) }
     }
 
     pub fn enter<R>(&mut self, f: impl for<'a> FnOnce(InferCtx<'a, 'tcx>) -> R) -> R {
@@ -55,7 +53,7 @@ impl<'tcx> InferCtxInner<'tcx> {
 pub struct InferCtx<'a, 'tcx> {
     pub tcx: TyCtx<'tcx>,
     pub inner: RefCell<InferCtxInner<'tcx>>,
-    crate tables: &'a RefCell<TypeckTables<'tcx>>,
+    pub tables: &'a RefCell<TypeckTables<'tcx>>,
     has_error: Cell<bool>,
 }
 

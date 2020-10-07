@@ -3,6 +3,7 @@ use crate::*;
 use ast::{Ident, Mutability};
 use error::{LError, LResult};
 use index::{Idx, IndexVec};
+use ir::CtorKind;
 use ir::{DefId, FieldIdx, FnVisitor, ItemVisitor, ParamIdx, VariantIdx};
 use itertools::Itertools;
 use resolve::Resolutions;
@@ -284,44 +285,37 @@ impl<'tcx> TyCtx<'tcx> {
     // }
 }
 
+impl<'tcx> TyCtx<'tcx> {
+    /// write collected ty to tcx map
+    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
+        self.collected_tys.borrow_mut().insert(def, ty);
+        ty
+    }
+
+    pub fn variant_ty(
+        self,
+        ident: Ident,
+        ctor: Option<DefId>,
+        variant_kind: &ir::VariantKind<'tcx>,
+    ) -> VariantTy<'tcx> {
+        let mut seen = FxHashMap::default();
+        // TODO check the number of generic params are correct
+        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
+            if let Some(span) = seen.insert(f.ident, f.span) {
+                self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
+            }
+            FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
+        }));
+        VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
+    }
+}
+
 /// debug
 impl<'tcx> TyCtx<'tcx> {
     pub fn dump_collected_tys(self) {
         println!("type collection results");
         self.collected_tys.borrow().iter().for_each(|(k, v)| println!("{:?}: {}", k, v));
     }
-
-    // ir -> tir
-    // this isn't actually used in the compiler pipeline anymore, its mostly for testing and debugging
-    // some older tests rely on this
-    // fn build_tir_inner(self, prog: &ir::IR<'tcx>) -> tir::Prog<'tcx> {
-    //     let mut items = BTreeMap::new();
-
-    //     for item in prog.items.values() {
-    //         match item.kind {
-    //             ir::ItemKind::Fn(sig, generics, body) => {
-    //                 if let Ok(tir) = self.typeck_fn(item.id.def, sig, generics, body, |mut lctx| {
-    //                     lctx.lower_item_tir(item)
-    //                 }) {
-    //                     items.insert(item.id, tir);
-    //                 }
-    //             }
-    //             ir::ItemKind::Struct(..) => {}
-    //             // note that no tir is generated for enum constructors
-    //             // the constructor code is generated at mir level only
-    //             ir::ItemKind::Enum(..) => {}
-    //             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } =>
-    //                 unimplemented!(),
-    //         }
-    //     }
-    //     tir::Prog { items }
-    // }
-
-    // top level entrace to typechecking and lowering to tir
-    // pub fn build_tir(self) -> tir::Prog<'tcx> {
-    //     self.collect(self.ir);
-    //     self.build_tir_inner(self.ir)
-    // }
 }
 
 pub struct CommonTypes<'tcx> {

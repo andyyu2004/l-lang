@@ -1,13 +1,13 @@
 use crate::TyConv;
 use ast::{Ident, Mutability};
-use error::{DiagnosticBuilder, LError, LResult};
+use error::{LError, LResult};
 use infer::TyCtxtInferExt;
 use infer::{InferCtx, InferCtxBuilder};
 use ir::{self, DefId, FnVisitor, ItemVisitor};
 use lcore::ty::*;
 use lcore::TyCtx;
 use rustc_hash::FxHashMap;
-use span::{sym, Span};
+use span::Span;
 use std::cell::RefCell;
 use std::io::Write;
 use std::ops::Deref;
@@ -32,16 +32,14 @@ pub fn typeck_fn<'tcx, R>(
         // don't bother continuing if typeck failed
         // note that the failure to typeck could also come from resolution errors
         halt_on_error!(tcx);
-        todo!()
-        // let tables = fcx.resolve_inference_variables(body);
-        // let lctx = TirCtx::new(&inherited, tables);
-        // Ok(f(lctx))
+        let tables = fcx.resolve_inference_variables(body);
+        let lctx = TirCtx::new(&inherited, tables);
+        Ok(f(lctx))
     })
 }
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a InheritedCtx<'a, 'tcx>,
-    pub(super) fn_ty: Ty<'tcx>,
     pub(super) param_tys: SubstsRef<'tcx>,
     pub(super) ret_ty: Ty<'tcx>,
 }
@@ -49,7 +47,7 @@ pub struct FnCtx<'a, 'tcx> {
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(inherited: &'a InheritedCtx<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
         let (param_tys, ret_ty) = fn_ty.expect_fn();
-        Self { inherited, fn_ty, param_tys, ret_ty }
+        Self { inherited, param_tys, ret_ty }
     }
 }
 
@@ -133,7 +131,7 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
         &'a self,
         def_id: DefId,
         sig: &ir::FnSig,
-        generics: &ir::Generics,
+        _generics: &ir::Generics,
         body: &ir::Body,
     ) -> FnCtx<'a, 'tcx> {
         let fn_ty = self.tcx.collected_ty(def_id);

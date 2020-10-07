@@ -26,7 +26,7 @@ impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
                 type_vars.equate(a_id, b_id),
             (&ty::Infer(ty::TyVar(vid)), _) => type_vars.instantiate(vid, b)?,
             (_, &ty::Infer(ty::TyVar(vid))) => type_vars.instantiate(vid, a)?,
-            (Error, _) | (_, Error) => return Ok(self.infcx.set_ty_err()),
+            (ty::Error, _) | (_, ty::Error) => return Ok(self.infcx.set_ty_err()),
             _ => {
                 // drop the refcell borrow so the recursive call doesn't panic
                 drop(inner);

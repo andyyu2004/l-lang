@@ -29,7 +29,7 @@ pub use visitor::Visitor;
 use crate as tir;
 use ast::Ident;
 use ir::{self, FieldIdx, Id, Res};
-use lcore::ty::{List, SubstsRef, Ty};
+use lcore::ty::Ty;
 use span::Span;
 use std::marker::PhantomData;
 

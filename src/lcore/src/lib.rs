@@ -7,6 +7,7 @@
 
 mod arenas;
 mod interners;
+mod ir_map;
 pub mod mir;
 pub mod ty;
 mod tyctx;

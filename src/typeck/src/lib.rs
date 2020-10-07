@@ -5,15 +5,24 @@
 #[macro_use]
 extern crate log;
 
+#[cfg(test)]
+mod tests;
+
 mod autoderef;
 mod check;
+mod collect;
 mod expr;
 mod pat;
 mod stmt;
+mod tir;
 mod tyconv;
 mod type_of;
+mod upvars;
+mod writeback;
 
+pub use crate::tir::build_tir;
 use autoderef::Autoderef;
-use check::FnCtx;
-use tyconv::TyConv;
-use type_of::Typeof;
+pub use check::{typeck_fn, FnCtx};
+pub use collect::collect_item_types;
+pub use tyconv::TyConv;
+pub use type_of::Typeof;

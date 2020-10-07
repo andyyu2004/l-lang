@@ -10,10 +10,12 @@ lex = { path = "../lex" }
 parse = { path = "../parse" }
 ast = { path = "../ast" }
 ir = { path = "../ir" }
+tir = { path = "../tir" }
 lcore = { path = "../lcore" }
 ast_lowering = { path = "../ast_lowering" }
 session = { path = "../session" }
 error = { path = "../error" }
+typeck = { path = "../typeck" }
 resolve = { path = "../resolve" }
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 colour = "0.5"
