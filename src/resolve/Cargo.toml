@@ -1,0 +1,19 @@
+[package]
+name = "resolve"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+span = { path = "../span" }
+lex = { path = "../lex" }
+parse = { path = "../parse" }
+ast = { path = "../ast" }
+session = { path = "../session" }
+index = { path = "../index" }
+error = { path = "../error" }
+arena = { path = "../arena" }
+ir = { path = "../ir" }
+thiserror = "1"
+rustc-hash = "1"
+log = "0.4.11"

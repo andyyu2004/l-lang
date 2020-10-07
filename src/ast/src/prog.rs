@@ -1,4 +1,4 @@
-use super::{Expr, Item, P};
+use super::{Item, P};
 use std::fmt::{self, Display, Formatter};
 
 /// top level ast representation that stores entire contents of the program being compiled

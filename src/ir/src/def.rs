@@ -14,7 +14,7 @@ pub enum Res<Id = ir::Id> {
     Err,
 }
 
-trait HasDefKind {
+pub trait HasDefKind {
     fn def_kind(&self) -> DefKind;
 }
 

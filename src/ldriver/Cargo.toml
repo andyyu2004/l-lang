@@ -9,7 +9,13 @@ span = { path = "../span" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 ast = { path = "../ast" }
+ir = { path = "../ir" }
+lcore = { path = "../lcore" }
+ast_lowering = { path = "../ast_lowering" }
 session = { path = "../session" }
 error = { path = "../error" }
+resolve = { path = "../resolve" }
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 colour = "0.5"
+log = "0.4.11"
+simple-logging = "2.0.2"

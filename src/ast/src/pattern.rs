@@ -1,4 +1,4 @@
-use super::{Expr, Ident, Lit, NodeId, Path, P};
+use super::{Expr, Ident, NodeId, Path, P};
 use span::Span;
 use std::fmt::{self, Display, Formatter};
 

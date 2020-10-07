@@ -1,0 +1,19 @@
+[package]
+name = "infer"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+error = { path = "../error" }
+lcore = { path = "../lcore" }
+span = { path = "../span" }
+ast = { path = "../ast" }
+index = { path = "../index" }
+ir = { path = "../ir" }
+util = { path = "../util" }
+smallvec = "1.4.2"
+itertools = "0.9"
+rustc-hash = "1"
+ena = "0.14"
+log = "0.4.11"

@@ -165,7 +165,7 @@ impl Block {
 }
 
 impl Display for Block {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         todo!()
     }
 }
@@ -205,7 +205,7 @@ pub struct Param {
 }
 
 impl Display for Param {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         todo!();
         // write!(f, "{}: {}", self.pattern, self.ty)
     }

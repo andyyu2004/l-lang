@@ -120,7 +120,7 @@ impl Display for ExprKind {
             Self::Path(path) => write!(fmt, "{}", path),
             Self::Tuple(xs) => write!(fmt, "({})", util::join(xs, ",")),
             Self::Call(f, args) => write!(fmt, "({} {})", f, util::join(args, " ")),
-            Self::Struct(path, fields) => todo!(),
+            Self::Struct(_path, _fields) => todo!(),
             Self::Field(expr, ident) => write!(fmt, "{}.{}", expr, ident),
             Self::Box(expr) => write!(fmt, "box {}", expr),
             Self::Closure(name, sig, body) => match name {

@@ -10,4 +10,5 @@ edition = "2018"
 index = { path = "../index" }
 ast = { path = "../ast" }
 span = { path = "../span" }
+util = { path = "../util" }
 rustc-hash = "1"

@@ -91,7 +91,7 @@ impl TryFrom<ItemKind> for ForeignItemKind {
 impl Display for Item {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ItemKind::Fn(sig, generics, body) => writeln!(
+            ItemKind::Fn(sig, _generics, body) => writeln!(
                 f,
                 "{} fn {}({}) -> {:?} {}",
                 self.vis.node,
@@ -100,8 +100,8 @@ impl Display for Item {
                 sig.ret_ty,
                 body.as_ref().unwrap()
             ),
-            ItemKind::Enum(generics, variants) => todo!(),
-            ItemKind::Struct(generics, variant_kind) => todo!(),
+            ItemKind::Enum(_generics, _variants) => todo!(),
+            ItemKind::Struct(_generics, _variant_kind) => todo!(),
             ItemKind::Impl { .. } => todo!(),
             ItemKind::Extern(_) => todo!(),
         }

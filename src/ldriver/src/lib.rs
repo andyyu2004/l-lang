@@ -4,11 +4,20 @@
 #[macro_use]
 extern crate colour;
 
+#[macro_use]
+extern crate log;
+
 use ast::P;
+use ast_lowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
+use lcore::{CoreArenas, GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
+use log::LevelFilter;
 use parse::Parser;
+use resolve::Resolutions;
+use resolve::Resolver;
+use resolve::ResolverArenas;
 use session::Session;
 use span::{SourceMap, SPAN_GLOBALS};
 use std::lazy::OnceCell;
@@ -16,6 +25,8 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 pub fn main() -> ! {
+    simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
+
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
     let check = matches.is_present("check");
@@ -44,9 +55,10 @@ pub fn main() -> ! {
 pub struct Driver<'tcx> {
     sess: Session,
     tmp: PhantomData<&'tcx ()>,
-    // arena: Arenas<'tcx>,
-    // resolver_arenas: ResolverArenas<'tcx>,
-    // global_ctx: OnceCell<GlobalCtx<'tcx>>,
+    arena: CoreArenas<'tcx>,
+    ir_arena: ast_lowering::Arena<'tcx>,
+    resolver_arenas: ResolverArenas<'tcx>,
+    global_ctx: OnceCell<GlobalCtx<'tcx>>,
 }
 
 #[macro_export]
@@ -73,9 +85,10 @@ impl<'tcx> Driver<'tcx> {
             .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(src))));
         Self {
             tmp: PhantomData,
-            // resolver_arenas: Default::default(),
-            // arena: Default::default(),
-            // global_ctx: OnceCell::new(),
+            resolver_arenas: Default::default(),
+            arena: Default::default(),
+            ir_arena: Default::default(),
+            global_ctx: OnceCell::new(),
             sess: Default::default(),
         }
     }
@@ -102,32 +115,33 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    // pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::IR<'tcx>, Resolutions)> {
-    //     let ast = self.parse()?;
-    //     let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
-    //     resolver.resolve(&ast);
-    //     let lctx = AstLoweringCtx::new(&self.arena, &mut resolver);
-    //     let ir = lctx.lower_prog(&ast);
-    //     info!("{:#?}", ir);
-    //     let resolutions = resolver.complete();
-    //     Ok((ir, resolutions))
-    // }
+    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::IR<'tcx>, Resolutions)> {
+        let ast = self.parse()?;
+        let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
+        resolver.resolve(&ast);
+        let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
+        let ir = lctx.lower_prog(&ast);
+        let resolutions = resolver.complete();
+        info!("{:#?}", ir);
+        dbg!(&ir);
+        Ok((ir, resolutions))
+    }
 
-    // fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
-    //     let (ir, mut resolutions) = self.gen_ir()?;
-    //     let resolutions = self.arena.alloc(std::mem::take(&mut resolutions));
-    //     let gcx = self
-    //         .global_ctx
-    //         .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
-    //     let ret = gcx.enter_tcx(|tcx| {
-    //         tcx.run_typeck();
-    //         f(tcx)
-    //     });
-    //     check_errors!(self, ret)
-    // }
+    fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
+        let (ir, mut resolutions) = self.gen_ir()?;
+        let resolutions = self.arena.alloc(std::mem::take(&mut resolutions));
+        let gcx = self
+            .global_ctx
+            .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
+        let ret = gcx.enter_tcx(|tcx| {
+            // tcx.run_typeck();
+            f(tcx)
+        });
+        check_errors!(self, ret)
+    }
 
     // pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-    //     self.with_tcx(|tcx| tcx.build_tir())
+    // self.with_tcx(|tcx| tcx.build_tir())
     // }
 
     // pub fn dump_mir(&'tcx self) -> LResult<()> {

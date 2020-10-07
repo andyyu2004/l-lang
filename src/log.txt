@@ -1,0 +1,113 @@
+[00:00:00.001] (7fc112d93000) INFO   resolving node NodeId(1) to PrimTy(Int)
+[00:00:00.002] (7fc112d93000) INFO   IR {
+    entry_id: Some(
+        0,
+    ),
+    items: {
+        0: Item {
+            span: Span {
+                lo: 0,
+                hi: 26,
+            },
+            id: 0.0,
+            vis: Spanned {
+                span: Span {
+                    lo: 0,
+                    hi: 0,
+                },
+                node: Private,
+            },
+            ident: Ident {
+                span: Span {
+                    lo: 3,
+                    hi: 7,
+                },
+                symbol: Symbol(
+                    5,
+                ),
+            },
+            kind: Fn(
+                FnSig {
+                    inputs: [],
+                    output: Some(
+                        Ty {
+                            id: 0.2,
+                            span: Span {
+                                lo: 13,
+                                hi: 16,
+                            },
+                            kind: Path(
+                                Path {
+                                    span: Span {
+                                        lo: 13,
+                                        hi: 16,
+                                    },
+                                    res: PrimTy(
+                                        Int,
+                                    ),
+                                    segments: [
+                                        PathSegment {
+                                            ident: Ident {
+                                                span: Span {
+                                                    lo: 13,
+                                                    hi: 16,
+                                                },
+                                                symbol: Symbol(
+                                                    4,
+                                                ),
+                                            },
+                                            id: 0.1,
+                                            args: None,
+                                        },
+                                    ],
+                                },
+                            ),
+                        },
+                    ),
+                },
+                Generics {
+                    span: Span {
+                        lo: 7,
+                        hi: 7,
+                    },
+                    params: [],
+                },
+                Body {
+                    params: [],
+                    expr: Expr {
+                        span: Span {
+                            lo: 17,
+                            hi: 26,
+                        },
+                        id: 0.6,
+                        kind: Block(
+                            Block {
+                                id: 0.5,
+                                span: Span {
+                                    lo: 17,
+                                    hi: 26,
+                                },
+                                stmts: [],
+                                expr: Some(
+                                    Expr {
+                                        span: Span {
+                                            lo: 23,
+                                            hi: 24,
+                                        },
+                                        id: 0.3,
+                                        kind: Lit(
+                                            Int(
+                                                5,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                },
+            ),
+        },
+    },
+    impl_items: {},
+}
