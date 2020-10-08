@@ -30,6 +30,7 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 pub fn main() -> ! {
+    let _ = std::fs::remove_file("log.txt");
     simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
 
     let yaml = clap::load_yaml!("cli.yaml");

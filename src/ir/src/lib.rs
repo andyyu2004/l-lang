@@ -72,7 +72,7 @@ index::newtype_index!(
 
 index::newtype_index!(
     pub struct FieldIdx {
-        DEBUG_FORMAT = "FieldIdx({})"
+        DEBUG_FORMAT = "{}"
     }
 );
 

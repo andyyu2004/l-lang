@@ -81,8 +81,14 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         arm: &tir::Arm<'tcx>,
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
+        let tcx = self.tcx;
         let dest = self.dest;
-        let predicate = set!(pblock = self.build_arm_predicate(pblock, scrut, &arm.pat));
+        // if `predicate` is true, then its corresponding branch will be executed
+        let predicate = self.alloc_tmp(info, tcx.types.boolean).into();
+        // predicate starts off as true by default
+        let b = self.mk_const_bool(true);
+        self.push_assignment(info, pblock, predicate, Rvalue::Operand(Operand::Const(b)));
+        set!(pblock = self.build_arm_predicate(pblock, predicate, scrut, &arm.pat));
         self.terminate(
             info,
             pblock,
@@ -99,16 +105,12 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
     fn build_arm_predicate(
         &mut self,
         mut pblock: BlockId,
+        predicate: Lvalue<'tcx>,
         scrut: Lvalue<'tcx>,
         pat: &tir::Pattern<'tcx>,
-    ) -> BlockAnd<Lvalue<'tcx>> {
+    ) -> BlockAnd<()> {
         let tcx = self.tcx;
         let info = self.span_info(pat.span);
-        // if `predicate` is true, then its corresponding branch will be executed
-        let predicate = self.alloc_tmp(info, tcx.types.boolean).into();
-        // predicate starts off as true by default
-        let b = self.mk_const_bool(true);
-        self.push_assignment(info, pblock, predicate, Rvalue::Operand(Operand::Const(b)));
         match pat.kind {
             tir::PatternKind::Wildcard => {}
             tir::PatternKind::Binding(_m, _ident, ref sub) => {
@@ -120,6 +122,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     set!(
                         pblock = self.build_arm_predicate(
                             pblock,
+                            predicate,
                             tcx.project_field(scrut, *field, pat.ty),
                             pat
                         )
@@ -204,6 +207,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     set!(
                         pblock = self.build_arm_predicate(
                             pblock,
+                            predicate,
                             tcx.project_field(enum_content_lvalue, FieldIdx::new(i), pat.ty),
                             pat
                         )
@@ -211,7 +215,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 }
             }
         };
-        pblock.and(predicate)
+        pblock.unit()
     }
 }
 

@@ -42,7 +42,7 @@ fn main() -> int {
     /* eval(expr); */
 
     return match (1,2,3) {
-	(1,3,3) => 99,
+	(1,b,3) => b,
 	(a,b,c) => c,
     };
 
