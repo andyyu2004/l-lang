@@ -1,16 +1,16 @@
 use super::*;
-use ast::{self, Ident};
+use context::{Context, ContextRef};
 use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::*;
-use inkwell::{builder::Builder, context::Context, module::Module};
+use inkwell::{builder::Builder, module::Module};
 use ir::{self, DefId, ItemVisitor};
 use lcore::mir::Mir;
 use lcore::ty::*;
 use lcore::TyCtx;
 use rustc_hash::FxHashMap;
-use span::{sym, Span};
+use span::{sym, Span, Symbol};
 use std::cell::RefCell;
 use std::ops::Deref;
 use typeck::{TcxCollectExt, Typeof};
@@ -24,9 +24,8 @@ pub struct CodegenCtx<'tcx> {
     pub types: CommonTypes<'tcx>,
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
-    /// stores the `Ident` for a `DefId` which can then be used to lookup the function in the `llctx`
-    /// this api is a bit awkward, but its what inkwell has so..
-    pub items: RefCell<FxHashMap<DefId, Ident>>,
+    pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
+    pub items: RefCell<FxHashMap<DefId, FunctionValue<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
 }
 
@@ -92,7 +91,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
 
         let native_functions = NativeFunctions::new(llctx, &module);
-
+        let intrinsics = build_instrinsics(&module);
         Self {
             tcx,
             llctx,
@@ -101,6 +100,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             vals,
             types,
             native_functions,
+            intrinsics,
             builder: llctx.create_builder(),
             items: Default::default(),
             lltypes: Default::default(),

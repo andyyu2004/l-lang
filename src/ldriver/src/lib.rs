@@ -168,6 +168,7 @@ impl<'tcx> Driver<'tcx> {
         let (cctx, main_fn) = self.llvm_compile()?;
         dbg!("llvm codegen complete");
         let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::Default).unwrap();
+        println!("---");
         let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
         Ok(val)
     }

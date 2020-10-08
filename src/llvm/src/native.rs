@@ -30,7 +30,13 @@ impl<'tcx> NativeFunctions<'tcx> {
     }
 
     fn build_printf(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
-        module.add_function("printf", llctx.i32_type().fn_type(&[], false), Some(Linkage::External))
+        module.add_function(
+            "printf",
+            llctx
+                .i32_type()
+                .fn_type(&[llctx.i8_type().ptr_type(AddressSpace::Generic).into()], false),
+            Some(Linkage::External),
+        )
     }
 
     fn build_exit(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {

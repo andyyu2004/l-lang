@@ -30,7 +30,7 @@ enum Expr {
 
 extern {
     /* fn rc<T>(t: &T); */
-    /* fn rc(t: &int) -> bool; */
+    fn rc(t: &int) -> int;
 }
 
 fn main() -> int {
@@ -41,12 +41,12 @@ fn main() -> int {
     /* ); */
     /* eval(expr); */
 
-    return match (1,2,3) {
-	(1,b,3) => b,
-	(a,b,c) => c,
-    };
+    /* return match (1,2,3) { */
+    /*     (1,b,3) => b, */
+    /*     (a,b,c) => c, */
+    /* }; */
 
-    /* rc(box 5); */
+    return rc(box 5);
 
     let next = box Node {
 	val: 22,
@@ -56,7 +56,8 @@ fn main() -> int {
 	val: 6,
 	next: NodeOption::Some(next),
     };
-    last(node);
+
+    /* last(node); */
     8
 }
 

@@ -1,8 +1,10 @@
 #![feature(decl_macro)]
+#![feature(array_value_iter)]
 
 mod codegen;
 mod codegen_ctx;
 mod fcx;
+mod intrinsics;
 mod lltypes;
 mod llvm_error;
 mod native;
@@ -13,6 +15,7 @@ mod tests;
 use codegen::*;
 pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
+use intrinsics::build_instrinsics;
 use llvm_error::LLVMError;
 use native::NativeFunctions;
 

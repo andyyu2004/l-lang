@@ -101,6 +101,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_basic_block(&mut self, id: BlockId) -> BasicBlock<'tcx> {
         let block = self.set_block(id);
+        // let string = self.build_global_string_ptr("string\n", "somestr").as_pointer_value();
+        // let printf = self.native_functions.printf;
+        // self.build_call(printf, &[string.into()], "printfcall");
         block.stmts.iter().for_each(|stmt| self.codegen_stmt(stmt));
         self.codegen_terminator(block.terminator());
         self.blocks[id]
@@ -380,13 +383,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Operand::Item(def_id) => {
                 // TODO assume item is fn for now
-                let ident = self
+                let llfn = self
                     .items
                     .borrow()
                     .get(def_id)
                     .copied()
                     .unwrap_or_else(|| panic!("no entry in items with def_id `{}`", def_id));
-                let llfn = self.module.get_function(ident.as_str()).unwrap();
                 // probably not the `correct` way to do this :)
                 let val =
                     unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into();

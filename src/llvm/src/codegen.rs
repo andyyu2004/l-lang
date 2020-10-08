@@ -17,22 +17,22 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
         _generics: &'tcx ir::Generics<'tcx>,
         _body: &'tcx ir::Body<'tcx>,
     ) {
-        self.cctx.items.borrow_mut().insert(def_id, ident);
         let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
         let (params, ret) = ty.expect_fn();
         let llty = self.llvm_fn_ty(params, ret);
-        self.module.add_function(ident.as_str(), llty, None);
+        let llfn = self.module.add_function(ident.as_str(), llty, None);
+        self.cctx.items.borrow_mut().insert(def_id, llfn);
     }
 
     fn visit_foreign_fn(
         &mut self,
-        _def_id: DefId,
-        _ident: Ident,
+        def_id: DefId,
+        ident: Ident,
         _sig: &'tcx ir::FnSig<'tcx>,
         _generics: &'tcx ir::Generics<'tcx>,
     ) {
-        // TODO just lookup into native functions by ident?
-        todo!()
+        // assume that all foreign functions are intrinsics for now
+        self.cctx.items.borrow_mut().insert(def_id, self.intrinsics[&ident.symbol]);
     }
 
     // this function actually declares AND codegens
@@ -40,10 +40,10 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
     // they don't have the issue of referring to other functions
     fn visit_enum(&mut self, item: &ir::Item) {
         for (ctor_id, (ident, mir)) in mir::build_enum_ctors(self.tcx, item) {
-            self.cctx.items.borrow_mut().insert(ctor_id, ident);
             let (_, ty) = self.tcx.collected_ty(ctor_id).expect_scheme();
             let llty = self.llvm_fn_ty_from_ty(ty);
             let llfn = self.module.add_function(ident.as_str(), llty, None);
+            self.cctx.items.borrow_mut().insert(ctor_id, llfn);
             FnCtx::new(self, llfn, mir).codegen();
         }
     }

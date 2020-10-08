@@ -23,11 +23,20 @@ ret:                                              ; preds = %rc_release
 
 declare void @free(i8*)
 
-declare i32 @printf()
+declare i32 @printf(i8*)
 
 declare void @abort()
 
 declare void @exit(i32)
+
+define i64 @rc(i64* %0) {
+rc_entry:
+  %sdf = bitcast i64* %0 to { i64, i32 }*
+  %rc_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %sdf, i32 0, i32 1
+  %load_refcount = load i32, i32* %rc_gep
+  %"rc->i64" = sext i32 %load_refcount to i64
+  ret i64 %"rc->i64"
+}
 
 define %opaque @"Option::Some"(i64 %0) {
 basic_blockbb0:
@@ -128,158 +137,97 @@ basic_blockbb0:
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
-  %tmp = alloca { i64, i64, i64 }
-  %tmp1 = alloca i1
-  %tmp2 = alloca i64
-  %tmp3 = alloca i1
-  %b = alloca i64
-  %tmp4 = alloca i64
-  %tmp5 = alloca i1
-  %tmp6 = alloca i1
-  %a = alloca i64
-  %b7 = alloca i64
-  %c = alloca i64
-  %tmp8 = alloca %opaque.1*
-  %tmp9 = alloca %opaque.1*
-  %tmp10 = alloca %opaque.0
+  %tmp = alloca i64*
+  %tmp1 = alloca i64*
+  %tmp2 = alloca %opaque.1*
+  %tmp3 = alloca %opaque.1*
+  %tmp4 = alloca %opaque.0
   %next = alloca %opaque.1*
-  %tmp11 = alloca %opaque.1*
-  %tmp12 = alloca %opaque.1*
-  %tmp13 = alloca %opaque.0
+  %tmp5 = alloca %opaque.1*
+  %tmp6 = alloca %opaque.1*
+  %tmp7 = alloca %opaque.0
   %node = alloca %opaque.1*
-  %tmp14 = alloca i64
-  %struct_gep = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 0
-  store i64 1, i64* %struct_gep
-  %struct_gep15 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 1
-  store i64 2, i64* %struct_gep15
-  %struct_gep16 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 2
-  store i64 3, i64* %struct_gep16
+  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ i64, i32 }* getelementptr ({ i64, i32 }, { i64, i32 }* null, i32 1) to i32))
+  %box = bitcast i8* %malloccall to { i64, i32 }*
+  %rc_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %box, i32 0, i32 1
+  store i32 0, i32* %rc_gep
+  %box_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %box, i32 0, i32 0
+  store i64* %box_gep, i64** %tmp1
+  call void @rc_retain_int(i64** %tmp1)
+  %load_deref = load i64*, i64** %tmp1
+  store i64 5, i64* %load_deref
+  %load = load i64*, i64** %tmp1
+  store i64* %load, i64** %tmp
+  call void @rc_retain_int(i64** %tmp)
+  %load8 = load i64*, i64** %tmp
+  %fcall = call i64 @rc(i64* %load8)
+  store i64 %fcall, i64* %retvar
   br label %basic_blockbb1
 
 basic_blockbb1:                                   ; preds = %basic_blockbb0
-  store i1 true, i1* %tmp1
-  store i64 1, i64* %tmp2
-  %load = load i64, i64* %tmp2
-  %struct_gep17 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 0
-  %load18 = load i64, i64* %struct_gep17
-  %icmp_eq = icmp eq i64 %load, %load18
-  store i1 %icmp_eq, i1* %tmp3
-  %load19 = load i1, i1* %tmp3
-  %load20 = load i1, i1* %tmp1
-  %and = and i1 %load19, %load20
-  store i1 %and, i1* %tmp1
-  %struct_gep21 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 1
-  %load22 = load i64, i64* %struct_gep21
-  store i64 %load22, i64* %b
-  store i64 3, i64* %tmp4
-  %load23 = load i64, i64* %tmp4
-  %struct_gep24 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 2
-  %load25 = load i64, i64* %struct_gep24
-  %icmp_eq26 = icmp eq i64 %load23, %load25
-  store i1 %icmp_eq26, i1* %tmp5
-  %load27 = load i1, i1* %tmp5
-  %load28 = load i1, i1* %tmp1
-  %and29 = and i1 %load27, %load28
-  store i1 %and29, i1* %tmp1
-  %load30 = load i1, i1* %tmp1
-  br i1 %load30, label %basic_blockbb2, label %basic_blockbb3
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  %load31 = load i64, i64* %b
-  store i64 %load31, i64* %retvar
-  br label %basic_blockbb5
-
-basic_blockbb3:                                   ; preds = %basic_blockbb1
-  store i1 true, i1* %tmp6
-  %struct_gep32 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 0
-  %load33 = load i64, i64* %struct_gep32
-  store i64 %load33, i64* %a
-  %struct_gep34 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 1
-  %load35 = load i64, i64* %struct_gep34
-  store i64 %load35, i64* %b7
-  %struct_gep36 = getelementptr inbounds { i64, i64, i64 }, { i64, i64, i64 }* %tmp, i32 0, i32 2
-  %load37 = load i64, i64* %struct_gep36
-  store i64 %load37, i64* %c
-  %load38 = load i1, i1* %tmp6
-  br i1 %load38, label %basic_blockbb4, label %basic_blockbb6
-
-basic_blockbb4:                                   ; preds = %basic_blockbb3
-  %load39 = load i64, i64* %c
-  store i64 %load39, i64* %retvar
-  br label %basic_blockbb5
-
-basic_blockbb5:                                   ; preds = %basic_blockbb4, %basic_blockbb2
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 
-basic_blockbb6:                                   ; preds = %basic_blockbb3
-  call void @exit(i32 1)
-  unreachable
-
-basic_blockbb7:                                   ; No predecessors!
-  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ %opaque.1, i32 }* getelementptr ({ %opaque.1, i32 }, { %opaque.1, i32 }* null, i32 1) to i32))
-  %box = bitcast i8* %malloccall to { %opaque.1, i32 }*
-  %rc_gep = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box, i32 0, i32 1
-  store i32 0, i32* %rc_gep
-  %box_gep = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box, i32 0, i32 0
-  store %opaque.1* %box_gep, %opaque.1** %tmp9
-  call void @"rc_retain_Node<>"(%opaque.1** %tmp9)
-  %discr_gep = getelementptr inbounds %opaque.0, %opaque.0* %tmp10, i32 0, i32 0
+basic_blockbb2:                                   ; No predecessors!
+  %malloccall9 = tail call i8* @malloc(i32 ptrtoint ({ %opaque.1, i32 }* getelementptr ({ %opaque.1, i32 }, { %opaque.1, i32 }* null, i32 1) to i32))
+  %box10 = bitcast i8* %malloccall9 to { %opaque.1, i32 }*
+  %rc_gep11 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box10, i32 0, i32 1
+  store i32 0, i32* %rc_gep11
+  %box_gep12 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box10, i32 0, i32 0
+  store %opaque.1* %box_gep12, %opaque.1** %tmp3
+  call void @"rc_retain_Node<>"(%opaque.1** %tmp3)
+  %discr_gep = getelementptr inbounds %opaque.0, %opaque.0* %tmp4, i32 0, i32 0
   store i64 0, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %opaque.0, %opaque.0* %tmp10, i32 0, i32 1
+  %enum_gep = getelementptr inbounds %opaque.0, %opaque.0* %tmp4, i32 0, i32 1
   %enum_ptr_cast = bitcast { %opaque.1* }* %enum_gep to {}*
-  %load_deref = load %opaque.1*, %opaque.1** %tmp9
-  %struct_gep40 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref, i32 0, i32 0
-  store i64 22, i64* %struct_gep40
-  %load41 = load %opaque.0, %opaque.0* %tmp10
-  %struct_gep42 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref, i32 0, i32 1
-  store %opaque.0 %load41, %opaque.0* %struct_gep42
-  %load43 = load %opaque.1*, %opaque.1** %tmp9
-  store %opaque.1* %load43, %opaque.1** %tmp8
-  call void @"rc_retain_Node<>"(%opaque.1** %tmp8)
-  %load44 = load %opaque.1*, %opaque.1** %tmp8
-  store %opaque.1* %load44, %opaque.1** %next
+  %load_deref13 = load %opaque.1*, %opaque.1** %tmp3
+  %struct_gep = getelementptr inbounds %opaque.1, %opaque.1* %load_deref13, i32 0, i32 0
+  store i64 22, i64* %struct_gep
+  %load14 = load %opaque.0, %opaque.0* %tmp4
+  %struct_gep15 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref13, i32 0, i32 1
+  store %opaque.0 %load14, %opaque.0* %struct_gep15
+  %load16 = load %opaque.1*, %opaque.1** %tmp3
+  store %opaque.1* %load16, %opaque.1** %tmp2
+  call void @"rc_retain_Node<>"(%opaque.1** %tmp2)
+  %load17 = load %opaque.1*, %opaque.1** %tmp2
+  store %opaque.1* %load17, %opaque.1** %next
   call void @"rc_retain_Node<>"(%opaque.1** %next)
-  %malloccall45 = tail call i8* @malloc(i32 ptrtoint ({ %opaque.1, i32 }* getelementptr ({ %opaque.1, i32 }, { %opaque.1, i32 }* null, i32 1) to i32))
-  %box46 = bitcast i8* %malloccall45 to { %opaque.1, i32 }*
-  %rc_gep47 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box46, i32 0, i32 1
-  store i32 0, i32* %rc_gep47
-  %box_gep48 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box46, i32 0, i32 0
-  store %opaque.1* %box_gep48, %opaque.1** %tmp12
-  call void @"rc_retain_Node<>"(%opaque.1** %tmp12)
-  %load49 = load %opaque.1*, %opaque.1** %next
-  %fcall = call %opaque.0 @"NodeOption::Some"(%opaque.1* %load49)
-  store %opaque.0 %fcall, %opaque.0* %tmp13
-  br label %basic_blockbb8
+  %malloccall18 = tail call i8* @malloc(i32 ptrtoint ({ %opaque.1, i32 }* getelementptr ({ %opaque.1, i32 }, { %opaque.1, i32 }* null, i32 1) to i32))
+  %box19 = bitcast i8* %malloccall18 to { %opaque.1, i32 }*
+  %rc_gep20 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box19, i32 0, i32 1
+  store i32 0, i32* %rc_gep20
+  %box_gep21 = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %box19, i32 0, i32 0
+  store %opaque.1* %box_gep21, %opaque.1** %tmp6
+  call void @"rc_retain_Node<>"(%opaque.1** %tmp6)
+  %load22 = load %opaque.1*, %opaque.1** %next
+  %fcall23 = call %opaque.0 @"NodeOption::Some"(%opaque.1* %load22)
+  store %opaque.0 %fcall23, %opaque.0* %tmp7
+  br label %basic_blockbb3
 
-basic_blockbb8:                                   ; preds = %basic_blockbb7
-  %load_deref50 = load %opaque.1*, %opaque.1** %tmp12
-  %struct_gep51 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref50, i32 0, i32 0
-  store i64 6, i64* %struct_gep51
-  %load52 = load %opaque.0, %opaque.0* %tmp13
-  %struct_gep53 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref50, i32 0, i32 1
-  store %opaque.0 %load52, %opaque.0* %struct_gep53
-  %load54 = load %opaque.1*, %opaque.1** %tmp12
-  store %opaque.1* %load54, %opaque.1** %tmp11
-  call void @"rc_retain_Node<>"(%opaque.1** %tmp11)
-  %load55 = load %opaque.1*, %opaque.1** %tmp11
-  store %opaque.1* %load55, %opaque.1** %node
+basic_blockbb3:                                   ; preds = %basic_blockbb2
+  %load_deref24 = load %opaque.1*, %opaque.1** %tmp6
+  %struct_gep25 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref24, i32 0, i32 0
+  store i64 6, i64* %struct_gep25
+  %load26 = load %opaque.0, %opaque.0* %tmp7
+  %struct_gep27 = getelementptr inbounds %opaque.1, %opaque.1* %load_deref24, i32 0, i32 1
+  store %opaque.0 %load26, %opaque.0* %struct_gep27
+  %load28 = load %opaque.1*, %opaque.1** %tmp6
+  store %opaque.1* %load28, %opaque.1** %tmp5
+  call void @"rc_retain_Node<>"(%opaque.1** %tmp5)
+  %load29 = load %opaque.1*, %opaque.1** %tmp5
+  store %opaque.1* %load29, %opaque.1** %node
   call void @"rc_retain_Node<>"(%opaque.1** %node)
-  %load56 = load %opaque.1*, %opaque.1** %node
-  %fcall57 = call i64 @last(%opaque.1* %load56)
-  store i64 %fcall57, i64* %tmp14
-  br label %basic_blockbb9
-
-basic_blockbb9:                                   ; preds = %basic_blockbb8
   store i64 8, i64* %retvar
   call void @"rc_release_Node<>"(%opaque.1** %node)
-  call void @"rc_release_Node<>"(%opaque.1** %tmp11)
-  call void @"rc_release_Node<>"(%opaque.1** %tmp12)
+  call void @"rc_release_Node<>"(%opaque.1** %tmp5)
+  call void @"rc_release_Node<>"(%opaque.1** %tmp6)
   call void @"rc_release_Node<>"(%opaque.1** %next)
-  call void @"rc_release_Node<>"(%opaque.1** %tmp8)
-  call void @"rc_release_Node<>"(%opaque.1** %tmp9)
-  %load_ret58 = load i64, i64* %retvar
-  ret i64 %load_ret58
+  call void @"rc_release_Node<>"(%opaque.1** %tmp2)
+  call void @"rc_release_Node<>"(%opaque.1** %tmp3)
+  call void @rc_release_int(i64** %tmp)
+  call void @rc_release_int(i64** %tmp1)
+  %load_ret30 = load i64, i64* %retvar
+  ret i64 %load_ret30
 }
 
 define i64 @last(%opaque.1* %0) {
@@ -478,6 +426,17 @@ basic_blockbb8:                                   ; preds = %basic_blockbb7
 
 declare noalias i8* @malloc(i32)
 
+define void @rc_retain_int(i64** %0) {
+rc_retain_start:
+  %load_box = load i64*, i64** %0
+  %rc_retain_box_cast = bitcast i64* %load_box to { i64, i32 }*
+  %rc = getelementptr inbounds { i64, i32 }, { i64, i32 }* %rc_retain_box_cast, i32 0, i32 1
+  %load_rc = load i32, i32* %rc
+  %increment_rc = add i32 %load_rc, 1
+  store i32 %increment_rc, i32* %rc
+  ret void
+}
+
 define void @"rc_retain_Node<>"(%opaque.1** %0) {
 rc_retain_start:
   %load_box = load %opaque.1*, %opaque.1** %0
@@ -494,6 +453,24 @@ rc_release_start:
   %load_box = load %opaque.1*, %opaque.1** %0
   %rc_release_box_cast = bitcast %opaque.1* %load_box to { %opaque.1, i32 }*
   %rc = getelementptr inbounds { %opaque.1, i32 }, { %opaque.1, i32 }* %rc_release_box_cast, i32 0, i32 1
+  %load_rc = load i32, i32* %rc
+  %decrement = sub i32 %load_rc, 1
+  store i32 %decrement, i32* %rc
+  %rc_cmp = icmp eq i32 %decrement, 0
+  br i1 %rc_cmp, label %rc_release_free, label %rc_release_ret
+
+rc_release_free:                                  ; preds = %rc_release_start
+  ret void
+
+rc_release_ret:                                   ; preds = %rc_release_start
+  ret void
+}
+
+define void @rc_release_int(i64** %0) {
+rc_release_start:
+  %load_box = load i64*, i64** %0
+  %rc_release_box_cast = bitcast i64* %load_box to { i64, i32 }*
+  %rc = getelementptr inbounds { i64, i32 }, { i64, i32 }* %rc_release_box_cast, i32 0, i32 1
   %load_rc = load i32, i32* %rc
   %decrement = sub i32 %load_rc, 1
   store i32 %decrement, i32* %rc
