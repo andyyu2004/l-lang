@@ -94,6 +94,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) {
         self.cfg.push_assignment(info, block, lvalue, rvalue);
         // if the type is pointer, then it is a box and we need to do refcounting
+        // TODO need to differentiate between initialization and reassignments
+        // https://youtu.be/Ntj8ab-5cvE?t=2328
         if lvalue.ty(self).is_ptr() {
             self.push_retain(info, block, lvalue);
             self.schedule_release(info, lvalue);

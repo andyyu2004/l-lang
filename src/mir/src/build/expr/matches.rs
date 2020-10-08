@@ -43,7 +43,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         let info = self.span_info(expr.span);
 
         // allocate initial basic blocks for each arm
-        arms.iter().for_each(|arm| {
+        arms.iter().for_each(|_arm| {
             let pblock = self.append_basic_block();
             let body_block = self.append_basic_block();
             self.pblocks.push(pblock);
@@ -111,12 +111,20 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         self.push_assignment(info, pblock, predicate, Rvalue::Operand(Operand::Const(b)));
         match pat.kind {
             tir::PatternKind::Wildcard => {}
-            tir::PatternKind::Binding(m, ident, ref sub) => {
+            tir::PatternKind::Binding(_m, _ident, ref sub) => {
                 assert!(sub.is_none());
-                // TODO bind the names
                 set!(pblock = self.bind_pat_to_lvalue(pblock, pat, scrut));
             }
-            tir::PatternKind::Field(_) => todo!(),
+            tir::PatternKind::Field(ref pats) =>
+                for tir::FieldPat { field, pat } in pats {
+                    set!(
+                        pblock = self.build_arm_predicate(
+                            pblock,
+                            tcx.project_field(scrut, *field, pat.ty),
+                            pat
+                        )
+                    );
+                },
             tir::PatternKind::Lit(ref expr) => {
                 let tmp = self.alloc_tmp(info, expr.ty).into();
                 set!(pblock = self.write_expr(pblock, tmp, expr));
