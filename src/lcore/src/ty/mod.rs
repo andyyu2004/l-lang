@@ -4,6 +4,7 @@ mod relate;
 mod substs;
 mod tables;
 mod traverse;
+mod tyctx;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
@@ -12,11 +13,11 @@ pub use relate::{Relate, TypeRelation};
 pub use substs::*;
 pub use tables::TypeckTables;
 pub use traverse::*;
+pub use tyctx::{GlobalCtx, TyCtx};
 pub use type_error::{TypeError, TypeResult};
 pub use InferTy::*;
 pub use TyKind::*;
 
-use crate::TyCtx;
 use ast::{Ident, Mutability, Visibility};
 use bitflags::bitflags;
 use index::{Idx, IndexVec};

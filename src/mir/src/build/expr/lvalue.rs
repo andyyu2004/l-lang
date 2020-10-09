@@ -1,7 +1,5 @@
 use super::*;
-use lcore::mir::*;
-use lcore::ty::Ty;
-use lcore::TyCtx;
+use lcore::ty::{Ty, TyCtx};
 
 /// helper struct for building projections of an lvalue
 pub struct LvalueBuilder<'tcx> {

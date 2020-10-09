@@ -1,6 +1,5 @@
 use crate::At;
-use lcore::ty::{self, Ty, TypeRelation, TypeResult};
-use lcore::TyCtx;
+use lcore::ty::{self, Ty, TyCtx, TypeRelation, TypeResult};
 use std::ops::Deref;
 
 pub struct Equate<'a, 'tcx> {

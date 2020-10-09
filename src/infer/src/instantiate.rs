@@ -1,6 +1,5 @@
 use crate::InferCtx;
 use lcore::ty::*;
-use lcore::TyCtx;
 use span::Span;
 
 /// instantiates universal type variables introduced by generic parameters

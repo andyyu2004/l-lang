@@ -15,7 +15,6 @@ use index::Idx;
 use instantiate::InstantiationFolder;
 use ir::{DefId, FieldIdx};
 use lcore::ty::*;
-use lcore::TyCtx;
 use span::Span;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
@@ -100,7 +99,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         let mut inner = self.inner.borrow_mut();
         let mut type_variables = inner.type_variables();
         // generates an indexed substitution based on the contents of the UnificationTable
-        let substs = (0..type_variables.storage.tyvid_count).map(|index| {
+        let mut substs = self.tcx.mk_substs((0..type_variables.storage.tyvid_count).map(|index| {
             let vid = TyVid { index };
             let val = type_variables.probe(vid);
             match val {
@@ -110,8 +109,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
                     self.emit_ty_err(span, TypeError::InferenceFailure)
                 }
             }
-        });
-        let mut substs = self.tcx.mk_substs(substs);
+        }));
 
         // repeatedly substitute its inference variables for its value
         // until it contains no inference variables or failure

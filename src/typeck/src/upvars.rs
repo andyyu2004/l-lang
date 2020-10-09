@@ -1,7 +1,6 @@
 use super::FnCtx;
 use ir::{self, Visitor};
-use lcore::ty::UpvarId;
-use lcore::TyCtx;
+use lcore::ty::{TyCtx, UpvarId};
 use rustc_hash::FxHashSet;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {

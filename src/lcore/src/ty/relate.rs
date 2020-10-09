@@ -1,5 +1,4 @@
 use crate::ty::*;
-use crate::TyCtx;
 use itertools::Itertools;
 
 pub trait TypeRelation<'tcx>: Sized {

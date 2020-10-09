@@ -8,7 +8,6 @@ use inkwell::{builder::Builder, module::Module};
 use ir::{self, DefId, ItemVisitor};
 use lcore::mir::Mir;
 use lcore::ty::*;
-use lcore::TyCtx;
 use rustc_hash::FxHashMap;
 use span::{sym, Span, Symbol};
 use std::cell::RefCell;

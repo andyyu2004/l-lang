@@ -1,6 +1,5 @@
 //! methods for manipulating ir on `TyCtx`
-
-use crate::TyCtx;
+use crate::ty::TyCtx;
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn impl_item(self, id: ir::ImplItemId) -> &'tcx ir::ImplItem<'tcx> {

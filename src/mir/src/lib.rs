@@ -1,19 +1,22 @@
-#![feature(box_syntax, box_patterns)]
-#![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
+#![feature(crate_visibility_modifier)]
+#![feature(box_syntax, box_patterns)]
 
 mod build;
+mod monomorphize;
+mod traverse;
 
 #[macro_use]
 extern crate log;
 
 pub use build::{build_enum_ctors, build_fn, MirCtx};
+pub use traverse::Visitor;
 
 use ast::Ident;
 use error::{LError, LResult};
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
-use lcore::TyCtx;
+use lcore::ty::TyCtx;
 use std::collections::BTreeMap;
 use std::io::Write;
 use typeck::{InheritedCtx, TcxCollectExt};

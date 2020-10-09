@@ -2,8 +2,7 @@
 mod fmt;
 
 use crate::mir;
-use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty};
-use crate::TyCtx;
+use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty, TyCtx};
 use ast::{self, Mutability};
 use index::{Idx, IndexVec};
 use ir::{self, DefId, VariantIdx};

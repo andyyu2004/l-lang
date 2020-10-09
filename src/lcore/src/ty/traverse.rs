@@ -1,5 +1,4 @@
-use crate::ty::{List, Ty, TyKind};
-use crate::TyCtx;
+use crate::ty::{List, Ty, TyCtx, TyKind};
 use smallvec::SmallVec;
 
 pub trait TypeFoldable<'tcx>: Sized {

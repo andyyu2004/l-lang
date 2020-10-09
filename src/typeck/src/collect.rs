@@ -1,8 +1,6 @@
-use ir::Visitor;
-use lcore::ty::{Substs, Ty};
-use lcore::TyCtx;
-
 use crate::TyConv;
+use ir::Visitor;
+use lcore::ty::{Substs, Ty, TyCtx};
 
 struct ItemCollector<'tcx> {
     tcx: TyCtx<'tcx>,

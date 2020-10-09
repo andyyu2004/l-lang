@@ -1,46 +1,46 @@
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(2) to PrimTy(Int)
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(9) to Def(6, Struct)
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(16) to PrimTy(Int)
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(20) to Def(3, Enum)
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(25) to PrimTy(Int)
-[00:00:00.003] (7fe397b06940) INFO   resolving node NodeId(29) to PrimTy(Bool)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(34) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(39) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(45) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(50) to Def(11, Enum)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(55) to Def(11, Enum)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(65) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(70) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(79) to Def(17, TyParam(ParamIdx(0)))
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(83) to Def(17, TyParam(ParamIdx(0)))
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(86) to Local(NodeId(77))
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(93) to PrimTy(Int)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(96) to Def(16, Fn)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(103) to Def(15, Fn)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(114) to Def(6, Struct)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(119) to Def(4, Ctor(Unit))
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(130) to Def(6, Struct)
-[00:00:00.004] (7fe397b06940) INFO   resolving node NodeId(135) to Def(5, Ctor(Tuple))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(138) to Local(NodeId(112))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(155) to Def(6, Struct)
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(160) to PrimTy(Int)
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(163) to Local(NodeId(153))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(168) to Def(5, Ctor(Tuple))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(174) to Def(19, Fn)
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(177) to Local(NodeId(171))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(183) to Def(4, Ctor(Unit))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(186) to Local(NodeId(153))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(199) to Def(11, Enum)
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(204) to PrimTy(Int)
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(207) to Local(NodeId(197))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(212) to Def(12, Ctor(Tuple))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(218) to Local(NodeId(215))
-[00:00:00.005] (7fe397b06940) INFO   resolving node NodeId(223) to Def(13, Ctor(Tuple))
-[00:00:00.006] (7fe397b06940) INFO   resolving node NodeId(232) to Def(20, Fn)
-[00:00:00.006] (7fe397b06940) INFO   resolving node NodeId(235) to Local(NodeId(226))
-[00:00:00.006] (7fe397b06940) INFO   resolving node NodeId(239) to Def(20, Fn)
-[00:00:00.006] (7fe397b06940) INFO   resolving node NodeId(242) to Local(NodeId(229))
-[00:00:00.006] (7fe397b06940) INFO   IR {
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(2) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(9) to Def(6, Struct)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(16) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(20) to Def(3, Enum)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(25) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(29) to PrimTy(Bool)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(34) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(39) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(45) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(50) to Def(11, Enum)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(55) to Def(11, Enum)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(65) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(70) to PrimTy(Int)
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(79) to Def(17, TyParam(ParamIdx(0)))
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(83) to Def(17, TyParam(ParamIdx(0)))
+[00:00:00.004] (7ff764086940) INFO   resolving node NodeId(86) to Local(NodeId(77))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(93) to PrimTy(Int)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(96) to Def(16, Fn)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(103) to Def(15, Fn)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(114) to Def(6, Struct)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(119) to Def(4, Ctor(Unit))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(130) to Def(6, Struct)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(135) to Def(5, Ctor(Tuple))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(138) to Local(NodeId(112))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(155) to Def(6, Struct)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(160) to PrimTy(Int)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(163) to Local(NodeId(153))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(168) to Def(5, Ctor(Tuple))
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(174) to Def(19, Fn)
+[00:00:00.005] (7ff764086940) INFO   resolving node NodeId(177) to Local(NodeId(171))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(183) to Def(4, Ctor(Unit))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(186) to Local(NodeId(153))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(199) to Def(11, Enum)
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(204) to PrimTy(Int)
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(207) to Local(NodeId(197))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(212) to Def(12, Ctor(Tuple))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(218) to Local(NodeId(215))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(223) to Def(13, Ctor(Tuple))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(232) to Def(20, Fn)
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(235) to Local(NodeId(226))
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(239) to Def(20, Fn)
+[00:00:00.006] (7ff764086940) INFO   resolving node NodeId(242) to Local(NodeId(229))
+[00:00:00.007] (7ff764086940) INFO   IR {
     entry_id: Some(
         18,
     ),
@@ -3185,43 +3185,43 @@
     },
     impl_items: {},
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.083] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.Option<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.083] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.NodeOption<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.083] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.Node<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.083] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.S<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.083] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.Either<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.084] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.Expr<>,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.084] (7ff764086940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT.fn(τParamIdx(0))->τParamIdx(0),
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.084] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.084] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn(&Node<>)->int,
 }
-[00:00:00.076] (7fe397b06940) INFO   collect item: TyS {
+[00:00:00.084] (7ff764086940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn(&Expr<>)->int,
 }

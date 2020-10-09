@@ -1,6 +1,5 @@
 use crate::TyConv;
 use lcore::ty::*;
-use lcore::TyCtx;
 
 pub trait Typeof<'tcx> {
     fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx>;

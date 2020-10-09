@@ -1,7 +1,6 @@
 //! conversion of ir::Ty to ty::Ty
 
-use lcore::ty::{Generics, Subst, Ty, TyParam, TypeError};
-use lcore::TyCtx;
+use lcore::ty::{Generics, Subst, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
 pub trait TyConv<'tcx> {

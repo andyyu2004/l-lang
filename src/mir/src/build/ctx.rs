@@ -5,7 +5,6 @@ use infer::InferCtx;
 use ir::{self, CtorKind, DefKind, Res, VariantIdx};
 use lcore::mir::Mir;
 use lcore::ty::*;
-use lcore::TyCtx;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
