@@ -37,6 +37,7 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
 
         // define a new function for every monomorphization
         for substs in monomorphizations {
+            dbg!(substs);
             let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
             let name = format!("{}<{}>", ident, substs);
             let llfn = self.module.add_function(&name, llty, None);

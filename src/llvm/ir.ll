@@ -1,8 +1,6 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%opaque = type { i64 }
-
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
   %2 = atomicrmw sub i32* %1, i32 1 seq_cst
@@ -34,15 +32,45 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
+define i64 @"id<int>"(i64 %0) {
+basic_blockbb0:
+  %retvar = alloca i64
+  %x = alloca i64
+  store i64 %0, i64* %x
+  %load = load i64, i64* %x
+  store i64 %load, i64* %retvar
+  %load_ret = load i64, i64* %retvar
+  ret i64 %load_ret
+}
+
+define i64 @"fst<int,bool>"(i64 %0, i1 %1) {
+basic_blockbb0:
+  %retvar = alloca i64
+  %t = alloca i64
+  store i64 %0, i64* %t
+  %u = alloca i1
+  store i1 %1, i1* %u
+  %load = load i64, i64* %t
+  store i64 %load, i64* %retvar
+  %load_ret = load i64, i64* %retvar
+  ret i64 %load_ret
+}
+
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
-  %tmp = alloca %opaque
-  %struct_gep = getelementptr inbounds %opaque, %opaque* %tmp, i32 0, i32 0
-  store i64 5, i64* %struct_gep
-  %struct_gep1 = getelementptr inbounds %opaque, %opaque* %tmp, i32 0, i32 0
-  %load = load i64, i64* %struct_gep1
-  store i64 %load, i64* %retvar
+  %tmp = alloca i64
+  %fcall = call i64 @"fst<int,bool>"(i64 5, i1 false)
+  store i64 %fcall, i64* %tmp
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load = load i64, i64* %tmp
+  %fcall1 = call i64 @"id<int>"(i64 %load)
+  store i64 %fcall1, i64* %retvar
+  br label %basic_blockbb2
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 }

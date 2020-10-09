@@ -1,5 +1,7 @@
-fn id<T, U>(t: T, u: U) -> T { t }
+fn fst<T, U>(t: T, u: U) -> T { t }
+fn snd<T, U>(t: T, u: U) -> U { fst(u, t) }
+
 
 fn main() -> int {
-    id(4, false)
+    fst(4, false)
 }

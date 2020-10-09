@@ -37,16 +37,10 @@ basic_blockbb0:
   %retvar = alloca i64
   %t = alloca i64
   store i64 %0, i64* %t
-  %t1 = alloca i64
-  store i1 %1, i64* %t1
   %u = alloca i1
-  %u2 = alloca i1
+  store i1 %1, i1* %u
   %load = load i64, i64* %t
-  store i64 %load, i64* %t1
-  %load3 = load i1, i1* %u
-  store i1 %load3, i1* %u2
-  %load4 = load i64, i64* %t1
-  store i64 %load4, i64* %retvar
+  store i64 %load, i64* %retvar
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 }

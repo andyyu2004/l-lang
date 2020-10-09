@@ -68,8 +68,6 @@ fn build_variant_ctor<'tcx>(
         return None;
     }
 
-    let ctor = variant.ctor.unwrap();
-
     // TODO get a proper span
     let info = SpanInfo { span: Span::empty() };
     let (adt, substs) = ty.expect_adt();

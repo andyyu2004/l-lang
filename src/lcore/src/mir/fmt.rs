@@ -226,9 +226,11 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
                 f.mir_fmt(fmt)?;
                 write!(fmt, "(")?;
                 args.get(0).map(|arg| arg.mir_fmt(fmt));
-                for arg in &args[1..] {
-                    write!(fmt, ", ")?;
-                    arg.mir_fmt(fmt)?;
+                if args.len() > 1 {
+                    for arg in &args[1..] {
+                        write!(fmt, ", ")?;
+                        arg.mir_fmt(fmt)?;
+                    }
                 }
                 writeln!(fmt, ") -> [{:?}]", target)?;
                 writeln!(fmt)
