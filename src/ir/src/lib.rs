@@ -60,7 +60,7 @@ index::newtype_index!(
 
 index::newtype_index!(
     pub struct ParamIdx {
-        DEBUG_FORMAT ="ParamIdx({})"
+        DEBUG_FORMAT ="{}"
     }
 );
 

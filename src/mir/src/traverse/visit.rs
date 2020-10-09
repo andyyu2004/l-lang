@@ -81,7 +81,7 @@ pub trait Visitor<'tcx> {
         match operand {
             Operand::Lvalue(lvalue) => self.visit_lvalue(lvalue),
             Operand::Const(_) => {}
-            Operand::Item(_) => {}
+            Operand::Instance(_) => {}
         }
     }
 

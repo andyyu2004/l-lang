@@ -16,14 +16,6 @@ pub struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
 }
 
-impl<'tcx> Deref for TyCtx<'tcx> {
-    type Target = GlobalCtx<'tcx>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.gcx
-    }
-}
-
 impl<'tcx> TyCtx<'tcx> {
     pub fn alloc<T>(self, t: T) -> &'tcx T {
         // these types have their own typed arena
@@ -194,12 +186,16 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 pub struct GlobalCtx<'tcx> {
+    interners: CtxInterners<'tcx>,
     pub arena: &'tcx CoreArenas<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::IR<'tcx>,
-    interners: CtxInterners<'tcx>,
     pub resolutions: &'tcx Resolutions,
+    /// map from the `DefId` of a function to a list of
+    /// all substitutions the function is instantiated with
+    // TODO maybe there is a better data structure to use that won't require cloning
+    pub(super) monomorphizations: RefCell<FxHashMap<DefId, Vec<SubstsRef<'tcx>>>>,
     /// where the results of type collection are stored
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
@@ -213,7 +209,16 @@ impl<'tcx> GlobalCtx<'tcx> {
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
-        Self { types, ir, arena, interners, resolutions, sess, collected_tys: Default::default() }
+        Self {
+            types,
+            ir,
+            arena,
+            interners,
+            resolutions,
+            sess,
+            collected_tys: Default::default(),
+            monomorphizations: Default::default(),
+        }
     }
 
     pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
@@ -340,5 +345,13 @@ impl<'tcx> CommonTypes<'tcx> {
             unit: mk(TyKind::Tuple(List::empty())),
             int,
         }
+    }
+}
+
+impl<'tcx> Deref for TyCtx<'tcx> {
+    type Target = GlobalCtx<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.gcx
     }
 }

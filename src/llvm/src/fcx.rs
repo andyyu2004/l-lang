@@ -7,13 +7,14 @@ use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use lcore::mir::{self, BlockId, VarId};
-use lcore::ty::{AdtKind, ConstKind, Projection, Ty};
+use lcore::ty::{AdtKind, ConstKind, Instance, Projection, Subst, Ty};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
 pub struct FnCtx<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
-    body: &'tcx mir::Mir<'tcx>,
+    instance: Instance<'tcx>,
+    mir: &'tcx mir::Mir<'tcx>,
     llfn: FunctionValue<'tcx>,
     vars: IndexVec<mir::VarId, LvalueRef<'tcx>>,
     /// map from mir block to llvm block
@@ -40,21 +41,22 @@ struct LLVMVar<'tcx> {
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(
-        cctx: &'a CodegenCtx<'tcx>,
-        llfn: FunctionValue<'tcx>,
-        body: &'tcx mir::Mir<'tcx>,
-    ) -> Self {
-        let blocks = body
+    pub fn new(cctx: &'a CodegenCtx<'tcx>, instance: Instance<'tcx>) -> Self {
+        let llfn = cctx.instances.borrow()[&instance];
+        let mir = cctx.instance_mir(instance);
+
+        let blocks = mir
             .basic_blocks
             .indices()
             .map(|i| cctx.llctx.append_basic_block(llfn, &format!("basic_block{:?}", i)))
             .collect();
+
         let mut ctx = Self {
             cctx,
-            body,
+            mir,
             llfn,
             blocks,
+            instance,
             vars: Default::default(),
             #[cfg(debug_assertions)]
             mallocs: Default::default(),
@@ -66,14 +68,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn alloc_vars(&mut self) -> IndexVec<VarId, LvalueRef<'tcx>> {
         let alloca = |var_id| {
-            let mir_var = self.body.vars[var_id];
-            let ty = mir_var.ty;
+            let mir_var = self.mir.vars[var_id];
+            let ty = mir_var.ty.subst(self.tcx, self.instance.substs);
             let ptr = self.build_alloca(self.llvm_ty(ty), &mir_var.to_string());
             LvalueRef { ptr, ty }
         };
 
         // store arguments into the respective vars
-        let args = self.body.arg_iter().zip(self.llfn.get_param_iter()).map(|(id, llval)| {
+        let args = self.mir.arg_iter().zip(self.llfn.get_param_iter()).map(|(id, llval)| {
             let var = alloca(id);
             // store the provided arguments into the local variables we provided
             self.build_store(var.ptr, llval);
@@ -81,13 +83,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         });
 
         let retvar = alloca(mir::RET_VAR);
-        let vars = self.body.var_iter().map(alloca);
+        let vars = self.mir.var_iter().map(alloca);
         std::iter::once(retvar).chain(args).chain(vars).collect()
     }
 
     /// entry point of `FnCtx`
     pub fn codegen(&mut self) {
-        for id in self.body.basic_blocks.indices() {
+        for id in self.mir.basic_blocks.indices() {
             self.codegen_basic_block(id);
         }
         // self.fpm.run_on(&self.llfn);
@@ -96,7 +98,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// sets the current llvm block to write to
     fn set_block(&self, block: BlockId) -> &'tcx mir::BasicBlock<'tcx> {
         self.position_at_end(self.blocks[block]);
-        &self.body.basic_blocks[block]
+        &self.mir.basic_blocks[block]
     }
 
     fn codegen_basic_block(&mut self, id: BlockId) -> BasicBlock<'tcx> {
@@ -296,26 +298,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    /// saves the previous insert block, runs a function, then restores the builder to the end of
-    /// the previous basic block
-    fn with_new_insertion_point<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
-        // save the insertion point of the outer function
-        let prev_block = self.get_insert_block();
-        let ret = f(self);
-        if let Some(block) = prev_block {
-            self.position_at_end(block);
-        }
-        ret
-    }
-
     fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> ValueRef<'tcx> {
         match rvalue {
             mir::Rvalue::Closure(ty, body) => {
-                let name = "<closure>";
-                let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
-                self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
-                let val = f.as_llvm_ptr().into();
-                ValueRef { val, ty }
+                todo!();
+                // let name = "<closure>";
+                // let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
+                // self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
+                // let val = f.as_llvm_ptr().into();
+                // ValueRef { val, ty }
             }
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(box_ty) => {
@@ -332,7 +323,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.mallocs.insert(LvalueRef { ty, ptr });
                 ValueRef { ty, val: ptr.into() }
             }
-            mir::Rvalue::Ref(lvalue) => {
+            mir::Rvalue::Ref(_lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
                 panic!("unsupported");
             }
@@ -381,18 +372,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let val = self.build_load(var.ptr, "load").into();
                 ValueRef { val, ty: var.ty }
             }
-            mir::Operand::Item(def_id) => {
-                // TODO assume item is fn for now
+            mir::Operand::Instance(instance) => {
                 let llfn = self
-                    .items
+                    .instances
                     .borrow()
-                    .get(def_id)
+                    .get(instance)
                     .copied()
-                    .unwrap_or_else(|| panic!("no entry in items with def_id `{}`", def_id));
-                // probably not the `correct` way to do this :)
-                let val =
-                    unsafe { std::mem::transmute::<FunctionValue, PointerValue>(llfn) }.into();
-                ValueRef { val, ty: self.tcx.collected_ty(*def_id) }
+                    .unwrap_or_else(|| panic!("no instance `{:?}`", instance));
+                let val = llfn.as_llvm_ptr().into();
+                ValueRef { val, ty: instance.ty(self.tcx) }
             }
         }
     }

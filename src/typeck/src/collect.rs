@@ -17,7 +17,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
-                let substs = Substs::id_for_generics(tcx, generics);
+                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
@@ -30,7 +30,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                     .collect();
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
-                let substs = Substs::id_for_generics(tcx, generics);
+                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }

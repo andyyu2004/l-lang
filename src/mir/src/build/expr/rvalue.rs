@@ -62,7 +62,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(Rvalue::Ref(lvalue))
             }
             tir::ExprKind::Block(..)
-            | tir::ExprKind::ItemRef(..)
+            | tir::ExprKind::InstanceRef(..)
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Field(..)

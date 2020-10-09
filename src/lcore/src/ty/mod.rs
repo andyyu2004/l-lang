@@ -1,5 +1,7 @@
 mod adjustments;
+mod instance;
 mod list;
+mod monomorphization;
 mod relate;
 mod substs;
 mod tables;
@@ -8,6 +10,7 @@ mod tyctx;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
+pub use instance::{Instance, InstanceDef};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
 pub use substs::*;
@@ -337,7 +340,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
-            TyKind::Array(ty, n) => write!(f, "[{};n]", ty),
+            TyKind::Array(ty, n) => write!(f, "[{};{}]", ty, n),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),

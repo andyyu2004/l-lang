@@ -86,7 +86,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
-            | tir::ExprKind::ItemRef(..)
+            | tir::ExprKind::InstanceRef(..)
             | tir::ExprKind::Tuple(..)
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Call(..)

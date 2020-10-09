@@ -1,11 +1,11 @@
 use super::*;
-use context::{Context, ContextRef};
+use context::Context;
 use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
-use ir::{self, DefId, ItemVisitor};
+use ir::{DefId, ItemVisitor};
 use lcore::mir::Mir;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
@@ -24,7 +24,8 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
-    pub items: RefCell<FxHashMap<DefId, FunctionValue<'tcx>>>,
+    pub mir_bodies: RefCell<FxHashMap<DefId, &'tcx Mir<'tcx>>>,
+    pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
 }
 
@@ -101,28 +102,46 @@ impl<'tcx> CodegenCtx<'tcx> {
             native_functions,
             intrinsics,
             builder: llctx.create_builder(),
-            items: Default::default(),
+            mir_bodies: Default::default(),
+            instances: Default::default(),
             lltypes: Default::default(),
         }
     }
 
-    pub fn declare_items(&self) {
+    pub fn declare_instances(&self) {
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
         DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
-    pub fn codegen_items(&self) {
-        // we need to predeclare all items as we don't require them to be declared in the source
-        // file in topological order
-        CodegenCollector { cctx: self }.visit_ir(self.tcx.ir);
+    pub fn codegen_instances(&self) {
+        // after doing mir collection and declarations we can finally codegen
+        let instances = self.instances.borrow();
+        instances.iter().for_each(|(&instance, &llfn)| self.codegen_instance(instance, llfn));
+    }
+
+    crate fn instance_mir(&self, instance: Instance<'tcx>) -> &'tcx Mir<'tcx> {
+        match instance.kind {
+            InstanceDef::Item(def_id) => self.mir_bodies.borrow()[&def_id],
+        }
+    }
+
+    pub fn codegen_instance(&self, instance: Instance<'tcx>, llfn: FunctionValue<'tcx>) {
+        FnCtx::new(self, instance).codegen()
+    }
+
+    pub fn collect_mir(&self) {
+        MirCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
     /// returns the main function
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
         self.tcx.collect_item_types();
-        self.declare_items();
-        self.codegen_items();
+        self.collect_mir();
+        // we declare instances after building mir as monomorphizations
+        // are collected during mir gen
+        self.declare_instances();
+        self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
@@ -130,17 +149,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
             None
         })
-    }
-
-    pub fn codegen_body(&self, fn_name: &str, body: &'tcx Mir<'tcx>) -> FunctionValue<'tcx> {
-        let llfn = self.module.get_function(fn_name).unwrap();
-        let mut fcx = FnCtx::new(&self, llfn, body);
-        fcx.codegen();
-        llfn
-    }
-
-    fn const_size_of(&self, llty: BasicTypeEnum<'tcx>) {
-        let idx = self.types.int32.const_int(1, false);
     }
 
     pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {

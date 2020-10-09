@@ -12,6 +12,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
+    // use a separate function for fn types as `FunctionType<'tcx>` is not considered a basic type
     pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {
         self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
@@ -57,6 +58,8 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
                 AdtKind::Enum => {
                     let opaque_ty = self.llctx.opaque_struct_type("opaque");
+                    // we must insert the opaque type immediately into the map as it may be a
+                    // recursive type
                     self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
                     // it is fine to unwrap here as if the enum has no variants it is not
                     // constructable and this will never be called
@@ -76,7 +79,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             | TyKind::Scheme(..)
             | TyKind::Infer(..)
             | TyKind::Never
-            | TyKind::Error => unreachable!(),
+            | TyKind::Error => unreachable!("{}", ty),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty

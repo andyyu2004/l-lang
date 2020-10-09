@@ -2,10 +2,10 @@
 mod fmt;
 
 use crate::mir;
-use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty, TyCtx};
-use ast::{self, Mutability};
+use crate::ty::{AdtTy, Const, Instance, List, Projection, SubstsRef, Ty, TyCtx};
+use ast::Mutability;
 use index::{Idx, IndexVec};
-use ir::{self, DefId, VariantIdx};
+use ir::VariantIdx;
 use span::Span;
 
 index::newtype_index! {
@@ -190,7 +190,7 @@ pub enum Rvalue<'tcx> {
 pub enum Operand<'tcx> {
     Lvalue(Lvalue<'tcx>),
     Const(&'tcx Const<'tcx>),
-    Item(DefId),
+    Instance(Instance<'tcx>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

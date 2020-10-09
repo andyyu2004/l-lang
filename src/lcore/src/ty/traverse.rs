@@ -73,7 +73,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Opaque(_, substs) => substs.visit_with(visitor),
             TyKind::Infer(_) => false,
             TyKind::Adt(_, substs) => substs.visit_with(visitor),
-            TyKind::Param(_)
+            TyKind::Param(..)
             | TyKind::Never
             | TyKind::Error
             | TyKind::Char

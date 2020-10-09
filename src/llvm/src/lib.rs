@@ -1,4 +1,5 @@
 #![feature(decl_macro)]
+#![feature(crate_visibility_modifier)]
 #![feature(array_value_iter)]
 
 mod codegen;

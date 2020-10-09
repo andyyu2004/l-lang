@@ -41,6 +41,10 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         self.tcx.alloc(build::build_fn(self, tir))
     }
 
+    pub fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
+        self.node_type(expr.id)
+    }
+
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
         info!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
@@ -259,8 +263,15 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                     }
                 }
                 // functions and function-like variant constructors
-                DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
-                    tir::ExprKind::ItemRef(def_id),
+                // we deal with monomorphizations here
+                DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn => {
+                    let fn_ty = self.collected_ty(def_id);
+                    let expr_ty = self.expr_ty(expr);
+                    let substs = self.match_tys(fn_ty, expr_ty);
+                    self.add_monomorphization(def_id, substs);
+                    let instance = Instance::item(substs, def_id);
+                    tir::ExprKind::InstanceRef(instance)
+                }
                 DefKind::AssocFn => todo!(),
                 DefKind::Extern => todo!(),
                 DefKind::Impl => todo!(),
