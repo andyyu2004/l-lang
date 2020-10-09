@@ -33,6 +33,8 @@ extern {
     fn rc(t: &int) -> int;
 }
 
+fn id<T>(t: T) -> T { t }
+
 fn main() -> int {
     /* "string"; */
     /* let expr = box Expr::Add( */
@@ -46,6 +48,7 @@ fn main() -> int {
     /*     (a,b,c) => c, */
     /* }; */
 
+    return id(5);
     return rc(box 5);
 
     let next = box Node {

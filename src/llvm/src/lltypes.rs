@@ -34,7 +34,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Float => self.types.float.into(),
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Char => todo!(),
-            TyKind::Array(ty, n) => todo!(),
+            TyKind::Array(_ty, _n) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
             TyKind::Tuple(tys) => {
@@ -74,9 +74,9 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Opaque(..) => todo!(),
             TyKind::Param(..)
             | TyKind::Scheme(..)
+            | TyKind::Infer(..)
             | TyKind::Never
-            | TyKind::Error
-            | TyKind::Infer(_) => unreachable!(),
+            | TyKind::Error => unreachable!(),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty

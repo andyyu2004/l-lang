@@ -3,22 +3,23 @@ use lcore::ty::*;
 use lcore::TyCtx;
 use span::Span;
 
-/// instantiates universal type variables introduced by generic parameters with fresh inference variables
+/// instantiates universal type variables introduced by generic parameters
+/// with fresh inference variables
 pub struct InstantiationFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstsRef<'tcx>,
 }
 
 trait SubstsExt<'tcx> {
-    // creates a fresh inference variable for each type parameter in `forall`
-    fn forall(infcx: &InferCtx<'_, 'tcx>, forall: &Generics<'tcx>) -> SubstsRef<'tcx> {
-        let tcx = infcx.tcx;
-        let params = forall.params.iter().map(|p| infcx.new_infer_var(p.span));
-        tcx.mk_substs(params)
-    }
+    fn forall(infcx: &InferCtx<'_, 'tcx>, forall: &Generics<'tcx>) -> SubstsRef<'tcx>;
 }
 
 impl<'tcx> SubstsExt<'tcx> for Substs<'tcx> {
+    // creates a fresh inference variable for each type parameter in `forall`
+    fn forall(infcx: &InferCtx<'_, 'tcx>, forall: &Generics<'tcx>) -> SubstsRef<'tcx> {
+        let params = forall.params.iter().map(|p| infcx.new_infer_var(p.span));
+        infcx.mk_substs(params)
+    }
 }
 
 impl<'tcx> InstantiationFolder<'tcx> {

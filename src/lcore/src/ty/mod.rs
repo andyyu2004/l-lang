@@ -61,17 +61,6 @@ impl Display for TyVid {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum TyVarValue<'tcx> {
-    Known(Ty<'tcx>),
-    Unknown,
-}
-
-#[derive(Debug)]
-pub struct TyVarData {
-    span: Span,
-}
-
 impl<'tcx> TypeVisitor<'tcx> for TyVidVisitor {
     fn visit_ty(&mut self, ty: Ty<'tcx>) -> bool {
         match ty.kind {
