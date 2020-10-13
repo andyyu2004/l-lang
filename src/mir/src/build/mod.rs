@@ -130,7 +130,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;
                 let lvalue = Lvalue::from(this.alloc_arg(id, span, ty));
                 if let tir::PatternKind::Binding(..) = param.pat.kind {
-                    // nothing meaningful to bind to, so skip
+                    // nothing meaningful to recursively bind to
                     continue;
                 }
                 set!(block = this.bind_pat_to_lvalue(block, &param.pat, lvalue));

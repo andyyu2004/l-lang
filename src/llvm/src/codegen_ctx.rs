@@ -162,6 +162,9 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.tcx.collect_item_types();
         let instances = self.collect_monomorphization_instances();
         self.declare_instances(&instances);
+        if self.tcx.sess.has_errors() {
+            return None;
+        }
         self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();

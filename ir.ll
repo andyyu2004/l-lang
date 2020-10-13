@@ -32,51 +32,90 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
+define i1 @"0<bool,int>"(i1 %0, i64 %1) {
+basic_blockbb0:
+  %retvar = alloca i1
+  %t = alloca i1
+  store i1 %0, i1* %t
+  %u = alloca i64
+  store i64 %1, i64* %u
+  %load = load i1, i1* %t
+  store i1 %load, i1* %retvar
+  %load_ret = load i1, i1* %retvar
+  ret i1 %load_ret
+}
+
+define i1 @"3<int,bool>"(i64 %0, i1 %1) {
+basic_blockbb0:
+  %retvar = alloca i1
+  %t = alloca i64
+  store i64 %0, i64* %t
+  %u = alloca i1
+  store i1 %1, i1* %u
+  %load = load i1, i1* %u
+  %load1 = load i64, i64* %t
+  %fcall = call i1 @"0<bool,int>"(i1 %load, i64 %load1)
+  store i1 %fcall, i1* %retvar
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load_ret = load i1, i1* %retvar
+  ret i1 %load_ret
+}
+
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
   %tmp = alloca i64
   %x = alloca i64
+  %tmp1 = alloca i1
+  %tmp2 = alloca i1
+  %tmp3 = alloca i1
+  %tmp4 = alloca i1
+  %tmp5 = alloca i1
   store i64 5, i64* %tmp
   %load = load i64, i64* %tmp
   store i64 %load, i64* %x
-  %load1 = load i64, i64* %x
-  %fcall = call i64 @"3<bool,int>"(i1 false, i64 %load1)
-  store i64 %fcall, i64* %retvar
+  %load6 = load i64, i64* %x
+  %fcall = call i1 @"3<int,bool>"(i64 %load6, i1 true)
+  store i1 %fcall, i1* %tmp1
+  br label %basic_blockbb5
+
+basic_blockbb1:                                   ; preds = %basic_blockbb5
+  store i1 true, i1* %tmp2
+  store i1 true, i1* %tmp3
+  %load7 = load i1, i1* %tmp3
+  %load8 = load i1, i1* %tmp1
+  %icmp_eq = icmp eq i1 %load7, %load8
+  store i1 %icmp_eq, i1* %tmp4
+  %load9 = load i1, i1* %tmp4
+  %load10 = load i1, i1* %tmp2
+  %and = and i1 %load9, %load10
+  store i1 %and, i1* %tmp2
+  %load11 = load i1, i1* %tmp2
+  br i1 %load11, label %basic_blockbb2, label %basic_blockbb3
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
+  store i64 5, i64* %retvar
+  br label %basic_blockbb6
+
+basic_blockbb3:                                   ; preds = %basic_blockbb1
+  store i1 true, i1* %tmp5
+  %load12 = load i1, i1* %tmp5
+  br i1 %load12, label %basic_blockbb4, label %basic_blockbb7
+
+basic_blockbb4:                                   ; preds = %basic_blockbb3
+  store i64 100, i64* %retvar
+  br label %basic_blockbb6
+
+basic_blockbb5:                                   ; preds = %basic_blockbb0
   br label %basic_blockbb1
 
-basic_blockbb1:                                   ; preds = %basic_blockbb0
+basic_blockbb6:                                   ; preds = %basic_blockbb4, %basic_blockbb2
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
-}
 
-define i64 @"3<bool,int>"(i1 %0, i64 %1) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %t = alloca i1
-  store i1 %0, i1* %t
-  %u = alloca i64
-  store i64 %1, i64* %u
-  %load = load i64, i64* %u
-  %load1 = load i1, i1* %t
-  %fcall = call i64 @"0<int,bool>"(i64 %load, i1 %load1)
-  store i64 %fcall, i64* %retvar
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-}
-
-define i64 @"0<int,bool>"(i64 %0, i1 %1) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %t = alloca i64
-  store i64 %0, i64* %t
-  %u = alloca i1
-  store i1 %1, i1* %u
-  %load = load i64, i64* %t
-  store i64 %load, i64* %retvar
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
+basic_blockbb7:                                   ; preds = %basic_blockbb3
+  call void @exit(i32 1)
+  unreachable
 }
