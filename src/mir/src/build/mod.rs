@@ -129,8 +129,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             for param in &this.body.params {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;
                 let lvalue = Lvalue::from(this.alloc_arg(id, span, ty));
-                if lvalue.projs.is_empty() {
-                    // nothing meaningful to bind to
+                if let tir::PatternKind::Binding(..) = param.pat.kind {
+                    // nothing meaningful to bind to, so skip
                     continue;
                 }
                 set!(block = this.bind_pat_to_lvalue(block, &param.pat, lvalue));

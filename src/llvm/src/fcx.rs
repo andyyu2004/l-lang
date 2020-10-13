@@ -75,6 +75,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         };
 
         // store arguments into the respective vars
+        assert_eq!(self.llfn.count_params() as usize, self.mir.argc);
         let args = self.mir.arg_iter().zip(self.llfn.get_param_iter()).map(|(id, llval)| {
             let var = alloca(id);
             // store the provided arguments into the local variables we provided
