@@ -19,11 +19,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         match irref_pat.kind {
             tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
-                if lvalue.projs.is_empty() {
-                    // TODO should be able to avoid binding two names
-                    // to the same lvalue in this case
-                    // however, we cannot just naively return here due to resolution issues
-                }
                 let rvalue = Rvalue::Operand(Operand::Lvalue(lvalue));
                 let &tir::Pattern { id, span, ty, .. } = irref_pat;
                 let local = self.alloc_local(id, span, ty);

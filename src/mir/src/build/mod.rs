@@ -128,7 +128,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.with_scope(info, |this| {
             for param in &this.body.params {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;
-                let lvalue = this.alloc_arg(id, span, ty).into();
+                let lvalue = Lvalue::from(this.alloc_arg(id, span, ty));
+                if lvalue.projs.is_empty() {
+                    // nothing meaningful to bind to
+                    continue;
+                }
                 set!(block = this.bind_pat_to_lvalue(block, &param.pat, lvalue));
             }
             set!(block = this.write_expr(block, Lvalue::ret(), &this.body.expr));
@@ -166,7 +170,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn alloc_ir_var(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>, kind: VarKind) -> VarId {
         let info = self.span_info(span);
         let idx = self.alloc_var(info, kind, ty);
-        self.var_ir_map.insert(id, idx);
+        let prev = self.var_ir_map.insert(id, idx);
+        if prev.is_some() {
+            panic!("two mir vars allocated for id {}", id);
+        }
         idx
     }
 

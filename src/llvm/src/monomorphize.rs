@@ -26,6 +26,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
 
         if let Ok(mir) = mir {
+            println!("{}", mir);
             MonoCollector { cctx: self, instance, visited }.visit_mir(mir)
         }
     }

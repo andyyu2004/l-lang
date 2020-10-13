@@ -163,7 +163,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let instances = self.collect_monomorphization_instances();
         self.declare_instances(&instances);
         self.codegen_instances();
-        self.module.print_to_stderr();
+        // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
         self.module.get_function(sym::MAIN.as_str()).or_else(|| {

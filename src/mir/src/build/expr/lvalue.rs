@@ -54,7 +54,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     pub fn var_id_as_lvalue_builder(&mut self, id: ir::Id) -> LvalueBuilder<'tcx> {
         if let Some(&var_id) = self.var_ir_map.get(&id) {
-            dbg!(&self.var_ir_map);
             LvalueBuilder::from(var_id)
         } else {
             panic!("no var found with id `{}`", id)
