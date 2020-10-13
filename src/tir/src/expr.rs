@@ -1,7 +1,7 @@
 use crate as tir;
 use fmt::Display;
 use ir::{DefId, FieldIdx, VariantIdx};
-use lcore::ty::{AdtTy, Const, Instance, SubstsRef, Ty};
+use lcore::ty::{AdtTy, Const, SubstsRef, Ty};
 use span::Span;
 use std::fmt::{self, Formatter};
 
@@ -22,7 +22,7 @@ pub enum ExprKind<'tcx> {
     /// (reference not in the & sense, but just a usage of the variable)
     VarRef(ir::Id),
     /// reference to an item such as a function item or a constant
-    InstanceRef(Instance<'tcx>),
+    ItemRef(DefId),
     /// (x, y)
     Tuple(Vec<tir::Expr<'tcx>>),
     /// f(x)

@@ -8,6 +8,7 @@ mod fcx;
 mod intrinsics;
 mod lltypes;
 mod llvm_error;
+mod monomorphize;
 mod native;
 
 #[cfg(test)]

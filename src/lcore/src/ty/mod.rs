@@ -1,7 +1,6 @@
 mod adjustments;
 mod instance;
 mod list;
-mod monomorphization;
 mod relate;
 mod substs;
 mod tables;
@@ -10,7 +9,7 @@ mod tyctx;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
-pub use instance::{Instance, InstanceDef};
+pub use instance::{Instance, InstanceKind};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
 pub use substs::*;

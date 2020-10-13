@@ -3,5 +3,6 @@ fn snd<T, U>(t: T, u: U) -> U { fst(u, t) }
 
 
 fn main() -> int {
-    fst(4, false)
+    let x = 5;
+    snd(false, x)
 }

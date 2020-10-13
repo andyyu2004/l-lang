@@ -32,15 +32,45 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
-define i64 @"id<int,bool>"(i64 %0, i1 %1) {
+define i64 @"0<int,bool>"(i64 %0, i1 %1) {
 basic_blockbb0:
   %retvar = alloca i64
   %t = alloca i64
   store i64 %0, i64* %t
+  %t1 = alloca i64
+  store i1 %1, i64* %t1
   %u = alloca i1
-  store i1 %1, i1* %u
+  %u2 = alloca i1
   %load = load i64, i64* %t
-  store i64 %load, i64* %retvar
+  store i64 %load, i64* %t1
+  %load3 = load i1, i1* %u
+  store i1 %load3, i1* %u2
+  %load4 = load i64, i64* %t1
+  store i64 %load4, i64* %retvar
+  %load_ret = load i64, i64* %retvar
+  ret i64 %load_ret
+}
+
+define i64 @"3<bool,int>"(i1 %0, i64 %1) {
+basic_blockbb0:
+  %retvar = alloca i64
+  %t = alloca i1
+  store i1 %0, i1* %t
+  %t1 = alloca i1
+  store i64 %1, i1* %t1
+  %u = alloca i64
+  %u2 = alloca i64
+  %load = load i1, i1* %t
+  store i1 %load, i1* %t1
+  %load3 = load i64, i64* %u
+  store i64 %load3, i64* %u2
+  %load4 = load i64, i64* %u2
+  %load5 = load i1, i1* %t1
+  %fcall = call i64 @"0<int,bool>"(i64 %load4, i1 %load5)
+  store i64 %fcall, i64* %retvar
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 }
@@ -48,7 +78,13 @@ basic_blockbb0:
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
-  %fcall = call i64 @"id<int,bool>"(i64 4, i1 false)
+  %tmp = alloca i64
+  %x = alloca i64
+  store i64 5, i64* %tmp
+  %load = load i64, i64* %tmp
+  store i64 %load, i64* %x
+  %load1 = load i64, i64* %x
+  %fcall = call i64 @"3<bool,int>"(i1 false, i64 %load1)
   store i64 %fcall, i64* %retvar
   br label %basic_blockbb1
 

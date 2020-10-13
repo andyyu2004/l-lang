@@ -7,7 +7,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<Operand<'tcx>> {
         match expr.kind {
-            tir::ExprKind::InstanceRef(instance) => block.and(Operand::Instance(instance)),
+            tir::ExprKind::ItemRef(def_id) => block.and(Operand::Item(def_id, expr.ty)),
             tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) | tir::ExprKind::VarRef(..) => {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Lvalue(lvalue))

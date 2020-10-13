@@ -351,7 +351,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn codegen_operand(&mut self, operand: &mir::Operand<'tcx>) -> ValueRef<'tcx> {
-        match operand {
+        match *operand {
             mir::Operand::Const(c) => match c.kind {
                 ConstKind::Float(f) => ValueRef {
                     val: self.types.float.const_float(f).into(),
@@ -367,18 +367,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 },
                 ConstKind::Unit => ValueRef { val: self.vals.unit.into(), ty: self.tcx.types.unit },
             },
-            &mir::Operand::Lvalue(lvalue) => {
+            mir::Operand::Lvalue(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
                 let val = self.build_load(var.ptr, "load").into();
                 ValueRef { val, ty: var.ty }
             }
-            mir::Operand::Instance(instance) => {
-                let llfn = self
-                    .instances
-                    .borrow()
-                    .get(instance)
-                    .copied()
-                    .unwrap_or_else(|| panic!("no instance `{:?}`", instance));
+            mir::Operand::Item(def_id, ty) => {
+                let instance = self.operand_instance_map.borrow()[&(def_id, ty)];
+                let llfn = self.instances.borrow()[&instance];
                 let val = llfn.as_llvm_ptr().into();
                 ValueRef { val, ty: instance.ty(self.tcx) }
             }

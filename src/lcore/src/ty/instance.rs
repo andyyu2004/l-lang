@@ -1,4 +1,4 @@
-use crate::ty::{Subst, SubstsRef, Ty, TyCtx};
+use crate::ty::{Subst, Substs, SubstsRef, Ty, TyCtx};
 use ir::DefId;
 use std::fmt::{self, Display, Formatter};
 
@@ -7,44 +7,38 @@ use std::fmt::{self, Display, Formatter};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Instance<'tcx> {
     pub substs: SubstsRef<'tcx>,
-    pub kind: InstanceDef,
+    pub def_id: DefId,
+    pub kind: InstanceKind,
 }
 
 impl<'tcx> Instance<'tcx> {
     pub fn ty(self, tcx: TyCtx<'tcx>) -> Ty<'tcx> {
-        let ty = self.kind.ty(tcx);
+        let ty = match self.kind {
+            InstanceKind::Item => tcx.collected_ty(self.def_id),
+        };
         ty.subst(tcx, self.substs)
     }
 
     /// construct a new instance of an item
     pub fn item(substs: SubstsRef<'tcx>, def_id: DefId) -> Self {
-        Instance { substs, kind: InstanceDef::Item(def_id) }
+        Instance { substs, def_id, kind: InstanceKind::Item }
+    }
+
+    pub fn mono_item(def_id: DefId) -> Self {
+        Self::item(Substs::empty(), def_id)
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum InstanceDef {
-    Item(DefId),
-}
-
-impl InstanceDef {
-    fn ty<'tcx>(self, tcx: TyCtx<'tcx>) -> Ty<'tcx> {
-        match self {
-            InstanceDef::Item(def_id) => tcx.collected_ty(def_id),
-        }
-    }
+pub enum InstanceKind {
+    // maybe include the mir body in here?
+    Item,
 }
 
 impl<'tcx> Display for Instance<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}<{}>", self.kind, self.substs)
-    }
-}
-
-impl Display for InstanceDef {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            InstanceDef::Item(def_id) => write!(f, "{}", def_id),
+        match self.kind {
+            InstanceKind::Item => write!(f, "{}<{}>", self.def_id, self.substs),
         }
     }
 }

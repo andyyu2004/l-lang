@@ -37,7 +37,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
             tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, &xs),
             tir::ExprKind::VarRef(..)
-            | tir::ExprKind::InstanceRef(..)
+            | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Ref(..)

@@ -80,8 +80,8 @@ pub trait Visitor<'tcx> {
     fn walk_operand(&mut self, operand: &Operand<'tcx>) {
         match operand {
             Operand::Lvalue(lvalue) => self.visit_lvalue(lvalue),
-            Operand::Const(_) => {}
-            Operand::Instance(_) => {}
+            Operand::Const(..) => {}
+            Operand::Item(..) => {}
         }
     }
 
@@ -105,9 +105,8 @@ pub trait Visitor<'tcx> {
                 arms.iter().for_each(|(operand, _)| self.visit_operand(operand));
                 let _ = default;
             }
-            TerminatorKind::Cond(_, _, _) => {}
+            TerminatorKind::Cond(operand, _, _) => self.visit_operand(operand),
             TerminatorKind::Abort => {}
         };
-        todo!()
     }
 }

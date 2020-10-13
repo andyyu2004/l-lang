@@ -26,7 +26,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Block(_)
             | tir::ExprKind::VarRef(_)
-            | tir::ExprKind::InstanceRef(_)
+            | tir::ExprKind::ItemRef(_)
             | tir::ExprKind::Tuple(_)
             | tir::ExprKind::Call(_, _)
             | tir::ExprKind::Match(_, _)

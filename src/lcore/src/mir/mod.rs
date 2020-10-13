@@ -1,11 +1,13 @@
 //! mid-level intermediate representation (control flow graph)
 mod fmt;
+mod mirty;
 
 use crate::mir;
 use crate::ty::{AdtTy, Const, Instance, List, Projection, SubstsRef, Ty, TyCtx};
 use ast::Mutability;
 use index::{Idx, IndexVec};
-use ir::VariantIdx;
+use ir::{DefId, VariantIdx};
+pub use mirty::{LvalueTy, MirTy};
 use span::Span;
 
 index::newtype_index! {
@@ -99,19 +101,6 @@ pub struct Lvalue<'tcx> {
     pub projs: &'tcx List<Projection<'tcx>>,
 }
 
-pub trait LvalueTy<'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx>;
-    fn locals(&self) -> &IndexVec<VarId, Var<'tcx>>;
-}
-
-impl<'tcx> Lvalue<'tcx> {
-    pub fn ty(&self, ctx: &impl LvalueTy<'tcx>) -> Ty<'tcx> {
-        let base = ctx.locals()[self.id].ty;
-        let tcx = ctx.tcx();
-        self.projs.iter().fold(base, |ty, proj| tcx.apply_projection(ty, proj))
-    }
-}
-
 impl<'tcx> Ord for Lvalue<'tcx> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.id.cmp(&other.id)
@@ -190,7 +179,7 @@ pub enum Rvalue<'tcx> {
 pub enum Operand<'tcx> {
     Lvalue(Lvalue<'tcx>),
     Const(&'tcx Const<'tcx>),
-    Instance(Instance<'tcx>),
+    Item(DefId, Ty<'tcx>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

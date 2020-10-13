@@ -3,7 +3,6 @@
 #![feature(box_syntax, box_patterns)]
 
 mod build;
-mod monomorphize;
 mod traverse;
 
 #[macro_use]
@@ -27,6 +26,20 @@ macro halt_on_error($tcx:expr) {{
     }
 }}
 
+pub trait TyCtxMirExt<'tcx> {
+    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>>;
+}
+
+impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
+    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
+        let item = &self.ir.items[&def_id];
+        match item.kind {
+            ir::ItemKind::Fn(sig, generics, body) => build_mir(self, def_id, sig, generics, body),
+            _ => panic!(),
+        }
+    }
+}
+
 pub fn with_mir_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
     def_id: DefId,
@@ -38,7 +51,7 @@ pub fn with_mir_ctx<'tcx, R>(
     InheritedCtx::build(tcx, def_id).enter(|inherited| {
         let fcx = inherited.check_fn_item(def_id, sig, generics, body);
         // don't bother continuing if typeck failed
-        // note that the failure to typeck could also come from resolution errors
+        // note that the failure to typeck could also come from earlier resolution errors
         halt_on_error!(tcx);
         let tables = fcx.resolve_inference_variables(body);
         let lctx = MirCtx::new(&inherited, tables);

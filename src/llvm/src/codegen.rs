@@ -29,11 +29,7 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
             return;
         }
 
-        let monomorphizations = match self.tcx.monomorphizations_for(def_id) {
-            Some(mono) => mono,
-            // if there are no monomorphizations recorded, then presumably it is never called
-            None => return,
-        };
+        let monomorphizations = vec![];
 
         // define a new function for every monomorphization
         for substs in monomorphizations {
@@ -43,6 +39,7 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
             let llfn = self.module.add_function(&name, llty, None);
             self.cctx.instances.borrow_mut().insert(Instance::item(substs, def_id), llfn);
         }
+        todo!();
     }
 
     // fn visit_foreign_fn(

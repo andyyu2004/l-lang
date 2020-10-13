@@ -190,10 +190,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 }
 
 impl<'tcx> LvalueTy<'tcx> for Builder<'_, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        self.tcx
-    }
-
     fn locals(&self) -> &IndexVec<VarId, Var<'tcx>> {
         &self.vars
     }

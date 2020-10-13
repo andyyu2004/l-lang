@@ -52,12 +52,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         block.and(builder.lvalue(self.tcx))
     }
 
-    pub fn var_id_as_lvalue(&mut self, id: ir::Id) -> Lvalue<'tcx> {
-        self.var_id_as_lvalue_builder(id).lvalue(self.tcx)
-    }
-
     pub fn var_id_as_lvalue_builder(&mut self, id: ir::Id) -> LvalueBuilder<'tcx> {
         if let Some(&var_id) = self.var_ir_map.get(&id) {
+            dbg!(&self.var_ir_map);
             LvalueBuilder::from(var_id)
         } else {
             panic!("no var found with id `{}`", id)
@@ -86,7 +83,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
-            | tir::ExprKind::InstanceRef(..)
+            | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Tuple(..)
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Call(..)

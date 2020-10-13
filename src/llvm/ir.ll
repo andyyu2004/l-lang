@@ -32,45 +32,38 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
-define i64 @"id<int>"(i64 %0) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %x = alloca i64
-  store i64 %0, i64* %x
-  %load = load i64, i64* %x
-  store i64 %load, i64* %retvar
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-}
-
-define i64 @"fst<int,bool>"(i64 %0, i1 %1) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %t = alloca i64
-  store i64 %0, i64* %t
-  %u = alloca i1
-  store i1 %1, i1* %u
-  %load = load i64, i64* %t
-  store i64 %load, i64* %retvar
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-}
-
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
-  %tmp = alloca i64
-  %fcall = call i64 @"fst<int,bool>"(i64 5, i1 false)
-  store i64 %fcall, i64* %tmp
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load = load i64, i64* %tmp
-  %fcall1 = call i64 @"id<int>"(i64 %load)
-  store i64 %fcall1, i64* %retvar
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
+  %tmp = alloca { i64, { i64, { i64, { i64, i64 } } } }
+  %tmp1 = alloca { i64, { i64, { i64, i64 } } }
+  %tmp2 = alloca { i64, { i64, i64 } }
+  %tmp3 = alloca { i64, i64 }
+  %struct_gep = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 0
+  store i64 1, i64* %struct_gep
+  %struct_gep4 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1, i32 0, i32 0
+  store i64 2, i64* %struct_gep4
+  %struct_gep5 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2, i32 0, i32 0
+  store i64 3, i64* %struct_gep5
+  %struct_gep6 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp3, i32 0, i32 0
+  store i64 4, i64* %struct_gep6
+  %struct_gep7 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp3, i32 0, i32 1
+  store i64 5, i64* %struct_gep7
+  %struct_gep8 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2, i32 0, i32 1
+  %load = load { i64, i64 }, { i64, i64 }* %tmp3
+  store { i64, i64 } %load, { i64, i64 }* %struct_gep8
+  %struct_gep9 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1, i32 0, i32 1
+  %load10 = load { i64, { i64, i64 } }, { i64, { i64, i64 } }* %tmp2
+  store { i64, { i64, i64 } } %load10, { i64, { i64, i64 } }* %struct_gep9
+  %struct_gep11 = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 1
+  %load12 = load { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %tmp1
+  store { i64, { i64, { i64, i64 } } } %load12, { i64, { i64, { i64, i64 } } }* %struct_gep11
+  %struct_gep13 = getelementptr inbounds { i64, { i64, { i64, { i64, i64 } } } }, { i64, { i64, { i64, { i64, i64 } } } }* %tmp, i32 0, i32 1
+  %struct_gep14 = getelementptr inbounds { i64, { i64, { i64, i64 } } }, { i64, { i64, { i64, i64 } } }* %struct_gep13, i32 0, i32 1
+  %struct_gep15 = getelementptr inbounds { i64, { i64, i64 } }, { i64, { i64, i64 } }* %struct_gep14, i32 0, i32 1
+  %struct_gep16 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %struct_gep15, i32 0, i32 1
+  %load17 = load i64, i64* %struct_gep16
+  store i64 %load17, i64* %retvar
   %load_ret = load i64, i64* %retvar
   ret i64 %load_ret
 }

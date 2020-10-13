@@ -100,7 +100,7 @@ where
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
-            tir::ExprKind::InstanceRef(_def_id) => indent!(self, "{}", expr.span.to_string()),
+            tir::ExprKind::ItemRef(_def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),
             tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),

@@ -20,8 +20,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
                 if lvalue.projs.is_empty() {
-                    // no need to create a new variable just to refer to the same thing
-                    return block.unit();
+                    // TODO should be able to avoid binding two names
+                    // to the same lvalue in this case
+                    // however, we cannot just naively return here due to resolution issues
                 }
                 let rvalue = Rvalue::Operand(Operand::Lvalue(lvalue));
                 let &tir::Pattern { id, span, ty, .. } = irref_pat;
