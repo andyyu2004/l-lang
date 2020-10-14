@@ -173,30 +173,6 @@ impl<'tcx> Driver<'tcx> {
         Ok(val)
     }
 
-    // pub fn llvm_jit(&'tcx self) -> LResult<i32> {
-    //     let cctx = self.create_codegen_ctx()?;
-    //     let jcx = JitCtx::new(&cctx, GC::default());
-    //     todo!()
-    // }
-
-    // // pub fn compile(&'tcx self) -> LResult<Executable> {
-    // //     let tir = self.gen_mir()?;
-    // //     println!("{}", tir);
-    // //     let gcx = self.global_ctx.get().unwrap();
-
-    // //     let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
-    // //     let executable = Compiler::new(cctx).compile(&tir);
-    // //     println!("{}", executable);
-    // //     Ok(executable)
-    // // }
-
-    // // pub fn exec(&'tcx self) -> LResult<exec::Val> {
-    // //     let executable = self.compile()?;
-    // //     let mut vm = VM::with_default_gc(executable);
-    // //     let value = vm.run()?;
-    // //     Ok(value)
-    // // }
-
     pub fn has_errors(&self) -> bool {
         self.sess.has_errors()
     }

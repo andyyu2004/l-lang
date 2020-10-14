@@ -148,7 +148,9 @@ impl<'a> Resolver<'a> {
 
     /// node_id -> def_id
     pub fn def_id(&self, node_id: NodeId) -> DefId {
-        self.node_id_to_def_id[&node_id]
+        self.node_id_to_def_id.get(&node_id).copied().unwrap_or_else(|| {
+            panic!("unresolved def_id for node `{:?}` (check def_visitor implementation)", node_id)
+        })
     }
 
     pub fn get_res(&self, id: NodeId) -> Res<NodeId> {

@@ -44,10 +44,12 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
 
     fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
+        ast::walk_foreign_item(self, item);
     }
 
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
+        ast::walk_assoc_item(self, item);
     }
 
     /// define the variant constructor
