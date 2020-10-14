@@ -1,5 +1,4 @@
-//! context for lowering from ir to mir
-//!
+//! context for lowering from ir to tir/mir
 
 use crate::build;
 use ast::{Lit, Mutability, UnaryOp};
@@ -182,7 +181,7 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
     type Output = tir::Generics<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, _ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
         tir::Generics { data: 0, pd: PhantomData }
     }
 }
@@ -283,12 +282,12 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        ctx.lower_expr(self)
+        ctx.lower_expr_adjusted(self)
     }
 }
 
 impl<'a, 'tcx> MirCtx<'a, 'tcx> {
-    fn lower_expr_no_adjust(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+    fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_type(expr.id);
         let kind = match kind {
@@ -332,8 +331,8 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         tir::Expr { span, kind, ty }
     }
 
-    fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
-        let tir = self.lower_expr_no_adjust(expr);
+    fn lower_expr_adjusted(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+        let tir = self.lower_expr(expr);
         let adjustments = self.tables.adjustments_for_expr(expr);
         self.apply_adjustments(tir, adjustments)
     }

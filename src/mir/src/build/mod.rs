@@ -13,10 +13,11 @@ use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::*;
-use lcore::ty::{Ty, TyCtx, VariantTy};
+use lcore::ty::{InstanceId, Ty, TyCtx, VariantTy};
 use rustc_hash::FxHashMap;
 use scope::{ReleaseInfo, Scopes};
 use span::Span;
+use std::cell::Cell;
 use typeck::Typeof;
 
 /// lowers `tir::Body` into `mir::Body`

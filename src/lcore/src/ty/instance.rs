@@ -2,6 +2,12 @@ use crate::ty::{Subst, Substs, SubstsRef, Ty, TyCtx};
 use ir::DefId;
 use std::fmt::{self, Display, Formatter};
 
+index::newtype_index! {
+    pub struct InstanceId {
+        DEBUG_FORMAT = "{}"
+    }
+}
+
 /// a generic definition along with its concrete substitutions
 /// used for monomorphization
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

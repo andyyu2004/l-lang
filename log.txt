@@ -1,17 +1,17 @@
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(6) to Def(1, TyParam(0))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(13) to Def(2, TyParam(1))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(17) to Def(1, TyParam(0))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(20) to Local(NodeId(4))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(32) to Def(4, TyParam(0))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(39) to Def(5, TyParam(1))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(43) to Def(5, TyParam(1))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(46) to Def(0, Fn)
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(49) to Local(NodeId(37))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(52) to Local(NodeId(30))
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(60) to PrimTy(Int)
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(69) to Def(3, Fn)
-[00:00:00.002] (7f9244894940) INFO   resolving node NodeId(72) to Local(NodeId(64))
-[00:00:00.003] (7f9244894940) INFO   IR {
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(6) to Def(1, TyParam(0))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(13) to Def(2, TyParam(1))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(17) to Def(1, TyParam(0))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(20) to Local(NodeId(4))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(32) to Def(4, TyParam(0))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(39) to Def(5, TyParam(1))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(43) to Def(5, TyParam(1))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(46) to Def(0, Fn)
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(49) to Local(NodeId(37))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(52) to Local(NodeId(30))
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(60) to PrimTy(Int)
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(69) to Def(3, Fn)
+[00:00:00.002] (7fb99807f940) INFO   resolving node NodeId(72) to Local(NodeId(64))
+[00:00:00.003] (7fb99807f940) INFO   IR {
     entry_id: Some(
         6,
     ),
@@ -683,7 +683,7 @@
         6: Item {
             span: Span {
                 lo: 82,
-                hi: 168,
+                hi: 164,
             },
             id: 6.0,
             vis: Spanned {
@@ -753,7 +753,7 @@
                     expr: Expr {
                         span: Span {
                             lo: 99,
-                            hi: 168,
+                            hi: 164,
                         },
                         id: 6.27,
                         kind: Block(
@@ -761,7 +761,7 @@
                                 id: 6.26,
                                 span: Span {
                                     lo: 99,
-                                    hi: 168,
+                                    hi: 164,
                                 },
                                 stmts: [
                                     Stmt {
@@ -820,7 +820,7 @@
                                     Expr {
                                         span: Span {
                                             lo: 120,
-                                            hi: 167,
+                                            hi: 163,
                                         },
                                         id: 6.24,
                                         kind: Match(
@@ -925,13 +925,13 @@
                                                         id: 6.12,
                                                         span: Span {
                                                             lo: 120,
-                                                            hi: 167,
+                                                            hi: 163,
                                                         },
                                                         kind: Lit(
                                                             Expr {
                                                                 span: Span {
                                                                     lo: 120,
-                                                                    hi: 167,
+                                                                    hi: 163,
                                                                 },
                                                                 id: 6.11,
                                                                 kind: Lit(
@@ -979,13 +979,13 @@
                                                     id: 6.23,
                                                     span: Span {
                                                         lo: 120,
-                                                        hi: 166,
+                                                        hi: 162,
                                                     },
                                                     pat: Pattern {
                                                         id: 6.18,
                                                         span: Span {
                                                             lo: 120,
-                                                            hi: 167,
+                                                            hi: 163,
                                                         },
                                                         kind: Wildcard,
                                                     },
@@ -993,7 +993,7 @@
                                                     body: Expr {
                                                         span: Span {
                                                             lo: 152,
-                                                            hi: 166,
+                                                            hi: 162,
                                                         },
                                                         id: 6.22,
                                                         kind: Block(
@@ -1001,19 +1001,19 @@
                                                                 id: 6.21,
                                                                 span: Span {
                                                                     lo: 152,
-                                                                    hi: 166,
+                                                                    hi: 162,
                                                                 },
                                                                 stmts: [],
                                                                 expr: Some(
                                                                     Expr {
                                                                         span: Span {
                                                                             lo: 155,
-                                                                            hi: 160,
+                                                                            hi: 156,
                                                                         },
                                                                         id: 6.19,
                                                                         kind: Lit(
-                                                                            Bool(
-                                                                                false,
+                                                                            Int(
+                                                                                8,
                                                                             ),
                                                                         ),
                                                                     },
@@ -1036,33 +1036,195 @@
     },
     impl_items: {},
 }
-[00:00:00.023] (7f9244894940) INFO   collect item: TyS {
+[00:00:00.026] (7fb99807f940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT,U.fn(τ0,τ1)->τ0,
 }
-[00:00:00.023] (7f9244894940) INFO   collect item: TyS {
+[00:00:00.026] (7fb99807f940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT,U.fn(τ0,τ1)->τ1,
 }
-[00:00:00.023] (7f9244894940) INFO   collect item: TyS {
+[00:00:00.026] (7fb99807f940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.023] (7f9244894940) INFO   fcx write ty 6.3 : int
-[00:00:00.023] (7f9244894940) INFO   deflocal 6.2 : int
-[00:00:00.023] (7f9244894940) INFO   fcx write ty 6.2 : int
-[00:00:00.023] (7f9244894940) INFO   fcx write ty 6.6 : fn(?1,?2)->?2
-[00:00:00.024] (7f9244894940) INFO   lookup ty for local 6.2
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.8 : int
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.9 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.10 : ?0
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.11 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.12 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.18 : ?0
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.19 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.22 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.13 : int
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.16 : int
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.24 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.27 : bool
-[00:00:00.024] (7f9244894940) INFO   fcx write ty 6.27 : int
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.3 : int
+[00:00:00.026] (7fb99807f940) INFO   deflocal 6.2 : int
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.2 : int
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.6 : fn(?1,?2)->?2
+[00:00:00.026] (7fb99807f940) INFO   lookup ty for local 6.2
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.8 : int
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.9 : bool
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.10 : ?0
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.11 : bool
+[00:00:00.026] (7fb99807f940) INFO   fcx write ty 6.12 : bool
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.18 : ?0
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.19 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.22 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.13 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.16 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.24 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.27 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx write ty 6.27 : int
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.27
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.3
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.2
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.24
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.10
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.6
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.8
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.9
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.12
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.11
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.16
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.13
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.18
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.22
+[00:00:00.027] (7fb99807f940) INFO   fcx query node type for 6.19
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.27
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.2
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.3
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.24
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.10
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.6
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.8
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.9
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.11
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.12
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.16
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.13
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.18
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.22
+[00:00:00.028] (7fb99807f940) INFO   irloweringctx: query typeof 6.19
+[00:00:00.029] (7fb99807f940) INFO   deflocal 3.2 : τ0
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.2 : τ0
+[00:00:00.029] (7fb99807f940) INFO   deflocal 3.4 : τ1
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.4 : τ1
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.6 : fn(?1,?2)->?1
+[00:00:00.029] (7fb99807f940) INFO   lookup ty for local 3.4
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.8 : τ1
+[00:00:00.029] (7fb99807f940) INFO   lookup ty for local 3.2
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.10 : τ0
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.11 : ?0
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.14 : ?0
+[00:00:00.029] (7fb99807f940) INFO   fcx write ty 3.14 : τ1
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.2
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.4
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.14
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.11
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.6
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.8
+[00:00:00.029] (7fb99807f940) INFO   fcx query node type for 3.10
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.2
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.4
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.14
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.11
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.6
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.8
+[00:00:00.030] (7fb99807f940) INFO   irloweringctx: query typeof 3.10
+[00:00:00.030] (7fb99807f940) INFO   deflocal 0.2 : τ0
+[00:00:00.030] (7fb99807f940) INFO   fcx write ty 0.2 : τ0
+[00:00:00.030] (7fb99807f940) INFO   deflocal 0.4 : τ1
+[00:00:00.030] (7fb99807f940) INFO   fcx write ty 0.4 : τ1
+[00:00:00.030] (7fb99807f940) INFO   lookup ty for local 0.2
+[00:00:00.030] (7fb99807f940) INFO   fcx write ty 0.6 : τ0
+[00:00:00.030] (7fb99807f940) INFO   fcx write ty 0.9 : τ0
+[00:00:00.030] (7fb99807f940) INFO   fcx write ty 0.9 : τ0
+[00:00:00.031] (7fb99807f940) INFO   fcx query node type for 0.2
+[00:00:00.031] (7fb99807f940) INFO   fcx query node type for 0.4
+[00:00:00.031] (7fb99807f940) INFO   fcx query node type for 0.9
+[00:00:00.031] (7fb99807f940) INFO   fcx query node type for 0.6
+[00:00:00.031] (7fb99807f940) INFO   irloweringctx: query typeof 0.2
+[00:00:00.031] (7fb99807f940) INFO   irloweringctx: query typeof 0.4
+[00:00:00.031] (7fb99807f940) INFO   irloweringctx: query typeof 0.9
+[00:00:00.031] (7fb99807f940) INFO   irloweringctx: query typeof 0.6
+[00:00:00.031] (7fb99807f940) INFO   deflocal 3.2 : τ0
+[00:00:00.031] (7fb99807f940) INFO   fcx write ty 3.2 : τ0
+[00:00:00.031] (7fb99807f940) INFO   deflocal 3.4 : τ1
+[00:00:00.031] (7fb99807f940) INFO   fcx write ty 3.4 : τ1
+[00:00:00.031] (7fb99807f940) INFO   fcx write ty 3.6 : fn(?1,?2)->?1
+[00:00:00.031] (7fb99807f940) INFO   lookup ty for local 3.4
+[00:00:00.031] (7fb99807f940) INFO   fcx write ty 3.8 : τ1
+[00:00:00.031] (7fb99807f940) INFO   lookup ty for local 3.2
+[00:00:00.031] (7fb99807f940) INFO   fcx write ty 3.10 : τ0
+[00:00:00.032] (7fb99807f940) INFO   fcx write ty 3.11 : ?0
+[00:00:00.032] (7fb99807f940) INFO   fcx write ty 3.14 : ?0
+[00:00:00.032] (7fb99807f940) INFO   fcx write ty 3.14 : τ1
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.2
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.4
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.14
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.11
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.6
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.8
+[00:00:00.032] (7fb99807f940) INFO   fcx query node type for 3.10
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.2
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.4
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.14
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.11
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.6
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.8
+[00:00:00.032] (7fb99807f940) INFO   irloweringctx: query typeof 3.10
+[00:00:00.033] (7fb99807f940) INFO   deflocal 0.2 : τ0
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 0.2 : τ0
+[00:00:00.033] (7fb99807f940) INFO   deflocal 0.4 : τ1
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 0.4 : τ1
+[00:00:00.033] (7fb99807f940) INFO   lookup ty for local 0.2
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 0.6 : τ0
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 0.9 : τ0
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 0.9 : τ0
+[00:00:00.033] (7fb99807f940) INFO   fcx query node type for 0.2
+[00:00:00.033] (7fb99807f940) INFO   fcx query node type for 0.4
+[00:00:00.033] (7fb99807f940) INFO   fcx query node type for 0.9
+[00:00:00.033] (7fb99807f940) INFO   fcx query node type for 0.6
+[00:00:00.033] (7fb99807f940) INFO   irloweringctx: query typeof 0.2
+[00:00:00.033] (7fb99807f940) INFO   irloweringctx: query typeof 0.4
+[00:00:00.033] (7fb99807f940) INFO   irloweringctx: query typeof 0.9
+[00:00:00.033] (7fb99807f940) INFO   irloweringctx: query typeof 0.6
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 6.3 : int
+[00:00:00.033] (7fb99807f940) INFO   deflocal 6.2 : int
+[00:00:00.033] (7fb99807f940) INFO   fcx write ty 6.2 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.6 : fn(?1,?2)->?2
+[00:00:00.034] (7fb99807f940) INFO   lookup ty for local 6.2
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.8 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.9 : bool
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.10 : ?0
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.11 : bool
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.12 : bool
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.18 : ?0
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.19 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.22 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.13 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.16 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.24 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.27 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx write ty 6.27 : int
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.27
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.3
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.2
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.24
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.10
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.6
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.8
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.9
+[00:00:00.034] (7fb99807f940) INFO   fcx query node type for 6.12
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.11
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.16
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.13
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.18
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.22
+[00:00:00.035] (7fb99807f940) INFO   fcx query node type for 6.19
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.27
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.2
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.3
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.24
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.10
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.6
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.8
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.9
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.11
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.12
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.16
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.13
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.18
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.22
+[00:00:00.035] (7fb99807f940) INFO   irloweringctx: query typeof 6.19

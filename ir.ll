@@ -32,19 +32,6 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
-define i1 @"0<bool,int>"(i1 %0, i64 %1) {
-basic_blockbb0:
-  %retvar = alloca i1
-  %t = alloca i1
-  store i1 %0, i1* %t
-  %u = alloca i64
-  store i64 %1, i64* %u
-  %load = load i1, i1* %t
-  store i1 %load, i1* %retvar
-  %load_ret = load i1, i1* %retvar
-  ret i1 %load_ret
-}
-
 define i1 @"3<int,bool>"(i64 %0, i1 %1) {
 basic_blockbb0:
   %retvar = alloca i1
@@ -59,6 +46,19 @@ basic_blockbb0:
   br label %basic_blockbb1
 
 basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load_ret = load i1, i1* %retvar
+  ret i1 %load_ret
+}
+
+define i1 @"0<bool,int>"(i1 %0, i64 %1) {
+basic_blockbb0:
+  %retvar = alloca i1
+  %t = alloca i1
+  store i1 %0, i1* %t
+  %u = alloca i64
+  store i64 %1, i64* %u
+  %load = load i1, i1* %t
+  store i1 %load, i1* %retvar
   %load_ret = load i1, i1* %retvar
   ret i1 %load_ret
 }
@@ -105,7 +105,7 @@ basic_blockbb3:                                   ; preds = %basic_blockbb1
   br i1 %load12, label %basic_blockbb4, label %basic_blockbb7
 
 basic_blockbb4:                                   ; preds = %basic_blockbb3
-  store i64 100, i64* %retvar
+  store i64 8, i64* %retvar
   br label %basic_blockbb6
 
 basic_blockbb5:                                   ; preds = %basic_blockbb0

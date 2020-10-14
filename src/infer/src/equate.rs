@@ -8,12 +8,11 @@ pub struct Equate<'a, 'tcx> {
 
 impl<'a, 'tcx> TypeRelation<'tcx> for Equate<'a, 'tcx> {
     fn tcx(&self) -> TyCtx<'tcx> {
-        self.at.infcx.tcx
+        self.tcx
     }
 
     fn relate_tys(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>> {
-        let infcx = self.at.infcx;
-        let mut inner = infcx.inner.borrow_mut();
+        let mut inner = self.inner.borrow_mut();
         let mut type_vars = inner.type_variables();
 
         let a = type_vars.instantiate_if_known(a);

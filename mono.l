@@ -7,6 +7,6 @@ fn main() -> int {
     if snd(x, true) {
 	5
     } else {
-	false
+	8
     }
 }

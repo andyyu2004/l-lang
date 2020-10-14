@@ -1,7 +1,9 @@
 use super::{Equate, InferCtx};
 use lcore::ty::*;
 use span::Span;
+use std::ops::Deref;
 
+/// perform an operation "at" some particular span
 pub struct At<'a, 'tcx> {
     pub span: Span,
     pub infcx: &'a InferCtx<'a, 'tcx>,
@@ -20,5 +22,13 @@ impl<'a, 'tcx> At<'a, 'tcx> {
         T: Relate<'tcx>,
     {
         Equate { at: self }.relate(a, b)
+    }
+}
+
+impl<'a, 'tcx> Deref for At<'a, 'tcx> {
+    type Target = InferCtx<'a, 'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.infcx
     }
 }

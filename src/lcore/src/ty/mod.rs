@@ -9,7 +9,7 @@ mod tyctx;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
-pub use instance::{Instance, InstanceKind};
+pub use instance::{Instance, InstanceId, InstanceKind};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
 pub use substs::*;

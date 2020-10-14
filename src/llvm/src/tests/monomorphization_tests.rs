@@ -10,7 +10,7 @@ fn test_simple_mono() {
     assert_eq!(llvm_exec!(src), 5);
 }
 
-// #[test]
+#[test]
 fn test_simple_mono2() {
     let src = r#"
     fn fst<T, U>(t: T, u: U) -> T { snd(u, t) }
