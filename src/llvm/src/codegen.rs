@@ -67,34 +67,6 @@ impl<'tcx> FnVisitor<'tcx> for DeclarationCollector<'_, 'tcx> {
     // }
 }
 
-pub struct MirCollector<'a, 'tcx> {
-    pub cctx: &'a CodegenCtx<'tcx>,
-}
-
-impl<'tcx> FnVisitor<'tcx> for MirCollector<'_, 'tcx> {
-    fn visit_fn(
-        &mut self,
-        def_id: DefId,
-        _ident: Ident,
-        sig: &'tcx ir::FnSig<'tcx>,
-        generics: &'tcx ir::Generics<'tcx>,
-        body: &'tcx ir::Body<'tcx>,
-    ) {
-        if let Ok(mir) = mir::build_mir(self.tcx, def_id, sig, generics, body) {
-            eprintln!("{}", mir);
-            self.mir_bodies.borrow_mut().insert(def_id, mir);
-        }
-    }
-}
-
-impl<'a, 'tcx> Deref for MirCollector<'a, 'tcx> {
-    type Target = CodegenCtx<'tcx>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.cctx
-    }
-}
-
 impl<'a, 'tcx> Deref for DeclarationCollector<'a, 'tcx> {
     type Target = CodegenCtx<'tcx>;
 

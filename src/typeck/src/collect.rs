@@ -96,7 +96,7 @@ struct CtorCollector<'tcx> {
 impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
     fn visit_variant(&mut self, variant: &'tcx ir::Variant<'tcx>) {
         let tcx = self.tcx;
-        let ty = tcx.collected_ty(variant.adt_def);
+        let ty = tcx.collected_ty(variant.adt_def_id);
         let (forall, ty) = ty.expect_scheme();
         let (adt_ty, _substs) = ty.expect_adt();
         let ctor_ty = match variant.kind {

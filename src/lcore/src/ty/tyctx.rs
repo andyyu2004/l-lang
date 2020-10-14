@@ -191,7 +191,7 @@ pub struct GlobalCtx<'tcx> {
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::IR<'tcx>,
-    pub resolutions: &'tcx Resolutions,
+    pub resolutions: Resolutions<'tcx>,
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
@@ -199,7 +199,7 @@ impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
         ir: &'tcx ir::IR<'tcx>,
         arena: &'tcx CoreArenas<'tcx>,
-        resolutions: &'tcx Resolutions,
+        resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,
     ) -> Self {
         let interners = CtxInterners::new(arena);

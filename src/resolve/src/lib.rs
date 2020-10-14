@@ -40,7 +40,7 @@ pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
     primitive_types: PrimitiveTypes,
     modules: IndexVec<ModuleId, &'a Module<'a>>,
-    defs: Definitions,
+    defs: Definitions<'a>,
     /// (usize, usize) is (min, max) number of type parameters expected
     /// (as some may be default parameters)
     generic_arg_counts: FxHashMap<DefId, usize>,
@@ -53,8 +53,8 @@ pub struct Resolver<'a> {
 
 /// stuff that is useful later in `TyCtx` that the resolver computes
 #[derive(Debug, Default)]
-pub struct Resolutions {
-    pub defs: Definitions,
+pub struct Resolutions<'a> {
+    pub defs: Definitions<'a>,
     pub generic_arg_counts: FxHashMap<DefId, usize>,
 }
 
@@ -79,7 +79,7 @@ impl<'a> Resolver<'a> {
         self.late_resolve(prog);
     }
 
-    pub fn complete(self) -> Resolutions {
+    pub fn complete(self) -> Resolutions<'a> {
         let Resolver { defs, generic_arg_counts, .. } = self;
         Resolutions { defs, generic_arg_counts }
     }
@@ -107,6 +107,10 @@ impl<'a> Resolver<'a> {
         let def_id = self.defs.alloc_def_id();
         assert!(self.node_id_to_def_id.insert(node_id, def_id).is_none());
         def_id
+    }
+
+    pub fn def_node(&mut self, def_id: DefId, node: ir::DefNode<'a>) {
+        self.defs.def_node(def_id, node)
     }
 
     pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> Res<NodeId> {

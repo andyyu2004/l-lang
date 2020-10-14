@@ -8,7 +8,7 @@ mod traverse;
 #[macro_use]
 extern crate log;
 
-pub use build::{build_enum_ctors, build_fn, MirCtx};
+pub use build::*;
 pub use traverse::Visitor;
 
 use ast::Ident;
@@ -32,10 +32,17 @@ pub trait TyCtxMirExt<'tcx> {
 
 impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
     fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
-        let item = &self.ir.items[&def_id];
-        match item.kind {
-            ir::ItemKind::Fn(sig, generics, body) => build_mir(self, def_id, sig, generics, body),
-            _ => panic!(),
+        let node = self.defs().get(def_id);
+        match node {
+            ir::DefNode::Item(item) => match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) =>
+                    build_mir(self, def_id, sig, generics, body),
+                _ => panic!(),
+            },
+            ir::DefNode::ImplItem(_) => todo!(),
+            ir::DefNode::ForeignItem(_) => todo!(),
+            ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(self, variant)),
+            ir::DefNode::Variant(_) => panic!(),
         }
     }
 }

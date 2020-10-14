@@ -136,11 +136,10 @@ impl<'tcx> Driver<'tcx> {
     }
 
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
-        let (ir, mut resolutions) = self.gen_ir()?;
-        let resolutions = self.arena.alloc(std::mem::take(&mut resolutions));
+        let (ir, resolutions) = self.gen_ir()?;
         let gcx = self
             .global_ctx
-            .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
+            .get_or_init(|| GlobalCtx::new(ir, &self.arena, resolutions, &self.sess));
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }

@@ -108,7 +108,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         predicate: Lvalue<'tcx>,
         scrut: Lvalue<'tcx>,
         pat: &tir::Pattern<'tcx>,
-    ) -> BlockAnd<()> {
+    ) -> BlockAnd<Lvalue<'tcx>> {
         let tcx = self.tcx;
         let info = self.span_info(pat.span);
         match pat.kind {
@@ -215,7 +215,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 }
             }
         };
-        pblock.unit()
+        pblock.and(predicate)
     }
 }
 

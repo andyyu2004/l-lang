@@ -27,6 +27,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
         if let Ok(mir) = mir {
             println!("{}", mir);
+            self.instance_mir.borrow_mut().insert(instance, mir);
             MonoCollector { cctx: self, instance, visited }.visit_mir(mir)
         }
     }
@@ -89,6 +90,8 @@ impl<'a, 'tcx> Visitor<'tcx> for MonoCollector<'a, 'tcx> {
             // firstly, we must monomorphize the ty with its
             // "parent" instance's substitutions
             let ty = self.monomorphize(fn_ty);
+            // `ty` should have no type parameters after monomorphization
+            assert!(!ty.has_ty_params());
             // this `substs` is the substitution
             // applied to the generic function with def_id `def_id`
             // to obtain its concrete type

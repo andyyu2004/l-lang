@@ -25,7 +25,7 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
-    pub mir_bodies: RefCell<FxHashMap<DefId, &'tcx Mir<'tcx>>>,
+    pub instance_mir: RefCell<FxHashMap<Instance<'tcx>, &'tcx Mir<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
@@ -104,7 +104,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             native_functions,
             intrinsics,
             builder: llctx.create_builder(),
-            mir_bodies: Default::default(),
+            instance_mir: Default::default(),
             instances: Default::default(),
             operand_instance_map: Default::default(),
             lltypes: Default::default(),
@@ -144,17 +144,12 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     crate fn instance_mir(&self, instance: Instance<'tcx>) -> &'tcx Mir<'tcx> {
         match instance.kind {
-            // IMPORTANT TODO reuse the body from before somehow
-            InstanceKind::Item => self.tcx.mir_of_def(instance.def_id).unwrap(),
+            InstanceKind::Item => self.instance_mir.borrow()[&instance],
         }
     }
 
     pub fn codegen_instance(&self, instance: Instance<'tcx>) {
         FnCtx::new(self, instance).codegen()
-    }
-
-    pub fn collect_mir(&self) {
-        MirCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
     /// returns the main function

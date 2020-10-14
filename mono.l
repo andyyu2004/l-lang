@@ -6,7 +6,19 @@ extern {
 }
 
 
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+enum MonoOption {
+    Some(int),
+    None
+}
+
 fn main() -> int {
-    let x = box 5;
-    rc(x);
+    let opt = MonoOption::Some(8);
+    match opt {
+	MonoOption::Some(k) => k,
+    }
 }
