@@ -198,17 +198,17 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(lvalue) => {
                 return;
-                let lvalue_ref = self.codegen_lvalue(lvalue);
-                assert!(lvalue_ref.ty.is_ptr());
-                let rc_retain = self.build_rc_retain(lvalue_ref);
-                self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
+                // let lvalue_ref = self.codegen_lvalue(lvalue);
+                // assert!(lvalue_ref.ty.is_ptr());
+                // let rc_retain = self.build_rc_retain(lvalue_ref);
+                // self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(lvalue) => {
                 return;
-                let lvalue_ref = self.codegen_lvalue(lvalue);
-                assert!(lvalue_ref.ty.is_ptr());
-                let rc_release = self.build_rc_release(lvalue_ref);
-                self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
+                // let lvalue_ref = self.codegen_lvalue(lvalue);
+                // assert!(lvalue_ref.ty.is_ptr());
+                // let rc_release = self.build_rc_release(lvalue_ref);
+                // self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }

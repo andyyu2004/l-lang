@@ -77,3 +77,30 @@ fn simple_expr_match() {
 
     assert_eq!(llvm_exec!(src), 14);
 }
+
+// #[test]
+fn nested_match() {
+    let src = r#"
+    enum Option<T> {
+        Some(T),
+        None,
+    }
+
+    enum Either<L, R> {
+        Left(L),
+        Right(R),
+    }
+
+    fn main() -> int {
+        let e = Either::Left(Option::Some(88));
+        match e {
+            Either::Left(opt) => match opt {
+                Option::Some(i) => i,
+                Option::None => 4,
+            },
+            Either::Right(x) => x,
+        }
+    }"#;
+
+    assert_eq!(llvm_exec!(src), 88);
+}
