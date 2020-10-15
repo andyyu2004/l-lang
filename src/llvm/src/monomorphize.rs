@@ -6,6 +6,12 @@ use mir::{TyCtxMirExt, Visitor};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
+pub trait Monomorphize<'tcx> {
+    fn monomorphize<T>(&self, t: T) -> T
+    where
+        T: TypeFoldable<'tcx>;
+}
+
 impl<'tcx> CodegenCtx<'tcx> {
     /// collects all references to generic items along with substitutions representing
     /// each unique instantiation of the generic parameters
@@ -22,6 +28,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn collect_rec(&self, visited: &mut FxHashSet<Instance<'tcx>>, instance: Instance<'tcx>) {
         visited.insert(instance);
         assert!(!self.instance_mir.borrow().contains_key(&instance));
+        // TODO this will generate the same mir multiple times
         let mir = match instance.kind {
             InstanceKind::Item => self.tcx.mir_of_def(instance.def_id),
         };
@@ -74,7 +81,7 @@ struct MonoCollector<'a, 'tcx> {
     visited: &'a mut FxHashSet<Instance<'tcx>>,
 }
 
-impl<'a, 'tcx> MonoCollector<'a, 'tcx> {
+impl<'a, 'tcx> Monomorphize<'tcx> for MonoCollector<'a, 'tcx> {
     fn monomorphize<T>(&self, t: T) -> T
     where
         T: TypeFoldable<'tcx>,
@@ -89,16 +96,22 @@ impl<'a, 'tcx> Visitor<'tcx> for MonoCollector<'a, 'tcx> {
         if let &Operand::Item(def_id, fn_ty) = operand {
             // firstly, we must monomorphize the ty with its
             // "parent" instance's substitutions
-            let ty = self.monomorphize(fn_ty);
+            let mono_ty = self.monomorphize(fn_ty);
             // `ty` should have no type parameters after monomorphization
-            assert!(!ty.has_ty_params());
+            assert!(!mono_ty.has_ty_params());
             // this `substs` is the substitution
             // applied to the generic function with def_id `def_id`
             // to obtain its concrete type
             let scheme = self.collected_ty(def_id);
-            let substs = self.match_tys(scheme, ty);
+            let substs = self.match_tys(scheme, mono_ty);
             let instance = Instance::item(substs, def_id);
-            self.cctx.operand_instance_map.borrow_mut().insert((def_id, fn_ty), instance);
+            if let Some(prev) =
+                self.cctx.operand_instance_map.borrow_mut().insert((def_id, mono_ty), instance)
+            {
+                // the same operand key shouldn't map to different instances
+                assert_eq!(prev, instance);
+            }
+
             if self.visited.contains(&instance) {
                 return;
             }

@@ -39,7 +39,6 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
-        eprintln!("{}", tir);
         self.tcx.alloc(build::build_fn(self, tir))
     }
 

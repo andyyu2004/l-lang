@@ -26,6 +26,7 @@ pub struct CodegenCtx<'tcx> {
     pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
     pub instance_mir: RefCell<FxHashMap<Instance<'tcx>, &'tcx Mir<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
+    // we map Operand::Item to an instance via its DefId and monomorphized type
     pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
     main_fn: Option<FunctionValue<'tcx>>,
@@ -127,7 +128,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             InstanceKind::Item => {
                 let Instance { def_id, substs, .. } = instance;
                 let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
-                let name = format!("{}<{}>", def_id, substs);
+                let ident = self.tcx.defs().ident_of(def_id);
+                let name = format!("{}<{}>", ident, substs);
                 let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
                 let llfn = self.module.add_function(&name, llty, None);
                 if Some(def_id) == self.tcx.ir.entry_id {

@@ -17,7 +17,9 @@ fn test_simple_mono2() {
     fn snd<T, U>(t: T, u: U) -> U { u }
 
     fn main() -> int {
-        fst(4, false)
+        fst(5, true);
+        fst(false, 9);
+        fst(4, 9)
     }"#;
 
     assert_eq!(llvm_exec!(src), 4);

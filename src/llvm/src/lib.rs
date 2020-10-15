@@ -19,6 +19,7 @@ pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
 use intrinsics::build_instrinsics;
 use llvm_error::LLVMError;
+use monomorphize::Monomorphize;
 use native::NativeFunctions;
 
 use inkwell::values::{FunctionValue, PointerValue};

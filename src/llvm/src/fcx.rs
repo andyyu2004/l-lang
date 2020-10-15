@@ -1,4 +1,4 @@
-use super::{CodegenCtx, LLVMAsPtrVal};
+use super::{CodegenCtx, LLVMAsPtrVal, Monomorphize};
 use ast::{BinOp, Mutability};
 use index::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
@@ -6,8 +6,8 @@ use inkwell::types::BasicType;
 use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use lcore::mir::{self, BlockId, MirTy, VarId};
-use lcore::ty::{AdtKind, ConstKind, Instance, Projection, Subst, Ty};
+use lcore::mir::{self, BlockId, VarId};
+use lcore::ty::{AdtKind, ConstKind, Instance, Projection, Subst, Ty, TypeFoldable};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
@@ -377,7 +377,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ValueRef { val, ty: var.ty }
             }
             mir::Operand::Item(def_id, ty) => {
-                let instance = self.operand_instance_map.borrow()[&(def_id, ty)];
+                let mono_ty = self.monomorphize(ty);
+                let instance = self.operand_instance_map.borrow()[&(def_id, mono_ty)];
                 let llfn = self.instances.borrow()[&instance];
                 let val = llfn.as_llvm_ptr().into();
                 ValueRef { val, ty: instance.ty(self.tcx) }
@@ -524,6 +525,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             })
             .collect_vec();
         self.build_switch(discr, self.blocks[default], &arms);
+    }
+}
+
+impl<'a, 'tcx> Monomorphize<'tcx> for FnCtx<'a, 'tcx> {
+    fn monomorphize<T>(&self, t: T) -> T
+    where
+        T: TypeFoldable<'tcx>,
+    {
+        t.subst(self.tcx, self.instance.substs)
     }
 }
 

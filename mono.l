@@ -21,6 +21,10 @@ enum Either<L, R> {
 }
 
 fn main() -> int {
-    let x = snd(false, 9);
-    x
+    Option::Some(8);
+    /* let x = snd(false, 9); */
+    /* snd(9, false); */
+    snd(9, false);
+    snd(false, 9);
+    8
 }
