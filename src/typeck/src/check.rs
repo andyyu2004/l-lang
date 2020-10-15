@@ -3,7 +3,6 @@ use ast::Mutability;
 use infer::{InferCtx, InferCtxBuilder, TyCtxtInferExt};
 use ir::{self, DefId};
 use lcore::ty::*;
-use lcore::TyCtx;
 use rustc_hash::FxHashMap;
 use span::Span;
 use std::cell::RefCell;

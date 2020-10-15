@@ -1,3 +1,5 @@
+//! context for lowering from ir to tir/mir
+
 use crate::build;
 use ast::{Lit, Mutability, UnaryOp};
 use index::Idx;
@@ -5,7 +7,6 @@ use infer::InferCtx;
 use ir::{self, CtorKind, DefKind, Res, VariantIdx};
 use lcore::mir::Mir;
 use lcore::ty::*;
-use lcore::TyCtx;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -38,8 +39,11 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
-        eprintln!("{}", tir);
         self.tcx.alloc(build::build_fn(self, tir))
+    }
+
+    pub fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
+        self.node_type(expr.id)
     }
 
     pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
@@ -48,7 +52,6 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     }
 
     fn lower_tuple_subpats(&mut self, pats: &[ir::Pattern<'tcx>]) -> Vec<tir::FieldPat<'tcx>> {
-        let tcx = self.tcx;
         pats.iter()
             .enumerate()
             .map(|(i, pat)| tir::FieldPat {
@@ -169,7 +172,6 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
     type Output = tir::Body<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        let tcx = ctx.tcx;
         let params = self.params.to_tir(ctx);
         tir::Body { params, expr: box self.expr.to_tir(ctx) }
     }
@@ -178,7 +180,7 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
     type Output = tir::Generics<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, _ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
         tir::Generics { data: 0, pd: PhantomData }
     }
 }
@@ -187,7 +189,6 @@ impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
     type Output = tir::Let<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        let tcx = ctx.tcx;
         tir::Let {
             id: self.id,
             pat: box self.pat.to_tir(ctx),
@@ -216,7 +217,6 @@ impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
     type Output = tir::Block<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        let tcx = ctx.tcx;
         let stmts = self.stmts.iter().map(|stmt| stmt.to_tir(ctx)).collect();
         let expr = self.expr.map(|expr| box expr.to_tir(ctx));
         tir::Block { id: self.id, stmts, expr }
@@ -260,6 +260,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                     }
                 }
                 // functions and function-like variant constructors
+                // we deal with monomorphizations here
                 DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
                     tir::ExprKind::ItemRef(def_id),
                 DefKind::AssocFn => todo!(),
@@ -280,13 +281,13 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        ctx.lower_expr(self)
+        ctx.lower_expr_adjusted(self)
     }
 }
 
 impl<'a, 'tcx> MirCtx<'a, 'tcx> {
-    fn lower_expr_no_adjust(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
-        let &ir::Expr { span, id, ref kind } = expr;
+    fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+        let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_type(expr.id);
         let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
@@ -329,8 +330,8 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         tir::Expr { span, kind, ty }
     }
 
-    fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
-        let tir = self.lower_expr_no_adjust(expr);
+    fn lower_expr_adjusted(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
+        let tir = self.lower_expr(expr);
         let adjustments = self.tables.adjustments_for_expr(expr);
         self.apply_adjustments(tir, adjustments)
     }

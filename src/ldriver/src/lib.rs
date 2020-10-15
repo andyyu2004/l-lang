@@ -136,11 +136,10 @@ impl<'tcx> Driver<'tcx> {
     }
 
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
-        let (ir, mut resolutions) = self.gen_ir()?;
-        let resolutions = self.arena.alloc(std::mem::take(&mut resolutions));
+        let (ir, resolutions) = self.gen_ir()?;
         let gcx = self
             .global_ctx
-            .get_or_init(|| GlobalCtx::new(ir, &self.arena, &resolutions, &self.sess));
+            .get_or_init(|| GlobalCtx::new(ir, &self.arena, resolutions, &self.sess));
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }
@@ -172,30 +171,6 @@ impl<'tcx> Driver<'tcx> {
         let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
         Ok(val)
     }
-
-    // pub fn llvm_jit(&'tcx self) -> LResult<i32> {
-    //     let cctx = self.create_codegen_ctx()?;
-    //     let jcx = JitCtx::new(&cctx, GC::default());
-    //     todo!()
-    // }
-
-    // // pub fn compile(&'tcx self) -> LResult<Executable> {
-    // //     let tir = self.gen_mir()?;
-    // //     println!("{}", tir);
-    // //     let gcx = self.global_ctx.get().unwrap();
-
-    // //     let cctx = gcx.enter_tcx(|tcx| self.arena.alloc(GlobalCompilerCtx::new(tcx)));
-    // //     let executable = Compiler::new(cctx).compile(&tir);
-    // //     println!("{}", executable);
-    // //     Ok(executable)
-    // // }
-
-    // // pub fn exec(&'tcx self) -> LResult<exec::Val> {
-    // //     let executable = self.compile()?;
-    // //     let mut vm = VM::with_default_gc(executable);
-    // //     let value = vm.run()?;
-    // //     Ok(value)
-    // // }
 
     pub fn has_errors(&self) -> bool {
         self.sess.has_errors()

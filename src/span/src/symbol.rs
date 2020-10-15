@@ -20,7 +20,7 @@ pub mod sym {
     pub const USELF: Symbol = Symbol(7);
     pub const USCORE: Symbol = Symbol(8);
     pub const RC: Symbol = Symbol(9);
-    pub const INTRINSICS: Symbol = Symbol(9);
+    pub const INTRINSICS: Symbol = Symbol(10);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

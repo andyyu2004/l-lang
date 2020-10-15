@@ -13,8 +13,7 @@ use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::*;
-use lcore::ty::{Ty, VariantTy};
-use lcore::TyCtx;
+use lcore::ty::{Ty, TyCtx, VariantTy};
 use rustc_hash::FxHashMap;
 use scope::{ReleaseInfo, Scopes};
 use span::Span;
@@ -43,7 +42,7 @@ pub fn build_enum_ctors<'tcx>(
     let (adt_ty, _) = ty.expect_adt();
     let mut map = FxHashMap::default();
     for (idx, variant) in adt_ty.variants.iter_enumerated() {
-        let body = build_variant_ctor(tcx, ty, idx, variant);
+        let body = build_variant_ctor_inner(tcx, ty, idx, variant);
         match body {
             None => continue,
             Some(body) => {
@@ -57,10 +56,19 @@ pub fn build_enum_ctors<'tcx>(
     map
 }
 
+pub fn build_variant_ctor<'tcx>(tcx: TyCtx<'tcx>, variant: ir::Variant<'tcx>) -> &'tcx Mir<'tcx> {
+    let scheme = tcx.collected_ty(variant.adt_def_id);
+    let (_forall, ty) = scheme.expect_scheme();
+    let (adt_ty, _) = ty.expect_adt();
+    let idx = variant.idx;
+    let variant_ty = &adt_ty.variants[idx];
+    build_variant_ctor_inner(tcx, ty, idx, variant_ty).unwrap()
+}
+
 /// constructs the mir for a single variant constructor (if it is a function)
-fn build_variant_ctor<'tcx>(
+pub fn build_variant_ctor_inner<'tcx>(
     tcx: TyCtx<'tcx>,
-    ty: Ty<'tcx>,
+    ret_ty: Ty<'tcx>,
     variant_idx: VariantIdx,
     variant: &VariantTy<'tcx>,
 ) -> Option<&'tcx Mir<'tcx>> {
@@ -69,11 +77,9 @@ fn build_variant_ctor<'tcx>(
         return None;
     }
 
-    let ctor = variant.ctor.unwrap();
-
     // TODO get a proper span
     let info = SpanInfo { span: Span::empty() };
-    let (adt, substs) = ty.expect_adt();
+    let (adt, substs) = ret_ty.expect_adt();
 
     let mut vars = IndexVec::<VarId, Var<'tcx>>::default();
     let mut alloc_var = |info: SpanInfo, kind: VarKind, ty: Ty<'tcx>| {
@@ -82,7 +88,7 @@ fn build_variant_ctor<'tcx>(
     };
 
     let mut cfg = Cfg::default();
-    let lvalue = alloc_var(info, VarKind::Ret, ty).into();
+    let lvalue = alloc_var(info, VarKind::Ret, ret_ty).into();
 
     // the `fields` of the variant are essentially the parameters of the constructor function
     let fields = variant
@@ -131,7 +137,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.with_scope(info, |this| {
             for param in &this.body.params {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;
-                let lvalue = this.alloc_arg(id, span, ty).into();
+                let lvalue = Lvalue::from(this.alloc_arg(id, span, ty));
+                if let tir::PatternKind::Binding(..) = param.pat.kind {
+                    // nothing meaningful to recursively bind to
+                    continue;
+                }
                 set!(block = this.bind_pat_to_lvalue(block, &param.pat, lvalue));
             }
             set!(block = this.write_expr(block, Lvalue::ret(), &this.body.expr));
@@ -169,7 +179,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn alloc_ir_var(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>, kind: VarKind) -> VarId {
         let info = self.span_info(span);
         let idx = self.alloc_var(info, kind, ty);
-        self.var_ir_map.insert(id, idx);
+        let prev = self.var_ir_map.insert(id, idx);
+        if prev.is_some() {
+            panic!("two mir vars allocated for id {}", id);
+        }
         idx
     }
 
@@ -193,10 +206,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 }
 
 impl<'tcx> LvalueTy<'tcx> for Builder<'_, 'tcx> {
-    fn tcx(&self) -> TyCtx<'tcx> {
-        self.tcx
-    }
-
     fn locals(&self) -> &IndexVec<VarId, Var<'tcx>> {
         &self.vars
     }

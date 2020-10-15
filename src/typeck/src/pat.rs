@@ -7,12 +7,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_pat(&mut self, pat: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {
         let pat_ty = match &pat.kind {
             ir::PatternKind::Wildcard => ty,
-            ir::PatternKind::Binding(ident, _, mtbl) => self.def_local(pat.id, ty, *mtbl),
+            ir::PatternKind::Binding(_, _, mtbl) => self.def_local(pat.id, ty, *mtbl),
             ir::PatternKind::Tuple(pats) => self.check_pat_tuple(pat, pats, ty),
             ir::PatternKind::Lit(expr) => self.check_pat_lit(expr, ty),
             ir::PatternKind::Variant(path, pats) => self.check_pat_variant(pat, path, pats, ty),
             ir::PatternKind::Path(path) => self.check_pat_path(pat, path),
         };
+        // unify the two types
+        // don't bother if they are already the same
+        // i.e. in the case of Wildcard or Binding
+        if pat_ty != ty {
+            self.unify(pat.span, pat_ty, ty);
+        }
         self.write_ty(pat.id, pat_ty)
     }
 

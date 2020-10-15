@@ -1,4 +1,3 @@
-use super::InferCtx;
 use ena::undo_log::UndoLogs;
 use ena::unify as ut;
 use lcore::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};
@@ -39,15 +38,15 @@ pub enum TyVarValue<'tcx> {
 
 #[derive(Debug)]
 pub struct TyVarData {
-    span: Span,
+    pub span: Span,
 }
 
 #[derive(Default, Debug)]
 pub struct TypeVariableStorage<'tcx> {
-    eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
-    tyvar_data: FxHashMap<TyVid, TyVarData>,
+    crate tyvar_data: FxHashMap<TyVid, TyVarData>,
     /// the number of type variables that have been generated
-    tyvid_count: u32,
+    crate tyvid_count: u32,
+    eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
 }
 
 impl<'tcx> TypeVariableStorage<'tcx> {
@@ -64,30 +63,13 @@ pub(crate) type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
 >;
 
 pub struct TypeVariableTable<'a, 'tcx> {
-    storage: &'a mut TypeVariableStorage<'tcx>,
+    crate storage: &'a mut TypeVariableStorage<'tcx>,
     undo_log: &'a mut InferCtxUndoLogs<'tcx>,
 }
 
 impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     fn eq_relations(&mut self) -> UnificationTable<'_, 'tcx, TyVidEqKey<'tcx>> {
         self.storage.eq_relations.with_log(&mut self.undo_log)
-    }
-
-    /// generates an indexed substitution based on the contents of the UnificationTable
-    pub fn gen_substs(&mut self, infcx: &'a InferCtx<'a, 'tcx>) -> Vec<Ty<'tcx>> {
-        (0..self.storage.tyvid_count)
-            .map(|index| {
-                let vid = TyVid { index };
-                let val = self.probe(vid);
-                match val {
-                    TyVarValue::Known(ty) => self.instantiate_if_known(ty),
-                    TyVarValue::Unknown => {
-                        let span = self.storage.tyvar_data[&vid].span;
-                        infcx.emit_ty_err(span, TypeError::InferenceFailure)
-                    }
-                }
-            })
-            .collect()
     }
 
     /// if `ty` is known, return its known type, otherwise just return `t`

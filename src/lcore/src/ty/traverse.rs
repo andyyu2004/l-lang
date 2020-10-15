@@ -1,5 +1,4 @@
-use crate::ty::{List, Ty, TyKind};
-use crate::TyCtx;
+use crate::ty::{List, Ty, TyCtx, TyKind};
 use smallvec::SmallVec;
 
 pub trait TypeFoldable<'tcx>: Sized {
@@ -74,7 +73,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Opaque(_, substs) => substs.visit_with(visitor),
             TyKind::Infer(_) => false,
             TyKind::Adt(_, substs) => substs.visit_with(visitor),
-            TyKind::Param(_)
+            TyKind::Param(..)
             | TyKind::Never
             | TyKind::Error
             | TyKind::Char

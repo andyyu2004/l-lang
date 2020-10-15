@@ -30,7 +30,7 @@ impl<'a> Parse<'a> for ItemParser {
         let (kind_span, kind) = parser.with_span(
             &mut |parser: &mut Parser<'a>| match kw.ttype {
                 TokenType::Fn => FnParser { fn_kw: kw }.parse(parser),
-                TokenType::Struct => StructDeclParser { struct_kw: kw }.parse(parser),
+                TokenType::Struct => StructDeclParser.parse(parser),
                 TokenType::Enum => EnumParser { enum_kw: kw }.parse(parser),
                 TokenType::Type => TypeAliasParser { type_kw: kw }.parse(parser),
                 _ => unreachable!(),
@@ -189,9 +189,8 @@ impl<'a> Parse<'a> for VariantKindParser {
     }
 }
 
-pub struct StructDeclParser {
-    struct_kw: Tok,
-}
+pub struct StructDeclParser;
+
 impl<'a> Parse<'a> for StructDeclParser {
     type Output = ItemKind;
 

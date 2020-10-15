@@ -1,8 +1,6 @@
-use ir::Visitor;
-use lcore::ty::{Substs, Ty};
-use lcore::TyCtx;
-
 use crate::TyConv;
+use ir::Visitor;
+use lcore::ty::{Substs, Ty, TyCtx};
 
 struct ItemCollector<'tcx> {
     tcx: TyCtx<'tcx>,
@@ -19,7 +17,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
-                let substs = Substs::id_for_generics(tcx, generics);
+                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
@@ -32,7 +30,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                     .collect();
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
-                let substs = Substs::id_for_generics(tcx, generics);
+                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.generalize(generics, ty)
             }
@@ -85,6 +83,7 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
     }
 }
 
+/// run type collection on items and constructors
 pub fn collect_item_types<'tcx>(tcx: TyCtx<'tcx>) {
     ItemCollector { tcx }.visit_prog(tcx.ir);
     CtorCollector { tcx }.visit_prog(tcx.ir);
@@ -98,7 +97,7 @@ struct CtorCollector<'tcx> {
 impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
     fn visit_variant(&mut self, variant: &'tcx ir::Variant<'tcx>) {
         let tcx = self.tcx;
-        let ty = tcx.collected_ty(variant.adt_def);
+        let ty = tcx.collected_ty(variant.adt_def_id);
         let (forall, ty) = ty.expect_scheme();
         let (adt_ty, _substs) = ty.expect_adt();
         let ctor_ty = match variant.kind {

@@ -11,17 +11,15 @@ mod type_variables;
 use at::At;
 use equate::Equate;
 use error::DiagnosticBuilder;
+use index::Idx;
 use instantiate::InstantiationFolder;
 use ir::{DefId, FieldIdx};
 use lcore::ty::*;
-use lcore::TyCtx;
 use span::Span;
-use type_variables::*;
-// use crate::typeck::{TyCtx, TypeckTables};
-use index::Idx;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::ops::Deref;
+use type_variables::*;
 
 pub struct InferCtxBuilder<'tcx> {
     tcx: TyCtx<'tcx>,
@@ -70,11 +68,11 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
     }
 
-    pub fn unify(&self, span: Span, expected: Ty<'tcx>, actual: Ty<'tcx>) {
-        if expected.contains_err() || actual.contains_err() {
+    pub fn unify(&self, span: Span, expected: Ty<'tcx>, ty: Ty<'tcx>) {
+        if expected.contains_err() || ty.contains_err() {
             return;
         }
-        if let Err(err) = self.at(span).equate(expected, actual) {
+        if let Err(err) = self.at(span).equate(expected, ty) {
             self.emit_ty_err(span, err);
         }
     }
@@ -95,13 +93,27 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         self.tcx.mk_ty_err()
     }
 
-    /// creates the substitutions for the inference variables
+    /// creates the substitutions for all inference variables
     pub fn inference_substs(&self) -> SubstsRef<'tcx> {
-        let vec: Vec<_> = self.inner.borrow_mut().type_variables().gen_substs(self);
-        let mut substs = self.tcx.intern_substs(&vec);
-        // repeatedly substitutes its inference variables value
+        // let vec: Vec<_> = self.inner.borrow_mut().type_variables();
+        let mut inner = self.inner.borrow_mut();
+        let mut type_variables = inner.type_variables();
+        // generates an indexed substitution based on the contents of the UnificationTable
+        let mut substs = self.tcx.mk_substs((0..type_variables.storage.tyvid_count).map(|index| {
+            let vid = TyVid { index };
+            let val = type_variables.probe(vid);
+            match val {
+                TyVarValue::Known(ty) => type_variables.instantiate_if_known(ty),
+                TyVarValue::Unknown => {
+                    let span = type_variables.storage.tyvar_data[&vid].span;
+                    self.emit_ty_err(span, TypeError::InferenceFailure)
+                }
+            }
+        }));
+
+        // repeatedly substitute its inference variables for its value
         // until it contains no inference variables or failure
-        // I think this process won't/can't be cyclic?
+        // I think this will always terminate?
         let mut folder = InferenceVarSubstFolder::new(self.tcx, substs);
         loop {
             let new_substs = substs.fold_with(&mut folder);
@@ -116,10 +128,8 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
 
     pub fn instantiate(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
-            TyKind::Scheme(forall, ty) => {
-                let mut folder = InstantiationFolder::new(self, span, forall);
-                ty.fold_with(&mut folder)
-            }
+            TyKind::Scheme(forall, ty) =>
+                ty.fold_with(&mut InstantiationFolder::new(self, span, forall)),
             _ => ty,
         }
     }

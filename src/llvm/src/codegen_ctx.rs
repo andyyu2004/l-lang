@@ -1,16 +1,15 @@
 use super::*;
-use context::{Context, ContextRef};
+use context::Context;
 use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
-use ir::{self, DefId, ItemVisitor};
+use ir::DefId;
 use lcore::mir::Mir;
 use lcore::ty::*;
-use lcore::TyCtx;
 use rustc_hash::FxHashMap;
-use span::{sym, Span, Symbol};
+use span::{Span, Symbol};
 use std::cell::RefCell;
 use std::ops::Deref;
 use typeck::{TcxCollectExt, Typeof};
@@ -25,8 +24,12 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
-    pub items: RefCell<FxHashMap<DefId, FunctionValue<'tcx>>>,
+    pub instance_mir: RefCell<FxHashMap<Instance<'tcx>, &'tcx Mir<'tcx>>>,
+    pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
+    // we map Operand::Item to an instance via its DefId and monomorphized type
+    pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
+    main_fn: Option<FunctionValue<'tcx>>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -102,46 +105,71 @@ impl<'tcx> CodegenCtx<'tcx> {
             native_functions,
             intrinsics,
             builder: llctx.create_builder(),
-            items: Default::default(),
+            instance_mir: Default::default(),
+            instances: Default::default(),
+            operand_instance_map: Default::default(),
             lltypes: Default::default(),
+            main_fn: None,
         }
     }
 
-    pub fn declare_items(&self) {
+    pub fn declare_instances<I>(&mut self, instances: &I)
+    where
+        for<'a> &'a I: IntoIterator<Item = &'a Instance<'tcx>>,
+    {
+        instances.into_iter().for_each(|&instance| self.declare_instance(instance));
         // we need to predeclare all items as we don't require them to be declared in the source
         // file in topological order
-        DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
+        // DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
-    pub fn codegen_items(&self) {
-        // we need to predeclare all items as we don't require them to be declared in the source
-        // file in topological order
-        CodegenCollector { cctx: self }.visit_ir(self.tcx.ir);
+    fn declare_instance(&mut self, instance: Instance<'tcx>) {
+        match instance.kind {
+            InstanceKind::Item => {
+                let Instance { def_id, substs, .. } = instance;
+                let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
+                let ident = self.tcx.defs().ident_of(def_id);
+                let name = format!("{}<{}>", ident, substs);
+                let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
+                let llfn = self.module.add_function(&name, llty, None);
+                if Some(def_id) == self.tcx.ir.entry_id {
+                    self.main_fn = Some(llfn);
+                }
+                self.instances.borrow_mut().insert(Instance::item(substs, def_id), llfn);
+            }
+        }
+    }
+
+    pub fn codegen_instances(&self) {
+        self.instances.borrow().keys().for_each(|&instance| self.codegen_instance(instance));
+    }
+
+    crate fn instance_mir(&self, instance: Instance<'tcx>) -> &'tcx Mir<'tcx> {
+        match instance.kind {
+            InstanceKind::Item => self.instance_mir.borrow()[&instance],
+        }
+    }
+
+    pub fn codegen_instance(&self, instance: Instance<'tcx>) {
+        FnCtx::new(self, instance).codegen()
     }
 
     /// returns the main function
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
         self.tcx.collect_item_types();
-        self.declare_items();
-        self.codegen_items();
+        let instances = self.collect_monomorphization_instances();
+        self.declare_instances(&instances);
+        if self.tcx.sess.has_errors() {
+            return None;
+        }
+        self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
-        self.module.get_function(sym::MAIN.as_str()).or_else(|| {
+        if self.main_fn.is_none() {
             self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
-            None
-        })
-    }
-
-    pub fn codegen_body(&self, fn_name: &str, body: &'tcx Mir<'tcx>) -> FunctionValue<'tcx> {
-        let llfn = self.module.get_function(fn_name).unwrap();
-        let mut fcx = FnCtx::new(&self, llfn, body);
-        fcx.codegen();
-        llfn
-    }
-
-    fn const_size_of(&self, llty: BasicTypeEnum<'tcx>) {
-        let idx = self.types.int32.const_int(1, false);
+        }
+        self.main_fn
     }
 
     pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {

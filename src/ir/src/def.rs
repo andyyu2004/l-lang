@@ -1,6 +1,6 @@
 use super::{DefId, ParamIdx};
 use crate as ir;
-use index::{Idx, IndexVec};
+use index::Idx;
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 use std::fmt::{self, Display, Formatter};
@@ -130,15 +130,58 @@ impl<Id> Res<Id> {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct Definitions {
-    /// just use a counter for DefIds for now
-    def_id_counter: Cell<usize>,
-    id_to_def_id: FxHashMap<ir::Id, DefId>,
-    def_id_to_hir_id: IndexVec<DefId, Option<ir::Id>>,
+#[derive(Clone, Copy, Debug)]
+pub enum DefNode<'ir> {
+    Item(ir::Item<'ir>),
+    ImplItem(ir::ImplItem<'ir>),
+    ForeignItem(ir::ForeignItem<'ir>),
+    /// the node is considered a ctor iff it is a tuple variant
+    Ctor(ir::Variant<'ir>),
+    Variant(ir::Variant<'ir>),
 }
 
-impl Definitions {
+impl<'ir> Into<DefNode<'ir>> for ir::Item<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        DefNode::Item(self)
+    }
+}
+
+impl<'ir> Into<DefNode<'ir>> for ir::ImplItem<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        DefNode::ImplItem(self)
+    }
+}
+
+impl<'ir> Into<DefNode<'ir>> for ir::ForeignItem<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        DefNode::ForeignItem(self)
+    }
+}
+
+impl<'ir> Into<DefNode<'ir>> for ir::Variant<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct Definitions<'a> {
+    /// just use a counter for DefIds for now
+    def_id_counter: Cell<usize>,
+    // id_to_def_id: FxHashMap<ir::Id, DefId>,
+    // def_id_to_ir_id: IndexVec<DefId, Option<ir::Id>>,
+    def_map: FxHashMap<DefId, DefNode<'a>>,
+}
+
+impl<'a> Definitions<'a> {
+    pub fn def_node(&mut self, def_id: DefId, node: DefNode<'a>) {
+        assert!(self.def_map.insert(def_id, node).is_none());
+    }
+
+    pub fn get_def_node(&self, def_id: DefId) -> DefNode<'a> {
+        self.def_map[&def_id]
+    }
+
     pub fn alloc_def_id(&self) -> DefId {
         let def_id = self.def_id_counter.get();
         self.def_id_counter.set(1 + def_id);

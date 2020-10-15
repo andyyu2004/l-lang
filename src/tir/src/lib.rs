@@ -8,7 +8,6 @@ extern crate log;
 
 mod expr;
 mod fmt;
-mod ir_lowering;
 mod item;
 mod map;
 mod pattern;

@@ -1,5 +1,6 @@
 #![feature(array_value_iter)]
 
+mod construct;
 mod expr;
 mod item;
 mod pat;
@@ -14,7 +15,6 @@ use index::Idx;
 use ir::{DefId, LocalId, Res};
 use resolve::Resolver;
 use rustc_hash::FxHashMap;
-use span::Span;
 use std::cell::Cell;
 
 ir::arena_types!(arena::declare_arena, [], 'tcx);
@@ -29,40 +29,8 @@ pub struct AstLoweringCtx<'a, 'ir> {
     entry_id: Option<DefId>,
     /// this counter counts backwards as to be sure not to not
     /// overlap with the ids that the parser assigned
+    /// this counts nodes that are constructed by desugaring
     new_node_id_counter: Cell<usize>,
-}
-
-/// methods for constructing `ir` for desugaring purposes
-impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
-    fn mk_expr(&mut self, span: Span, kind: ir::ExprKind<'ir>) -> &'ir ir::Expr<'ir> {
-        self.arena.alloc(ir::Expr { id: self.new_id(), span, kind })
-    }
-
-    fn mk_expr_bool(&mut self, span: Span, b: bool) -> &'ir ir::Expr<'ir> {
-        self.mk_expr(span, ir::ExprKind::Lit(Lit::Bool(b)))
-    }
-
-    fn mk_pat_bool(&mut self, span: Span, b: bool) -> &'ir ir::Pattern<'ir> {
-        let expr = self.mk_expr_bool(span, b);
-        self.mk_pat(span, ir::PatternKind::Lit(expr))
-    }
-
-    fn mk_pat(&mut self, span: Span, kind: ir::PatternKind<'ir>) -> &'ir ir::Pattern<'ir> {
-        self.arena.alloc(ir::Pattern { id: self.new_id(), span, kind })
-    }
-
-    fn mk_empty_block_expr(&mut self, span: Span) -> &'ir ir::Expr<'ir> {
-        let block = self.mk_empty_block(span);
-        self.mk_expr(span, ir::ExprKind::Block(block))
-    }
-
-    fn mk_empty_block(&mut self, span: Span) -> &'ir ir::Block<'ir> {
-        self.arena.alloc(ir::Block { id: self.new_id(), span, stmts: &[], expr: None })
-    }
-
-    fn mk_arm(&mut self, pat: &'ir ir::Pattern<'ir>, expr: &'ir ir::Expr<'ir>) -> ir::Arm<'ir> {
-        ir::Arm { id: self.new_id(), span: pat.span.merge(expr.span), pat, guard: None, body: expr }
-    }
 }
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {

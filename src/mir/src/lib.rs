@@ -1,19 +1,21 @@
-#![feature(box_syntax, box_patterns)]
-#![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
+#![feature(crate_visibility_modifier)]
+#![feature(box_syntax, box_patterns)]
 
 mod build;
+mod traverse;
 
 #[macro_use]
 extern crate log;
 
-pub use build::{build_enum_ctors, build_fn, MirCtx};
+pub use build::*;
+pub use traverse::Visitor;
 
 use ast::Ident;
 use error::{LError, LResult};
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
-use lcore::TyCtx;
+use lcore::ty::TyCtx;
 use std::collections::BTreeMap;
 use std::io::Write;
 use typeck::{InheritedCtx, TcxCollectExt};
@@ -23,6 +25,27 @@ macro halt_on_error($tcx:expr) {{
         return Err(LError::ErrorReported);
     }
 }}
+
+pub trait TyCtxMirExt<'tcx> {
+    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>>;
+}
+
+impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
+    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
+        let node = self.defs().get(def_id);
+        match node {
+            ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(self, variant)),
+            ir::DefNode::Item(item) => match item.kind {
+                ir::ItemKind::Fn(sig, generics, body) =>
+                    build_mir(self, def_id, sig, generics, body),
+                _ => panic!(),
+            },
+            ir::DefNode::ImplItem(_) => todo!(),
+            ir::DefNode::ForeignItem(_) => todo!(),
+            ir::DefNode::Variant(_) => panic!(),
+        }
+    }
+}
 
 pub fn with_mir_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
@@ -35,7 +58,7 @@ pub fn with_mir_ctx<'tcx, R>(
     InheritedCtx::build(tcx, def_id).enter(|inherited| {
         let fcx = inherited.check_fn_item(def_id, sig, generics, body);
         // don't bother continuing if typeck failed
-        // note that the failure to typeck could also come from resolution errors
+        // note that the failure to typeck could also come from earlier resolution errors
         halt_on_error!(tcx);
         let tables = fcx.resolve_inference_variables(body);
         let lctx = MirCtx::new(&inherited, tables);

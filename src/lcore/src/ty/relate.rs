@@ -1,5 +1,4 @@
 use crate::ty::*;
-use crate::TyCtx;
 use itertools::Itertools;
 
 pub trait TypeRelation<'tcx>: Sized {
@@ -22,7 +21,6 @@ pub trait TypeRelation<'tcx>: Sized {
             // ignore mutability for now
             (Ptr(_m, t), Ptr(_n, u)) => self.relate(t, u),
             (Param(t), Param(u)) if t.idx == u.idx => Ok(a),
-            (Infer(_), _) | (_, Infer(_)) => panic!(),
             (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),
             (Array(t, m), Array(u, n)) if m == n => self.relate(t, u),
             (Adt(adtx, substsx), Adt(adty, substsy)) if adtx == adty => {
@@ -36,6 +34,7 @@ pub trait TypeRelation<'tcx>: Sized {
                 let r = self.relate(b, u)?;
                 Ok(tcx.mk_fn_ty(s, r))
             }
+            (Infer(_), _) | (_, Infer(_)) => panic!(),
             _ => Err(TypeError::Mismatch(a, b)),
         }
     }

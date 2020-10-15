@@ -1,7 +1,7 @@
 use super::AstLoweringCtx;
 use ast::*;
 use index::Idx;
-use ir::VariantIdx;
+use ir::{DefId, DefNode, VariantIdx};
 use span::sym;
 use span::Symbol;
 
@@ -42,8 +42,19 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Extern(items) => lctx.lower_foreign_mod(items),
             };
             let item = ir::Item { span, id, vis, ident, kind };
+            lctx.def_node(id.def, item);
             lctx.items.insert(item.id.def, item);
         });
+    }
+
+    /// inserts DefId -> DefNode mapping into the `DefMap`
+    /// returns the same T for convenience
+    fn def_node<T>(&mut self, def_id: DefId, node: T) -> T
+    where
+        T: Into<DefNode<'ir>> + Copy,
+    {
+        self.resolver.def_node(def_id, node.into());
+        node
     }
 
     fn lower_foreign_mod(&mut self, items: &[P<ForeignItem>]) -> ir::ItemKind<'ir> {
@@ -55,11 +66,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     fn lower_foreign_item(&mut self, item: &ForeignItem) -> ir::ForeignItem<'ir> {
         let &ForeignItem { span, id, vis, ident, ref kind } = item;
         self.with_owner(id, |lctx| {
+            let id = lctx.lower_node_id(id);
             let kind = match kind {
                 ForeignItemKind::Fn(sig, generics) =>
                     ir::ForeignItemKind::Fn(lctx.lower_fn_sig(sig), lctx.lower_generics(generics)),
             };
-            ir::ForeignItem { id: lctx.lower_node_id(id), ident, span, vis, kind }
+            lctx.def_node(id.def, ir::ForeignItem { id, ident, span, vis, kind })
         })
     }
 
@@ -90,6 +102,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_impl_item(&mut self, impl_item: &AssocItem) -> ir::ImplItem<'ir> {
         let &AssocItem { span, id, vis, ident, ref kind } = impl_item;
+        let id = self.lower_node_id(id);
         let (generics, kind) = match kind {
             AssocItemKind::Fn(sig, generics, body) => {
                 let generics = self.lower_generics(generics);
@@ -98,18 +111,24 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 (generics, ir::ImplItemKind::Fn(sig, body))
             }
         };
-        ir::ImplItem { id: self.lower_node_id(id), ident, span, vis, generics, kind }
+
+        self.def_node(id.def, ir::ImplItem { id, ident, span, vis, generics, kind })
     }
 
     fn lower_variant(&mut self, idx: usize, variant: &Variant) -> ir::Variant<'ir> {
         let adt_def = self.curr_owner();
-        self.with_owner(variant.id, |lctx| ir::Variant {
-            adt_def,
-            id: lctx.lower_node_id(variant.id),
-            idx: VariantIdx::new(idx),
-            ident: variant.ident,
-            span: variant.span,
-            kind: lctx.lower_variant_kind(&variant.kind),
+        self.with_owner(variant.id, |lctx| {
+            let id = lctx.lower_node_id(variant.id);
+            let kind = lctx.lower_variant_kind(&variant.kind);
+            let variant = ir::Variant {
+                adt_def_id: adt_def,
+                id,
+                kind,
+                idx: VariantIdx::new(idx),
+                ident: variant.ident,
+                span: variant.span,
+            };
+            lctx.def_node(id.def, variant)
         })
     }
 

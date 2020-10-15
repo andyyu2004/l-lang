@@ -201,7 +201,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
             mir::Operand::Lvalue(lvalue) => lvalue.mir_fmt(f),
-            mir::Operand::Item(def) => write!(f, "#{:?}", def),
+            mir::Operand::Item(def, _ty) => write!(f, "#{}", def),
         }
     }
 }
@@ -222,11 +222,15 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
             mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
                 lvalue.mir_fmt(fmt)?;
                 let ty = fmt.mir.vars[lvalue.id].ty;
-                write!(fmt, ":{} ← (", ty)?;
+                write!(fmt, ":{} ← call ", ty)?;
                 f.mir_fmt(fmt)?;
-                for arg in args {
-                    write!(fmt, " ")?;
-                    arg.mir_fmt(fmt)?;
+                write!(fmt, "(")?;
+                args.get(0).map(|arg| arg.mir_fmt(fmt));
+                if args.len() > 1 {
+                    for arg in &args[1..] {
+                        write!(fmt, ", ")?;
+                        arg.mir_fmt(fmt)?;
+                    }
                 }
                 writeln!(fmt, ") -> [{:?}]", target)?;
                 writeln!(fmt)

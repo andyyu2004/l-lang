@@ -1,7 +1,5 @@
 use super::*;
-use lcore::mir::*;
-use lcore::ty::Ty;
-use lcore::TyCtx;
+use lcore::ty::{Ty, TyCtx};
 
 /// helper struct for building projections of an lvalue
 pub struct LvalueBuilder<'tcx> {
@@ -52,10 +50,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> BlockAnd<Lvalue<'tcx>> {
         let builder = set!(block = self.as_lvalue_builder(block, expr));
         block.and(builder.lvalue(self.tcx))
-    }
-
-    pub fn var_id_as_lvalue(&mut self, id: ir::Id) -> Lvalue<'tcx> {
-        self.var_id_as_lvalue_builder(id).lvalue(self.tcx)
     }
 
     pub fn var_id_as_lvalue_builder(&mut self, id: ir::Id) -> LvalueBuilder<'tcx> {

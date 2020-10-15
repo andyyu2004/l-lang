@@ -10,8 +10,7 @@ mod interners;
 mod ir_map;
 pub mod mir;
 pub mod ty;
-mod tyctx;
 
 pub use arenas::CoreArenas;
 use interners::CtxInterners;
-pub use tyctx::{GlobalCtx, TyCtx};
+pub use ty::{GlobalCtx, TyCtx};

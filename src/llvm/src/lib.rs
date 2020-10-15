@@ -1,4 +1,5 @@
 #![feature(decl_macro)]
+#![feature(crate_visibility_modifier)]
 #![feature(array_value_iter)]
 
 mod codegen;
@@ -7,6 +8,7 @@ mod fcx;
 mod intrinsics;
 mod lltypes;
 mod llvm_error;
+mod monomorphize;
 mod native;
 
 #[cfg(test)]
@@ -17,6 +19,7 @@ pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
 use intrinsics::build_instrinsics;
 use llvm_error::LLVMError;
+use monomorphize::Monomorphize;
 use native::NativeFunctions;
 
 use inkwell::values::{FunctionValue, PointerValue};

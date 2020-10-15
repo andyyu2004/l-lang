@@ -60,7 +60,7 @@ index::newtype_index!(
 
 index::newtype_index!(
     pub struct ParamIdx {
-        DEBUG_FORMAT ="ParamIdx({})"
+        DEBUG_FORMAT ="{}"
     }
 );
 
@@ -117,23 +117,32 @@ impl Display for Id {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Variant<'ir> {
     pub id: ir::Id,
     pub ident: Ident,
     pub span: Span,
-    /// `DefId` of the enum that this variant belongs to
-    pub adt_def: DefId,
+    /// `DefId` of the adt that this variant belongs to
+    pub adt_def_id: DefId,
     /// index of the variant in the enum
     pub idx: VariantIdx,
-    pub kind: ir::VariantKind<'ir>,
+    pub kind: VariantKind<'ir>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum VariantKind<'ir> {
     Struct(&'ir [ir::FieldDecl<'ir>]),
     Tuple(&'ir [ir::FieldDecl<'ir>]),
     Unit,
+}
+
+impl<'ir> VariantKind<'ir> {
+    pub fn is_tuple(&self) -> bool {
+        match self {
+            VariantKind::Tuple(_) => true,
+            _ => false,
+        }
+    }
 }
 
 impl<'ir> From<&VariantKind<'ir>> for ir::CtorKind {

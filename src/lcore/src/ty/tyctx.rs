@@ -16,14 +16,6 @@ pub struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
 }
 
-impl<'tcx> Deref for TyCtx<'tcx> {
-    type Target = GlobalCtx<'tcx>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.gcx
-    }
-}
-
 impl<'tcx> TyCtx<'tcx> {
     pub fn alloc<T>(self, t: T) -> &'tcx T {
         // these types have their own typed arena
@@ -194,13 +186,12 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 pub struct GlobalCtx<'tcx> {
+    interners: CtxInterners<'tcx>,
     pub arena: &'tcx CoreArenas<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::IR<'tcx>,
-    interners: CtxInterners<'tcx>,
-    pub resolutions: &'tcx Resolutions,
-    /// where the results of type collection are stored
+    pub resolutions: Resolutions<'tcx>,
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
@@ -208,7 +199,7 @@ impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
         ir: &'tcx ir::IR<'tcx>,
         arena: &'tcx CoreArenas<'tcx>,
-        resolutions: &'tcx Resolutions,
+        resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,
     ) -> Self {
         let interners = CtxInterners::new(arena);
@@ -220,67 +211,6 @@ impl<'tcx> GlobalCtx<'tcx> {
         let tcx = TyCtx { gcx: self };
         f(tcx)
     }
-}
-
-impl<'tcx> TyCtx<'tcx> {
-    // top level entrace to typechecking
-    // does not check bodies, that is done when lowering to tir/mir
-    // pub fn run_typeck(self) {
-    //     self.collect(self.ir);
-    // }
-
-    // /// runs all analyses on `self.ir`
-    // pub fn check(self) {
-    //     // TODO abstract this pattern into a item or function visitor?
-    //     // we can ignore the results as the driver will pick it up
-    //     self.ir.items.iter().for_each(|(&id, item)| match item.kind {
-    //         ir::ItemKind::Fn(sig, generics, body) => {
-    //             let _ = self.typeck_fn(id, sig, generics, body, |_| {});
-    //         }
-    //         _ => {}
-    //     });
-    //     self.ir.impl_items.values().for_each(|item| match item.kind {
-    //         ir::ImplItemKind::Fn(sig, body) => {
-    //             let _ = self.typeck_fn(item.id.def, sig, item.generics, body, |_| {});
-    //         }
-    //     })
-    // }
-
-    // /// constructs a TypeScheme from a type and its generics
-    // pub(super) fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
-    //     let binders = self.alloc_iter(generics.params.iter().map(|p| p.index));
-    //     let generics = self.lower_generics(generics);
-    //     self.mk_ty_scheme(generics, ty)
-    // }
-
-    // pub fn build_mir(
-    //     self,
-    //     def_id: DefId,
-    //     sig: &ir::FnSig<'tcx>,
-    //     generics: &ir::Generics<'tcx>,
-    //     body: &'tcx ir::Body<'tcx>,
-    // ) -> LResult<&'tcx mir::Mir<'tcx>> {
-    //     self.typeck_fn(def_id, sig, generics, body, |mut lctx| lctx.build_mir(body))
-    // }
-
-    // pub fn typeck_fn<R>(
-    //     self,
-    //     def_id: DefId,
-    //     sig: &ir::FnSig<'tcx>,
-    //     generics: &ir::Generics<'tcx>,
-    //     body: &'tcx ir::Body<'tcx>,
-    //     f: impl for<'a> FnOnce(TirCtx<'a, 'tcx>) -> R,
-    // ) -> LResult<R> {
-    //     InheritedCtx::build(self, def_id).enter(|inherited| {
-    //         let fcx = inherited.check_fn_item(def_id, sig, generics, body);
-    //         // don't bother continuing if typeck failed
-    //         // note that the failure to typeck could also come from resolution errors
-    //         halt_on_error!(self);
-    //         let tables = fcx.resolve_inference_variables(body);
-    //         let lctx = TirCtx::new(&inherited, tables);
-    //         Ok(f(lctx))
-    //     })
-    // }
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -340,5 +270,13 @@ impl<'tcx> CommonTypes<'tcx> {
             unit: mk(TyKind::Tuple(List::empty())),
             int,
         }
+    }
+}
+
+impl<'tcx> Deref for TyCtx<'tcx> {
+    type Target = GlobalCtx<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.gcx
     }
 }

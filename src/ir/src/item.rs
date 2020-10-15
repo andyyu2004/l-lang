@@ -2,7 +2,7 @@ use crate as ir;
 use ast::{Ident, Visibility};
 use span::Span;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Item<'ir> {
     pub span: Span,
     pub id: ir::Id,
@@ -32,7 +32,7 @@ impl<'ir> Item<'ir> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),
     Struct(&'ir ir::Generics<'ir>, ir::VariantKind<'ir>),
@@ -46,7 +46,7 @@ pub enum ItemKind<'ir> {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ForeignItem<'ir> {
     pub id: ir::Id,
     pub ident: Ident,
@@ -55,12 +55,12 @@ pub struct ForeignItem<'ir> {
     pub kind: ForeignItemKind<'ir>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ForeignItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImplItem<'ir> {
     pub id: ir::Id,
     pub ident: Ident,
@@ -70,7 +70,7 @@ pub struct ImplItem<'ir> {
     pub kind: ImplItemKind<'ir>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ImplItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
 }
