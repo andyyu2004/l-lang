@@ -11,23 +11,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::PatternKind::Tuple(pats) => self.check_pat_tuple(pat, pats, ty),
             ir::PatternKind::Lit(expr) => self.check_pat_lit(expr, ty),
             ir::PatternKind::Variant(path, pats) => self.check_pat_variant(pat, path, pats, ty),
-            ir::PatternKind::Path(path) => self.check_pat_path(pat, path),
+            ir::PatternKind::Path(path) => self.check_pat_path(pat, path, ty),
         };
-        // unify the two types
-        // don't bother if they are already the same
-        // i.e. in the case of Wildcard or Binding
-        if pat_ty != ty {
-            self.unify(pat.span, pat_ty, ty);
-        }
         self.write_ty(pat.id, pat_ty)
     }
 
-    fn check_pat_path(&mut self, pat: &ir::Pattern, path: &ir::Path) -> Ty<'tcx> {
+    fn check_pat_path(&mut self, pat: &ir::Pattern, path: &ir::Path, ty: Ty<'tcx>) -> Ty<'tcx> {
         // before we use `check_expr_path` there are some cases we must handle
-        // for example
-        // Some has type T -> Option<T>
+        // for example:
+        // `Some` has type T -> Option<T>
         // however, we don't want the pattern `Some` to have that same type
-        // indeed, this should be an error instead
+        // a valid use of the pattern would be `Some(x)`
+        // this should be an error instead as it should be handled under
+        // PatKind::Variant not PatKind::Path
         match path.res {
             // this is the good case
             ir::Res::Def(_, DefKind::Ctor(CtorKind::Unit)) => (),
@@ -36,7 +32,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::Res::Err => return self.set_ty_err(),
             _ => unreachable!(),
         };
-        self.check_expr_path(path)
+        let path_ty = self.check_expr_path(path);
+        self.unify(pat.span, ty, path_ty);
+        path_ty
     }
 
     fn check_pat_variant(
