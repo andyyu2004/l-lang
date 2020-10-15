@@ -21,10 +21,12 @@ enum Either<L, R> {
 }
 
 fn main() -> int {
-    Option::Some(8);
-    /* let x = snd(false, 9); */
-    /* snd(9, false); */
-    snd(9, false);
-    snd(false, 9);
-    8
+    let e = Either::Left(Option::Some(88));
+    match e {
+	Either::Left(opt) => match opt {
+	    Option::Some(i) => i,
+	    Option::None => 4,
+	},
+	Either::Right(x) => x,
+    }
 }

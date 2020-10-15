@@ -255,6 +255,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             });
             self.unify(arm.span, expected_ty, arm_ty);
         });
+
         expected_ty
     }
 
