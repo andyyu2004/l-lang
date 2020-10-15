@@ -34,6 +34,7 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
     fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
         let node = self.defs().get(def_id);
         match node {
+            ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(self, variant)),
             ir::DefNode::Item(item) => match item.kind {
                 ir::ItemKind::Fn(sig, generics, body) =>
                     build_mir(self, def_id, sig, generics, body),
@@ -41,7 +42,6 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
             },
             ir::DefNode::ImplItem(_) => todo!(),
             ir::DefNode::ForeignItem(_) => todo!(),
-            ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(self, variant)),
             ir::DefNode::Variant(_) => panic!(),
         }
     }

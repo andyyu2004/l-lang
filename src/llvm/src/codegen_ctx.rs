@@ -9,7 +9,7 @@ use ir::DefId;
 use lcore::mir::Mir;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
-use span::{sym, Span, Symbol};
+use span::{Span, Symbol};
 use std::cell::RefCell;
 use std::ops::Deref;
 use typeck::{TcxCollectExt, Typeof};

@@ -21,6 +21,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     fn collect_rec(&self, visited: &mut FxHashSet<Instance<'tcx>>, instance: Instance<'tcx>) {
         visited.insert(instance);
+        assert!(!self.instance_mir.borrow().contains_key(&instance));
         let mir = match instance.kind {
             InstanceKind::Item => self.tcx.mir_of_def(instance.def_id),
         };
@@ -86,7 +87,6 @@ impl<'a, 'tcx> Visitor<'tcx> for MonoCollector<'a, 'tcx> {
     fn visit_operand(&mut self, operand: &Operand<'tcx>) {
         // `Operand::Item` is the only way to reference a generic item
         if let &Operand::Item(def_id, fn_ty) = operand {
-            let scheme = self.collected_ty(def_id);
             // firstly, we must monomorphize the ty with its
             // "parent" instance's substitutions
             let ty = self.monomorphize(fn_ty);
@@ -95,6 +95,7 @@ impl<'a, 'tcx> Visitor<'tcx> for MonoCollector<'a, 'tcx> {
             // this `substs` is the substitution
             // applied to the generic function with def_id `def_id`
             // to obtain its concrete type
+            let scheme = self.collected_ty(def_id);
             let substs = self.match_tys(scheme, ty);
             let instance = Instance::item(substs, def_id);
             self.cctx.operand_instance_map.borrow_mut().insert((def_id, fn_ty), instance);

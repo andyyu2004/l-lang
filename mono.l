@@ -15,14 +15,12 @@ enum Option<T> {
     None,
 }
 
-enum MonoOption {
-    Some(int),
-    None
+enum Either<L, R> {
+    Left(L),
+    Right(R),
 }
 
 fn main() -> int {
-    let opt = Option::Some(8);
-    match opt {
-	Option::Some(k) => k,
-    }
+    let x = snd(false, 9);
+    x
 }

@@ -1,5 +1,4 @@
 use crate::*;
-use index::Idx;
 use ty::*;
 
 pub trait Subst<'tcx>: Sized {
