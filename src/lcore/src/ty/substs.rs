@@ -30,6 +30,7 @@ impl<'tcx> TypeFolder<'tcx> for SubstsFolder<'tcx> {
         if !ty.has_ty_params() {
             return ty;
         }
+
         match ty.kind {
             TyKind::Param(param_ty) => self.substs[param_ty.idx.index()],
             _ => ty.inner_fold_with(self),
@@ -88,7 +89,7 @@ impl<'tcx> TyCtx<'tcx> {
     /// used for finding all the substitutions for monomorphization
     /// we can assume that these two types are unifiable as this should
     /// only be called after successful typechecking
-    pub fn match_tys(self, scheme: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
+    pub fn unify_tys(self, scheme: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
         assert!(!t.has_infer_vars());
         let (generics, s) = scheme.expect_scheme();
         let substs = Substs::id_for_generics(self, generics);

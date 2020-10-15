@@ -28,14 +28,12 @@ fn test_simple_mono2() {
 #[test]
 fn test_mono_different_number_of_type_parameters() {
     let src = r#"
-    fn fst<T, U>(t: T, u: U) -> T { snd(u, t) }
+    fn id<T>(t: T) -> T { snd(false, t) }
     fn snd<T, U>(t: T, u: U) -> U { u }
 
     fn main() -> int {
-        fst(5, true);
-        fst(false, 9);
-        fst(4, 9)
+        id(5)
     }"#;
 
-    assert_eq!(llvm_exec!(src), 4);
+    assert_eq!(llvm_exec!(src), 5);
 }

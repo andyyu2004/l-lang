@@ -24,7 +24,7 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
-    pub instance_mir: RefCell<FxHashMap<Instance<'tcx>, &'tcx Mir<'tcx>>>,
+    pub cached_mir: RefCell<FxHashMap<DefId, &'tcx Mir<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     // we map Operand::Item to an instance via its DefId and monomorphized type
     pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
@@ -105,7 +105,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             native_functions,
             intrinsics,
             builder: llctx.create_builder(),
-            instance_mir: Default::default(),
+            cached_mir: Default::default(),
             instances: Default::default(),
             operand_instance_map: Default::default(),
             lltypes: Default::default(),
@@ -142,12 +142,6 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn codegen_instances(&self) {
         self.instances.borrow().keys().for_each(|&instance| self.codegen_instance(instance));
-    }
-
-    crate fn instance_mir(&self, instance: Instance<'tcx>) -> &'tcx Mir<'tcx> {
-        match instance.kind {
-            InstanceKind::Item => self.instance_mir.borrow()[&instance],
-        }
     }
 
     pub fn codegen_instance(&self, instance: Instance<'tcx>) {

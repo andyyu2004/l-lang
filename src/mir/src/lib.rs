@@ -15,7 +15,7 @@ use ast::Ident;
 use error::{LError, LResult};
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
-use lcore::ty::TyCtx;
+use lcore::ty::{Instance, InstanceKind, TyCtx};
 use std::collections::BTreeMap;
 use std::io::Write;
 use typeck::{InheritedCtx, TcxCollectExt};
@@ -28,6 +28,7 @@ macro halt_on_error($tcx:expr) {{
 
 pub trait TyCtxMirExt<'tcx> {
     fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>>;
+    fn mir_of_instance(self, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>>;
 }
 
 impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
@@ -43,6 +44,12 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
             ir::DefNode::ImplItem(_) => todo!(),
             ir::DefNode::ForeignItem(_) => todo!(),
             ir::DefNode::Variant(_) => panic!(),
+        }
+    }
+
+    fn mir_of_instance(self, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>> {
+        match instance.kind {
+            InstanceKind::Item => self.mir_of_def(instance.def_id),
         }
     }
 }

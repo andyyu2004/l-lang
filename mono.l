@@ -1,6 +1,8 @@
 fn fst<T, U>(t: T, u: U) -> T { t }
 fn snd<T, U>(t: T, u: U) -> U { fst(u, t) }
 
+fn id<T>(t: T) -> T { snd(false, t) }
+
 extern {
     fn rc<T>(t: &T) -> int;
 }
@@ -21,12 +23,13 @@ enum Either<L, R> {
 }
 
 fn main() -> int {
-    let e = Either::Left(Option::Some(88));
-    match e {
-	Either::Left(opt) => match opt {
-	    Option::Some(i) => i,
-	    Option::None => 4,
-	},
-	Either::Right(x) => x,
-    }
+    return id(5);
+    /* let e = Either::Left(Option::Some(88)); */
+    /* match e { */
+    /*     Either::Left(opt) => match opt { */
+    /*         Option::Some(i) => i, */
+    /*         Option::None => 4, */
+    /*     }, */
+    /*     Either::Right(x) => x, */
+    /* } */
 }

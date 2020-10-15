@@ -43,7 +43,7 @@ struct LLVMVar<'tcx> {
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(cctx: &'a CodegenCtx<'tcx>, instance: Instance<'tcx>) -> Self {
         let llfn = cctx.instances.borrow()[&instance];
-        let mir = cctx.instance_mir(instance);
+        let mir = cctx.cached_mir.borrow()[&instance.def_id];
 
         let blocks = mir
             .basic_blocks
