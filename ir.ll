@@ -34,6 +34,21 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
+define %opaque @"13<int>"(i64 %0) {
+basic_blockbb0:
+  %retvar = alloca %opaque
+  %1 = alloca i64
+  store i64 %0, i64* %1
+  %discr_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 0
+  store i64 0, i64* %discr_gep
+  %enum_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 1
+  %load = load i64, i64* %1
+  %enum_content_gep = getelementptr inbounds { i64 }, { i64 }* %enum_gep, i32 0, i32 0
+  store i64 %load, i64* %enum_content_gep
+  %load_ret = load %opaque, %opaque* %retvar
+  ret %opaque %load_ret
+}
+
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
@@ -43,7 +58,7 @@ basic_blockbb0:
   %tmp2 = alloca i64
   %tmp3 = alloca i1
   %k = alloca i64
-  %fcall = call %opaque @"14<>"(i64 8)
+  %fcall = call %opaque @"13<int>"(i64 8)
   store %opaque %fcall, %opaque* %tmp
   br label %basic_blockbb1
 
@@ -83,19 +98,4 @@ basic_blockbb4:                                   ; preds = %basic_blockbb3
 basic_blockbb5:                                   ; preds = %basic_blockbb2
   call void @exit(i32 1)
   unreachable
-}
-
-define %opaque @"14<>"(i64 %0) {
-basic_blockbb0:
-  %retvar = alloca %opaque
-  %1 = alloca i64
-  store i64 %0, i64* %1
-  %discr_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 0
-  store i64 0, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %opaque, %opaque* %retvar, i32 0, i32 1
-  %load = load i64, i64* %1
-  %enum_content_gep = getelementptr inbounds { i64 }, { i64 }* %enum_gep, i32 0, i32 0
-  store i64 %load, i64* %enum_content_gep
-  %load_ret = load %opaque, %opaque* %retvar
-  ret %opaque %load_ret
 }

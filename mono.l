@@ -6,6 +6,10 @@ extern {
 }
 
 
+struct S<T> {
+    t: T
+}
+
 enum Option<T> {
     Some(T),
     None,
@@ -17,8 +21,8 @@ enum MonoOption {
 }
 
 fn main() -> int {
-    let opt = MonoOption::Some(8);
+    let opt = Option::Some(8);
     match opt {
-	MonoOption::Some(k) => k,
+	Option::Some(k) => k,
     }
 }

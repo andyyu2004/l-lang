@@ -1,4 +1,3 @@
-use super::InferCtx;
 use ena::undo_log::UndoLogs;
 use ena::unify as ut;
 use lcore::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};

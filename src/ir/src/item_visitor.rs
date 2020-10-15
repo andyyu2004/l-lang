@@ -41,10 +41,10 @@ pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
 
     fn visit_foreign_fn(
         &mut self,
-        def_id: DefId,
-        ident: Ident,
-        sig: &'ir FnSig<'ir>,
-        generics: &'ir Generics<'ir>,
+        _def_id: DefId,
+        _ident: Ident,
+        _sig: &'ir FnSig<'ir>,
+        _generics: &'ir Generics<'ir>,
     ) {
     }
 

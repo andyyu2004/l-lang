@@ -83,6 +83,7 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
     }
 }
 
+/// run type collection on items and constructors
 pub fn collect_item_types<'tcx>(tcx: TyCtx<'tcx>) {
     ItemCollector { tcx }.visit_prog(tcx.ir);
     CtorCollector { tcx }.visit_prog(tcx.ir);

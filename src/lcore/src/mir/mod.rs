@@ -3,7 +3,7 @@ mod fmt;
 mod mirty;
 
 use crate::mir;
-use crate::ty::{AdtTy, Const, Instance, List, Projection, SubstsRef, Ty, TyCtx};
+use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty, TyCtx};
 use ast::Mutability;
 use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};

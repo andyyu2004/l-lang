@@ -1,6 +1,6 @@
 use super::{DefId, ParamIdx};
 use crate as ir;
-use index::{Idx, IndexVec};
+use index::Idx;
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 use std::fmt::{self, Display, Formatter};

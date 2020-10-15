@@ -5,10 +5,9 @@ use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
-use ir::{DefId, ItemVisitor};
+use ir::DefId;
 use lcore::mir::Mir;
 use lcore::ty::*;
-use mir::TyCtxMirExt;
 use rustc_hash::FxHashMap;
 use span::{sym, Span, Symbol};
 use std::cell::RefCell;
@@ -29,6 +28,7 @@ pub struct CodegenCtx<'tcx> {
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
+    main_fn: Option<FunctionValue<'tcx>>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -108,10 +108,11 @@ impl<'tcx> CodegenCtx<'tcx> {
             instances: Default::default(),
             operand_instance_map: Default::default(),
             lltypes: Default::default(),
+            main_fn: None,
         }
     }
 
-    pub fn declare_instances<I>(&self, instances: &I)
+    pub fn declare_instances<I>(&mut self, instances: &I)
     where
         for<'a> &'a I: IntoIterator<Item = &'a Instance<'tcx>>,
     {
@@ -121,18 +122,17 @@ impl<'tcx> CodegenCtx<'tcx> {
         // DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
-    fn declare_instance(&self, instance: Instance<'tcx>) {
+    fn declare_instance(&mut self, instance: Instance<'tcx>) {
         match instance.kind {
             InstanceKind::Item => {
                 let Instance { def_id, substs, .. } = instance;
                 let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
-                let name = if Some(def_id) == self.tcx.ir.entry_id {
-                    sym::MAIN.as_str().to_owned()
-                } else {
-                    format!("{}<{}>", def_id, substs)
-                };
+                let name = format!("{}<{}>", def_id, substs);
                 let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
                 let llfn = self.module.add_function(&name, llty, None);
+                if Some(def_id) == self.tcx.ir.entry_id {
+                    self.main_fn = Some(llfn);
+                }
                 self.instances.borrow_mut().insert(Instance::item(substs, def_id), llfn);
             }
         }
@@ -164,10 +164,10 @@ impl<'tcx> CodegenCtx<'tcx> {
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
-        self.module.get_function(sym::MAIN.as_str()).or_else(|| {
+        if self.main_fn.is_none() {
             self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
-            None
-        })
+        }
+        self.main_fn
     }
 
     pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {

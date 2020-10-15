@@ -6,7 +6,7 @@ use inkwell::types::BasicType;
 use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
-use lcore::mir::{self, BlockId, VarId};
+use lcore::mir::{self, BlockId, MirTy, VarId};
 use lcore::ty::{AdtKind, ConstKind, Instance, Projection, Subst, Ty};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
@@ -197,12 +197,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(lvalue) => {
+                return;
                 let lvalue_ref = self.codegen_lvalue(lvalue);
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_retain = self.build_rc_retain(lvalue_ref);
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(lvalue) => {
+                return;
                 let lvalue_ref = self.codegen_lvalue(lvalue);
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_release = self.build_rc_release(lvalue_ref);
@@ -218,8 +220,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // llvm doesn't like recursively building these values (with temporaries)
         // instead, we use geps to set the fields directly
         match rvalue {
-            mir::Rvalue::Adt { adt, substs, fields, variant_idx } => {
-                let ty = self.tcx.mk_adt_ty(adt, substs);
+            mir::Rvalue::Adt { adt, fields, variant_idx, .. } => {
                 match adt.kind {
                     // basically identical code to tuple but has potential substs to deal with
                     AdtKind::Struct => {
@@ -233,6 +234,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         }
                     }
                     AdtKind::Enum => {
+                        let (ty, substs) = (lvalue_ref.ty, self.instance.substs);
+                        assert!(!ty.has_ty_params());
                         let idx = variant_idx.index() as u64;
                         let discr_ptr =
                             self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
