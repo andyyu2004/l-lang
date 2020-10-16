@@ -9,7 +9,7 @@ use ir::DefId;
 use lcore::mir::Mir;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
-use span::{sym, Span, Symbol};
+use span::{sym, Span};
 use std::cell::RefCell;
 use std::ops::Deref;
 use typeck::TcxCollectExt;
@@ -23,7 +23,7 @@ pub struct CodegenCtx<'tcx> {
     pub types: CommonTypes<'tcx>,
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
-    pub intrinsics: FxHashMap<Symbol, FunctionValue<'tcx>>,
+    pub intrinsics: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub cached_mir: RefCell<FxHashMap<DefId, &'tcx Mir<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     // we map Operand::Item to an instance via its DefId and monomorphized type
@@ -94,7 +94,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
 
         let native_functions = NativeFunctions::new(llctx, &module);
-        let intrinsics = build_instrinsics(&module);
         Self {
             tcx,
             llctx,
@@ -103,8 +102,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             vals,
             types,
             native_functions,
-            intrinsics,
             builder: llctx.create_builder(),
+            intrinsics: Default::default(),
             cached_mir: Default::default(),
             instances: Default::default(),
             operand_instance_map: Default::default(),
@@ -143,7 +142,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
                 self.instances.borrow_mut().insert(Instance::item(def_id, substs), llfn);
             }
-            InstanceKind::Intrinsic => todo!(),
+            InstanceKind::Intrinsic => self.codegen_intrinsic(instance),
         }
     }
 
@@ -154,7 +153,8 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen_instance(&self, instance: Instance<'tcx>) {
         match instance.kind {
             InstanceKind::Item => FnCtx::new(self, instance).codegen(),
-            InstanceKind::Intrinsic => todo!(),
+            // codegenned during declaration
+            InstanceKind::Intrinsic => {}
         }
     }
 

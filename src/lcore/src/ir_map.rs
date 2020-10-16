@@ -31,7 +31,7 @@ impl<'ir> DefMap<'ir> {
         match self.get(def_id) {
             ir::DefNode::Item(item) => item.ident,
             ir::DefNode::ImplItem(_) => todo!(),
-            ir::DefNode::ForeignItem(_) => todo!(),
+            ir::DefNode::ForeignItem(item) => item.ident,
             ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => {
                 let adt_ident = self.ident_of(variant.adt_def_id);
                 adt_ident.concat_as_path(variant.ident)

@@ -7,7 +7,7 @@ use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use lcore::mir::{self, BlockId, VarId};
-use lcore::ty::{AdtKind, ConstKind, Instance, Projection, Subst, Ty, TypeFoldable};
+use lcore::ty::{AdtKind, ConstKind, Instance, InstanceKind, Projection, Subst, Ty, TypeFoldable};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
@@ -88,7 +88,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         std::iter::once(retvar).chain(args).chain(vars).collect()
     }
 
-    /// entry point of `FnCtx`
+    /// entry point of `FnCtx` code generation
     pub fn codegen(&mut self) {
         for id in self.mir.basic_blocks.indices() {
             self.codegen_basic_block(id);
@@ -197,7 +197,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(lvalue) => {
-                return;
                 // let lvalue_ref = self.codegen_lvalue(lvalue);
                 // assert!(lvalue_ref.ty.is_ptr());
                 // let rc_retain = self.build_rc_retain(lvalue_ref);
@@ -304,7 +303,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> ValueRef<'tcx> {
         match rvalue {
-            mir::Rvalue::Closure(ty, body) => {
+            mir::Rvalue::Closure(_ty, _body) => {
                 todo!();
                 // let name = "<closure>";
                 // let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
@@ -379,7 +378,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::Operand::Item(def_id, ty) => {
                 let mono_ty = self.monomorphize(ty);
                 let instance = self.operand_instance_map.borrow()[&(def_id, mono_ty)];
-                let llfn = self.instances.borrow()[&instance];
+                let llfn = match instance.kind {
+                    InstanceKind::Item => self.instances.borrow()[&instance],
+                    InstanceKind::Intrinsic => self.intrinsics.borrow()[&instance],
+                };
                 let val = llfn.as_llvm_ptr().into();
                 ValueRef { val, ty: instance.ty(self.tcx) }
             }
