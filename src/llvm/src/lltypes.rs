@@ -1,10 +1,9 @@
+use crate::CodegenCtx;
 use inkwell::types::*;
 use inkwell::AddressSpace;
 use itertools::Itertools;
 use lcore::ty::*;
 use typeck::Typeof;
-
-use crate::CodegenCtx;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {

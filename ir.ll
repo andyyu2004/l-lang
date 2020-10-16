@@ -1,8 +1,8 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"Either<Option<int>,int>" = type { i64, { %"Option<int>" } }
 %"Option<int>" = type { i64, { i64 } }
+%"Either<Option<int>,int>" = type { i64, { %"Option<int>" } }
 
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
@@ -35,19 +35,19 @@ rc_entry:
   ret i64 %"rc->i64"
 }
 
-define %"Either<Option<int>,int>" @"Either::Left<Option<int>,int>"(%"Option<int>" %0) {
+define %"Option<int>" @"Option::Some<int>"(i64 %0) {
 basic_blockbb0:
-  %retvar = alloca %"Either<Option<int>,int>"
-  %1 = alloca %"Option<int>"
-  store %"Option<int>" %0, %"Option<int>"* %1
-  %discr_gep = getelementptr inbounds %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar, i32 0, i32 0
+  %retvar = alloca %"Option<int>"
+  %1 = alloca i64
+  store i64 %0, i64* %1
+  %discr_gep = getelementptr inbounds %"Option<int>", %"Option<int>"* %retvar, i32 0, i32 0
   store i64 0, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar, i32 0, i32 1
-  %load = load %"Option<int>", %"Option<int>"* %1
-  %enum_content_gep = getelementptr inbounds { %"Option<int>" }, { %"Option<int>" }* %enum_gep, i32 0, i32 0
-  store %"Option<int>" %load, %"Option<int>"* %enum_content_gep
-  %load_ret = load %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar
-  ret %"Either<Option<int>,int>" %load_ret
+  %enum_gep = getelementptr inbounds %"Option<int>", %"Option<int>"* %retvar, i32 0, i32 1
+  %load = load i64, i64* %1
+  %enum_content_gep = getelementptr inbounds { i64 }, { i64 }* %enum_gep, i32 0, i32 0
+  store i64 %load, i64* %enum_content_gep
+  %load_ret = load %"Option<int>", %"Option<int>"* %retvar
+  ret %"Option<int>" %load_ret
 }
 
 define i64 @main() {
@@ -192,17 +192,17 @@ basic_blockbb14:                                  ; preds = %basic_blockbb5
   unreachable
 }
 
-define %"Option<int>" @"Option::Some<int>"(i64 %0) {
+define %"Either<Option<int>,int>" @"Either::Left<Option<int>,int>"(%"Option<int>" %0) {
 basic_blockbb0:
-  %retvar = alloca %"Option<int>"
-  %1 = alloca i64
-  store i64 %0, i64* %1
-  %discr_gep = getelementptr inbounds %"Option<int>", %"Option<int>"* %retvar, i32 0, i32 0
+  %retvar = alloca %"Either<Option<int>,int>"
+  %1 = alloca %"Option<int>"
+  store %"Option<int>" %0, %"Option<int>"* %1
+  %discr_gep = getelementptr inbounds %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar, i32 0, i32 0
   store i64 0, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %"Option<int>", %"Option<int>"* %retvar, i32 0, i32 1
-  %load = load i64, i64* %1
-  %enum_content_gep = getelementptr inbounds { i64 }, { i64 }* %enum_gep, i32 0, i32 0
-  store i64 %load, i64* %enum_content_gep
-  %load_ret = load %"Option<int>", %"Option<int>"* %retvar
-  ret %"Option<int>" %load_ret
+  %enum_gep = getelementptr inbounds %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar, i32 0, i32 1
+  %load = load %"Option<int>", %"Option<int>"* %1
+  %enum_content_gep = getelementptr inbounds { %"Option<int>" }, { %"Option<int>" }* %enum_gep, i32 0, i32 0
+  store %"Option<int>" %load, %"Option<int>"* %enum_content_gep
+  %load_ret = load %"Either<Option<int>,int>", %"Either<Option<int>,int>"* %retvar
+  ret %"Either<Option<int>,int>" %load_ret
 }

@@ -1,7 +1,8 @@
 use crate::CodegenCtx;
 use inkwell::types::{AsTypeRef, BasicTypeEnum};
-use lcore::ty::Ty;
+use lcore::ty::{SubstsRef, Ty, VariantTy};
 use llvm_sys::target::*;
+use typeck::Typeof;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn sizeof(&self, llty: BasicTypeEnum<'tcx>) -> u64 {
@@ -12,5 +13,9 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn sizeof_ty(&self, ty: Ty<'tcx>) -> u64 {
         self.sizeof(self.llvm_ty(ty))
+    }
+
+    pub fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
+        variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.sizeof_ty(ty)).sum()
     }
 }

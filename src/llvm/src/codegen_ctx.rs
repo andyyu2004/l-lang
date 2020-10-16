@@ -12,7 +12,7 @@ use rustc_hash::FxHashMap;
 use span::{sym, Span, Symbol};
 use std::cell::RefCell;
 use std::ops::Deref;
-use typeck::{TcxCollectExt, Typeof};
+use typeck::TcxCollectExt;
 
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
@@ -158,10 +158,10 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
         self.tcx.collect_item_types();
         let instances = self.collect_monomorphization_instances();
-        self.declare_instances(&instances);
         if self.tcx.sess.has_errors() {
             return None;
         }
+        self.declare_instances(&instances);
         self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
@@ -170,21 +170,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
         }
         self.main_fn
-    }
-
-    pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
-        // this works for both enums and structs
-        // as structs by definition only have one variant the max is essentially redundant
-        let variant_max = adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap();
-        match adt.kind {
-            AdtKind::Struct => variant_max,
-            // account for the discriminant
-            AdtKind::Enum => 8 + variant_max,
-        }
-    }
-
-    pub fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
-        variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.sizeof_ty(ty)).sum()
     }
 }
 
