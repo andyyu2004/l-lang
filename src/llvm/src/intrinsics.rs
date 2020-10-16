@@ -7,12 +7,36 @@ use span::sym;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn codegen_intrinsic(&self, instance: Instance<'tcx>) {
+        if self.intrinsics.borrow().contains_key(&instance) {
+            return;
+        }
         let ident = self.tcx.defs().ident_of(instance.def_id);
         let llfn = match ident.symbol {
             sym::RC => self.codegen_rc_intrinsic(instance),
-            _ => panic!(),
+            sym::PRINT => self.codegen_print_intrinsic(instance),
+            _ => panic!("unknown intrinsic `{}`", ident),
         };
         self.intrinsics.borrow_mut().insert(instance, llfn);
+    }
+
+    fn codegen_print_intrinsic(&self, _instance: Instance<'tcx>) -> FunctionValue<'tcx> {
+        let printfn = self.module.add_function(
+            "print",
+            self.types.unit.fn_type(&[self.types.int.into()], false),
+            None,
+        );
+        let bb = self.llctx.append_basic_block(printfn, "printint");
+        self.position_at_end(bb);
+
+        let param = printfn.get_first_param().unwrap();
+        let vec = self.llctx.const_string("%d\n".as_bytes(), true);
+        let alloca = self.build_alloca(self.llctx.i8_type().array_type(4), "alloca_str");
+        self.build_store(alloca, vec);
+        let ptr =
+            self.build_bitcast(alloca, self.types.byte.ptr_type(AddressSpace::Generic), "bitcast");
+        self.build_call(self.native_functions.printf, &[ptr, param], "printf");
+        self.build_return(Some(&self.vals.unit));
+        printfn
     }
 
     fn codegen_rc_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {

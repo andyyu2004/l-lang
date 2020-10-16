@@ -34,7 +34,7 @@ impl<'tcx> NativeFunctions<'tcx> {
             "printf",
             llctx
                 .i32_type()
-                .fn_type(&[llctx.i8_type().ptr_type(AddressSpace::Generic).into()], false),
+                .fn_type(&[llctx.i8_type().ptr_type(AddressSpace::Generic).into()], true),
             Some(Linkage::External),
         )
     }

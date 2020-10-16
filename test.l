@@ -30,6 +30,7 @@
 
 extern {
     fn rc<T>(t: &T) -> int;
+    fn print(t: int);
 }
 
 fn main() -> int {
@@ -47,6 +48,8 @@ fn main() -> int {
 
     /* return id(5); */
     let boxed = box 5;
+    print(99);
+    print(rc(boxed));
     return rc(boxed);
 
     /* let next = box Node { */

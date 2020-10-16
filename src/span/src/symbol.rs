@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug, Display, Formatter};
 
 pub const SYMBOLS: &[&str] =
-    &["", "float", "bool", "char", "int", "main", "self", "Self", "_", "rc", "intrinsics"];
+    &["", "float", "bool", "char", "int", "main", "self", "Self", "_", "rc", "intrinsics", "print"];
 
 pub mod sym {
     use super::Symbol;
@@ -21,6 +21,7 @@ pub mod sym {
     pub const USCORE: Symbol = Symbol(8);
     pub const RC: Symbol = Symbol(9);
     pub const INTRINSICS: Symbol = Symbol(10);
+    pub const PRINT: Symbol = Symbol(11);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
