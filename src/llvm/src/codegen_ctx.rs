@@ -9,7 +9,7 @@ use ir::DefId;
 use lcore::mir::Mir;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
-use span::{Span, Symbol};
+use span::{sym, Span, Symbol};
 use std::cell::RefCell;
 use std::ops::Deref;
 use typeck::{TcxCollectExt, Typeof};
@@ -129,7 +129,13 @@ impl<'tcx> CodegenCtx<'tcx> {
                 let Instance { def_id, substs, .. } = instance;
                 let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
                 let ident = self.tcx.defs().ident_of(def_id);
-                let name = format!("{}<{}>", ident, substs);
+                // we need a special case with main, as the name actually matters
+                // for lli etc
+                let name = if ident.symbol == sym::MAIN {
+                    ident.to_string()
+                } else {
+                    format!("{}<{}>", ident, substs)
+                };
                 let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
                 let llfn = self.module.add_function(&name, llty, None);
                 if Some(def_id) == self.tcx.ir.entry_id {
@@ -169,7 +175,12 @@ impl<'tcx> CodegenCtx<'tcx> {
     pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
         // this works for both enums and structs
         // as structs by definition only have one variant the max is essentially redundant
-        adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap()
+        let variant_max = adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap();
+        match adt.kind {
+            AdtKind::Struct => variant_max,
+            // account for the discriminant
+            AdtKind::Enum => 8 + variant_max,
+        }
     }
 
     pub fn variant_size(
@@ -190,6 +201,10 @@ impl<'tcx> CodegenCtx<'tcx> {
     // however, this does not need to be exact
     // as this is only used to decide the largest variant in an enum
     // so hopefully its accurate enough for that
+    //
+    // the reason this is necessary at all is there doesn't seem
+    // to be a way to get sizeof out of llvm at compile time
+    // (at least not using the rust bindings)
     fn approx_sizeof(&self, ty: Ty<'tcx>) -> usize {
         let size = match ty.kind {
             Bool | Char => 1,

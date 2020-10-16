@@ -78,7 +78,7 @@ fn simple_expr_match() {
     assert_eq!(llvm_exec!(src), 14);
 }
 
-// #[test]
+#[test]
 fn nested_match() {
     let src = r#"
     enum Option<T> {

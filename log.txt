@@ -1,26 +1,35 @@
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(6) to Def(1, TyParam(0))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(13) to Def(2, TyParam(1))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(17) to Def(1, TyParam(0))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(20) to Local(NodeId(4))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(32) to Def(4, TyParam(0))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(39) to Def(5, TyParam(1))
-[00:00:00.002] (7fc9d6b48940) INFO   resolving node NodeId(43) to Def(5, TyParam(1))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(46) to Def(0, Fn)
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(49) to Local(NodeId(37))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(52) to Local(NodeId(30))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(64) to Def(7, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(68) to Def(7, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(71) to Def(3, Fn)
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(75) to Local(NodeId(62))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(87) to Def(10, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(92) to PrimTy(Int)
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(98) to Def(12, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(104) to Def(14, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(113) to Def(18, TyParam(0))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(118) to Def(19, TyParam(1))
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(124) to PrimTy(Int)
-[00:00:00.003] (7fc9d6b48940) INFO   resolving node NodeId(127) to Def(6, Fn)
-[00:00:00.004] (7fc9d6b48940) INFO   IR {
+[00:00:00.002] (7f3a59cb7940) INFO   resolving node NodeId(6) to Def(1, TyParam(0))
+[00:00:00.002] (7f3a59cb7940) INFO   resolving node NodeId(13) to Def(2, TyParam(1))
+[00:00:00.002] (7f3a59cb7940) INFO   resolving node NodeId(17) to Def(1, TyParam(0))
+[00:00:00.002] (7f3a59cb7940) INFO   resolving node NodeId(20) to Local(NodeId(4))
+[00:00:00.002] (7f3a59cb7940) INFO   resolving node NodeId(32) to Def(4, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(39) to Def(5, TyParam(1))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(43) to Def(5, TyParam(1))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(46) to Def(0, Fn)
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(49) to Local(NodeId(37))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(52) to Local(NodeId(30))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(64) to Def(7, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(68) to Def(7, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(71) to Def(3, Fn)
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(75) to Local(NodeId(62))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(87) to Def(10, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(92) to PrimTy(Int)
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(98) to Def(12, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(104) to Def(14, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(113) to Def(18, TyParam(0))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(118) to Def(19, TyParam(1))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(124) to PrimTy(Int)
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(131) to Def(20, Ctor(Tuple))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(135) to Def(15, Ctor(Tuple))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(143) to Local(NodeId(128))
+[00:00:00.003] (7f3a59cb7940) INFO   resolving node NodeId(147) to Def(20, Ctor(Tuple))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(153) to Local(NodeId(150))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(157) to Def(15, Ctor(Tuple))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(163) to Local(NodeId(160))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(168) to Def(16, Ctor(Unit))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(176) to Def(21, Ctor(Tuple))
+[00:00:00.004] (7f3a59cb7940) INFO   resolving node NodeId(182) to Local(NodeId(179))
+[00:00:00.004] (7f3a59cb7940) INFO   IR {
     entry_id: Some(
         22,
     ),
@@ -1315,7 +1324,7 @@
                                             hi: 214,
                                         },
                                         symbol: Symbol(
-                                            27,
+                                            31,
                                         ),
                                     },
                                     vis: Spanned {
@@ -1486,7 +1495,7 @@
                                             hi: 260,
                                         },
                                         symbol: Symbol(
-                                            27,
+                                            31,
                                         ),
                                     },
                                     vis: Spanned {
@@ -1567,7 +1576,7 @@
                                             hi: 274,
                                         },
                                         symbol: Symbol(
-                                            27,
+                                            31,
                                         ),
                                     },
                                     vis: Spanned {
@@ -1624,7 +1633,7 @@
         22: Item {
             span: Span {
                 lo: 280,
-                hi: 578,
+                hi: 481,
             },
             id: 22.0,
             vis: Spanned {
@@ -1648,7 +1657,7 @@
                     inputs: [],
                     output: Some(
                         Ty {
-                            id: 22.10,
+                            id: 22.47,
                             span: Span {
                                 lo: 293,
                                 hi: 296,
@@ -1673,7 +1682,7 @@
                                                     4,
                                                 ),
                                             },
-                                            id: 22.9,
+                                            id: 22.46,
                                             args: None,
                                         },
                                     ],
@@ -1694,84 +1703,650 @@
                     expr: Expr {
                         span: Span {
                             lo: 297,
-                            hi: 578,
+                            hi: 481,
                         },
-                        id: 22.8,
+                        id: 22.45,
                         kind: Block(
                             Block {
-                                id: 22.7,
+                                id: 22.44,
                                 span: Span {
                                     lo: 297,
-                                    hi: 578,
+                                    hi: 481,
                                 },
-                                stmts: [],
+                                stmts: [
+                                    Stmt {
+                                        id: 22.12,
+                                        span: Span {
+                                            lo: 303,
+                                            hi: 342,
+                                        },
+                                        kind: Let(
+                                            Let {
+                                                id: 22.1,
+                                                span: Span {
+                                                    lo: 303,
+                                                    hi: 342,
+                                                },
+                                                pat: Pattern {
+                                                    id: 22.2,
+                                                    span: Span {
+                                                        lo: 307,
+                                                        hi: 308,
+                                                    },
+                                                    kind: Binding(
+                                                        Ident {
+                                                            span: Span {
+                                                                lo: 307,
+                                                                hi: 308,
+                                                            },
+                                                            symbol: Symbol(
+                                                                27,
+                                                            ),
+                                                        },
+                                                        None,
+                                                        Imm,
+                                                    ),
+                                                },
+                                                ty: None,
+                                                init: Some(
+                                                    Expr {
+                                                        span: Span {
+                                                            lo: 311,
+                                                            hi: 341,
+                                                        },
+                                                        id: 22.11,
+                                                        kind: Call(
+                                                            Expr {
+                                                                span: Span {
+                                                                    lo: 311,
+                                                                    hi: 323,
+                                                                },
+                                                                id: 22.5,
+                                                                kind: Path(
+                                                                    Path {
+                                                                        span: Span {
+                                                                            lo: 311,
+                                                                            hi: 323,
+                                                                        },
+                                                                        res: Def(
+                                                                            20,
+                                                                            Ctor(
+                                                                                Tuple,
+                                                                            ),
+                                                                        ),
+                                                                        segments: [
+                                                                            PathSegment {
+                                                                                ident: Ident {
+                                                                                    span: Span {
+                                                                                        lo: 311,
+                                                                                        hi: 317,
+                                                                                    },
+                                                                                    symbol: Symbol(
+                                                                                        22,
+                                                                                    ),
+                                                                                },
+                                                                                id: 22.3,
+                                                                                args: None,
+                                                                            },
+                                                                            PathSegment {
+                                                                                ident: Ident {
+                                                                                    span: Span {
+                                                                                        lo: 319,
+                                                                                        hi: 323,
+                                                                                    },
+                                                                                    symbol: Symbol(
+                                                                                        25,
+                                                                                    ),
+                                                                                },
+                                                                                id: 22.4,
+                                                                                args: None,
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            },
+                                                            [
+                                                                Expr {
+                                                                    span: Span {
+                                                                        lo: 324,
+                                                                        hi: 340,
+                                                                    },
+                                                                    id: 22.10,
+                                                                    kind: Call(
+                                                                        Expr {
+                                                                            span: Span {
+                                                                                lo: 324,
+                                                                                hi: 336,
+                                                                            },
+                                                                            id: 22.8,
+                                                                            kind: Path(
+                                                                                Path {
+                                                                                    span: Span {
+                                                                                        lo: 324,
+                                                                                        hi: 336,
+                                                                                    },
+                                                                                    res: Def(
+                                                                                        15,
+                                                                                        Ctor(
+                                                                                            Tuple,
+                                                                                        ),
+                                                                                    ),
+                                                                                    segments: [
+                                                                                        PathSegment {
+                                                                                            ident: Ident {
+                                                                                                span: Span {
+                                                                                                    lo: 324,
+                                                                                                    hi: 330,
+                                                                                                },
+                                                                                                symbol: Symbol(
+                                                                                                    19,
+                                                                                                ),
+                                                                                            },
+                                                                                            id: 22.6,
+                                                                                            args: None,
+                                                                                        },
+                                                                                        PathSegment {
+                                                                                            ident: Ident {
+                                                                                                span: Span {
+                                                                                                    lo: 332,
+                                                                                                    hi: 336,
+                                                                                                },
+                                                                                                symbol: Symbol(
+                                                                                                    20,
+                                                                                                ),
+                                                                                            },
+                                                                                            id: 22.7,
+                                                                                            args: None,
+                                                                                        },
+                                                                                    ],
+                                                                                },
+                                                                            ),
+                                                                        },
+                                                                        [
+                                                                            Expr {
+                                                                                span: Span {
+                                                                                    lo: 337,
+                                                                                    hi: 339,
+                                                                                },
+                                                                                id: 22.9,
+                                                                                kind: Lit(
+                                                                                    Int(
+                                                                                        88,
+                                                                                    ),
+                                                                                ),
+                                                                            },
+                                                                        ],
+                                                                    ),
+                                                                },
+                                                            ],
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
                                 expr: Some(
                                     Expr {
                                         span: Span {
-                                            lo: 303,
-                                            hi: 315,
+                                            lo: 347,
+                                            hi: 479,
                                         },
-                                        id: 22.5,
-                                        kind: Ret(
-                                            Some(
-                                                Expr {
-                                                    span: Span {
-                                                        lo: 310,
-                                                        hi: 315,
-                                                    },
-                                                    id: 22.4,
-                                                    kind: Call(
-                                                        Expr {
-                                                            span: Span {
-                                                                lo: 310,
-                                                                hi: 312,
-                                                            },
-                                                            id: 22.2,
-                                                            kind: Path(
-                                                                Path {
-                                                                    span: Span {
-                                                                        lo: 310,
-                                                                        hi: 312,
-                                                                    },
-                                                                    res: Def(
-                                                                        6,
-                                                                        Fn,
-                                                                    ),
-                                                                    segments: [
-                                                                        PathSegment {
-                                                                            ident: Ident {
-                                                                                span: Span {
-                                                                                    lo: 310,
-                                                                                    hi: 312,
-                                                                                },
-                                                                                symbol: Symbol(
-                                                                                    17,
-                                                                                ),
-                                                                            },
-                                                                            id: 22.1,
-                                                                            args: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
+                                        id: 22.42,
+                                        kind: Match(
+                                            Expr {
+                                                span: Span {
+                                                    lo: 353,
+                                                    hi: 354,
+                                                },
+                                                id: 22.14,
+                                                kind: Path(
+                                                    Path {
+                                                        span: Span {
+                                                            lo: 353,
+                                                            hi: 354,
                                                         },
-                                                        [
-                                                            Expr {
-                                                                span: Span {
-                                                                    lo: 313,
-                                                                    hi: 314,
-                                                                },
-                                                                id: 22.3,
-                                                                kind: Lit(
-                                                                    Int(
-                                                                        5,
+                                                        res: Local(
+                                                            22.2,
+                                                        ),
+                                                        segments: [
+                                                            PathSegment {
+                                                                ident: Ident {
+                                                                    span: Span {
+                                                                        lo: 353,
+                                                                        hi: 354,
+                                                                    },
+                                                                    symbol: Symbol(
+                                                                        27,
                                                                     ),
-                                                                ),
+                                                                },
+                                                                id: 22.13,
+                                                                args: None,
                                                             },
                                                         ],
-                                                    ),
+                                                    },
+                                                ),
+                                            },
+                                            [
+                                                Arm {
+                                                    id: 22.15,
+                                                    span: Span {
+                                                        lo: 358,
+                                                        hi: 448,
+                                                    },
+                                                    pat: Pattern {
+                                                        id: 22.19,
+                                                        span: Span {
+                                                            lo: 358,
+                                                            hi: 375,
+                                                        },
+                                                        kind: Variant(
+                                                            Path {
+                                                                span: Span {
+                                                                    lo: 358,
+                                                                    hi: 370,
+                                                                },
+                                                                res: Def(
+                                                                    20,
+                                                                    Ctor(
+                                                                        Tuple,
+                                                                    ),
+                                                                ),
+                                                                segments: [
+                                                                    PathSegment {
+                                                                        ident: Ident {
+                                                                            span: Span {
+                                                                                lo: 358,
+                                                                                hi: 364,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                22,
+                                                                            ),
+                                                                        },
+                                                                        id: 22.16,
+                                                                        args: None,
+                                                                    },
+                                                                    PathSegment {
+                                                                        ident: Ident {
+                                                                            span: Span {
+                                                                                lo: 366,
+                                                                                hi: 370,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                25,
+                                                                            ),
+                                                                        },
+                                                                        id: 22.17,
+                                                                        args: None,
+                                                                    },
+                                                                ],
+                                                            },
+                                                            [
+                                                                Pattern {
+                                                                    id: 22.18,
+                                                                    span: Span {
+                                                                        lo: 371,
+                                                                        hi: 374,
+                                                                    },
+                                                                    kind: Binding(
+                                                                        Ident {
+                                                                            span: Span {
+                                                                                lo: 371,
+                                                                                hi: 374,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                28,
+                                                                            ),
+                                                                        },
+                                                                        None,
+                                                                        Imm,
+                                                                    ),
+                                                                },
+                                                            ],
+                                                        ),
+                                                    },
+                                                    guard: None,
+                                                    body: Expr {
+                                                        span: Span {
+                                                            lo: 379,
+                                                            hi: 448,
+                                                        },
+                                                        id: 22.34,
+                                                        kind: Match(
+                                                            Expr {
+                                                                span: Span {
+                                                                    lo: 385,
+                                                                    hi: 388,
+                                                                },
+                                                                id: 22.21,
+                                                                kind: Path(
+                                                                    Path {
+                                                                        span: Span {
+                                                                            lo: 385,
+                                                                            hi: 388,
+                                                                        },
+                                                                        res: Local(
+                                                                            22.18,
+                                                                        ),
+                                                                        segments: [
+                                                                            PathSegment {
+                                                                                ident: Ident {
+                                                                                    span: Span {
+                                                                                        lo: 385,
+                                                                                        hi: 388,
+                                                                                    },
+                                                                                    symbol: Symbol(
+                                                                                        28,
+                                                                                    ),
+                                                                                },
+                                                                                id: 22.20,
+                                                                                args: None,
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            },
+                                                            [
+                                                                Arm {
+                                                                    id: 22.22,
+                                                                    span: Span {
+                                                                        lo: 396,
+                                                                        hi: 416,
+                                                                    },
+                                                                    pat: Pattern {
+                                                                        id: 22.26,
+                                                                        span: Span {
+                                                                            lo: 396,
+                                                                            hi: 411,
+                                                                        },
+                                                                        kind: Variant(
+                                                                            Path {
+                                                                                span: Span {
+                                                                                    lo: 396,
+                                                                                    hi: 408,
+                                                                                },
+                                                                                res: Def(
+                                                                                    15,
+                                                                                    Ctor(
+                                                                                        Tuple,
+                                                                                    ),
+                                                                                ),
+                                                                                segments: [
+                                                                                    PathSegment {
+                                                                                        ident: Ident {
+                                                                                            span: Span {
+                                                                                                lo: 396,
+                                                                                                hi: 402,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                19,
+                                                                                            ),
+                                                                                        },
+                                                                                        id: 22.23,
+                                                                                        args: None,
+                                                                                    },
+                                                                                    PathSegment {
+                                                                                        ident: Ident {
+                                                                                            span: Span {
+                                                                                                lo: 404,
+                                                                                                hi: 408,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                20,
+                                                                                            ),
+                                                                                        },
+                                                                                        id: 22.24,
+                                                                                        args: None,
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            [
+                                                                                Pattern {
+                                                                                    id: 22.25,
+                                                                                    span: Span {
+                                                                                        lo: 409,
+                                                                                        hi: 410,
+                                                                                    },
+                                                                                    kind: Binding(
+                                                                                        Ident {
+                                                                                            span: Span {
+                                                                                                lo: 409,
+                                                                                                hi: 410,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                29,
+                                                                                            ),
+                                                                                        },
+                                                                                        None,
+                                                                                        Imm,
+                                                                                    ),
+                                                                                },
+                                                                            ],
+                                                                        ),
+                                                                    },
+                                                                    guard: None,
+                                                                    body: Expr {
+                                                                        span: Span {
+                                                                            lo: 415,
+                                                                            hi: 416,
+                                                                        },
+                                                                        id: 22.28,
+                                                                        kind: Path(
+                                                                            Path {
+                                                                                span: Span {
+                                                                                    lo: 415,
+                                                                                    hi: 416,
+                                                                                },
+                                                                                res: Local(
+                                                                                    22.25,
+                                                                                ),
+                                                                                segments: [
+                                                                                    PathSegment {
+                                                                                        ident: Ident {
+                                                                                            span: Span {
+                                                                                                lo: 415,
+                                                                                                hi: 416,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                29,
+                                                                                            ),
+                                                                                        },
+                                                                                        id: 22.27,
+                                                                                        args: None,
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                },
+                                                                Arm {
+                                                                    id: 22.29,
+                                                                    span: Span {
+                                                                        lo: 423,
+                                                                        hi: 444,
+                                                                    },
+                                                                    pat: Pattern {
+                                                                        id: 22.32,
+                                                                        span: Span {
+                                                                            lo: 423,
+                                                                            hi: 435,
+                                                                        },
+                                                                        kind: Path(
+                                                                            Path {
+                                                                                span: Span {
+                                                                                    lo: 423,
+                                                                                    hi: 435,
+                                                                                },
+                                                                                res: Def(
+                                                                                    16,
+                                                                                    Ctor(
+                                                                                        Unit,
+                                                                                    ),
+                                                                                ),
+                                                                                segments: [
+                                                                                    PathSegment {
+                                                                                        ident: Ident {
+                                                                                            span: Span {
+                                                                                                lo: 423,
+                                                                                                hi: 429,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                19,
+                                                                                            ),
+                                                                                        },
+                                                                                        id: 22.30,
+                                                                                        args: None,
+                                                                                    },
+                                                                                    PathSegment {
+                                                                                        ident: Ident {
+                                                                                            span: Span {
+                                                                                                lo: 431,
+                                                                                                hi: 435,
+                                                                                            },
+                                                                                            symbol: Symbol(
+                                                                                                21,
+                                                                                            ),
+                                                                                        },
+                                                                                        id: 22.31,
+                                                                                        args: None,
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                    guard: None,
+                                                                    body: Expr {
+                                                                        span: Span {
+                                                                            lo: 439,
+                                                                            hi: 444,
+                                                                        },
+                                                                        id: 22.33,
+                                                                        kind: Lit(
+                                                                            Int(
+                                                                                99999,
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                },
+                                                            ],
+                                                            Match,
+                                                        ),
+                                                    },
                                                 },
-                                            ),
+                                                Arm {
+                                                    id: 22.35,
+                                                    span: Span {
+                                                        lo: 451,
+                                                        hi: 472,
+                                                    },
+                                                    pat: Pattern {
+                                                        id: 22.39,
+                                                        span: Span {
+                                                            lo: 451,
+                                                            hi: 467,
+                                                        },
+                                                        kind: Variant(
+                                                            Path {
+                                                                span: Span {
+                                                                    lo: 451,
+                                                                    hi: 464,
+                                                                },
+                                                                res: Def(
+                                                                    21,
+                                                                    Ctor(
+                                                                        Tuple,
+                                                                    ),
+                                                                ),
+                                                                segments: [
+                                                                    PathSegment {
+                                                                        ident: Ident {
+                                                                            span: Span {
+                                                                                lo: 451,
+                                                                                hi: 457,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                22,
+                                                                            ),
+                                                                        },
+                                                                        id: 22.36,
+                                                                        args: None,
+                                                                    },
+                                                                    PathSegment {
+                                                                        ident: Ident {
+                                                                            span: Span {
+                                                                                lo: 459,
+                                                                                hi: 464,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                26,
+                                                                            ),
+                                                                        },
+                                                                        id: 22.37,
+                                                                        args: None,
+                                                                    },
+                                                                ],
+                                                            },
+                                                            [
+                                                                Pattern {
+                                                                    id: 22.38,
+                                                                    span: Span {
+                                                                        lo: 465,
+                                                                        hi: 466,
+                                                                    },
+                                                                    kind: Binding(
+                                                                        Ident {
+                                                                            span: Span {
+                                                                                lo: 465,
+                                                                                hi: 466,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                30,
+                                                                            ),
+                                                                        },
+                                                                        None,
+                                                                        Imm,
+                                                                    ),
+                                                                },
+                                                            ],
+                                                        ),
+                                                    },
+                                                    guard: None,
+                                                    body: Expr {
+                                                        span: Span {
+                                                            lo: 471,
+                                                            hi: 472,
+                                                        },
+                                                        id: 22.41,
+                                                        kind: Path(
+                                                            Path {
+                                                                span: Span {
+                                                                    lo: 471,
+                                                                    hi: 472,
+                                                                },
+                                                                res: Local(
+                                                                    22.38,
+                                                                ),
+                                                                segments: [
+                                                                    PathSegment {
+                                                                        ident: Ident {
+                                                                            span: Span {
+                                                                                lo: 471,
+                                                                                hi: 472,
+                                                                            },
+                                                                            symbol: Symbol(
+                                                                                30,
+                                                                            ),
+                                                                        },
+                                                                        id: 22.40,
+                                                                        args: None,
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                },
+                                            ],
+                                            Match,
                                         ),
                                     },
                                 ),
@@ -1784,110 +2359,107 @@
     },
     impl_items: {},
 }
-[00:00:00.035] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT,U.fn(τ0,τ1)->τ0,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT,U.fn(τ0,τ1)->τ1,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT.fn(τ0)->τ0,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT.S<τ0>,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τT.Option<τ0>,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: HAS_PARAM,
     kind: ∀τL,R.Either<τ0,τ1>,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   collect item: TyS {
+[00:00:00.050] (7f3a59cb7940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.2 : fn(?1)->?1
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.3 : int
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.4 : ?0
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.5 : !
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.8 : !
-[00:00:00.036] (7fc9d6b48940) INFO   fcx write ty 22.8 : int
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 22.8
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 22.5
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 22.4
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 22.2
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 22.3
-[00:00:00.037] (7fc9d6b48940) INFO   irloweringctx: query typeof 22.8
-[00:00:00.037] (7fc9d6b48940) INFO   irloweringctx: query typeof 22.5
-[00:00:00.037] (7fc9d6b48940) INFO   irloweringctx: query typeof 22.4
-[00:00:00.037] (7fc9d6b48940) INFO   irloweringctx: query typeof 22.2
-[00:00:00.037] (7fc9d6b48940) INFO   irloweringctx: query typeof 22.3
-[00:00:00.037] (7fc9d6b48940) INFO   deflocal 6.2 : τ0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.2 : τ0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.4 : fn(?1,?2)->?2
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.5 : bool
-[00:00:00.037] (7fc9d6b48940) INFO   lookup ty for local 6.2
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.7 : τ0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.8 : ?0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.11 : ?0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx write ty 6.11 : τ0
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 6.2
-[00:00:00.037] (7fc9d6b48940) INFO   fcx query node type for 6.11
-[00:00:00.038] (7fc9d6b48940) INFO   fcx query node type for 6.8
-[00:00:00.038] (7fc9d6b48940) INFO   fcx query node type for 6.4
-[00:00:00.038] (7fc9d6b48940) INFO   fcx query node type for 6.5
-[00:00:00.038] (7fc9d6b48940) INFO   fcx query node type for 6.7
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.2
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.11
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.8
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.4
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.5
-[00:00:00.038] (7fc9d6b48940) INFO   irloweringctx: query typeof 6.7
-[00:00:00.038] (7fc9d6b48940) INFO   deflocal 3.2 : τ0
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.2 : τ0
-[00:00:00.038] (7fc9d6b48940) INFO   deflocal 3.4 : τ1
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.4 : τ1
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.6 : fn(?1,?2)->?1
-[00:00:00.038] (7fc9d6b48940) INFO   lookup ty for local 3.4
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.8 : τ1
-[00:00:00.038] (7fc9d6b48940) INFO   lookup ty for local 3.2
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.10 : τ0
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.11 : ?0
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.14 : ?0
-[00:00:00.038] (7fc9d6b48940) INFO   fcx write ty 3.14 : τ1
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.2
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.4
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.14
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.11
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.6
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.8
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 3.10
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.2
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.4
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.14
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.11
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.6
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.8
-[00:00:00.039] (7fc9d6b48940) INFO   irloweringctx: query typeof 3.10
-[00:00:00.039] (7fc9d6b48940) INFO   deflocal 0.2 : τ0
-[00:00:00.039] (7fc9d6b48940) INFO   fcx write ty 0.2 : τ0
-[00:00:00.039] (7fc9d6b48940) INFO   deflocal 0.4 : τ1
-[00:00:00.039] (7fc9d6b48940) INFO   fcx write ty 0.4 : τ1
-[00:00:00.039] (7fc9d6b48940) INFO   lookup ty for local 0.2
-[00:00:00.039] (7fc9d6b48940) INFO   fcx write ty 0.6 : τ0
-[00:00:00.039] (7fc9d6b48940) INFO   fcx write ty 0.9 : τ0
-[00:00:00.039] (7fc9d6b48940) INFO   fcx write ty 0.9 : τ0
-[00:00:00.039] (7fc9d6b48940) INFO   fcx query node type for 0.2
-[00:00:00.040] (7fc9d6b48940) INFO   fcx query node type for 0.4
-[00:00:00.040] (7fc9d6b48940) INFO   fcx query node type for 0.9
-[00:00:00.040] (7fc9d6b48940) INFO   fcx query node type for 0.6
-[00:00:00.040] (7fc9d6b48940) INFO   irloweringctx: query typeof 0.2
-[00:00:00.040] (7fc9d6b48940) INFO   irloweringctx: query typeof 0.4
-[00:00:00.040] (7fc9d6b48940) INFO   irloweringctx: query typeof 0.9
-[00:00:00.040] (7fc9d6b48940) INFO   irloweringctx: query typeof 0.6
+[00:00:00.050] (7f3a59cb7940) INFO   fcx write ty 22.5 : fn(?1)->Either<?1,?2>
+[00:00:00.050] (7f3a59cb7940) INFO   fcx write ty 22.8 : fn(?4)->Option<?4>
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.9 : int
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.10 : ?3
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.11 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   deflocal 22.2 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.2 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   lookup ty for local 22.2
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.14 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   deflocal 22.18 : ?7
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.18 : ?7
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.19 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   deflocal 22.38 : ?10
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.38 : ?10
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.39 : ?0
+[00:00:00.051] (7f3a59cb7940) INFO   lookup ty for local 22.38
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.41 : ?10
+[00:00:00.051] (7f3a59cb7940) INFO   lookup ty for local 22.18
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.21 : ?7
+[00:00:00.051] (7f3a59cb7940) INFO   deflocal 22.25 : ?12
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.25 : ?12
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.26 : ?7
+[00:00:00.051] (7f3a59cb7940) INFO   fcx write ty 22.32 : Option<?13>
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.33 : int
+[00:00:00.052] (7f3a59cb7940) INFO   lookup ty for local 22.25
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.28 : ?12
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.34 : int
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.42 : ?10
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.45 : ?10
+[00:00:00.052] (7f3a59cb7940) INFO   fcx write ty 22.45 : int
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.45
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.11
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.5
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.10
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.8
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.9
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.2
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.42
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.14
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.19
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.18
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.34
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.21
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.26
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.25
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.28
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.32
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.33
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.39
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.38
+[00:00:00.052] (7f3a59cb7940) INFO   fcx query node type for 22.41
+[00:00:00.052] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.45
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.2
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.11
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.5
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.10
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.8
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.9
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.42
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.14
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.19
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.18
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.19
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.34
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.21
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.26
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.25
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.26
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.28
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.32
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.32
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.33
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.39
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.38
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.39
+[00:00:00.053] (7f3a59cb7940) INFO   irloweringctx: query typeof 22.41

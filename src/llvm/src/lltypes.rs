@@ -43,36 +43,36 @@ impl<'tcx> CodegenCtx<'tcx> {
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
                 self.llctx.struct_type(&lltys, false).into()
             }
-            TyKind::Adt(adt, substs) => match adt.kind {
-                AdtKind::Struct => {
-                    let opaque_ty = self.llctx.opaque_struct_type("opaque");
-                    self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
-                    let variant = adt.single_variant();
-                    let tys = variant
-                        .fields
-                        .iter()
-                        .map(|f| self.llvm_ty(f.ty(self.tcx, substs)))
-                        .collect_vec();
-                    opaque_ty.set_body(&tys, false);
-                    return opaque_ty.into();
+            TyKind::Adt(adt, substs) => {
+                let name = format!("{}<{}>", adt.ident.as_str(), substs);
+                let opaque_ty = self.llctx.opaque_struct_type(&name);
+                // we must insert the opaque type immediately into the map as it may be a
+                // recursive type
+                self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
+                match adt.kind {
+                    AdtKind::Struct => {
+                        let variant = adt.single_variant();
+                        let tys = variant
+                            .fields
+                            .iter()
+                            .map(|f| self.llvm_ty(f.ty(self.tcx, substs)))
+                            .collect_vec();
+                        opaque_ty.set_body(&tys, false);
+                    }
+                    AdtKind::Enum => {
+                        // it is fine to unwrap here as if the enum has no variants it is not
+                        // constructable and this will never be called
+                        let largest_variant = adt.variants.iter().max_by(|s, t| {
+                            self.variant_size(s, substs).cmp(&self.variant_size(t, substs))
+                        });
+                        let llvariant =
+                            self.variant_ty_to_llvm_ty(ty, largest_variant.unwrap(), substs).into();
+                        assert!(adt.variants.len() < 256, "too many variants");
+                        opaque_ty.set_body(&[self.types.discr.into(), llvariant], false);
+                    }
                 }
-                AdtKind::Enum => {
-                    let opaque_ty = self.llctx.opaque_struct_type("opaque");
-                    // we must insert the opaque type immediately into the map as it may be a
-                    // recursive type
-                    self.lltypes.borrow_mut().insert(ty, opaque_ty.into());
-                    // it is fine to unwrap here as if the enum has no variants it is not
-                    // constructable and this will never be called
-                    let largest_variant = adt.variants.iter().max_by(|s, t| {
-                        self.variant_size(s, substs).cmp(&self.variant_size(t, substs))
-                    });
-                    let llvariant =
-                        self.variant_ty_to_llvm_ty(ty, largest_variant.unwrap(), substs).into();
-                    assert!(adt.variants.len() < 256, "too many variants");
-                    opaque_ty.set_body(&[self.types.discr.into(), llvariant], false);
-                    return opaque_ty.into();
-                }
-            },
+                return opaque_ty.into();
+            }
             TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
             TyKind::Opaque(..) => todo!(),
             TyKind::Param(..)
