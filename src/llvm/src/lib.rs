@@ -6,6 +6,7 @@ mod codegen;
 mod codegen_ctx;
 mod fcx;
 mod intrinsics;
+mod layout;
 mod lltypes;
 mod llvm_error;
 mod monomorphize;

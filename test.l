@@ -49,7 +49,7 @@ fn main() -> int {
     /* }; */
 
     return id(5);
-    /* return rc(box 5); */
+    return rc(box 5);
 
     let next = box Node {
 	val: 22,

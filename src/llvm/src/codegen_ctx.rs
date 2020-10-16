@@ -172,7 +172,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.main_fn
     }
 
-    pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> usize {
+    pub fn adt_size(&self, adt: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
         // this works for both enums and structs
         // as structs by definition only have one variant the max is essentially redundant
         let variant_max = adt.variants.iter().map(|v| self.variant_size(v, substs)).max().unwrap();
@@ -183,43 +183,8 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
     }
 
-    pub fn variant_size(
-        &self,
-        variant_ty: &'tcx VariantTy<'tcx>,
-        substs: SubstsRef<'tcx>,
-    ) -> usize {
-        variant_ty
-            .fields
-            .iter()
-            .map(|f| f.ty(self.tcx, substs))
-            .map(|ty| self.approx_sizeof(ty))
-            .sum()
-    }
-
-    // there is probably all sorts of problems with this
-    // as it does not account for padding etc
-    // however, this does not need to be exact
-    // as this is only used to decide the largest variant in an enum
-    // so hopefully its accurate enough for that
-    //
-    // the reason this is necessary at all is there doesn't seem
-    // to be a way to get sizeof out of llvm at compile time
-    // (at least not using the rust bindings)
-    fn approx_sizeof(&self, ty: Ty<'tcx>) -> usize {
-        let size = match ty.kind {
-            Bool | Char => 1,
-            Float | Int => 8,
-            // assuming 64bit..
-            Ptr(..) => 8,
-            Array(ty, n) => n * self.approx_sizeof(ty),
-            Fn(..) => 8,
-            Adt(adt, substs) => self.adt_size(adt, substs),
-            Tuple(tys) => tys.iter().map(|ty| self.approx_sizeof(ty)).sum(),
-            Opaque(_, _) => todo!(),
-            Scheme(..) | Param(..) | Infer(..) | Never | Error =>
-                unreachable!("`approx_sizeof` called on {}", ty),
-        };
-        size
+    pub fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
+        variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.sizeof_ty(ty)).sum()
     }
 }
 

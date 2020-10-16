@@ -20,7 +20,7 @@ error = { path = "../error" }
 typeck = { path = "../typeck" }
 resolve = { path = "../resolve" }
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm10-0" }
+inkwell = { git = "https://github.com/andyyu2004/inkwell", branch = "llvm10-0" }
 colour = "0.5"
 log = "0.4.11"
 simple-logging = "2.0.2"

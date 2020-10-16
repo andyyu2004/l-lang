@@ -270,7 +270,7 @@ dependencies = [
 [[package]]
 name = "inkwell"
 version = "0.1.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=llvm10-0#79070d9fbb0e7ed1c96c7133273770dc2e000a88"
+source = "git+https://github.com/andyyu2004/inkwell?branch=llvm10-0#3d40a253ff6fff40b87b91714a2c5f613cd15ca0"
 dependencies = [
  "either",
  "inkwell_internals",
@@ -285,7 +285,7 @@ dependencies = [
 [[package]]
 name = "inkwell_internals"
 version = "0.2.0"
-source = "git+https://github.com/TheDan64/inkwell?branch=llvm10-0#79070d9fbb0e7ed1c96c7133273770dc2e000a88"
+source = "git+https://github.com/andyyu2004/inkwell?branch=llvm10-0#3d40a253ff6fff40b87b91714a2c5f613cd15ca0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -433,6 +433,7 @@ dependencies = [
  "itertools",
  "lcore",
  "ldriver",
+ "llvm-sys",
  "maplit",
  "mir",
  "rustc-hash",
