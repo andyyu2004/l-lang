@@ -34,13 +34,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match op {
             UnaryOp::Neg => todo!(),
             UnaryOp::Not => {
-                self.unify(expr.span, self.types.boolean, operand_ty);
+                self.equate(expr.span, self.types.boolean, operand_ty);
                 self.types.boolean
             }
             // TODO how to handle mutability?
             UnaryOp::Deref => {
                 let ty = self.new_infer_var(expr.span);
-                self.unify(expr.span, self.mk_ptr_ty(Mutability::Mut, ty), operand_ty);
+                self.equate(expr.span, self.mk_ptr_ty(Mutability::Mut, ty), operand_ty);
                 ty
             }
             UnaryOp::Ref => self.mk_ptr_ty(Mutability::Mut, operand_ty),
@@ -105,7 +105,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// return expressions have the type of the expression that follows the return
     fn check_ret_expr(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
         let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
-        self.unify(expr.span, self.ret_ty, ty);
+        self.equate(expr.span, self.ret_ty, ty);
         self.tcx.types.never
     }
 
@@ -124,7 +124,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.check_lvalue(l);
         let lty = self.check_expr(l);
         let rty = self.check_expr(r);
-        self.unify(expr.span, lty, rty);
+        self.equate(expr.span, lty, rty);
         rty
     }
 
@@ -192,7 +192,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 Some((idx, f)) => {
                     seen_fields.insert(field.ident, idx);
                     self.write_field_index(field.id, idx);
-                    self.unify(field.span, f.ty(self.tcx, substs), ty);
+                    self.equate(field.span, f.ty(self.tcx, substs), ty);
                 }
                 None => {
                     has_error = true;
@@ -230,7 +230,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         let expr_ty = self.check_expr(expr);
         match src {
-            ir::MatchSource::If => self.unify(expr.span, self.tcx.types.boolean, expr_ty),
+            ir::MatchSource::If => self.equate(expr.span, self.tcx.types.boolean, expr_ty),
             ir::MatchSource::Match => {}
         };
 
@@ -251,9 +251,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             let arm_ty = self.check_expr(arm.body);
             arm.guard.iter().for_each(|guard| {
                 let guard_ty = self.check_expr(guard);
-                self.unify(guard.span, self.tcx.types.boolean, guard_ty);
+                self.equate(guard.span, self.tcx.types.boolean, guard_ty);
             });
-            self.unify(arm.span, expected_ty, arm_ty);
+            self.equate(arm.span, expected_ty, arm_ty);
         });
 
         expected_ty
@@ -264,7 +264,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let f_ty = self.check_expr(f);
         let arg_tys = self.check_expr_list(args);
         let ty = self.tcx.mk_ty(TyKind::Fn(arg_tys, ret_ty));
-        self.unify(expr.span, f_ty, ty);
+        self.equate(expr.span, f_ty, ty);
         ret_ty
     }
 
@@ -290,7 +290,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             self.check_pat(param.pat, ty);
         }
         let body_ty = self.check_expr(body.expr);
-        self.unify(body.expr.span, self.ret_ty, body_ty);
+        self.equate(body.expr.span, self.ret_ty, body_ty);
         // explicitly overwrite the type of body with the return type of the function
         // in the case where it is inferred to be `!`
         // this is a special case due to return statements in the top level block expr
@@ -345,21 +345,21 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match op {
             // TODO deal with floats
             BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub => {
-                self.unify(l.span, self.tcx.types.int, tl);
-                self.unify(r.span, tl, tr);
+                self.equate(l.span, self.tcx.types.int, tl);
+                self.equate(r.span, tl, tr);
                 tl
             }
             BinOp::Lt | BinOp::Gt => {
                 // TODO deal with floats
-                self.unify(l.span, self.tcx.types.int, tl);
-                self.unify(r.span, tl, tr);
+                self.equate(l.span, self.tcx.types.int, tl);
+                self.equate(r.span, tl, tr);
                 self.tcx.types.boolean
             }
             BinOp::Eq => todo!(),
             BinOp::Neq => todo!(),
             BinOp::And | BinOp::Or => {
-                self.unify(l.span, self.tcx.types.int, tl);
-                self.unify(r.span, tl, tr);
+                self.equate(l.span, self.tcx.types.int, tl);
+                self.equate(r.span, tl, tr);
                 tl
             }
         }

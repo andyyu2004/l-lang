@@ -68,7 +68,9 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
     }
 
-    pub fn unify(&self, span: Span, expected: Ty<'tcx>, ty: Ty<'tcx>) {
+    /// equates two types in the unification table
+    /// emits a type error if the types are not unifiable
+    pub fn equate(&self, span: Span, expected: Ty<'tcx>, ty: Ty<'tcx>) {
         if expected.contains_err() || ty.contains_err() {
             return;
         }

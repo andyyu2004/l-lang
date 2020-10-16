@@ -1,7 +1,7 @@
 use crate::CodegenCtx;
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
-use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
+use lcore::ty::{Instance, Subst, TyCtx, TypeFoldable};
 use mir::{TyCtxMirExt, Visitor};
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
@@ -120,7 +120,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
             // applied to the generic function with def_id `def_id`
             // to obtain its concrete type
             let scheme = self.tcx.collected_ty(def_id);
-            let substs = self.tcx.unify_tys(scheme, mono_ty);
+            let substs = self.tcx.unify(scheme, mono_ty);
             let instance = Instance::item(substs, def_id);
             if let Some(prev) =
                 self.collector.operand_instance_map.borrow_mut().insert((def_id, mono_ty), instance)

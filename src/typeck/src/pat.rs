@@ -33,7 +33,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             _ => unreachable!(),
         };
         let path_ty = self.check_expr_path(path);
-        self.unify(pat.span, ty, path_ty);
+        self.equate(pat.span, ty, path_ty);
         path_ty
     }
 
@@ -51,13 +51,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         let fn_ty = self.tcx.mk_fn_ty(params, pat_ty);
         // TODO maybe expected and actual should be the other way around?
-        self.unify(pat.span, ctor_ty, fn_ty);
+        self.equate(pat.span, ctor_ty, fn_ty);
         pat_ty
     }
 
     fn check_pat_lit(&mut self, expr: &ir::Expr, expected: Ty<'tcx>) -> Ty<'tcx> {
         let lit_ty = self.check_expr(expr);
-        self.unify(expr.span, expected, lit_ty);
+        self.equate(expr.span, expected, lit_ty);
         lit_ty
     }
 
@@ -74,7 +74,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         let pat_ty = self.tcx.mk_tup(tys);
         // we expect `ty` to be a tuple
-        self.unify(pat.span, ty, pat_ty);
+        self.equate(pat.span, ty, pat_ty);
         pat_ty
     }
 }
