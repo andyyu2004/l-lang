@@ -1,7 +1,7 @@
 //! methods for manipulating ir on `TyCtx`
 use crate::ty::TyCtx;
 use ast::Ident;
-use ir::{DefId, DefNode};
+use ir::{DefId, DefKind, DefNode};
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn impl_item(self, id: ir::ImplItemId) -> &'tcx ir::ImplItem<'tcx> {
@@ -21,6 +21,10 @@ pub struct DefMap<'ir> {
 impl<'ir> DefMap<'ir> {
     pub fn get(&self, def_id: DefId) -> DefNode<'ir> {
         self.tcx.resolutions.defs.get_def_node(def_id)
+    }
+
+    pub fn def_kind(&self, _def_id: DefId) -> DefKind {
+        todo!()
     }
 
     pub fn ident_of(&self, def_id: DefId) -> Ident {

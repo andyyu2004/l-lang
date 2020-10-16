@@ -434,6 +434,7 @@ dependencies = [
  "lcore",
  "ldriver",
  "llvm-sys",
+ "log",
  "maplit",
  "mir",
  "rustc-hash",

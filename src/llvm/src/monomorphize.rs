@@ -1,7 +1,7 @@
 use crate::CodegenCtx;
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
-use lcore::ty::{Instance, Subst, TyCtx, TypeFoldable};
+use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
 use mir::{TyCtxMirExt, Visitor};
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
@@ -37,13 +37,12 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
     fn collect_instances(self) -> FxHashSet<Instance<'tcx>> {
         for &root in self.roots {
             let instance = Instance::mono_item(root);
-            self.collect_rec(instance);
+            self.collect_instance(instance);
         }
         self.instances.into_inner()
     }
 
-    fn collect_rec(&self, instance: Instance<'tcx>) {
-        self.instances.borrow_mut().insert(instance);
+    fn collect_item_instance(&self, instance: Instance<'tcx>) {
         let mir = match self.cached_mir.borrow().get(&instance.def_id) {
             Some(&mir) => Ok(mir),
             None => self.tcx.mir_of_instance(instance),
@@ -53,6 +52,14 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
             println!("{}", mir);
             self.cached_mir.borrow_mut().insert(instance.def_id, mir);
             InstanceCollector { collector: self, instance }.visit_mir(mir)
+        }
+    }
+
+    fn collect_instance(&self, instance: Instance<'tcx>) {
+        self.instances.borrow_mut().insert(instance);
+        match instance.kind {
+            InstanceKind::Item => self.collect_item_instance(instance),
+            InstanceKind::Intrinsic => {}
         }
     }
 }
@@ -121,7 +128,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
             // to obtain its concrete type
             let scheme = self.tcx.collected_ty(def_id);
             let substs = self.tcx.unify(scheme, mono_ty);
-            let instance = Instance::item(substs, def_id);
+            let instance = Instance::resolve(self.tcx, def_id, substs);
             if let Some(prev) =
                 self.collector.operand_instance_map.borrow_mut().insert((def_id, mono_ty), instance)
             {
@@ -131,7 +138,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
 
             if !self.instances.borrow().contains(&instance) {
                 // recursively collect all its neighbours
-                self.collector.collect_rec(instance);
+                self.collector.collect_instance(instance);
             }
         }
     }

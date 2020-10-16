@@ -2,7 +2,9 @@
 #![feature(crate_visibility_modifier)]
 #![feature(array_value_iter)]
 
-mod codegen;
+#[macro_use]
+extern crate log;
+
 mod codegen_ctx;
 mod fcx;
 mod intrinsics;
@@ -15,7 +17,6 @@ mod native;
 #[cfg(test)]
 mod tests;
 
-use codegen::*;
 pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
 use intrinsics::build_instrinsics;

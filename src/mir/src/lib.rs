@@ -50,6 +50,7 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
     fn mir_of_instance(self, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>> {
         match instance.kind {
             InstanceKind::Item => self.mir_of_def(instance.def_id),
+            InstanceKind::Intrinsic => unreachable!("intrinsics don't have mir"),
         }
     }
 }

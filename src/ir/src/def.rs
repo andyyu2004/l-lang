@@ -174,6 +174,7 @@ pub struct Definitions<'a> {
 }
 
 impl<'a> Definitions<'a> {
+    /// adds def mapping from `def_id` to `node`
     pub fn def_node(&mut self, def_id: DefId, node: DefNode<'a>) {
         assert!(self.def_map.insert(def_id, node).is_none());
     }

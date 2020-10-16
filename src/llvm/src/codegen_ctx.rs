@@ -141,8 +141,9 @@ impl<'tcx> CodegenCtx<'tcx> {
                 if Some(def_id) == self.tcx.ir.entry_id {
                     self.main_fn = Some(llfn);
                 }
-                self.instances.borrow_mut().insert(Instance::item(substs, def_id), llfn);
+                self.instances.borrow_mut().insert(Instance::item(def_id, substs), llfn);
             }
+            InstanceKind::Intrinsic => todo!(),
         }
     }
 
@@ -151,7 +152,10 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     pub fn codegen_instance(&self, instance: Instance<'tcx>) {
-        FnCtx::new(self, instance).codegen()
+        match instance.kind {
+            InstanceKind::Item => FnCtx::new(self, instance).codegen(),
+            InstanceKind::Intrinsic => todo!(),
+        }
     }
 
     /// returns the main function
