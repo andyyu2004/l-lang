@@ -51,16 +51,6 @@ impl<'tcx> NativeFunctions<'tcx> {
         module.add_function("abort", llctx.void_type().fn_type(&[], false), Some(Linkage::External))
     }
 
-    fn build_iprintln(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
-        let iprintln = module.add_function(
-            "iprintln",
-            llctx.void_type().fn_type(&[llctx.i64_type().into()], false),
-            None,
-        );
-        // TODO
-        iprintln
-    }
-
     fn build_rc_retain(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
         let rc_retain = module.add_function(
             "rc_retain",

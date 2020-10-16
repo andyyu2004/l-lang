@@ -42,7 +42,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     fn codegen_rc_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {
         let ident = self.tcx.defs().ident_of(instance.def_id);
         let name = format!("{}<{}>", ident, instance.substs);
-        // the generic parameter of the `rc` intrinsic
+        // `t` is the generic parameter of the `rc` intrinsic
         let t = instance.substs[0];
         let llty = self.llvm_ty(t);
         // `rc<T>: &T -> int`

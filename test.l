@@ -48,9 +48,8 @@ fn main() -> int {
 
     /* return id(5); */
     let boxed = box 5;
-    print(99);
     print(rc(boxed));
-    return rc(boxed);
+
 
     /* let next = box Node { */
     /*     val: 22, */

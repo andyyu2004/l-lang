@@ -44,7 +44,7 @@ pub fn main() -> ! {
 
     let driver = Driver::new(&src);
     match driver.llvm_exec() {
-        Ok(i) => println!("{}", i),
+        Ok(i) => std::process::exit(i),
         Err(..) => std::process::exit(1),
     }
 
@@ -59,7 +59,6 @@ pub fn main() -> ! {
     //     } else {
     //         println!("{}", libl::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
     //     };
-    std::process::exit(0)
 }
 
 pub struct Driver<'tcx> {

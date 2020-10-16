@@ -19,20 +19,11 @@ ret:                                              ; preds = %rc_release
 
 declare void @free(i8*)
 
-declare i32 @printf(i8*)
+declare i32 @printf(i8*, ...)
 
 declare void @abort()
 
 declare void @exit(i32)
-
-define i64 @rc(i64* %0) {
-rc_entry:
-  %sdf = bitcast i64* %0 to { i64, i32 }*
-  %rc_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %sdf, i32 0, i32 1
-  %load_refcount = load i32, i32* %rc_gep
-  %"rc->i64" = sext i32 %load_refcount to i64
-  ret i64 %"rc->i64"
-}
 
 define i64 @main() {
 basic_blockbb0:

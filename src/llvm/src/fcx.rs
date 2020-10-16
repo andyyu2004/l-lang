@@ -197,10 +197,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(lvalue) => {
-                // let lvalue_ref = self.codegen_lvalue(lvalue);
-                // assert!(lvalue_ref.ty.is_ptr());
-                // let rc_retain = self.build_rc_retain(lvalue_ref);
-                // self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
+                let lvalue_ref = self.codegen_lvalue(lvalue);
+                assert!(lvalue_ref.ty.is_ptr());
+                let rc_retain = self.build_rc_retain(lvalue_ref);
+                self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(lvalue) => {
                 return;
@@ -318,7 +318,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let ptr = self.build_malloc(llty, "box").unwrap();
                 // the refcount is at index `1` in the implicit struct
                 let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();
-                self.build_store(rc_ptr, self.vals.zero32);
+                self.build_store(rc_ptr, self.vals.one32);
                 // gep the returned pointer to point to the content only and return that
                 let ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
                 let ty = self.tcx.mk_ptr_ty(Mutability::Mut, box_ty);

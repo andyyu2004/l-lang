@@ -28,7 +28,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> BlockAnd<()> {
         let info = self.span_info(expr.span);
         match &expr.kind {
-            tir::ExprKind::Block(ir) => self.ir_block(block, dest, expr, ir),
+            tir::ExprKind::Block(ir) => self.build_ir_block(block, dest, expr, ir),
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => {
                 self.build_naive_match(block, dest, expr, &scrut, &arms)
@@ -167,7 +167,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
-    fn ir_block(
+    fn build_ir_block(
         &mut self,
         mut block: BlockId,
         lvalue: Lvalue<'tcx>,
