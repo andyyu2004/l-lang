@@ -121,7 +121,7 @@ impl<'tcx> TypeMatcher<'tcx> {
     }
 
     fn match_tys_inner(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) {
-        if s == t {
+        if s == t || !s.has_ty_params() {
             return;
         }
         match (s.kind, t.kind) {
