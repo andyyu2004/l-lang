@@ -1,4 +1,5 @@
 #![feature(array_value_iter)]
+#![feature(decl_macro)]
 
 mod construct;
 mod expr;
@@ -8,19 +9,23 @@ mod path;
 mod stmt;
 mod ty;
 
-use std::collections::BTreeMap;
+#[cfg(test)]
+mod tests;
 
 use ast::*;
 use index::Idx;
 use ir::{DefId, LocalId, Res};
 use resolve::Resolver;
 use rustc_hash::FxHashMap;
+use session::Session;
 use std::cell::Cell;
+use std::collections::BTreeMap;
 
 ir::arena_types!(arena::declare_arena, [], 'tcx);
 
 pub struct AstLoweringCtx<'a, 'ir> {
     arena: &'ir Arena<'ir>,
+    sess: &'ir Session,
     resolver: &'a mut Resolver<'ir>,
     node_id_to_id: FxHashMap<NodeId, ir::Id>,
     item_stack: Vec<(DefId, usize)>,
@@ -34,9 +39,14 @@ pub struct AstLoweringCtx<'a, 'ir> {
 }
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
-    pub fn new(arena: &'ir Arena<'ir>, resolver: &'a mut Resolver<'ir>) -> Self {
+    pub fn new(
+        arena: &'ir Arena<'ir>,
+        sess: &'ir Session,
+        resolver: &'a mut Resolver<'ir>,
+    ) -> Self {
         Self {
             arena,
+            sess,
             resolver,
             entry_id: None,
             item_stack: Default::default(),

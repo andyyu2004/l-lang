@@ -19,7 +19,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     if ident.symbol == sym::MAIN {
                         lctx.entry_id = Some(id.def);
                     }
-                    // assume the function has a body for now
+                    if expr.is_none() {
+                        lctx.sess.emit_error(item.span, AstError::FunctionWithoutBody);
+                        return;
+                    }
                     let body = lctx.lower_body(sig, expr.as_ref().unwrap());
                     let lowered_sig = lctx.lower_fn_sig(sig);
                     let generics = lctx.lower_generics(generics);

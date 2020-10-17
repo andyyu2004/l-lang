@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 resolve = { path = "../resolve" }
+session = { path = "../session" }
 ir = { path = "../ir" }
 ast = { path = "../ast" }
 arena = { path = "../arena" }
@@ -14,3 +15,6 @@ index = { path = "../index" }
 itertools = "0.9"
 rustc-hash = "1"
 
+
+[dev-dependencies]
+ldriver = { path = "../ldriver" }

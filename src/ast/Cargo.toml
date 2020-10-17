@@ -11,3 +11,4 @@ index = { path = "../index" }
 span = { path = "../span" }
 util = { path = "../util" }
 lex = { path = "../lex" }
+thiserror = "1"

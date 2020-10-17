@@ -128,7 +128,7 @@ impl<'tcx> Driver<'tcx> {
         let ast = self.parse()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
-        let lctx = AstLoweringCtx::new(&self.ir_arena, &mut resolver);
+        let lctx = AstLoweringCtx::new(&self.ir_arena, &self.sess, &mut resolver);
         let ir = lctx.lower_prog(&ast);
         let resolutions = resolver.complete();
         info!("{:#?}", ir);

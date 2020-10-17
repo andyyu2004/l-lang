@@ -1,10 +1,10 @@
-[00:00:00.001] (7fe77d73d940) INFO   resolving node NodeId(5) to Def(2, TyParam(0))
-[00:00:00.002] (7fe77d73d940) INFO   resolving node NodeId(10) to PrimTy(Int)
-[00:00:00.002] (7fe77d73d940) INFO   resolving node NodeId(17) to PrimTy(Int)
-[00:00:00.002] (7fe77d73d940) INFO   resolving node NodeId(23) to PrimTy(Int)
-[00:00:00.002] (7fe77d73d940) INFO   resolving node NodeId(33) to Def(3, Fn)
-[00:00:00.002] (7fe77d73d940) INFO   resolving node NodeId(36) to Local(NodeId(27))
-[00:00:00.002] (7fe77d73d940) INFO   IR {
+[00:00:00.001] (7f0d10149940) INFO   resolving node NodeId(5) to Def(2, TyParam(0))
+[00:00:00.001] (7f0d10149940) INFO   resolving node NodeId(10) to PrimTy(Int)
+[00:00:00.002] (7f0d10149940) INFO   resolving node NodeId(17) to PrimTy(Int)
+[00:00:00.002] (7f0d10149940) INFO   resolving node NodeId(23) to PrimTy(Int)
+[00:00:00.002] (7f0d10149940) INFO   resolving node NodeId(33) to Def(3, Fn)
+[00:00:00.002] (7f0d10149940) INFO   resolving node NodeId(36) to Local(NodeId(27))
+[00:00:00.002] (7f0d10149940) INFO   IR {
     entry_id: Some(
         4,
     ),
@@ -507,37 +507,37 @@
     },
     impl_items: {},
 }
-[00:00:00.014] (7fe77d73d940) INFO   collect item: TyS {
+[00:00:00.012] (7f0d10149940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.3 : int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.4 : &mut int
-[00:00:00.014] (7fe77d73d940) INFO   deflocal 4.2 : &mut int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.2 : &mut int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.7 : fn(int)->()
-[00:00:00.014] (7fe77d73d940) INFO   lookup ty for local 4.2
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.9 : &mut int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.10 : ?1
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.11 : ?0
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.13 : int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.16 : int
-[00:00:00.014] (7fe77d73d940) INFO   fcx write ty 4.16 : int
-[00:00:00.014] (7fe77d73d940) INFO   fcx query node type for 4.16
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.4
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.3
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.2
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.11
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.7
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.10
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.9
-[00:00:00.015] (7fe77d73d940) INFO   fcx query node type for 4.13
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.16
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.2
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.4
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.3
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.11
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.7
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.10
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.9
-[00:00:00.015] (7fe77d73d940) INFO   irloweringctx: query typeof 4.13
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.3 : int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.4 : &mut int
+[00:00:00.013] (7f0d10149940) INFO   deflocal 4.2 : &mut int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.2 : &mut int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.7 : fn(int)->()
+[00:00:00.013] (7f0d10149940) INFO   lookup ty for local 4.2
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.9 : &mut int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.10 : ?1
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.11 : ?0
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.13 : int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.16 : int
+[00:00:00.013] (7f0d10149940) INFO   fcx write ty 4.16 : int
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.16
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.4
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.3
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.2
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.11
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.7
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.10
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.9
+[00:00:00.013] (7f0d10149940) INFO   fcx query node type for 4.13
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.16
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.2
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.4
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.3
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.11
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.7
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.10
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.9
+[00:00:00.014] (7f0d10149940) INFO   irloweringctx: query typeof 4.13

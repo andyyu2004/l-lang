@@ -35,6 +35,7 @@ dependencies = [
  "index",
  "lex",
  "span",
+ "thiserror",
  "util",
 ]
 
@@ -47,8 +48,10 @@ dependencies = [
  "index",
  "ir",
  "itertools",
+ "ldriver",
  "resolve",
  "rustc-hash",
+ "session",
  "span",
 ]
 

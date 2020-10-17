@@ -37,8 +37,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 // self.build_match(block, dest, expr, scrut, arms)
             }
             tir::ExprKind::Box(inner) => {
-                let rvalue = Rvalue::Box(inner.ty);
-                self.push_assignment(info, block, dest, rvalue);
+                self.push_assignment(info, block, dest, Rvalue::Box(inner.ty));
                 // write the `inner` expression into the allocated memory
                 set!(block = self.write_expr(block, self.tcx.project_deref(dest), &inner));
                 block.unit()

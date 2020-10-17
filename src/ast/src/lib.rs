@@ -1,6 +1,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(const_panic)]
 
+mod error;
 mod expr;
 mod item;
 mod pattern;
@@ -24,6 +25,7 @@ use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 
+pub use error::*;
 pub use expr::*;
 pub use item::*;
 pub use pattern::*;
