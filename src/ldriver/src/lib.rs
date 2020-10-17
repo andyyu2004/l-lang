@@ -38,6 +38,7 @@ pub fn main() -> ! {
     let check = matches.is_present("check");
     let emit_tir = matches.is_present("tir");
     let emit_mir = matches.is_present("emit-mir");
+    // TODO take optimization level as parameter
 
     let path = matches.value_of("INPUT").unwrap();
     let src = std::fs::read_to_string(path).unwrap();
@@ -165,7 +166,7 @@ impl<'tcx> Driver<'tcx> {
     pub fn llvm_exec(&'tcx self) -> LResult<i32> {
         let (cctx, main_fn) = self.llvm_compile()?;
         dbg!("llvm codegen complete");
-        let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::Default).unwrap();
         println!("---");
         let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
         Ok(val)

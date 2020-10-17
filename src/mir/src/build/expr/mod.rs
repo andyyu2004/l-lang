@@ -26,6 +26,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         dest: Lvalue<'tcx>,
         expr: &tir::Expr<'tcx>,
     ) -> BlockAnd<()> {
+        // some issues with differences in mutability currently
+        // debug_assert_eq!(self.lvalue_ty(dest), expr.ty);
         let info = self.span_info(expr.span);
         match &expr.kind {
             tir::ExprKind::Block(ir) => self.build_ir_block(block, dest, expr, ir),
@@ -34,6 +36,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.build_naive_match(block, dest, expr, &scrut, &arms)
                 // self.build_match(block, dest, expr, scrut, arms)
             }
+            tir::ExprKind::Box(inner) => {
+                let rvalue = Rvalue::Box(inner.ty);
+                self.push_assignment(info, block, dest, rvalue);
+                // write the `inner` expression into the allocated memory
+                set!(block = self.write_expr(block, self.tcx.project_deref(dest), &inner));
+                block.unit()
+            }
             tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
             tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, &xs),
             tir::ExprKind::VarRef(..)
@@ -41,7 +50,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Ref(..)
-            | tir::ExprKind::Box(..)
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Unary(..)

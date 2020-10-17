@@ -2,12 +2,11 @@ use super::*;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
-        let info = self.span_info(stmt.span);
         match &stmt.kind {
-            tir::StmtKind::Let(tir::Let { id, pat, init }) => match init {
+            tir::StmtKind::Let(tir::Let { pat, init, .. }) => match init {
                 Some(expr) => {
-                    let rvalue = set!(block = self.as_lvalue(block, expr));
-                    self.bind_pat_to_lvalue(block, &pat, rvalue)
+                    let lvalue = set!(block = self.as_lvalue(block, expr));
+                    self.bind_pat_to_lvalue(block, &pat, lvalue)
                 }
                 None => todo!(),
             },
@@ -37,8 +36,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.append_basic_block().unit()
             }
             tir::ExprKind::Assign(l, r) => {
-                let rvalue = set!(block = self.as_rvalue(block, r));
                 let lvalue = set!(block = self.as_lvalue(block, l));
+                let rvalue = set!(block = self.as_rvalue(block, r));
                 self.push_assignment(info, block, lvalue, rvalue);
                 block.unit()
             }

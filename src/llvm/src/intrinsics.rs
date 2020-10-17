@@ -45,7 +45,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         // `t` is the generic parameter of the `rc` intrinsic
         let t = instance.substs[0];
         let llty = self.llvm_ty(t);
-        // `rc<T>: &T -> int`
+        // `rc<T>: fn(&T) -> int`
         let rc_fn_ty =
             self.types.int.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
         let llfn = self.module.add_function(&name, rc_fn_ty, None);

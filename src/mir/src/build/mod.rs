@@ -181,9 +181,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let idx = self.alloc_var(info, kind, ty);
         let prev = self.var_ir_map.insert(id, idx);
         if prev.is_some() {
-            panic!("two mir vars allocated for id {}", id);
+            panic!("two mir vars allocated for id `{}`", id);
         }
         idx
+    }
+
+    fn lvalue_ty(&self, lvalue: Lvalue<'tcx>) -> Ty<'tcx> {
+        lvalue.ty(self.tcx, self)
     }
 
     fn alloc_arg(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {

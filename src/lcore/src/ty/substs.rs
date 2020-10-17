@@ -93,7 +93,7 @@ impl<'tcx> TyCtx<'tcx> {
         assert!(!t.has_infer_vars());
         let (generics, s) = scheme.expect_scheme();
         let substs = Substs::id_for_generics(self, generics);
-        TypeMatcher::new(self, substs).perform_match(s, t)
+        TypeMatcher::new(self, substs).unify(s, t)
     }
 }
 
@@ -108,19 +108,20 @@ struct TypeMatcher<'tcx> {
 // if this pattern is used again, abstract into a trait
 impl<'tcx> TypeMatcher<'tcx> {
     fn new(tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self {
-        Self { tcx, substs: substs.to_vec(), map: Default::default() }
+        Self {
+            tcx,
+            substs: substs.to_vec(),
+            #[cfg(debug_assertions)]
+            map: Default::default(),
+        }
     }
 
-    fn perform_match(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
-        self.match_tys(s, t);
+    fn unify(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
+        self.unify_inner(s, t);
         self.tcx.intern_substs(&self.substs)
     }
 
-    fn match_tys(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) {
-        self.match_tys_inner(s, t)
-    }
-
-    fn match_tys_inner(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) {
+    fn unify_inner(&mut self, s: Ty<'tcx>, t: Ty<'tcx>) {
         if s == t || !s.has_ty_params() {
             return;
         }
@@ -128,18 +129,20 @@ impl<'tcx> TypeMatcher<'tcx> {
             (ty::Param(p), _) => {
                 // checks that if the param has already been set,
                 // it is set to the same type as last time
+                // even with debug_assert, the cfg is necessary
+                #[cfg(debug_assertions)]
                 debug_assert!(self.map.insert(p, t).map_or(true, |ty| ty == t));
                 self.substs[p.idx.index()] = t;
             }
-            (Ptr(_m, t), Ptr(_n, u)) => self.match_tys(t, u),
+            (Ptr(_m, t), Ptr(_n, u)) => self.unify_inner(t, u),
             (Tuple(xs), Tuple(ys)) => self.match_tuples(xs, ys),
-            (Array(t, m), Array(u, n)) if m == n => self.match_tys(t, u),
+            (Array(t, m), Array(u, n)) if m == n => self.unify_inner(t, u),
             (Adt(adtx, substsx), Adt(adty, substsy)) if adtx == adty =>
                 self.match_tuples(substsx, substsy),
             (_, ty::Never) | (ty::Never, _) => {}
             (Fn(a, b), Fn(t, u)) => {
                 self.match_tuples(a, t);
-                self.match_tys(b, u);
+                self.unify_inner(b, u);
             }
             _ => panic!("cannot match {} {}", s, t),
         }
@@ -147,6 +150,6 @@ impl<'tcx> TypeMatcher<'tcx> {
 
     fn match_tuples(&mut self, r: SubstsRef<'tcx>, s: SubstsRef<'tcx>) {
         assert!(r.len() == s.len());
-        r.iter().zip(s).for_each(|(t, u)| self.match_tys(t, u));
+        r.iter().zip(s).for_each(|(t, u)| self.unify_inner(t, u));
     }
 }
