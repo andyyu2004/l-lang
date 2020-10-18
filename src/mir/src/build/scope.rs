@@ -1,5 +1,6 @@
 use super::*;
 use crate::set;
+use std::marker::PhantomData;
 
 #[derive(Default, Debug)]
 crate struct Scopes<'tcx> {
@@ -25,21 +26,22 @@ impl<'tcx> Scopes<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct ReleaseInfo<'tcx> {
+crate struct ReleaseInfo {
     pub info: SpanInfo,
-    pub lvalue: Lvalue<'tcx>,
+    pub var: VarId,
 }
 
 #[derive(Default, Debug)]
 struct Scope<'tcx> {
     /// list of variables to be `release`d at the end of the scope
-    releases: Vec<ReleaseInfo<'tcx>>,
+    releases: Vec<ReleaseInfo>,
+    pd: PhantomData<&'tcx ()>,
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    pub fn schedule_release(&mut self, info: SpanInfo, lvalue: Lvalue<'tcx>) {
+    pub fn schedule_release(&mut self, info: SpanInfo, var: VarId) {
         let scope = self.scopes.peek_mut();
-        scope.releases.push(ReleaseInfo { lvalue, info });
+        scope.releases.push(ReleaseInfo { var, info });
     }
 
     fn exit_scope(&mut self, info: SpanInfo, block: BlockId) {

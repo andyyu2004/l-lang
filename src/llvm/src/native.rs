@@ -11,7 +11,8 @@ pub struct NativeFunctions<'tcx> {
     // pub print_int: FunctionValue<'tcx>,
     pub abort: FunctionValue<'tcx>,
     pub exit: FunctionValue<'tcx>,
-    pub printf: FunctionValue<'tcx>,
+    pub print: FunctionValue<'tcx>,
+    pub print_addr: FunctionValue<'tcx>,
 }
 
 // #[no_mangle]
@@ -20,16 +21,70 @@ pub struct NativeFunctions<'tcx> {
 // }
 
 impl<'tcx> NativeFunctions<'tcx> {
-    pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
-        let rc_release = Self::build_rc_release(llctx, module);
-        // let iprintln = Self::build_iprintln(llctx, module);
-        let printf = Self::build_printf(llctx, module);
-        let abort = Self::build_abort(llctx, module);
-        let exit = Self::build_exit(llctx, module);
-        Self { rc_retain: Default::default(), rc_release, abort, printf, exit }
+    pub fn new(module: &Module<'tcx>) -> Self {
+        let rc_release = Self::build_rc_release(module);
+        // printf is not directly exposed, but used in other native functions
+        Self::build_printf(module);
+        let print = Self::build_print(module);
+        let print_addr = Self::build_print_addr(module);
+        let abort = Self::build_abort(module);
+        let exit = Self::build_exit(module);
+        Self { rc_retain: Default::default(), rc_release, abort, print, exit, print_addr }
     }
 
-    fn build_printf(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+    fn build_print_addr(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
+        let unit = llctx.struct_type(&[], false);
+        let printfn = module.add_function(
+            "print_addr",
+            unit.fn_type(&[llctx.i8_type().ptr_type(AddressSpace::Generic).into()], false),
+            None,
+        );
+        let bb = llctx.append_basic_block(printfn, "printint");
+        let builder = llctx.create_builder();
+        builder.position_at_end(bb);
+
+        let param = printfn.get_first_param().unwrap();
+        let vec = llctx.const_string("%p\n".as_bytes(), true);
+        let alloca = builder.build_alloca(llctx.i8_type().array_type(4), "alloca_str");
+        builder.build_store(alloca, vec);
+        let ptr = builder.build_bitcast(
+            alloca,
+            llctx.i8_type().ptr_type(AddressSpace::Generic),
+            "bitcast",
+        );
+        let printf = module.get_function("printf").unwrap();
+        builder.build_call(printf, &[ptr, param], "printf");
+        builder.build_return(Some(&llctx.const_struct(&[], false)));
+        printfn
+    }
+
+    fn build_print(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
+        let unit = llctx.struct_type(&[], false);
+        let printfn =
+            module.add_function("print", unit.fn_type(&[llctx.i64_type().into()], false), None);
+        let bb = llctx.append_basic_block(printfn, "printint");
+        let builder = llctx.create_builder();
+        builder.position_at_end(bb);
+
+        let param = printfn.get_first_param().unwrap();
+        let vec = llctx.const_string("%d\n".as_bytes(), true);
+        let alloca = builder.build_alloca(llctx.i8_type().array_type(4), "alloca_str");
+        builder.build_store(alloca, vec);
+        let ptr = builder.build_bitcast(
+            alloca,
+            llctx.i8_type().ptr_type(AddressSpace::Generic),
+            "bitcast",
+        );
+        let printf = module.get_function("printf").unwrap();
+        builder.build_call(printf, &[ptr, param], "printf");
+        builder.build_return(Some(&llctx.const_struct(&[], false)));
+        printfn
+    }
+
+    fn build_printf(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
         module.add_function(
             "printf",
             llctx
@@ -39,7 +94,8 @@ impl<'tcx> NativeFunctions<'tcx> {
         )
     }
 
-    fn build_exit(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+    fn build_exit(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
         module.add_function(
             "exit",
             llctx.void_type().fn_type(&[llctx.i32_type().into()], false),
@@ -47,7 +103,8 @@ impl<'tcx> NativeFunctions<'tcx> {
         )
     }
 
-    fn build_abort(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+    fn build_abort(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
         module.add_function("abort", llctx.void_type().fn_type(&[], false), Some(Linkage::External))
     }
 
@@ -65,7 +122,8 @@ impl<'tcx> NativeFunctions<'tcx> {
         rc_retain
     }
 
-    fn build_rc_release(llctx: &'tcx Context, module: &Module<'tcx>) -> FunctionValue<'tcx> {
+    fn build_rc_release(module: &Module<'tcx>) -> FunctionValue<'tcx> {
+        let llctx = module.get_context().get();
         let rc_release = module.add_function(
             "rc_release",
             llctx.void_type().fn_type(

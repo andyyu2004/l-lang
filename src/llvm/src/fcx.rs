@@ -112,23 +112,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.blocks[id]
     }
 
-    /// generates the code to retrieve the reference count for a given variable
-    /// the variable must refer to a box to be valid
-    /// returns the i32 pointer to the refcount itself
-    fn build_get_rc(&mut self, lvalue: LvalueRef<'tcx>) -> PointerValue<'tcx> {
-        debug_assert!(lvalue.ty.is_ptr());
-        // `box_ptr` is a pointer into the boxed content (not including the rc header)
-        let box_ptr = self.build_load(lvalue.ptr, "load_box").into_pointer_value();
-        // we need to deref as `lvalue.ty` is the type of the pointer to the box
-        let boxed_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
-        let cast = self.build_pointer_cast(box_ptr, boxed_ty, "rc_cast");
-        // finally gep the reference count itself
-        self.build_struct_gep(cast, 1, "rc").unwrap()
-    }
-
     /// builds generic `rc_retain`
     fn build_rc_retain(&mut self, lvalue: LvalueRef<'tcx>) -> FunctionValue<'tcx> {
-        let name = format!("rc_retain_{}", lvalue.ty.deref_ty());
+        let name = format!("rc_retain<{}>", lvalue.ty.deref_ty());
         if let Some(f) = self.module.get_function(&name) {
             return f;
         }
@@ -144,19 +130,36 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         let alloca_ptr = rc_retain.get_first_param().unwrap().into_pointer_value();
         let malloc_ptr = builder.build_load(alloca_ptr, "load_box").into_pointer_value();
+
+        builder.build_call(
+            self.native_functions.print_addr,
+            &[builder.build_pointer_cast(alloca_ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
+            "print_malloc_addr",
+        );
+
+        builder.build_call(
+            self.native_functions.print_addr,
+            &[builder.build_pointer_cast(malloc_ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
+            "print_malloc_addr",
+        );
+
         let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
         let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_retain_box_cast");
         let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
-        let ref_count = builder.build_load(rc_ptr, "load_rc").into_int_value();
-        let increment = builder.build_int_add(ref_count, self.vals.one32, "increment_rc");
-        builder.build_store(rc_ptr, increment);
+        let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
+        let increment = builder.build_int_add(refcount, self.vals.one32, "increment_rc");
+        // builder.build_store(rc_ptr, increment);
+
+        let cast = builder.build_int_cast(increment, self.types.int, "i64rc").into();
+        builder.build_call(self.native_functions.print, &[cast], "print_rc");
+
         builder.build_return(None);
         rc_retain
     }
 
     /// builds generic `rc_release`
     fn build_rc_release(&mut self, lvalue: LvalueRef<'tcx>) -> FunctionValue<'tcx> {
-        let name = format!("rc_release_{}", lvalue.ty.deref_ty());
+        let name = format!("rc_release<{}>", lvalue.ty.deref_ty());
         if let Some(f) = self.module.get_function(&name) {
             return f;
         }
@@ -177,9 +180,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
         let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_release_box_cast");
         let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
-        let ref_count = builder.build_load(rc_ptr, "load_rc").into_int_value();
-        let dec = builder.build_int_sub(ref_count, self.vals.one32, "decrement");
+        let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
+
+        let dec = builder.build_int_sub(refcount, self.vals.one32, "decrement");
         builder.build_store(rc_ptr, dec);
+
+        builder.build_call(
+            self.native_functions.print,
+            &[builder.build_int_cast(dec, self.types.int, "").into()],
+            "print_rc",
+        );
 
         let cmp = builder.build_int_compare(IntPredicate::EQ, dec, self.vals.zero32, "rc_cmp");
         builder.build_conditional_branch(cmp, then_block, else_block);
@@ -196,15 +206,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
-            mir::StmtKind::Retain(lvalue) => {
-                let lvalue_ref = self.codegen_lvalue(lvalue);
+            mir::StmtKind::Retain(var) => {
+                let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_retain = self.build_rc_retain(lvalue_ref);
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
-            mir::StmtKind::Release(lvalue) => {
-                return;
-                // let lvalue_ref = self.codegen_lvalue(lvalue);
+            mir::StmtKind::Release(var) => {
+                // let lvalue_ref = self.vars[var];
                 // assert!(lvalue_ref.ty.is_ptr());
                 // let rc_release = self.build_rc_release(lvalue_ref);
                 // self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
@@ -314,17 +323,25 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(box_ty) => {
                 // important the refcount itself is boxed so it is shared
-                let llty = self.llvm_boxed_ty(box_ty);
-                let ptr = self.build_malloc(llty, "box").unwrap();
+                let boxed_ty = self.llvm_boxed_ty(box_ty);
+                let ptr = self.build_malloc(boxed_ty, "box").unwrap();
+
+                self.build_call(
+                    self.native_functions.print_addr,
+                    &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
+                    "print_malloc_addr",
+                );
+
                 // the refcount is at index `1` in the implicit struct
                 let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();
-                self.build_store(rc_ptr, self.vals.one32);
+                self.build_store(rc_ptr, self.vals.zero32);
                 // gep the returned pointer to point to the content only and return that
-                let ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
+                let content_ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
+
                 let ty = self.tcx.mk_ptr_ty(Mutability::Mut, box_ty);
                 #[cfg(debug_assertions)]
-                self.mallocs.insert(LvalueRef { ty, ptr });
-                ValueRef { ty, val: ptr.into() }
+                self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
+                ValueRef { ty, val: content_ptr.into() }
             }
             mir::Rvalue::Ref(_lvalue) => {
                 // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },

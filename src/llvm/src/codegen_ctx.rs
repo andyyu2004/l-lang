@@ -93,7 +93,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             unit: types.unit.get_undef(),
         };
 
-        let native_functions = NativeFunctions::new(llctx, &module);
+        let native_functions = NativeFunctions::new(&module);
         Self {
             tcx,
             llctx,

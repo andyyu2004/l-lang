@@ -65,13 +65,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.cfg.terminate(info, block, kind)
     }
 
-    pub fn push_release(&mut self, block: BlockId, release: ReleaseInfo<'tcx>) {
-        let ReleaseInfo { info, lvalue } = release;
-        self.push(block, Stmt { info, kind: StmtKind::Release(lvalue) })
+    pub fn push_release(&mut self, block: BlockId, release: ReleaseInfo) {
+        let ReleaseInfo { info, var } = release;
+        self.push(block, Stmt { info, kind: StmtKind::Release(var) })
     }
 
-    pub fn push_retain(&mut self, info: SpanInfo, block: BlockId, lvalue: Lvalue<'tcx>) {
-        self.push(block, Stmt { info, kind: StmtKind::Retain(lvalue) })
+    pub fn push_retain(&mut self, info: SpanInfo, block: BlockId, var: VarId) {
+        self.push(block, Stmt { info, kind: StmtKind::Retain(var) })
     }
 
     /// push a statement onto the given block
@@ -93,12 +93,5 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         rvalue: Rvalue<'tcx>,
     ) {
         self.cfg.push_assignment(info, block, lvalue, rvalue);
-        // if the type is pointer, then it is a box and we need to do refcounting
-        // TODO need to differentiate between initialization and reassignments
-        // https://youtu.be/Ntj8ab-5cvE?t=2328
-        if lvalue.ty(self.tcx, self).is_ptr() {
-            self.push_retain(info, block, lvalue);
-            self.schedule_release(info, lvalue);
-        }
     }
 }
