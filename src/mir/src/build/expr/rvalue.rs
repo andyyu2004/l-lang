@@ -49,13 +49,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(rhs)
             }
             tir::ExprKind::Box(ref inner) => {
-                let var = self.alloc_tmp(info, expr.ty);
-                let rvalue = Rvalue::Box(inner.ty);
-                let lvalue = Lvalue::from(var);
-                self.push_assignment(info, block, lvalue, rvalue);
-                // write the `inner` expression into the allocated memory
-                set!(block = self.write_expr(block, self.tcx.project_deref(lvalue), &inner));
-                block.and(Rvalue::Operand(Operand::Lvalue(lvalue)))
+                let operand = set!(block = self.as_operand(block, inner));
+                block.and(Rvalue::Box(operand))
             }
             tir::ExprKind::Ref(ref expr) => {
                 let lvalue = set!(block = self.as_lvalue(block, &expr));

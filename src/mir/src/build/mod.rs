@@ -137,7 +137,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.with_scope(info, |this| {
             for param in &this.body.params {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;
-                let lvalue = Lvalue::from(this.alloc_arg(block, id, span, ty));
+                let lvalue = Lvalue::from(this.alloc_arg(id, span, ty));
                 if let tir::PatternKind::Binding(..) = param.pat.kind {
                     // nothing meaningful to recursively bind to
                     continue;
@@ -176,26 +176,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     /// create variable that has a corresponding var in the `ir`
-    fn alloc_ir_var(
-        &mut self,
-        block: BlockId,
-        id: ir::Id,
-        span: Span,
-        ty: Ty<'tcx>,
-        kind: VarKind,
-    ) -> VarId {
+    fn alloc_ir_var(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>, kind: VarKind) -> VarId {
         let info = self.span_info(span);
         let var_id = self.alloc_var(info, kind, ty);
         let prev = self.var_ir_map.insert(id, var_id);
         if prev.is_some() {
             panic!("two mir vars allocated for id `{}`", id);
-        }
-        // if the type is pointer, then it is a box and we need to do refcounting
-        // TODO need to differentiate between initialization and reassignments
-        // https://youtu.be/Ntj8ab-5cvE?t=2328
-        if self.vars[var_id].ty.is_ptr() {
-            self.push_retain(info, block, var_id);
-            self.schedule_release(info, var_id);
         }
         var_id
     }
@@ -204,16 +190,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         lvalue.ty(self.tcx, self)
     }
 
-    fn alloc_arg(&mut self, block: BlockId, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
-        self.alloc_ir_var(block, id, span, ty, VarKind::Arg)
+    fn alloc_arg(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Arg)
     }
 
-    fn alloc_local(&mut self, block: BlockId, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
-        self.alloc_ir_var(block, id, span, ty, VarKind::Local)
+    fn alloc_local(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Local)
     }
 
-    fn alloc_upvar(&mut self, block: BlockId, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
-        self.alloc_ir_var(block, id, span, ty, VarKind::Upvar)
+    fn alloc_upvar(&mut self, id: ir::Id, span: Span, ty: Ty<'tcx>) -> VarId {
+        self.alloc_ir_var(id, span, ty, VarKind::Upvar)
     }
 
     fn alloc_var(&mut self, info: SpanInfo, kind: VarKind, ty: Ty<'tcx>) -> VarId {

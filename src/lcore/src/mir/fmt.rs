@@ -182,7 +182,10 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
                 write!(f, "&")?;
                 lvalue.mir_fmt(f)
             }
-            mir::Rvalue::Box(ty) => write!(f, "box {}", ty),
+            mir::Rvalue::Box(operand) => {
+                write!(f, "box ")?;
+                operand.mir_fmt(f)
+            }
             mir::Rvalue::Unary(op, operand) => {
                 write!(f, "{}", op)?;
                 operand.mir_fmt(f)

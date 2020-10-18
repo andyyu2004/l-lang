@@ -159,8 +159,8 @@ pub enum Rvalue<'tcx> {
     Unary(ast::UnaryOp, Operand<'tcx>),
     /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
-    /// returns (uninit) memory of `Ty`
-    Box(Ty<'tcx>),
+    /// box x
+    Box(Operand<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
     /// reads the discriminant of an enum

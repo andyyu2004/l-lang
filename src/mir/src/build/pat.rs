@@ -21,7 +21,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::PatternKind::Binding(m, _, _) => {
                 let &tir::Pattern { id, span, ty, .. } = irref_pat;
                 let rvalue = Rvalue::Operand(Operand::Lvalue(lvalue));
-                let local = self.alloc_local(block, id, span, ty);
+                let local = self.alloc_local(id, span, ty);
                 self.vars[local].mtbl = m;
                 self.push_assignment(info, block, local.into(), rvalue);
                 block.unit()

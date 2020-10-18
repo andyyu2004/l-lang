@@ -34,13 +34,13 @@ extern {
 }
 
 fn main() -> int {
-    /* let expr = box Expr::Add( */
-    /*     box Expr::Int(5), */
-    /*     box Expr::Int(9), */
-    /* ); */
-    /* eval(expr); */
+    let expr = box Expr::Add(
+	box Expr::Int(5),
+	box Expr::Int(9),
+    );
+    eval(expr);
 
-    let boxed = box 9;
+    /* let boxed = box 9; */
     /* let cp = boxed; */
     /* rc(cp); */
     /* take_box(boxed); */
@@ -71,13 +71,13 @@ fn take_box(i: &int) {
 // 	NodeOption::None => node.val,
 //     }
 // }
-//
-// fn eval(expr: &Expr) -> int {
-//     print(rc(expr));
-//     match *expr {
-// 	Expr::Int(i) => i,
-// 	Expr::Add(l, r) => eval(l) + eval(r),
-//     }
-// }
+
+fn eval(expr: &Expr) -> int {
+    print(rc(expr));
+    match *expr {
+	Expr::Int(i) => i,
+	Expr::Add(l, r) => eval(l) + eval(r),
+    }
+}
 
 

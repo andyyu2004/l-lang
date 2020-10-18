@@ -1,3 +1,4 @@
+use self::mir::MirTy;
 use super::{CodegenCtx, LLVMAsPtrVal, Monomorphize};
 use ast::{BinOp, Mutability};
 use index::{Idx, IndexVec};
@@ -133,12 +134,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         builder.build_call(
             self.native_functions.print_addr,
-            &[builder.build_pointer_cast(alloca_ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
-            "print_malloc_addr",
-        );
-
-        builder.build_call(
-            self.native_functions.print_addr,
             &[builder.build_pointer_cast(malloc_ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
             "print_malloc_addr",
         );
@@ -148,7 +143,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
         let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
         let increment = builder.build_int_add(refcount, self.vals.one32, "increment_rc");
-        // builder.build_store(rc_ptr, increment);
+        builder.build_store(rc_ptr, increment);
 
         let cast = builder.build_int_cast(increment, self.types.int, "i64rc").into();
         builder.build_call(self.native_functions.print, &[cast], "print_rc");
@@ -213,10 +208,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
-                // let lvalue_ref = self.vars[var];
-                // assert!(lvalue_ref.ty.is_ptr());
-                // let rc_release = self.build_rc_release(lvalue_ref);
-                // self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
+                let lvalue_ref = self.vars[var];
+                assert!(lvalue_ref.ty.is_ptr());
+                let rc_release = self.build_rc_release(lvalue_ref);
+                self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }
@@ -321,9 +316,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 // ValueRef { val, ty }
             }
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
-            mir::Rvalue::Box(box_ty) => {
+            mir::Rvalue::Box(operand) => {
+                let operand_ty = operand.ty(self.tcx, self.mir);
+                let operand = self.codegen_operand(operand);
                 // important the refcount itself is boxed so it is shared
-                let boxed_ty = self.llvm_boxed_ty(box_ty);
+                let boxed_ty = self.llvm_boxed_ty(operand_ty);
                 let ptr = self.build_malloc(boxed_ty, "box").unwrap();
 
                 self.build_call(
@@ -337,8 +334,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_store(rc_ptr, self.vals.zero32);
                 // gep the returned pointer to point to the content only and return that
                 let content_ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
+                self.build_store(content_ptr, operand.val);
 
-                let ty = self.tcx.mk_ptr_ty(Mutability::Mut, box_ty);
+                let ty = self.tcx.mk_ptr_ty(Mutability::Mut, operand_ty);
                 #[cfg(debug_assertions)]
                 self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
                 ValueRef { ty, val: content_ptr.into() }
