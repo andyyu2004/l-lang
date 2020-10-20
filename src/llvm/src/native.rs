@@ -12,24 +12,19 @@ pub struct NativeFunctions<'tcx> {
     pub abort: FunctionValue<'tcx>,
     pub exit: FunctionValue<'tcx>,
     pub print: FunctionValue<'tcx>,
+    pub printf: FunctionValue<'tcx>,
     pub print_addr: FunctionValue<'tcx>,
 }
-
-// #[no_mangle]
-// pub extern "C" fn iprintln(i: i32) {
-//     println!("{}", i);
-// }
 
 impl<'tcx> NativeFunctions<'tcx> {
     pub fn new(module: &Module<'tcx>) -> Self {
         let rc_release = Self::build_rc_release(module);
-        // printf is not directly exposed, but used in other native functions
-        Self::build_printf(module);
+        let printf = Self::build_printf(module);
         let print = Self::build_print(module);
         let print_addr = Self::build_print_addr(module);
         let abort = Self::build_abort(module);
         let exit = Self::build_exit(module);
-        Self { rc_retain: Default::default(), rc_release, abort, print, exit, print_addr }
+        Self { rc_retain: Default::default(), rc_release, abort, print, exit, print_addr, printf }
     }
 
     fn build_print_addr(module: &Module<'tcx>) -> FunctionValue<'tcx> {

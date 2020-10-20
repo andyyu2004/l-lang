@@ -1,31 +1,36 @@
-enum Option {
-    None,
-    Some(int),
-}
+// enum Option {
+//     None,
+//     Some(int),
+// }
+//
+// enum NodeOption {
+//     None,
+//     Some(&Node),
+// }
+//
+// struct Node {
+//     val: int,
+//     next: NodeOption,
+// }
+//
+// struct S {
+//     x: int,
+//     k: bool,
+// }
+//
+// enum Either {
+//     Left(int),
+//     Right(int),
+// }
+//
+// enum Expr {
+//     Int(int),
+//     Add(&Expr, &Expr)
+// }
 
-enum NodeOption {
-    None,
-    Some(&Node),
-}
-
-struct Node {
-    val: int,
-    next: NodeOption,
-}
-
-struct S {
-    x: int,
-    k: bool,
-}
-
-enum Either {
-    Left(int),
-    Right(int),
-}
-
-enum Expr {
-    Int(int),
-    Add(&Expr, &Expr)
+enum List {
+    Next(int, &List),
+    Null,
 }
 
 extern {
@@ -34,11 +39,15 @@ extern {
 }
 
 fn main() -> int {
-    let expr = box Expr::Add(
-	box Expr::Int(5),
-	box Expr::Int(9),
-    );
-    eval(expr);
+    let tail = box List::Null;
+    let head = box List::Next(4, tail);
+
+    last2(head);
+
+    /* let expr0 = box Expr::Int(5); */
+    /* let expr1 = box Expr::Int(9); */
+    /* let expr = box Expr::Add(expr0, expr1); */
+    /* eval(expr); */
 
     /* let boxed = box 9; */
     /* let cp = boxed; */
@@ -58,11 +67,18 @@ fn main() -> int {
     8
 }
 
-fn take_box(i: &int) {
-    print(rc(i));
 
+// fn take_box(i: &int) {
+//     print(rc(i));
+//
+// }
+
+fn last2(list: &List) -> &List {
+    match *list {
+	List::Next(i, l) => last2(l),
+	List::Null => list,
+    }
 }
-
 
 // fn last(node: &Node) -> int {
 //     /* print(rc(node)); */
@@ -71,13 +87,13 @@ fn take_box(i: &int) {
 // 	NodeOption::None => node.val,
 //     }
 // }
-
-fn eval(expr: &Expr) -> int {
-    print(rc(expr));
-    match *expr {
-	Expr::Int(i) => i,
-	Expr::Add(l, r) => eval(l) + eval(r),
-    }
-}
+//
+// fn eval(expr: &Expr) -> int {
+//     print(rc(expr));
+//     match *expr {
+// 	Expr::Int(i) => i,
+// 	Expr::Add(l, r) => eval(l) + eval(r),
+//     }
+// }
 
 

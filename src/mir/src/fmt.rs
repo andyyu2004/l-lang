@@ -1,9 +1,9 @@
 //! mir formatter
 
-use crate::mir;
-use crate::ty;
-use crate::ty::Projection;
+use crate::TyCtx;
 use ast::BinOp;
+use lcore::mir;
+use lcore::ty::Projection;
 use std::fmt;
 use std::fmt::Write;
 
@@ -11,6 +11,7 @@ use std::fmt::Write;
 const INDENT: &str = "    ";
 
 pub struct Formatter<'a, 'tcx> {
+    tcx: TyCtx<'tcx>,
     writer: &'a mut dyn Write,
     mir: &'a mir::Mir<'tcx>,
 }
@@ -26,8 +27,8 @@ pub trait MirFmt<'tcx> {
 }
 
 impl<'a, 'tcx> Formatter<'a, 'tcx> {
-    pub fn new(writer: &'a mut dyn Write, mir: &'a mir::Mir<'tcx>) -> Self {
-        Self { writer, mir }
+    pub fn new(tcx: TyCtx<'tcx>, writer: &'a mut dyn Write, mir: &'a mir::Mir<'tcx>) -> Self {
+        Self { tcx, writer, mir }
     }
 
     pub fn indent(&mut self) -> fmt::Result {
@@ -152,19 +153,6 @@ impl<'tcx> MirFmt<'tcx> for mir::VarId {
     }
 }
 
-// this implementation is used for giving names for llvm
-impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.kind {
-            mir::VarKind::Tmp => write!(f, "tmp"),
-            mir::VarKind::Local => write!(f, "{}", self.info.span.to_string()),
-            mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
-            mir::VarKind::Ret => write!(f, "retvar"),
-            mir::VarKind::Upvar => write!(f, "upvar"),
-        }
-    }
-}
-
 impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         match self {
@@ -197,8 +185,7 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
             mir::Operand::Lvalue(lvalue) => lvalue.mir_fmt(f),
-            mir::Operand::Item(def, _ty) =>
-                write!(f, "{}", ty::tls::with_tcx(|tcx| tcx.defs().ident_of(*def))),
+            mir::Operand::Item(def, _ty) => write!(f, "#{}", def),
         }
     }
 }

@@ -52,10 +52,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.cfg.append_basic_block()
     }
 
-    fn block_mut(&mut self, block: BlockId) -> &mut BasicBlock<'tcx> {
-        self.cfg.block_mut(block)
-    }
-
     /// branch inst
     pub fn branch(&mut self, info: SpanInfo, from: BlockId, to: BlockId) {
         self.terminate(info, from, TerminatorKind::Branch(to))
@@ -97,7 +93,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // if the type is pointer, then it is a box and we need to do refcounting
         // TODO need to differentiate between initialization and reassignments
         // https://youtu.be/Ntj8ab-5cvE?t=2328
-        if self.vars[lvalue.id].ty.is_ptr() && lvalue.projs.is_empty() {
+        let var = self.vars[lvalue.id];
+        if var.ty.is_ptr() && lvalue.projs.is_empty() {
             self.push_retain(info, block, lvalue.id);
             self.schedule_release(info, lvalue.id);
         }

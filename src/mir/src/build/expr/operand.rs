@@ -15,13 +15,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Lvalue(lvalue))
             }
-            tir::ExprKind::Const(c) => {
+            tir::ExprKind::Const(..) => {
                 let constant = set!(block = self.as_const(block, expr));
                 block.and(Operand::Const(constant))
             }
             tir::ExprKind::Unary(..)
             | tir::ExprKind::Adt { .. }
-            | tir::ExprKind::Block(_)
+            | tir::ExprKind::Block(..)
             | tir::ExprKind::Box(..)
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Match(..)

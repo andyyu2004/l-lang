@@ -45,11 +45,17 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
     fn collect_item_instance(&self, instance: Instance<'tcx>) {
         let mir = match self.cached_mir.borrow().get(&instance.def_id) {
             Some(&mir) => Ok(mir),
-            None => self.tcx.mir_of_instance(instance),
+            None => {
+                let mir = self.tcx.mir_of_instance(instance);
+                // we put the print here so it doesn't print the same mir multiple times
+                if let Ok(mir) = mir {
+                    println!("{} {}", self.tcx.defs().ident_of(instance.def_id), mir);
+                }
+                mir
+            }
         };
 
         if let Ok(mir) = mir {
-            println!("{}", mir);
             self.cached_mir.borrow_mut().insert(instance.def_id, mir);
             InstanceCollector { collector: self, instance }.visit_mir(mir)
         }

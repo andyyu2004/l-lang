@@ -1,7 +1,7 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"Expr<>" = type { i64, { %"Expr<>"*, %"Expr<>"* } }
+%"List<>" = type { i64, { i64, %"List<>"* } }
 
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
@@ -43,428 +43,302 @@ declare void @abort()
 
 declare void @exit(i32)
 
+define %"List<>"* @"last2<>"(%"List<>"* %0) {
+basic_blockbb0:
+  %retvar = alloca %"List<>"*
+  %list = alloca %"List<>"*
+  store %"List<>"* %0, %"List<>"** %list
+  %tmp = alloca i1
+  %tmp1 = alloca i64
+  %tmp2 = alloca i1
+  %i = alloca i64
+  %l = alloca %"List<>"*
+  %tmp3 = alloca i1
+  %tmp4 = alloca i64
+  %tmp5 = alloca i1
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  store i1 true, i1* %tmp
+  %load_deref = load %"List<>"*, %"List<>"** %list
+  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %load_deref, i32 0, i32 0
+  %load_discr = load i64, i64* %discr_gep
+  store i64 %load_discr, i64* %tmp1
+  %load = load i64, i64* %tmp1
+  %icmp_eq = icmp eq i64 0, %load
+  store i1 %icmp_eq, i1* %tmp2
+  %load6 = load i1, i1* %tmp2
+  %load7 = load i1, i1* %tmp
+  %and = and i1 %load6, %load7
+  store i1 %and, i1* %tmp
+  %load_deref8 = load %"List<>"*, %"List<>"** %list
+  %struct_gep = getelementptr inbounds %"List<>", %"List<>"* %load_deref8, i32 0, i32 1
+  %struct_gep9 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %struct_gep, i32 0, i32 0
+  %load10 = load i64, i64* %struct_gep9
+  store i64 %load10, i64* %i
+  %load_deref11 = load %"List<>"*, %"List<>"** %list
+  %struct_gep12 = getelementptr inbounds %"List<>", %"List<>"* %load_deref11, i32 0, i32 1
+  %struct_gep13 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %struct_gep12, i32 0, i32 1
+  %load14 = load %"List<>"*, %"List<>"** %struct_gep13
+  store %"List<>"* %load14, %"List<>"** %l
+  call void @"rc_retain<List<>>"(%"List<>"** %l)
+  %load15 = load i1, i1* %tmp
+  br i1 %load15, label %basic_blockbb2, label %basic_blockbb3
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
+  %load16 = load %"List<>"*, %"List<>"** %l
+  %fcall = call %"List<>"* @"last2<>.1"(%"List<>"* %load16)
+  store %"List<>"* %fcall, %"List<>"** %retvar
+  br label %basic_blockbb6
+
+basic_blockbb3:                                   ; preds = %basic_blockbb1
+  store i1 true, i1* %tmp3
+  %load_deref17 = load %"List<>"*, %"List<>"** %list
+  %discr_gep18 = getelementptr inbounds %"List<>", %"List<>"* %load_deref17, i32 0, i32 0
+  %load_discr19 = load i64, i64* %discr_gep18
+  store i64 %load_discr19, i64* %tmp4
+  %load20 = load i64, i64* %tmp4
+  %icmp_eq21 = icmp eq i64 1, %load20
+  store i1 %icmp_eq21, i1* %tmp5
+  %load22 = load i1, i1* %tmp5
+  %load23 = load i1, i1* %tmp3
+  %and24 = and i1 %load22, %load23
+  store i1 %and24, i1* %tmp3
+  %load25 = load i1, i1* %tmp3
+  br i1 %load25, label %basic_blockbb4, label %basic_blockbb7
+
+basic_blockbb4:                                   ; preds = %basic_blockbb3
+  %load26 = load %"List<>"*, %"List<>"** %list
+  store %"List<>"* %load26, %"List<>"** %retvar
+  call void @"rc_retain<List<>>"(%"List<>"** %retvar)
+  br label %basic_blockbb5
+
+basic_blockbb5:                                   ; preds = %basic_blockbb6, %basic_blockbb4
+  call void @"rc_release<List<>>"(%"List<>"** %retvar)
+  call void @"rc_release<List<>>"(%"List<>"** %l)
+  %load_ret = load %"List<>"*, %"List<>"** %retvar
+  ret %"List<>"* %load_ret
+
+basic_blockbb6:                                   ; preds = %basic_blockbb2
+  br label %basic_blockbb5
+
+basic_blockbb7:                                   ; preds = %basic_blockbb3
+  call void @exit(i32 1)
+  unreachable
+}
+
 define i64 @main() {
 basic_blockbb0:
   %retvar = alloca i64
-  %tmp = alloca %"Expr<>"*
-  %tmp1 = alloca %"Expr<>"
-  %tmp2 = alloca %"Expr<>"*
-  %tmp3 = alloca %"Expr<>"
-  %tmp4 = alloca %"Expr<>"*
-  %tmp5 = alloca %"Expr<>"
-  %expr = alloca %"Expr<>"*
-  %tmp6 = alloca i64
-  %fcall = call %"Expr<>" @"Expr::Int<>"(i64 5)
-  store %"Expr<>" %fcall, %"Expr<>"* %tmp3
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load = load %"Expr<>", %"Expr<>"* %tmp3
-  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ %"Expr<>", i32 }* getelementptr ({ %"Expr<>", i32 }, { %"Expr<>", i32 }* null, i32 1) to i32))
-  %box = bitcast i8* %malloccall to { %"Expr<>", i32 }*
-  %cast_malloc_ptr = bitcast { %"Expr<>", i32 }* %box to i8*
-  %print_malloc_addr = call {} @print_addr(i8* %cast_malloc_ptr)
-  %rc_gep = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box, i32 0, i32 1
-  store i32 0, i32* %rc_gep
-  %box_gep = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box, i32 0, i32 0
-  store %"Expr<>" %load, %"Expr<>"* %box_gep
-  store %"Expr<>"* %box_gep, %"Expr<>"** %tmp2
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %tmp2)
-  %fcall7 = call %"Expr<>" @"Expr::Int<>"(i64 9)
-  store %"Expr<>" %fcall7, %"Expr<>"* %tmp5
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  %load8 = load %"Expr<>", %"Expr<>"* %tmp5
-  %malloccall9 = tail call i8* @malloc(i32 ptrtoint ({ %"Expr<>", i32 }* getelementptr ({ %"Expr<>", i32 }, { %"Expr<>", i32 }* null, i32 1) to i32))
-  %box10 = bitcast i8* %malloccall9 to { %"Expr<>", i32 }*
-  %cast_malloc_ptr11 = bitcast { %"Expr<>", i32 }* %box10 to i8*
-  %print_malloc_addr12 = call {} @print_addr(i8* %cast_malloc_ptr11)
-  %rc_gep13 = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box10, i32 0, i32 1
-  store i32 0, i32* %rc_gep13
-  %box_gep14 = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box10, i32 0, i32 0
-  store %"Expr<>" %load8, %"Expr<>"* %box_gep14
-  store %"Expr<>"* %box_gep14, %"Expr<>"** %tmp4
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %tmp4)
-  %load15 = load %"Expr<>"*, %"Expr<>"** %tmp2
-  %load16 = load %"Expr<>"*, %"Expr<>"** %tmp4
-  %fcall17 = call %"Expr<>" @"Expr::Add<>"(%"Expr<>"* %load15, %"Expr<>"* %load16)
-  store %"Expr<>" %fcall17, %"Expr<>"* %tmp1
-  br label %basic_blockbb3
-
-basic_blockbb3:                                   ; preds = %basic_blockbb2
-  %load18 = load %"Expr<>", %"Expr<>"* %tmp1
-  %malloccall19 = tail call i8* @malloc(i32 ptrtoint ({ %"Expr<>", i32 }* getelementptr ({ %"Expr<>", i32 }, { %"Expr<>", i32 }* null, i32 1) to i32))
-  %box20 = bitcast i8* %malloccall19 to { %"Expr<>", i32 }*
-  %cast_malloc_ptr21 = bitcast { %"Expr<>", i32 }* %box20 to i8*
-  %print_malloc_addr22 = call {} @print_addr(i8* %cast_malloc_ptr21)
-  %rc_gep23 = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box20, i32 0, i32 1
-  store i32 0, i32* %rc_gep23
-  %box_gep24 = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %box20, i32 0, i32 0
-  store %"Expr<>" %load18, %"Expr<>"* %box_gep24
-  store %"Expr<>"* %box_gep24, %"Expr<>"** %tmp
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %tmp)
-  %load25 = load %"Expr<>"*, %"Expr<>"** %tmp
-  store %"Expr<>"* %load25, %"Expr<>"** %expr
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %expr)
-  %load26 = load %"Expr<>"*, %"Expr<>"** %expr
-  %fcall27 = call i64 @"eval<>"(%"Expr<>"* %load26)
-  store i64 %fcall27, i64* %tmp6
-  br label %basic_blockbb4
-
-basic_blockbb4:                                   ; preds = %basic_blockbb3
-  store i64 8, i64* %retvar
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %expr)
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %tmp)
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %tmp4)
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %tmp2)
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-}
-
-define i64 @"rc<int>"(i64* %0) {
-rc_entry:
-  %cast_box_ptr = bitcast i64* %0 to { i64, i64 }*
-  %rc_gep = getelementptr inbounds { i64, i64 }, { i64, i64 }* %cast_box_ptr, i32 0, i32 1
-  %load_refcount = load i64, i64* %rc_gep
-  ret i64 %load_refcount
-}
-
-define %"Expr<>" @"Expr::Int<>"(i64 %0) {
-basic_blockbb0:
-  %retvar = alloca %"Expr<>"
-  %1 = alloca i64
-  store i64 %0, i64* %1
-  %discr_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %retvar, i32 0, i32 0
-  store i64 0, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %retvar, i32 0, i32 1
-  %enum_ptr_cast = bitcast { %"Expr<>"*, %"Expr<>"* }* %enum_gep to { i64 }*
-  %load = load i64, i64* %1
-  %enum_content_gep = getelementptr inbounds { i64 }, { i64 }* %enum_ptr_cast, i32 0, i32 0
-  store i64 %load, i64* %enum_content_gep
-  %load_ret = load %"Expr<>", %"Expr<>"* %retvar
-  ret %"Expr<>" %load_ret
-}
-
-define %"Expr<>" @"Expr::Add<>"(%"Expr<>"* %0, %"Expr<>"* %1) {
-basic_blockbb0:
-  %retvar = alloca %"Expr<>"
-  %2 = alloca %"Expr<>"*
-  store %"Expr<>"* %0, %"Expr<>"** %2
-  %3 = alloca %"Expr<>"*
-  store %"Expr<>"* %1, %"Expr<>"** %3
-  %discr_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %retvar, i32 0, i32 0
+  %tmp = alloca %"List<>"*
+  %tmp1 = alloca %"List<>"
+  %tail = alloca %"List<>"*
+  %tmp2 = alloca %"List<>"*
+  %tmp3 = alloca %"List<>"
+  %head = alloca %"List<>"*
+  %tmp4 = alloca %"List<>"*
+  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %tmp1, i32 0, i32 0
   store i64 1, i64* %discr_gep
-  %enum_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %retvar, i32 0, i32 1
-  %load = load %"Expr<>"*, %"Expr<>"** %2
-  %enum_content_gep = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %enum_gep, i32 0, i32 0
-  store %"Expr<>"* %load, %"Expr<>"** %enum_content_gep
-  %load1 = load %"Expr<>"*, %"Expr<>"** %3
-  %enum_content_gep2 = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %enum_gep, i32 0, i32 1
-  store %"Expr<>"* %load1, %"Expr<>"** %enum_content_gep2
-  %load_ret = load %"Expr<>", %"Expr<>"* %retvar
-  ret %"Expr<>" %load_ret
-}
-
-define i64 @"eval<>"(%"Expr<>"* %0) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %expr = alloca %"Expr<>"*
-  store %"Expr<>"* %0, %"Expr<>"** %expr
-  %tmp = alloca {}
-  %tmp1 = alloca i64
-  %tmp2 = alloca i1
-  %tmp3 = alloca i64
-  %tmp4 = alloca i1
-  %i = alloca i64
-  %tmp5 = alloca i1
-  %tmp6 = alloca i64
-  %tmp7 = alloca i1
-  %l = alloca %"Expr<>"*
-  %r = alloca %"Expr<>"*
-  %tmp8 = alloca i64
-  %tmp9 = alloca i64
-  %load = load %"Expr<>"*, %"Expr<>"** %expr
-  %fcall = call i64 @"rc<Expr<>>"(%"Expr<>"* %load)
-  store i64 %fcall, i64* %tmp1
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load10 = load i64, i64* %tmp1
-  %fcall11 = call {} @print(i64 %load10)
-  store {} %fcall11, {}* %tmp
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  br label %basic_blockbb3
-
-basic_blockbb3:                                   ; preds = %basic_blockbb2
-  store i1 true, i1* %tmp2
-  %load_deref = load %"Expr<>"*, %"Expr<>"** %expr
-  %discr_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref, i32 0, i32 0
-  %load_discr = load i64, i64* %discr_gep
-  store i64 %load_discr, i64* %tmp3
-  %load12 = load i64, i64* %tmp3
-  %icmp_eq = icmp eq i64 0, %load12
-  store i1 %icmp_eq, i1* %tmp4
-  %load13 = load i1, i1* %tmp4
-  %load14 = load i1, i1* %tmp2
-  %and = and i1 %load13, %load14
-  store i1 %and, i1* %tmp2
-  %load_deref15 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref15, i32 0, i32 1
-  %lvalue_pointer_cast = bitcast { %"Expr<>"*, %"Expr<>"* }* %struct_gep to { i64 }*
-  %struct_gep16 = getelementptr inbounds { i64 }, { i64 }* %lvalue_pointer_cast, i32 0, i32 0
-  %load17 = load i64, i64* %struct_gep16
-  store i64 %load17, i64* %i
-  %load18 = load i1, i1* %tmp2
-  br i1 %load18, label %basic_blockbb4, label %basic_blockbb5
-
-basic_blockbb4:                                   ; preds = %basic_blockbb3
-  %load19 = load i64, i64* %i
-  store i64 %load19, i64* %retvar
-  br label %basic_blockbb7
-
-basic_blockbb5:                                   ; preds = %basic_blockbb3
-  store i1 true, i1* %tmp5
-  %load_deref20 = load %"Expr<>"*, %"Expr<>"** %expr
-  %discr_gep21 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref20, i32 0, i32 0
-  %load_discr22 = load i64, i64* %discr_gep21
-  store i64 %load_discr22, i64* %tmp6
-  %load23 = load i64, i64* %tmp6
-  %icmp_eq24 = icmp eq i64 1, %load23
-  store i1 %icmp_eq24, i1* %tmp7
-  %load25 = load i1, i1* %tmp7
-  %load26 = load i1, i1* %tmp5
-  %and27 = and i1 %load25, %load26
-  store i1 %and27, i1* %tmp5
-  %load_deref28 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep29 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref28, i32 0, i32 1
-  %struct_gep30 = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %struct_gep29, i32 0, i32 0
-  %load31 = load %"Expr<>"*, %"Expr<>"** %struct_gep30
-  store %"Expr<>"* %load31, %"Expr<>"** %l
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %l)
-  %load_deref32 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep33 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref32, i32 0, i32 1
-  %struct_gep34 = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %struct_gep33, i32 0, i32 1
-  %load35 = load %"Expr<>"*, %"Expr<>"** %struct_gep34
-  store %"Expr<>"* %load35, %"Expr<>"** %r
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %r)
-  %load36 = load i1, i1* %tmp5
-  br i1 %load36, label %basic_blockbb6, label %basic_blockbb8
-
-basic_blockbb6:                                   ; preds = %basic_blockbb5
-  %load37 = load %"Expr<>"*, %"Expr<>"** %l
-  %fcall38 = call i64 @"eval<>"(%"Expr<>"* %load37)
-  store i64 %fcall38, i64* %tmp8
-  br label %basic_blockbb9
-
-basic_blockbb7:                                   ; preds = %basic_blockbb10, %basic_blockbb4
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %r)
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %l)
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-
-basic_blockbb8:                                   ; preds = %basic_blockbb5
-  call void @exit(i32 1)
-  unreachable
-
-basic_blockbb9:                                   ; preds = %basic_blockbb6
-  %load39 = load %"Expr<>"*, %"Expr<>"** %r
-  %fcall40 = call i64 @"eval<>"(%"Expr<>"* %load39)
-  store i64 %fcall40, i64* %tmp9
-  br label %basic_blockbb10
-
-basic_blockbb10:                                  ; preds = %basic_blockbb9
-  %load41 = load i64, i64* %tmp8
-  %load42 = load i64, i64* %tmp9
-  %iadd = add i64 %load41, %load42
-  store i64 %iadd, i64* %retvar
-  br label %basic_blockbb7
-}
-
-define i64 @"rc<Expr<>>"(%"Expr<>"* %0) {
-rc_entry:
-  %cast_box_ptr = bitcast %"Expr<>"* %0 to { %"Expr<>", i64 }*
-  %rc_gep = getelementptr inbounds { %"Expr<>", i64 }, { %"Expr<>", i64 }* %cast_box_ptr, i32 0, i32 1
-  %load_refcount = load i64, i64* %rc_gep
-  ret i64 %load_refcount
-}
-
-define i64 @"eval<>.1"(%"Expr<>"* %0) {
-basic_blockbb0:
-  %retvar = alloca i64
-  %expr = alloca %"Expr<>"*
-  store %"Expr<>"* %0, %"Expr<>"** %expr
-  %tmp = alloca {}
-  %tmp1 = alloca i64
-  %tmp2 = alloca i1
-  %tmp3 = alloca i64
-  %tmp4 = alloca i1
-  %i = alloca i64
-  %tmp5 = alloca i1
-  %tmp6 = alloca i64
-  %tmp7 = alloca i1
-  %l = alloca %"Expr<>"*
-  %r = alloca %"Expr<>"*
-  %tmp8 = alloca i64
-  %tmp9 = alloca i64
-  %load = load %"Expr<>"*, %"Expr<>"** %expr
-  %fcall = call i64 @"rc<Expr<>>"(%"Expr<>"* %load)
-  store i64 %fcall, i64* %tmp1
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load10 = load i64, i64* %tmp1
-  %fcall11 = call {} @print(i64 %load10)
-  store {} %fcall11, {}* %tmp
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  br label %basic_blockbb3
-
-basic_blockbb3:                                   ; preds = %basic_blockbb2
-  store i1 true, i1* %tmp2
-  %load_deref = load %"Expr<>"*, %"Expr<>"** %expr
-  %discr_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref, i32 0, i32 0
-  %load_discr = load i64, i64* %discr_gep
-  store i64 %load_discr, i64* %tmp3
-  %load12 = load i64, i64* %tmp3
-  %icmp_eq = icmp eq i64 0, %load12
-  store i1 %icmp_eq, i1* %tmp4
-  %load13 = load i1, i1* %tmp4
-  %load14 = load i1, i1* %tmp2
-  %and = and i1 %load13, %load14
-  store i1 %and, i1* %tmp2
-  %load_deref15 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref15, i32 0, i32 1
-  %lvalue_pointer_cast = bitcast { %"Expr<>"*, %"Expr<>"* }* %struct_gep to { i64 }*
-  %struct_gep16 = getelementptr inbounds { i64 }, { i64 }* %lvalue_pointer_cast, i32 0, i32 0
-  %load17 = load i64, i64* %struct_gep16
-  store i64 %load17, i64* %i
-  %load18 = load i1, i1* %tmp2
-  br i1 %load18, label %basic_blockbb4, label %basic_blockbb5
-
-basic_blockbb4:                                   ; preds = %basic_blockbb3
-  %load19 = load i64, i64* %i
-  store i64 %load19, i64* %retvar
-  br label %basic_blockbb7
-
-basic_blockbb5:                                   ; preds = %basic_blockbb3
-  store i1 true, i1* %tmp5
-  %load_deref20 = load %"Expr<>"*, %"Expr<>"** %expr
-  %discr_gep21 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref20, i32 0, i32 0
-  %load_discr22 = load i64, i64* %discr_gep21
-  store i64 %load_discr22, i64* %tmp6
-  %load23 = load i64, i64* %tmp6
-  %icmp_eq24 = icmp eq i64 1, %load23
-  store i1 %icmp_eq24, i1* %tmp7
-  %load25 = load i1, i1* %tmp7
-  %load26 = load i1, i1* %tmp5
-  %and27 = and i1 %load25, %load26
-  store i1 %and27, i1* %tmp5
-  %load_deref28 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep29 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref28, i32 0, i32 1
-  %struct_gep30 = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %struct_gep29, i32 0, i32 0
-  %load31 = load %"Expr<>"*, %"Expr<>"** %struct_gep30
-  store %"Expr<>"* %load31, %"Expr<>"** %l
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %l)
-  %load_deref32 = load %"Expr<>"*, %"Expr<>"** %expr
-  %struct_gep33 = getelementptr inbounds %"Expr<>", %"Expr<>"* %load_deref32, i32 0, i32 1
-  %struct_gep34 = getelementptr inbounds { %"Expr<>"*, %"Expr<>"* }, { %"Expr<>"*, %"Expr<>"* }* %struct_gep33, i32 0, i32 1
-  %load35 = load %"Expr<>"*, %"Expr<>"** %struct_gep34
-  store %"Expr<>"* %load35, %"Expr<>"** %r
-  call void @"rc_retain<Expr<>>"(%"Expr<>"** %r)
-  %load36 = load i1, i1* %tmp5
-  br i1 %load36, label %basic_blockbb6, label %basic_blockbb8
-
-basic_blockbb6:                                   ; preds = %basic_blockbb5
-  %load37 = load %"Expr<>"*, %"Expr<>"** %l
-  %fcall38 = call i64 @"eval<>"(%"Expr<>"* %load37)
-  store i64 %fcall38, i64* %tmp8
-  br label %basic_blockbb9
-
-basic_blockbb7:                                   ; preds = %basic_blockbb10, %basic_blockbb4
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %r)
-  call void @"rc_release<Expr<>>"(%"Expr<>"** %l)
-  %load_ret = load i64, i64* %retvar
-  ret i64 %load_ret
-
-basic_blockbb8:                                   ; preds = %basic_blockbb5
-  call void @exit(i32 1)
-  unreachable
-
-basic_blockbb9:                                   ; preds = %basic_blockbb6
-  %load39 = load %"Expr<>"*, %"Expr<>"** %r
-  %fcall40 = call i64 @"eval<>"(%"Expr<>"* %load39)
-  store i64 %fcall40, i64* %tmp9
-  br label %basic_blockbb10
-
-basic_blockbb10:                                  ; preds = %basic_blockbb9
-  %load41 = load i64, i64* %tmp8
-  %load42 = load i64, i64* %tmp9
-  %iadd = add i64 %load41, %load42
-  store i64 %iadd, i64* %retvar
-  br label %basic_blockbb7
-}
-
-define {} @"take_box<>"(i64* %0) {
-basic_blockbb0:
-  %retvar = alloca {}
-  %i = alloca i64*
-  store i64* %0, i64** %i
-  %tmp = alloca {}
-  %tmp1 = alloca i64
-  %load = load i64*, i64** %i
-  %fcall = call i64 @"rc<int>"(i64* %load)
-  store i64 %fcall, i64* %tmp1
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load2 = load i64, i64* %tmp1
-  %fcall3 = call {} @print(i64 %load2)
-  store {} %fcall3, {}* %tmp
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  store {} undef, {}* %retvar
-  %load_ret = load {}, {}* %retvar
-  ret {} %load_ret
-}
-
-declare noalias i8* @malloc(i32)
-
-define void @"rc_retain<Expr<>>"(%"Expr<>"** %0) {
-rc_retain_start:
-  %load_box = load %"Expr<>"*, %"Expr<>"** %0
-  %cast_malloc_ptr = bitcast %"Expr<>"* %load_box to i8*
+  %enum_gep = getelementptr inbounds %"List<>", %"List<>"* %tmp1, i32 0, i32 1
+  %enum_ptr_cast = bitcast { i64, %"List<>"* }* %enum_gep to {}*
+  %load = load %"List<>", %"List<>"* %tmp1
+  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ %"List<>", i32 }* getelementptr ({ %"List<>", i32 }, { %"List<>", i32 }* null, i32 1) to i32))
+  %box = bitcast i8* %malloccall to { %"List<>", i32 }*
+  %cast_malloc_ptr = bitcast { %"List<>", i32 }* %box to i8*
   %print_malloc_addr = call {} @print_addr(i8* %cast_malloc_ptr)
-  %rc_retain_box_cast = bitcast %"Expr<>"* %load_box to { %"Expr<>", i32 }*
-  %rc = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %rc_retain_box_cast, i32 0, i32 1
+  %rc_gep = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %box, i32 0, i32 1
+  store i32 0, i32* %rc_gep
+  %box_gep = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %box, i32 0, i32 0
+  store %"List<>" %load, %"List<>"* %box_gep
+  store %"List<>"* %box_gep, %"List<>"** %tmp
+  call void @"rc_retain<List<>>"(%"List<>"** %tmp)
+  %load5 = load %"List<>"*, %"List<>"** %tmp
+  store %"List<>"* %load5, %"List<>"** %tail
+  call void @"rc_retain<List<>>"(%"List<>"** %tail)
+  %load6 = load %"List<>"*, %"List<>"** %tail
+  %fcall = call %"List<>" @"List::Next<>"(i64 4, %"List<>"* %load6)
+  store %"List<>" %fcall, %"List<>"* %tmp3
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load7 = load %"List<>", %"List<>"* %tmp3
+  %malloccall8 = tail call i8* @malloc(i32 ptrtoint ({ %"List<>", i32 }* getelementptr ({ %"List<>", i32 }, { %"List<>", i32 }* null, i32 1) to i32))
+  %box9 = bitcast i8* %malloccall8 to { %"List<>", i32 }*
+  %cast_malloc_ptr10 = bitcast { %"List<>", i32 }* %box9 to i8*
+  %print_malloc_addr11 = call {} @print_addr(i8* %cast_malloc_ptr10)
+  %rc_gep12 = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %box9, i32 0, i32 1
+  store i32 0, i32* %rc_gep12
+  %box_gep13 = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %box9, i32 0, i32 0
+  store %"List<>" %load7, %"List<>"* %box_gep13
+  store %"List<>"* %box_gep13, %"List<>"** %tmp2
+  call void @"rc_retain<List<>>"(%"List<>"** %tmp2)
+  %load14 = load %"List<>"*, %"List<>"** %tmp2
+  store %"List<>"* %load14, %"List<>"** %head
+  call void @"rc_retain<List<>>"(%"List<>"** %head)
+  %load15 = load %"List<>"*, %"List<>"** %head
+  %fcall16 = call %"List<>"* @"last2<>.1"(%"List<>"* %load15)
+  store %"List<>"* %fcall16, %"List<>"** %tmp4
+  br label %basic_blockbb2
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
+  store i64 8, i64* %retvar
+  call void @"rc_release<List<>>"(%"List<>"** %head)
+  call void @"rc_release<List<>>"(%"List<>"** %tmp2)
+  call void @"rc_release<List<>>"(%"List<>"** %tail)
+  call void @"rc_release<List<>>"(%"List<>"** %tmp)
+  %load_ret = load i64, i64* %retvar
+  ret i64 %load_ret
+}
+
+define %"List<>"* @"last2<>.1"(%"List<>"* %0) {
+basic_blockbb0:
+  %retvar = alloca %"List<>"*
+  %list = alloca %"List<>"*
+  store %"List<>"* %0, %"List<>"** %list
+  %tmp = alloca i1
+  %tmp1 = alloca i64
+  %tmp2 = alloca i1
+  %i = alloca i64
+  %l = alloca %"List<>"*
+  %tmp3 = alloca i1
+  %tmp4 = alloca i64
+  %tmp5 = alloca i1
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  store i1 true, i1* %tmp
+  %load_deref = load %"List<>"*, %"List<>"** %list
+  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %load_deref, i32 0, i32 0
+  %load_discr = load i64, i64* %discr_gep
+  store i64 %load_discr, i64* %tmp1
+  %load = load i64, i64* %tmp1
+  %icmp_eq = icmp eq i64 0, %load
+  store i1 %icmp_eq, i1* %tmp2
+  %load6 = load i1, i1* %tmp2
+  %load7 = load i1, i1* %tmp
+  %and = and i1 %load6, %load7
+  store i1 %and, i1* %tmp
+  %load_deref8 = load %"List<>"*, %"List<>"** %list
+  %struct_gep = getelementptr inbounds %"List<>", %"List<>"* %load_deref8, i32 0, i32 1
+  %struct_gep9 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %struct_gep, i32 0, i32 0
+  %load10 = load i64, i64* %struct_gep9
+  store i64 %load10, i64* %i
+  %load_deref11 = load %"List<>"*, %"List<>"** %list
+  %struct_gep12 = getelementptr inbounds %"List<>", %"List<>"* %load_deref11, i32 0, i32 1
+  %struct_gep13 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %struct_gep12, i32 0, i32 1
+  %load14 = load %"List<>"*, %"List<>"** %struct_gep13
+  store %"List<>"* %load14, %"List<>"** %l
+  call void @"rc_retain<List<>>"(%"List<>"** %l)
+  %load15 = load i1, i1* %tmp
+  br i1 %load15, label %basic_blockbb2, label %basic_blockbb3
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
+  %load16 = load %"List<>"*, %"List<>"** %l
+  %fcall = call %"List<>"* @"last2<>.1"(%"List<>"* %load16)
+  store %"List<>"* %fcall, %"List<>"** %retvar
+  br label %basic_blockbb6
+
+basic_blockbb3:                                   ; preds = %basic_blockbb1
+  store i1 true, i1* %tmp3
+  %load_deref17 = load %"List<>"*, %"List<>"** %list
+  %discr_gep18 = getelementptr inbounds %"List<>", %"List<>"* %load_deref17, i32 0, i32 0
+  %load_discr19 = load i64, i64* %discr_gep18
+  store i64 %load_discr19, i64* %tmp4
+  %load20 = load i64, i64* %tmp4
+  %icmp_eq21 = icmp eq i64 1, %load20
+  store i1 %icmp_eq21, i1* %tmp5
+  %load22 = load i1, i1* %tmp5
+  %load23 = load i1, i1* %tmp3
+  %and24 = and i1 %load22, %load23
+  store i1 %and24, i1* %tmp3
+  %load25 = load i1, i1* %tmp3
+  br i1 %load25, label %basic_blockbb4, label %basic_blockbb7
+
+basic_blockbb4:                                   ; preds = %basic_blockbb3
+  %load26 = load %"List<>"*, %"List<>"** %list
+  store %"List<>"* %load26, %"List<>"** %retvar
+  call void @"rc_retain<List<>>"(%"List<>"** %retvar)
+  br label %basic_blockbb5
+
+basic_blockbb5:                                   ; preds = %basic_blockbb6, %basic_blockbb4
+  call void @"rc_release<List<>>"(%"List<>"** %retvar)
+  call void @"rc_release<List<>>"(%"List<>"** %l)
+  %load_ret = load %"List<>"*, %"List<>"** %retvar
+  ret %"List<>"* %load_ret
+
+basic_blockbb6:                                   ; preds = %basic_blockbb2
+  br label %basic_blockbb5
+
+basic_blockbb7:                                   ; preds = %basic_blockbb3
+  call void @exit(i32 1)
+  unreachable
+}
+
+define %"List<>" @"List::Next<>"(i64 %0, %"List<>"* %1) {
+basic_blockbb0:
+  %retvar = alloca %"List<>"
+  %2 = alloca i64
+  store i64 %0, i64* %2
+  %3 = alloca %"List<>"*
+  store %"List<>"* %1, %"List<>"** %3
+  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %retvar, i32 0, i32 0
+  store i64 0, i64* %discr_gep
+  %enum_gep = getelementptr inbounds %"List<>", %"List<>"* %retvar, i32 0, i32 1
+  %load = load i64, i64* %2
+  %enum_content_gep = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %enum_gep, i32 0, i32 0
+  store i64 %load, i64* %enum_content_gep
+  %load1 = load %"List<>"*, %"List<>"** %3
+  %enum_content_gep2 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %enum_gep, i32 0, i32 1
+  store %"List<>"* %load1, %"List<>"** %enum_content_gep2
+  %load_ret = load %"List<>", %"List<>"* %retvar
+  ret %"List<>" %load_ret
+}
+
+define void @"rc_retain<List<>>"(%"List<>"** %0) {
+rc_retain_start:
+  %alloc_str = alloca [17 x i8]
+  store [17 x i8] c"rc_retain_count\0A\00", [17 x i8]* %alloc_str
+  %cast_str = bitcast [17 x i8]* %alloc_str to i8*
+  %print_str = call i32 (i8*, ...) @printf(i8* %cast_str)
+  %load_box = load %"List<>"*, %"List<>"** %0
+  %cast_malloc_ptr = bitcast %"List<>"* %load_box to i8*
+  %print_malloc_addr = call {} @print_addr(i8* %cast_malloc_ptr)
+  %rc_retain_box_cast = bitcast %"List<>"* %load_box to { %"List<>", i32 }*
+  %rc = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %rc_retain_box_cast, i32 0, i32 1
   %load_rc = load i32, i32* %rc
   %increment_rc = add i32 %load_rc, 1
   store i32 %increment_rc, i32* %rc
   %i64rc = sext i32 %increment_rc to i64
-  %print_rc = call {} @print(i64 %i64rc)
+  %rc_retain_count = call {} @print(i64 %i64rc)
   ret void
 }
 
-define void @"rc_release<Expr<>>"(%"Expr<>"** %0) {
+define void @"rc_release<List<>>"(%"List<>"** %0) {
 rc_release_start:
-  %load_box = load %"Expr<>"*, %"Expr<>"** %0
-  %rc_release_box_cast = bitcast %"Expr<>"* %load_box to { %"Expr<>", i32 }*
-  %rc = getelementptr inbounds { %"Expr<>", i32 }, { %"Expr<>", i32 }* %rc_release_box_cast, i32 0, i32 1
+  %alloc_str = alloca [18 x i8]
+  store [18 x i8] c"rc_release_count\0A\00", [18 x i8]* %alloc_str
+  %cast_str = bitcast [18 x i8]* %alloc_str to i8*
+  %print_str = call i32 (i8*, ...) @printf(i8* %cast_str)
+  %load_box = load %"List<>"*, %"List<>"** %0
+  %cast_malloc_ptr = bitcast %"List<>"* %load_box to i8*
+  %print_malloc_addr = call {} @print_addr(i8* %cast_malloc_ptr)
+  %rc_retain_box_cast = bitcast %"List<>"* %load_box to { %"List<>", i32 }*
+  %rc = getelementptr inbounds { %"List<>", i32 }, { %"List<>", i32 }* %rc_retain_box_cast, i32 0, i32 1
   %load_rc = load i32, i32* %rc
   %decrement = sub i32 %load_rc, 1
   store i32 %decrement, i32* %rc
-  %1 = sext i32 %decrement to i64
-  %print_rc = call {} @print(i64 %1)
+  %rc_release_count = sext i32 %decrement to i64
+  %print_rc = call {} @print(i64 %rc_release_count)
   %rc_cmp = icmp eq i32 %decrement, 0
   br i1 %rc_cmp, label %rc_release_free, label %rc_release_ret
 
 rc_release_free:                                  ; preds = %rc_release_start
+  %1 = bitcast { %"List<>", i32 }* %rc_retain_box_cast to i8*
+  tail call void @free(i8* %1)
   ret void
 
 rc_release_ret:                                   ; preds = %rc_release_start
   ret void
 }
+
+declare noalias i8* @malloc(i32)

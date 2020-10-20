@@ -8,12 +8,32 @@ use itertools::Itertools;
 use resolve::Resolutions;
 use rustc_hash::FxHashMap;
 use session::Session;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 
 #[derive(Copy, Clone)]
 pub struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
+}
+
+/// thread local storage for the TyCtx<'tcx>
+pub mod tls {
+    use super::*;
+
+    // stores a pointer to the gcx
+    thread_local! (static GCX: Cell<usize> = Cell::new(0));
+
+    crate fn enter_tcx<'tcx, R>(gcx: &'tcx GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+        GCX.with(|ptr| ptr.set(gcx as *const _ as _));
+        with_tcx(f)
+    }
+
+    pub fn with_tcx<'tcx, R>(f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+        let gcx_ptr = GCX.with(|gcx| gcx.get()) as *const GlobalCtx;
+        let gcx = unsafe { &*gcx_ptr };
+        let tcx = TyCtx { gcx };
+        f(tcx)
+    }
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -208,8 +228,7 @@ impl<'tcx> GlobalCtx<'tcx> {
     }
 
     pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
-        let tcx = TyCtx { gcx: self };
-        f(tcx)
+        tls::enter_tcx(self, f)
     }
 }
 

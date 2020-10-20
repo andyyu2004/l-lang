@@ -1,4 +1,5 @@
 #![feature(hash_raw_entry)]
+#![feature(crate_visibility_modifier)]
 #![feature(extern_types)]
 #![feature(const_panic)]
 #![feature(const_raw_ptr_deref)]
