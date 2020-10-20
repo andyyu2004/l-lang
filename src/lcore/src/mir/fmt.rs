@@ -58,6 +58,24 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         writeln!(self)
     }
 
+    fn fmt_iter<'i, I, T>(&mut self, iter: &'i I) -> fmt::Result
+    where
+        &'i I: IntoIterator<Item = &'i T>,
+        T: MirFmt<'tcx> + 'i,
+    {
+        let mut iter = iter.into_iter();
+        match iter.next() {
+            Some(t) => t.mir_fmt(self)?,
+            None => return Ok(()),
+        }
+
+        for t in iter {
+            write!(self, ", ")?;
+            t.mir_fmt(self)?;
+        }
+        Ok(())
+    }
+
     fn fmt_assign(
         &mut self,
         lvalue: &mir::Lvalue<'tcx>,
@@ -147,6 +165,7 @@ impl<'tcx> MirFmt<'tcx> for mir::VarId {
         match var.kind {
             mir::VarKind::Tmp | mir::VarKind::Ret | mir::VarKind::Upvar =>
                 write!(f, "{}{:?}", var, self),
+            _ if var.info.span.is_empty() => write!(f, "%{:?}", self),
             _ => write!(f, "{}", var),
         }
     }
@@ -157,8 +176,7 @@ impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
             mir::VarKind::Tmp => write!(f, "tmp"),
-            mir::VarKind::Local => write!(f, "{}", self.info.span.to_string()),
-            mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
+            mir::VarKind::Local | mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
             mir::VarKind::Ret => write!(f, "retvar"),
             mir::VarKind::Upvar => write!(f, "upvar"),
         }
@@ -172,10 +190,8 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
             mir::Rvalue::Bin(op, lhs, rhs) => f.fmt_bin(*op, lhs, rhs),
             mir::Rvalue::Adt { adt, variant_idx, substs, fields } => {
                 let variant_ident = adt.variants[*variant_idx].ident;
-                write!(f, "{}::{}<{}> {{", adt.ident, variant_ident, substs)?;
-                for field in fields {
-                    field.mir_fmt(f)?;
-                }
+                write!(f, "{}::{}<{}> {{ ", adt.ident, variant_ident, substs)?;
+                f.fmt_iter(fields)?;
                 write!(f, " }}")
             }
 
@@ -230,13 +246,7 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
                 write!(fmt, ":{} ← call ", ty)?;
                 f.mir_fmt(fmt)?;
                 write!(fmt, "(")?;
-                args.get(0).map(|arg| arg.mir_fmt(fmt));
-                if args.len() > 1 {
-                    for arg in &args[1..] {
-                        write!(fmt, ", ")?;
-                        arg.mir_fmt(fmt)?;
-                    }
-                }
+                fmt.fmt_iter(args)?;
                 writeln!(fmt, ") -> [{:?}]", target)?;
                 writeln!(fmt)
             }

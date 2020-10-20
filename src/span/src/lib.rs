@@ -60,6 +60,10 @@ impl Span {
         Self::new(0, 0)
     }
 
+    pub const fn is_empty(self) -> bool {
+        self.lo == self.hi
+    }
+
     pub fn hi(self) -> Self {
         Self::new(self.hi, self.hi)
     }
