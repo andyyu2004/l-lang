@@ -170,7 +170,15 @@ impl<'tcx> MirFmt<'tcx> for mir::Rvalue<'tcx> {
         match self {
             mir::Rvalue::Operand(operand) => operand.mir_fmt(f),
             mir::Rvalue::Bin(op, lhs, rhs) => f.fmt_bin(*op, lhs, rhs),
-            mir::Rvalue::Adt { adt, .. } => write!(f, "{} {{ .. }}", adt.ident),
+            mir::Rvalue::Adt { adt, variant_idx, substs, fields } => {
+                let variant_ident = adt.variants[*variant_idx].ident;
+                write!(f, "{}::{}<{}> {{", adt.ident, variant_ident, substs)?;
+                for field in fields {
+                    field.mir_fmt(f)?;
+                }
+                write!(f, " }}")
+            }
+
             mir::Rvalue::Ref(lvalue) => {
                 write!(f, "&")?;
                 lvalue.mir_fmt(f)
