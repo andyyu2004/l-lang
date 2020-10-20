@@ -1,27 +1,27 @@
-[00:00:00.002] (7f6c1e37f940) INFO   resolving node NodeId(1) to PrimTy(Int)
-[00:00:00.002] (7f6c1e37f940) INFO   resolving node NodeId(5) to Def(0, Enum)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(17) to Def(5, TyParam(0))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(22) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(29) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(35) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(39) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(44) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(48) to Def(7, Struct)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(53) to PrimTy(Int)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(60) to Def(2, Ctor(Unit))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(70) to Def(1, Ctor(Tuple))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(74) to Local(NodeId(57))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(81) to Def(10, Fn)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(84) to Local(NodeId(67))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(97) to Def(0, Enum)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(102) to Def(0, Enum)
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(106) to Local(NodeId(95))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(111) to Def(1, Ctor(Tuple))
-[00:00:00.003] (7f6c1e37f940) INFO   resolving node NodeId(120) to Def(10, Fn)
-[00:00:00.004] (7f6c1e37f940) INFO   resolving node NodeId(123) to Local(NodeId(117))
-[00:00:00.004] (7f6c1e37f940) INFO   resolving node NodeId(129) to Def(2, Ctor(Unit))
-[00:00:00.004] (7f6c1e37f940) INFO   resolving node NodeId(132) to Local(NodeId(95))
-[00:00:00.004] (7f6c1e37f940) INFO   IR {
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(1) to PrimTy(Int)
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(5) to Def(0, Enum)
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(17) to Def(5, TyParam(0))
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(22) to PrimTy(Int)
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(29) to PrimTy(Int)
+[00:00:00.002] (7f2f2388d940) INFO   resolving node NodeId(35) to PrimTy(Int)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(39) to PrimTy(Int)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(44) to PrimTy(Int)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(48) to Def(7, Struct)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(53) to PrimTy(Int)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(60) to Def(2, Ctor(Unit))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(70) to Def(1, Ctor(Tuple))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(74) to Local(NodeId(57))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(81) to Def(10, Fn)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(84) to Local(NodeId(67))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(97) to Def(0, Enum)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(102) to Def(0, Enum)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(106) to Local(NodeId(95))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(111) to Def(1, Ctor(Tuple))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(120) to Def(10, Fn)
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(123) to Local(NodeId(117))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(129) to Def(2, Ctor(Unit))
+[00:00:00.003] (7f2f2388d940) INFO   resolving node NodeId(132) to Local(NodeId(95))
+[00:00:00.004] (7f2f2388d940) INFO   IR {
     entry_id: Some(
         9,
     ),
@@ -1697,121 +1697,121 @@
     },
     impl_items: {},
 }
-[00:00:00.039] (7f6c1e37f940) INFO   collect item: TyS {
+[00:00:00.041] (7f2f2388d940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.List<>,
 }
-[00:00:00.040] (7f6c1e37f940) INFO   collect item: TyS {
+[00:00:00.042] (7f2f2388d940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.T<>,
 }
-[00:00:00.040] (7f6c1e37f940) INFO   collect item: TyS {
+[00:00:00.042] (7f2f2388d940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.K<>,
 }
-[00:00:00.040] (7f6c1e37f940) INFO   collect item: TyS {
+[00:00:00.042] (7f2f2388d940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn()->int,
 }
-[00:00:00.040] (7f6c1e37f940) INFO   collect item: TyS {
+[00:00:00.042] (7f2f2388d940) INFO   collect item: TyS {
     flags: (empty),
     kind: ∀τ.fn(&List<>)->&List<>,
 }
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.5 : List<>
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.6 : &mut List<>
-[00:00:00.040] (7f6c1e37f940) INFO   deflocal 9.2 : &mut List<>
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.2 : &mut List<>
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.12 : fn(int,&List<>)->List<>
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.13 : int
-[00:00:00.040] (7f6c1e37f940) INFO   lookup ty for local 9.2
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.15 : &mut List<>
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.16 : ?0
-[00:00:00.040] (7f6c1e37f940) INFO   fcx write ty 9.17 : &mut ?0
-[00:00:00.040] (7f6c1e37f940) INFO   deflocal 9.9 : &mut ?0
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.9 : &mut ?0
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.20 : fn(&List<>)->&List<>
-[00:00:00.041] (7f6c1e37f940) INFO   lookup ty for local 9.9
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.22 : &mut ?0
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.23 : ?1
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.25 : int
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.28 : int
-[00:00:00.041] (7f6c1e37f940) INFO   fcx write ty 9.28 : int
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.28
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.6
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.5
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.2
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.17
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.16
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.12
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.13
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.15
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.9
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.23
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.20
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.22
-[00:00:00.041] (7f6c1e37f940) INFO   fcx query node type for 9.25
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.28
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.2
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.6
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.5
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.5
-[00:00:00.041] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.9
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.17
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.16
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.12
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.13
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.15
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.23
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.20
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.22
-[00:00:00.042] (7f6c1e37f940) INFO   irloweringctx: query typeof 9.25
-[00:00:00.042] (7f6c1e37f940) INFO   deflocal 10.2 : &List<>
-[00:00:00.042] (7f6c1e37f940) INFO   fcx write ty 10.2 : &List<>
-[00:00:00.042] (7f6c1e37f940) INFO   lookup ty for local 10.2
-[00:00:00.042] (7f6c1e37f940) INFO   fcx write ty 10.4 : &List<>
-[00:00:00.042] (7f6c1e37f940) INFO   fcx write ty 10.5 : ?0
-[00:00:00.042] (7f6c1e37f940) INFO   deflocal 10.9 : ?1
-[00:00:00.042] (7f6c1e37f940) INFO   fcx write ty 10.9 : ?1
-[00:00:00.043] (7f6c1e37f940) INFO   deflocal 10.10 : ?2
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.10 : ?2
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.11 : ?0
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.20 : List<>
-[00:00:00.043] (7f6c1e37f940) INFO   lookup ty for local 10.2
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.22 : &List<>
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.13 : fn(&List<>)->&List<>
-[00:00:00.043] (7f6c1e37f940) INFO   lookup ty for local 10.10
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.15 : ?2
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.16 : ?3
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.23 : &List<>
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.26 : &List<>
-[00:00:00.043] (7f6c1e37f940) INFO   fcx write ty 10.26 : &List<>
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.2
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.26
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.23
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.5
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.4
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.11
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.9
-[00:00:00.043] (7f6c1e37f940) INFO   fcx query node type for 10.10
-[00:00:00.044] (7f6c1e37f940) INFO   fcx query node type for 10.16
-[00:00:00.044] (7f6c1e37f940) INFO   fcx query node type for 10.13
-[00:00:00.044] (7f6c1e37f940) INFO   fcx query node type for 10.15
-[00:00:00.044] (7f6c1e37f940) INFO   fcx query node type for 10.20
-[00:00:00.044] (7f6c1e37f940) INFO   fcx query node type for 10.22
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.2
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.26
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.23
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.5
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.4
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.11
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.9
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.10
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.11
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.16
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.13
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.15
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.20
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.20
-[00:00:00.044] (7f6c1e37f940) INFO   irloweringctx: query typeof 10.22
-[00:00:00.045] (7f6c1e37f940) INFO   sizeof int 8
-[00:00:00.045] (7f6c1e37f940) INFO   sizeof &List<> 8
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.5 : List<>
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.6 : &mut List<>
+[00:00:00.042] (7f2f2388d940) INFO   deflocal 9.2 : &mut List<>
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.2 : &mut List<>
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.12 : fn(int,&List<>)->List<>
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.13 : int
+[00:00:00.042] (7f2f2388d940) INFO   lookup ty for local 9.2
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.15 : &mut List<>
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.16 : ?0
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.17 : &mut ?0
+[00:00:00.042] (7f2f2388d940) INFO   deflocal 9.9 : &mut ?0
+[00:00:00.042] (7f2f2388d940) INFO   fcx write ty 9.9 : &mut ?0
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.20 : fn(&List<>)->&List<>
+[00:00:00.043] (7f2f2388d940) INFO   lookup ty for local 9.9
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.22 : &mut ?0
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.23 : ?1
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.25 : int
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.28 : int
+[00:00:00.043] (7f2f2388d940) INFO   fcx write ty 9.28 : int
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.28
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.6
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.5
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.2
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.17
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.16
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.12
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.13
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.15
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.9
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.23
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.20
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.22
+[00:00:00.043] (7f2f2388d940) INFO   fcx query node type for 9.25
+[00:00:00.043] (7f2f2388d940) INFO   irloweringctx: query typeof 9.28
+[00:00:00.043] (7f2f2388d940) INFO   irloweringctx: query typeof 9.2
+[00:00:00.043] (7f2f2388d940) INFO   irloweringctx: query typeof 9.6
+[00:00:00.043] (7f2f2388d940) INFO   irloweringctx: query typeof 9.5
+[00:00:00.043] (7f2f2388d940) INFO   irloweringctx: query typeof 9.5
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.9
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.17
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.16
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.12
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.13
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.15
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.23
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.20
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.22
+[00:00:00.044] (7f2f2388d940) INFO   irloweringctx: query typeof 9.25
+[00:00:00.044] (7f2f2388d940) INFO   deflocal 10.2 : &List<>
+[00:00:00.044] (7f2f2388d940) INFO   fcx write ty 10.2 : &List<>
+[00:00:00.044] (7f2f2388d940) INFO   lookup ty for local 10.2
+[00:00:00.044] (7f2f2388d940) INFO   fcx write ty 10.4 : &List<>
+[00:00:00.044] (7f2f2388d940) INFO   fcx write ty 10.5 : ?0
+[00:00:00.045] (7f2f2388d940) INFO   deflocal 10.9 : ?1
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.9 : ?1
+[00:00:00.045] (7f2f2388d940) INFO   deflocal 10.10 : ?2
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.10 : ?2
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.11 : ?0
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.20 : List<>
+[00:00:00.045] (7f2f2388d940) INFO   lookup ty for local 10.2
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.22 : &List<>
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.13 : fn(&List<>)->&List<>
+[00:00:00.045] (7f2f2388d940) INFO   lookup ty for local 10.10
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.15 : ?2
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.16 : ?3
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.23 : &List<>
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.26 : &List<>
+[00:00:00.045] (7f2f2388d940) INFO   fcx write ty 10.26 : &List<>
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.2
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.26
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.23
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.5
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.4
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.11
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.9
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.10
+[00:00:00.045] (7f2f2388d940) INFO   fcx query node type for 10.16
+[00:00:00.046] (7f2f2388d940) INFO   fcx query node type for 10.13
+[00:00:00.046] (7f2f2388d940) INFO   fcx query node type for 10.15
+[00:00:00.046] (7f2f2388d940) INFO   fcx query node type for 10.20
+[00:00:00.046] (7f2f2388d940) INFO   fcx query node type for 10.22
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.2
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.26
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.23
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.5
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.4
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.11
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.9
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.10
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.11
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.16
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.13
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.15
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.20
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.20
+[00:00:00.046] (7f2f2388d940) INFO   irloweringctx: query typeof 10.22
+[00:00:00.047] (7f2f2388d940) INFO   sizeof int 8
+[00:00:00.047] (7f2f2388d940) INFO   sizeof &List<> 8

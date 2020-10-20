@@ -45,27 +45,27 @@ declare void @exit(i32)
 
 define %"List<>" @"List::Next<>"(i64 %0, %"List<>"* %1) {
 basic_blockbb0:
-  %retvar = alloca %"List<>"
+  %ret = alloca %"List<>"
   %2 = alloca i64
   store i64 %0, i64* %2
   %3 = alloca %"List<>"*
   store %"List<>"* %1, %"List<>"** %3
-  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %retvar, i32 0, i32 0
+  %discr_gep = getelementptr inbounds %"List<>", %"List<>"* %ret, i32 0, i32 0
   store i16 0, i16* %discr_gep
-  %enum_gep = getelementptr inbounds %"List<>", %"List<>"* %retvar, i32 0, i32 1
+  %enum_gep = getelementptr inbounds %"List<>", %"List<>"* %ret, i32 0, i32 1
   %load = load i64, i64* %2
   %enum_content_gep = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %enum_gep, i32 0, i32 0
   store i64 %load, i64* %enum_content_gep
   %load1 = load %"List<>"*, %"List<>"** %3
   %enum_content_gep2 = getelementptr inbounds { i64, %"List<>"* }, { i64, %"List<>"* }* %enum_gep, i32 0, i32 1
   store %"List<>"* %load1, %"List<>"** %enum_content_gep2
-  %load_ret = load %"List<>", %"List<>"* %retvar
+  %load_ret = load %"List<>", %"List<>"* %ret
   ret %"List<>" %load_ret
 }
 
 define %"List<>"* @"last2<>"(%"List<>"* %0) {
 basic_blockbb0:
-  %retvar = alloca %"List<>"*
+  %ret = alloca %"List<>"*
   %list = alloca %"List<>"*
   store %"List<>"* %0, %"List<>"** %list
   %tmp = alloca i1
@@ -109,7 +109,7 @@ basic_blockbb1:                                   ; preds = %basic_blockbb0
 basic_blockbb2:                                   ; preds = %basic_blockbb1
   %load16 = load %"List<>"*, %"List<>"** %l
   %fcall = call %"List<>"* @"last2<>"(%"List<>"* %load16)
-  store %"List<>"* %fcall, %"List<>"** %retvar
+  store %"List<>"* %fcall, %"List<>"** %ret
   br label %basic_blockbb6
 
 basic_blockbb3:                                   ; preds = %basic_blockbb1
@@ -131,12 +131,12 @@ basic_blockbb3:                                   ; preds = %basic_blockbb1
 
 basic_blockbb4:                                   ; preds = %basic_blockbb3
   %load27 = load %"List<>"*, %"List<>"** %list
-  store %"List<>"* %load27, %"List<>"** %retvar
-  call void @"rc_retain<List<>>"(%"List<>"** %retvar)
+  store %"List<>"* %load27, %"List<>"** %ret
+  call void @"rc_retain<List<>>"(%"List<>"** %ret)
   br label %basic_blockbb5
 
 basic_blockbb5:                                   ; preds = %basic_blockbb6, %basic_blockbb4
-  %load_ret = load %"List<>"*, %"List<>"** %retvar
+  %load_ret = load %"List<>"*, %"List<>"** %ret
   ret %"List<>"* %load_ret
 
 basic_blockbb6:                                   ; preds = %basic_blockbb2
@@ -149,7 +149,7 @@ basic_blockbb7:                                   ; preds = %basic_blockbb3
 
 define i64 @main() {
 basic_blockbb0:
-  %retvar = alloca i64
+  %ret = alloca i64
   %tmp = alloca %"List<>"*
   %tmp1 = alloca %"List<>"
   %tail = alloca %"List<>"*
@@ -209,8 +209,8 @@ basic_blockbb1:                                   ; preds = %basic_blockbb0
   br label %basic_blockbb2
 
 basic_blockbb2:                                   ; preds = %basic_blockbb1
-  store i64 8, i64* %retvar
-  %load_ret = load i64, i64* %retvar
+  store i64 8, i64* %ret
+  %load_ret = load i64, i64* %ret
   ret i64 %load_ret
 }
 

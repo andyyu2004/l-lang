@@ -163,8 +163,8 @@ impl<'tcx> MirFmt<'tcx> for mir::VarId {
     fn mir_fmt(&self, f: &mut Formatter<'_, 'tcx>) -> fmt::Result {
         let var = f.mir.vars[*self];
         match var.kind {
-            mir::VarKind::Tmp | mir::VarKind::Ret | mir::VarKind::Upvar =>
-                write!(f, "{}{:?}", var, self),
+            mir::VarKind::Tmp | mir::VarKind::Upvar => write!(f, "%{}{:?}", var, self),
+            mir::VarKind::Ret => write!(f, "%{}", var),
             _ if var.info.span.is_empty() => write!(f, "%{:?}", self),
             _ => write!(f, "{}", var),
         }
@@ -176,9 +176,9 @@ impl<'tcx> std::fmt::Display for mir::Var<'tcx> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
             mir::VarKind::Tmp => write!(f, "tmp"),
-            mir::VarKind::Local | mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
-            mir::VarKind::Ret => write!(f, "retvar"),
+            mir::VarKind::Ret => write!(f, "ret"),
             mir::VarKind::Upvar => write!(f, "upvar"),
+            mir::VarKind::Local | mir::VarKind::Arg => write!(f, "{}", self.info.span.to_string()),
         }
     }
 }
