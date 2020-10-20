@@ -93,10 +93,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // if the type is pointer, then it is a box and we need to do refcounting
         // TODO need to differentiate between initialization and reassignments
         // https://youtu.be/Ntj8ab-5cvE?t=2328
-        let var = self.vars[lvalue.id];
-        if var.ty.is_ptr() && lvalue.projs.is_empty() {
-            self.push_retain(info, block, lvalue.id);
-            self.schedule_release(info, lvalue.id);
-        }
+        // let var = self.vars[lvalue.id];
+        // if var.ty.is_ptr() && lvalue.projs.is_empty() {
+        //     self.push_retain(info, block, lvalue.id);
+        //     self.schedule_release(info, lvalue.id);
+        // }
     }
 }

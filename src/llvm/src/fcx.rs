@@ -221,11 +221,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let boxed_ty = self.llvm_boxed_ty(operand_ty);
                 let ptr = self.build_malloc(boxed_ty, "box").unwrap();
 
-                self.build_call(
-                    self.native_functions.print_addr,
-                    &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
-                    "print_malloc_addr",
-                );
+                // self.build_call(
+                //     self.native_functions.print_addr,
+                //     &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
+                //     "print_malloc_addr",
+                // );
 
                 // the refcount is at index `1` in the implicit struct
                 let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();

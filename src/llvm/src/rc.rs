@@ -95,7 +95,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         builder.build_conditional_branch(cmp, then_block, else_block);
 
         builder.position_at_end(then_block);
-        builder.build_free(cast);
+        // builder.build_free(cast);
         builder.build_return(None);
 
         builder.position_at_end(else_block);
