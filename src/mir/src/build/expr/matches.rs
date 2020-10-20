@@ -159,7 +159,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 self.push_assignment(info, pblock, predicate, and);
             }
             tir::PatternKind::Variant(adt, substs, idx, ref pats) => {
-                let discriminant_lvalue = self.alloc_tmp(info, tcx.types.int).into();
+                let discriminant_lvalue = self.alloc_tmp(info, tcx.types.discr).into();
                 self.push_assignment(
                     info,
                     pblock,

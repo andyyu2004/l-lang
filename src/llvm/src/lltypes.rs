@@ -31,6 +31,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let llty = match ty.kind {
             TyKind::Bool => self.types.boolean.into(),
             TyKind::Int => self.types.int.into(),
+            TyKind::Discr => self.types.discr.into(),
             TyKind::Float => self.types.float.into(),
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Char => todo!(),

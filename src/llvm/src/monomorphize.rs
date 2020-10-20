@@ -47,7 +47,7 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
             Some(&mir) => Ok(mir),
             None => {
                 let mir = self.tcx.mir_of_instance(instance);
-                // we put the print here so it doesn't print the same mir multiple times
+                // we put the print and insertion here so it doesn't print the same instance multiple times
                 if let Ok(mir) = mir {
                     println!("{} {}", self.tcx.defs().ident_of(instance.def_id), mir);
                 }
@@ -56,7 +56,9 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
         };
 
         if let Ok(mir) = mir {
-            self.cached_mir.borrow_mut().insert(instance.def_id, mir);
+            if let Some(old) = self.cached_mir.borrow_mut().insert(instance.def_id, mir) {
+                debug_assert_eq!(old, mir);
+            }
             InstanceCollector { collector: self, instance }.visit_mir(mir)
         }
     }

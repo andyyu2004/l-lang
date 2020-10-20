@@ -64,6 +64,6 @@ impl<'tcx> Relate<'tcx> for SubstsRef<'tcx> {
             return Err(TypeError::TupleSizeMismatch(a.len(), b.len()));
         }
         let tys: Vec<_> = a.iter().zip(b).map(|(t, u)| relation.relate(t, u)).try_collect()?;
-        Ok(relation.tcx().mk_substs(tys.into_iter()))
+        Ok(relation.tcx().mk_substs(tys))
     }
 }

@@ -180,9 +180,9 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn mk_substs<I>(self, iter: I) -> SubstsRef<'tcx>
     where
-        I: Iterator<Item = Ty<'tcx>>,
+        I: IntoIterator<Item = Ty<'tcx>>,
     {
-        self.intern_substs(&iter.collect_vec())
+        self.intern_substs(&iter.into_iter().collect_vec())
     }
 
     pub fn intern_lvalue_projections(
@@ -201,7 +201,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
-        if slice.is_empty() { List::empty() } else { self.interners.intern_substs(slice) }
+        if slice.is_empty() { Substs::empty() } else { self.interners.intern_substs(slice) }
     }
 }
 
@@ -268,6 +268,7 @@ impl<'tcx> TyCtx<'tcx> {
 pub struct CommonTypes<'tcx> {
     pub unit: Ty<'tcx>,
     pub boolean: Ty<'tcx>,
+    pub discr: Ty<'tcx>,
     pub character: Ty<'tcx>,
     pub float: Ty<'tcx>,
     pub int: Ty<'tcx>,
@@ -283,10 +284,11 @@ impl<'tcx> CommonTypes<'tcx> {
         CommonTypes {
             boolean: mk(TyKind::Bool),
             character: mk(TyKind::Char),
+            discr: mk(TyKind::Discr),
             never: mk(TyKind::Never),
             float: mk(TyKind::Float),
-            main: mk(TyKind::Fn(List::empty(), int)),
-            unit: mk(TyKind::Tuple(List::empty())),
+            main: mk(TyKind::Fn(Substs::empty(), int)),
+            unit: mk(TyKind::Tuple(Substs::empty())),
             int,
         }
     }

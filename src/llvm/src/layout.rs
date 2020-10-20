@@ -1,11 +1,11 @@
 use crate::CodegenCtx;
-use inkwell::types::{AsTypeRef, BasicTypeEnum};
+use inkwell::types::BasicType;
 use lcore::ty::{SubstsRef, Ty, VariantTy};
 use llvm_sys::target::*;
 use typeck::Typeof;
 
 impl<'tcx> CodegenCtx<'tcx> {
-    pub fn sizeof(&self, llty: BasicTypeEnum<'tcx>) -> u64 {
+    pub fn sizeof(&self, llty: impl BasicType<'tcx>) -> u64 {
         let type_ref = llty.as_type_ref();
         let opaque_target_data = unsafe { LLVMGetModuleDataLayout(self.module.get_module_ref()) };
         unsafe { LLVMABISizeOfType(opaque_target_data, type_ref) }

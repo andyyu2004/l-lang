@@ -38,6 +38,15 @@ extern {
     fn print(t: int);
 }
 
+struct T {
+    y: int, z: int,
+}
+
+struct K {
+    x: int,
+    t: T
+}
+
 fn main() -> int {
     let tail = box List::Null;
     let head = box List::Next(4, tail);

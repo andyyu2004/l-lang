@@ -140,6 +140,8 @@ impl<'tcx> PartialEq for TyS<'tcx> {
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
+    /// the integer type of the discriminant (currently i16)
+    Discr,
     /// char
     Char,
     /// float
@@ -321,8 +323,12 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Param(..) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
             TyKind::Adt(_, substs) => substs.ty_flags(),
-            TyKind::Float | TyKind::Never | TyKind::Bool | TyKind::Char | TyKind::Int =>
-                TyFlags::empty(),
+            TyKind::Discr
+            | TyKind::Float
+            | TyKind::Never
+            | TyKind::Bool
+            | TyKind::Char
+            | TyKind::Int => TyFlags::empty(),
         }
     }
 }
@@ -344,14 +350,15 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
             TyKind::Adt(adt, substs) => write!(f, "{}<{}>", adt.ident, substs),
+            TyKind::Ptr(m, ty) => write!(f, "&{}{}", m, ty),
+            TyKind::Opaque(_, _) => write!(f, "opaque"),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
             TyKind::Int => write!(f, "int"),
             TyKind::Float => write!(f, "float"),
             TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
-            TyKind::Ptr(m, ty) => write!(f, "&{}{}", m, ty),
-            TyKind::Opaque(_, _) => write!(f, "opaque"),
+            TyKind::Discr => write!(f, "discr"),
         }
     }
 }

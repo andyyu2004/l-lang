@@ -69,6 +69,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         fpm.add_instruction_combining_pass();
         fpm.add_reassociate_pass();
         fpm.initialize();
+
         let types = CommonTypes {
             unit: llctx.struct_type(&[], false),
             int: llctx.i64_type(),
@@ -79,8 +80,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             i8ptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             i32ptr: llctx.i32_type().ptr_type(AddressSpace::Generic),
             i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
-            // this is obviously quite wasteful but whatever for now
-            discr: llctx.i64_type(),
+            discr: llctx.i16_type(),
         };
 
         let vals = CommonValues {

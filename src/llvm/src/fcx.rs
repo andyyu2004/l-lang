@@ -106,6 +106,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
+                return;
                 let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_release = self.build_rc_release(lvalue_ref);
@@ -143,11 +144,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         self.build_store(discr_ptr, self.types.discr.const_int(idx, false));
                         let content_ptr =
                             self.build_struct_gep(lvalue_ref.ptr, 1, "enum_gep").unwrap();
-                        let llty =
+                        let variant_ty =
                             self.variant_ty_to_llvm_ty(ty, &adt.variants[*variant_idx], substs);
                         let content_ptr = self.build_pointer_cast(
                             content_ptr,
-                            llty.ptr_type(AddressSpace::Generic),
+                            variant_ty.ptr_type(AddressSpace::Generic),
                             "enum_ptr_cast",
                         );
                         for (i, f) in fields.iter().enumerate() {
@@ -221,11 +222,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let boxed_ty = self.llvm_boxed_ty(operand_ty);
                 let ptr = self.build_malloc(boxed_ty, "box").unwrap();
 
-                // self.build_call(
-                //     self.native_functions.print_addr,
-                //     &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
-                //     "print_malloc_addr",
-                // );
+                self.build_print_str(&self.builder, "malloc box ");
+                self.build_call(
+                    self.native_functions.print_addr,
+                    &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
+                    "print_malloc_addr",
+                );
 
                 // the refcount is at index `1` in the implicit struct
                 let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();
@@ -350,9 +352,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         lhs: ValueRef<'tcx>,
         rhs: ValueRef<'tcx>,
     ) -> ValueRef<'tcx> {
-        debug_assert_eq!(lhs.ty, rhs.ty);
-        let l = lhs.val.into_int_value();
-        let r = rhs.val.into_int_value();
+        let mut l = lhs.val.into_int_value();
+        let mut r = rhs.val.into_int_value();
+        // the only reason l.ty != r.ty is a comparison between discr and int types
+        // we extend the smaller type into the larger one
+        // we can zero extend as discriminants are unsigned
+        if l.get_type() != r.get_type() {
+            if self.sizeof(l.get_type()) < self.sizeof(r.get_type()) {
+                l = self.build_int_z_extend(l, r.get_type(), "extend_discr");
+            } else {
+                r = self.build_int_z_extend(r, l.get_type(), "extend_discr");
+            }
+        }
         let val = match op {
             BinOp::Lt => self.builder.build_int_compare(IntPredicate::SLT, l, r, "icmp_lt"),
             BinOp::Gt => self.builder.build_int_compare(IntPredicate::SGT, l, r, "icmp_gt"),
