@@ -91,8 +91,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
 
     fn resolve_foreign_item(&mut self, item: &'ast ForeignItem) {
         match &item.kind {
-            ForeignItemKind::Fn(_, generics) =>
-                self.with_generics(generics, |r| ast::walk_foreign_item(r, item)),
+            ForeignItemKind::Fn(sig, generics) =>
+                self.with_generics(generics, |this| ast::walk_fn_sig(this, sig)),
         }
     }
 

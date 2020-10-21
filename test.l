@@ -35,18 +35,10 @@ enum List {
 
 extern {
     fn rc<T>(t: &T) -> int;
-    fn print_addr(t: &T) -> int;
     fn print(t: int);
+    fn print_addr(t: &T) -> int;
 }
 
-struct T {
-    y: int, z: int,
-}
-
-struct K {
-    x: int,
-    t: T
-}
 
 fn main() -> int {
     let tail = box List::Null;

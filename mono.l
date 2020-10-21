@@ -1,34 +1,5 @@
-fn fst<T, U>(t: T, u: U) -> T { t }
-fn snd<T, U>(t: T, u: U) -> U { fst(u, t) }
 
-fn id<T>(t: T) -> T { snd(false, t) }
+fn f(s: S) {}
+struct S { }
+fn main() -> int { 5 }
 
-extern {
-    fn rc<T>(t: &T) -> int;
-}
-
-
-struct S<T> {
-    t: T
-}
-
-enum Option<T> {
-    Some(T),
-    None,
-}
-
-enum Either<L, R> {
-    Left(L),
-    Right(R),
-}
-
-fn main() -> int {
-    let e = Either::Left(Option::Some(88));
-    match e {
-	Either::Left(opt) => match opt {
-	    Option::Some(i) => i,
-	    Option::None => 99999,
-	},
-	Either::Right(x) => x,
-    }
-}

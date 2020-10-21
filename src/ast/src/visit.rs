@@ -59,10 +59,7 @@ pub trait Visitor<'ast>: Sized {
     }
 
     fn visit_fn_sig(&mut self, sig: &'ast FnSig) {
-        sig.params.iter().for_each(|p| self.visit_param(p));
-        if let Some(ret_ty) = &sig.ret_ty {
-            self.visit_ty(ret_ty)
-        }
+        walk_fn_sig(self, sig);
     }
 
     fn visit_closure(&mut self, name: Option<Ident>, sig: &'ast FnSig, expr: &'ast Expr) {
@@ -112,6 +109,11 @@ pub trait Visitor<'ast>: Sized {
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         walk_assoc_item(self, item)
     }
+}
+
+pub fn walk_fn_sig<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig) {
+    sig.params.iter().for_each(|param| visitor.visit_param(param));
+    sig.ret_ty.iter().for_each(|ty| visitor.visit_ty(ty));
 }
 
 pub fn walk_foreign_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast ForeignItem) {

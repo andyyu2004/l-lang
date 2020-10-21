@@ -15,6 +15,7 @@ session = { path = "../session" }
 error = { path = "../error" }
 util = { path = "../util" }
 smallvec = "1.4.2"
+log = "0.4.11"
 itertools = "0.9"
 rustc-hash = "1"
 thiserror = "1"

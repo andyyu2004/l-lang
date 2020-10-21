@@ -8,6 +8,9 @@
 #![feature(decl_macro)]
 #![feature(type_name_of_val)]
 
+#[macro_use]
+extern crate log;
+
 mod arenas;
 mod interners;
 mod ir_map;

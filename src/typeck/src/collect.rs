@@ -2,24 +2,20 @@ use crate::TyConv;
 use ir::Visitor;
 use lcore::ty::{Substs, Ty, TyCtx};
 
-struct ItemCollector<'tcx> {
+struct AdtCollector<'tcx> {
     tcx: TyCtx<'tcx>,
 }
 
-impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
+impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
     fn visit_item(&mut self, item: &ir::Item<'tcx>) {
         let tcx = self.tcx;
         let ty = match &item.kind {
-            ir::ItemKind::Fn(sig, generics, _) => {
-                let fn_ty = tcx.fn_sig_to_ty(sig);
-                tcx.generalize(generics, fn_ty)
-            }
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
                 let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
-                tcx.generalize(generics, ty)
+                Some(tcx.generalize(generics, ty))
             }
             ir::ItemKind::Enum(generics, variants) => {
                 let variant_tys = variants
@@ -32,7 +28,29 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
                 let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
-                tcx.generalize(generics, ty)
+                Some(tcx.generalize(generics, ty))
+            }
+            _ => None,
+        };
+
+        if let Some(ty) = ty {
+            tcx.collect_ty(item.id.def, ty);
+        }
+    }
+}
+
+struct FnCollector<'tcx> {
+    tcx: TyCtx<'tcx>,
+}
+
+impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
+    fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
+        let tcx = self.tcx;
+        let ty = match &item.kind {
+            ir::ItemKind::Fn(sig, generics, _) => {
+                let fn_ty = tcx.fn_sig_to_ty(sig);
+                let ty = tcx.generalize(generics, fn_ty);
+                tcx.collect_ty(item.id.def, ty);
             }
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
                 for impl_item_ref in *impl_item_refs {
@@ -44,6 +62,7 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 for foreign_item in *foreign_items {
                     match foreign_item.kind {
                         ir::ForeignItemKind::Fn(sig, generics) => {
+                            println!("collect {}", foreign_item.id.def);
                             let fn_ty = tcx.fn_sig_to_ty(sig);
                             let ty = tcx.generalize(generics, fn_ty);
                             tcx.collect_ty(foreign_item.id.def, ty);
@@ -52,9 +71,35 @@ impl<'tcx> ir::Visitor<'tcx> for ItemCollector<'tcx> {
                 }
                 return;
             }
+            ir::ItemKind::Enum(..) => ir::walk_item(self, item),
+            ir::ItemKind::Struct(..) => {}
         };
-        info!("collect item: {:#?}", ty);
-        tcx.collect_ty(item.id.def, ty);
+    }
+
+    fn visit_variant(&mut self, variant: &'tcx ir::Variant<'tcx>) {
+        let tcx = self.tcx;
+        let ty = tcx.collected_ty(variant.adt_def_id);
+        let (forall, ty) = ty.expect_scheme();
+        let (adt_ty, _substs) = ty.expect_adt();
+        let ctor_ty = match variant.kind {
+            // these two constructor kinds are already of the enum type
+            ir::VariantKind::Struct(..) | ir::VariantKind::Unit => ty,
+            // represent enum tuples as injection functions
+            // enum Option<T> {
+            //     Some(T),
+            //     None
+            // }
+            //
+            // None: Option<T>
+            // Some: T -> Option<T>
+            ir::VariantKind::Tuple(..) => {
+                let variant = &adt_ty.variants[variant.idx];
+                let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.ir_ty_to_ty(f.ir_ty)));
+                tcx.mk_fn_ty(tys, ty)
+            }
+        };
+        let generalized = tcx.mk_ty_scheme(forall, ctor_ty);
+        tcx.collect_ty(variant.id.def, generalized);
     }
 }
 
@@ -85,7 +130,10 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
 
 /// run type collection on items and constructors
 pub fn collect_item_types<'tcx>(tcx: TyCtx<'tcx>) {
-    ItemCollector { tcx }.visit_prog(tcx.ir);
+    // we must do this in multiple phases as functions
+    // may need to refer to adt defintions
+    AdtCollector { tcx }.visit_prog(tcx.ir);
+    FnCollector { tcx }.visit_prog(tcx.ir);
     CtorCollector { tcx }.visit_prog(tcx.ir);
 }
 
@@ -95,29 +143,4 @@ struct CtorCollector<'tcx> {
 }
 
 impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
-    fn visit_variant(&mut self, variant: &'tcx ir::Variant<'tcx>) {
-        let tcx = self.tcx;
-        let ty = tcx.collected_ty(variant.adt_def_id);
-        let (forall, ty) = ty.expect_scheme();
-        let (adt_ty, _substs) = ty.expect_adt();
-        let ctor_ty = match variant.kind {
-            // these two constructor kinds are already of the enum type
-            ir::VariantKind::Struct(..) | ir::VariantKind::Unit => ty,
-            // represent enum tuples as injection functions
-            // enum Option<T> {
-            //     Some(T),
-            //     None
-            // }
-            //
-            // None: Option<T>
-            // Some: T -> Option<T>
-            ir::VariantKind::Tuple(..) => {
-                let variant = &adt_ty.variants[variant.idx];
-                let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.ir_ty_to_ty(f.ir_ty)));
-                tcx.mk_fn_ty(tys, ty)
-            }
-        };
-        let generalized = tcx.mk_ty_scheme(forall, ctor_ty);
-        tcx.collect_ty(variant.id.def, generalized);
-    }
 }
