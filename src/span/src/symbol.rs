@@ -3,25 +3,34 @@ use arena::DroplessArena;
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug, Display, Formatter};
 
-pub const SYMBOLS: &[&str] =
-    &["", "float", "bool", "char", "int", "main", "self", "Self", "_", "rc", "intrinsics", "print"];
+symbols! {
+    Keywords {
+        Empty: "",
+        UpperSelf: "Self",
+        LowerSelf: "self",
+    }
+    // the following must be in alphabetical order
+    Symbols {
+        addr,
+        bool,
+        char,
+        float,
+        int,
+        intrinsics,
+        main,
+        print,
+        rc,
+    }
+}
 
 pub mod sym {
-    use super::Symbol;
+    use super::*;
+    define_symbols!();
+}
 
-    pub const EMPTY: Symbol = Symbol(0);
-    pub const FLOAT: Symbol = Symbol(1);
-    pub const BOOL: Symbol = Symbol(2);
-    pub const CHAR: Symbol = Symbol(3);
-    pub const INT: Symbol = Symbol(4);
-    pub const MAIN: Symbol = Symbol(5);
-    // upper and lower case self
-    pub const LSELF: Symbol = Symbol(6);
-    pub const USELF: Symbol = Symbol(7);
-    pub const USCORE: Symbol = Symbol(8);
-    pub const RC: Symbol = Symbol(9);
-    pub const INTRINSICS: Symbol = Symbol(10);
-    pub const PRINT: Symbol = Symbol(11);
+pub mod kw {
+    use super::*;
+    keywords!();
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -71,7 +80,8 @@ impl Debug for Interner {
 
 impl Default for Interner {
     fn default() -> Self {
-        Self::prefill(SYMBOLS)
+        // fresh is defined in the `symbol!` macro
+        Self::fresh()
     }
 }
 

@@ -20,7 +20,7 @@ pub type P<T> = Box<T>;
 
 use index::Idx;
 use lex::{Tok, TokenType};
-use span::{sym, Span, Symbol};
+use span::{kw, Span, Symbol};
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -101,7 +101,7 @@ impl Ident {
     }
 
     pub fn empty() -> Self {
-        Self::new(Span::empty(), sym::EMPTY)
+        Self::new(Span::empty(), kw::Empty)
     }
 
     /// joins two identifiers `a` and `b`

@@ -35,6 +35,7 @@ enum List {
 
 extern {
     fn rc<T>(t: &T) -> int;
+    fn print_addr(t: &T) -> int;
     fn print(t: int);
 }
 

@@ -16,7 +16,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             }
             let kind = match &kind {
                 ItemKind::Fn(sig, generics, expr) => {
-                    if ident.symbol == sym::MAIN {
+                    if ident.symbol == sym::main {
                         lctx.entry_id = Some(id.def);
                     }
                     if expr.is_none() {

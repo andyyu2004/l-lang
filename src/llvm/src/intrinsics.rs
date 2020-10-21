@@ -2,7 +2,7 @@ use crate::CodegenCtx;
 use inkwell::types::BasicType;
 use inkwell::values::FunctionValue;
 use inkwell::AddressSpace;
-use lcore::ty::{Instance, Ty};
+use lcore::ty::Instance;
 use span::sym;
 
 impl<'tcx> CodegenCtx<'tcx> {
@@ -12,11 +12,16 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
         let ident = self.tcx.defs().ident_of(instance.def_id);
         let llfn = match ident.symbol {
-            sym::RC => self.codegen_rc_intrinsic(instance),
-            sym::PRINT => self.native_functions.print,
+            sym::rc => self.codegen_rc_intrinsic(instance),
+            sym::addr => self.codegen_addr_intrinsic(instance),
+            sym::print => self.native_functions.print,
             _ => panic!("unknown intrinsic `{}`", ident),
         };
         self.intrinsics.borrow_mut().insert(instance, llfn);
+    }
+
+    fn codegen_addr_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {
+        todo!()
     }
 
     fn codegen_rc_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {

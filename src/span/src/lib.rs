@@ -1,11 +1,14 @@
 #![feature(debug_non_exhaustive)]
 #![feature(const_panic)]
 
+#[macro_use]
+extern crate macros;
+
 mod source_map;
 mod symbol;
 
 pub use source_map::SourceMap;
-pub use symbol::{sym, Symbol};
+pub use symbol::{kw, sym, Symbol};
 
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};

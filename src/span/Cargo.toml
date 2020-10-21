@@ -6,5 +6,6 @@ edition = "2018"
 
 [dependencies]
 arena = { path = "../arena" }
+macros = { path = "../macros" }
 rustc-hash = "1.1.0"
 

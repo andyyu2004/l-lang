@@ -41,7 +41,7 @@ impl<'tcx> NativeFunctions<'tcx> {
 
         let param = printfn.get_first_param().unwrap();
         let vec = llctx.const_string("%p\n".as_bytes(), true);
-        let alloca = builder.build_alloca(llctx.i8_type().array_type(4), "alloca_str");
+        let alloca = builder.build_alloca(vec.get_type(), "alloca_str");
         builder.build_store(alloca, vec);
         let ptr = builder.build_bitcast(
             alloca,

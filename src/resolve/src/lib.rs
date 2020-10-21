@@ -27,7 +27,7 @@ use index::IndexVec;
 use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use rustc_hash::FxHashMap;
 use session::Session;
-use span::{sym, Symbol};
+use span::{kw, sym, Symbol};
 use std::error::Error;
 use std::ops::{Deref, Index, IndexMut};
 
@@ -183,10 +183,10 @@ pub struct PrimitiveTypes {
 impl Default for PrimitiveTypes {
     fn default() -> Self {
         let mut types = FxHashMap::default();
-        types.insert(sym::BOOL, PrimTy::Bool);
-        types.insert(sym::FLOAT, PrimTy::Float);
-        types.insert(sym::INT, PrimTy::Int);
-        types.insert(sym::CHAR, PrimTy::Char);
+        types.insert(sym::bool, PrimTy::Bool);
+        types.insert(sym::float, PrimTy::Float);
+        types.insert(sym::int, PrimTy::Int);
+        types.insert(sym::char, PrimTy::Char);
         Self { types }
     }
 }

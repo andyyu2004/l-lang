@@ -2,6 +2,7 @@
 members = [
     "src/l",
     "src/infer",
+    "src/macros",
     "src/ldriver",
     "src/span",
     "src/lex",

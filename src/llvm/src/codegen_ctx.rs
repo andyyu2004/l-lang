@@ -130,7 +130,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                 let ident = self.tcx.defs().ident_of(def_id);
                 // we need a special case with main, as the name actually matters
                 // for lli etc
-                let name = if ident.symbol == sym::MAIN {
+                let name = if ident.symbol == sym::main {
                     ident.to_string()
                 } else {
                     format!("{}<{}>", ident, substs)

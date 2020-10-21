@@ -98,7 +98,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
 
     fn with_self_ty<R>(&mut self, _ty: &'ast Ty, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
-            this.scopes[NS::Type].def(Ident::unspanned(sym::USELF), Res::SelfTy);
+            this.scopes[NS::Type].def(Ident::unspanned(kw::UpperSelf), Res::SelfTy);
             f(this)
         })
     }

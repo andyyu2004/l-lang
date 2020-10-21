@@ -45,7 +45,7 @@ declare void @exit(i32)
 
 define i64 @main() {
 basic_blockbb0:
-  %retvar = alloca i64
+  %ret = alloca i64
   %tmp = alloca %"S<>"
   %tmp1 = alloca { i64, i1, i64 }
   %struct_gep = getelementptr inbounds { i64, i1, i64 }, { i64, i1, i64 }* %tmp1, i32 0, i32 0
@@ -62,7 +62,7 @@ basic_blockbb0:
   %struct_gep6 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 1
   %struct_gep7 = getelementptr inbounds { i64, i1, i64 }, { i64, i1, i64 }* %struct_gep6, i32 0, i32 2
   %load8 = load i64, i64* %struct_gep7
-  store i64 %load8, i64* %retvar
-  %load_ret = load i64, i64* %retvar
+  store i64 %load8, i64* %ret
+  %load_ret = load i64, i64* %ret
   ret i64 %load_ret
 }
