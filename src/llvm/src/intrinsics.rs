@@ -21,7 +21,22 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn codegen_addr_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {
-        todo!()
+        let ident = self.tcx.defs().ident_of(instance.def_id);
+        let name = format!("{}<{}>", ident, instance.substs);
+        let t = instance.substs[0];
+        let llty = self.llvm_ty(t);
+        // `addr<T>: fn(&T) -> int` where the returned int is the address as a u64
+        let addr_fn_ty =
+            self.types.int.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
+        let llfn = self.module.add_function(&name, addr_fn_ty, None);
+        let block = self.llctx.append_basic_block(llfn, "addr_entry");
+
+        self.position_at_end(block);
+        let ptr = llfn.get_first_param().unwrap().into_pointer_value();
+
+        let int = self.build_ptr_to_int(ptr, self.types.int, "ptr_to_int");
+        self.build_return(Some(&int));
+        llfn
     }
 
     fn codegen_rc_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {

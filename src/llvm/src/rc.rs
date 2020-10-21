@@ -22,39 +22,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         let alloca_ptr = rc_retain.get_first_param().unwrap().into_pointer_value();
 
-        self.build_print_str(&builder, "rc_retain_count\n");
-
         let (_, rc_ptr) = self.builder_get_box_pointers(&builder, lvalue, alloca_ptr);
 
         let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
         let increment = builder.build_int_add(refcount, self.vals.one32, "increment_rc");
         builder.build_store(rc_ptr, increment);
 
-        let cast = builder.build_int_cast(increment, self.types.int, "i64rc").into();
-        builder.build_call(self.native_functions.print, &[cast], "rc_retain_count");
-
         builder.build_return(None);
         rc_retain
-    }
-
-    fn builder_get_box_pointers(
-        &self,
-        builder: &Builder<'tcx>,
-        lvalue: LvalueRef<'tcx>,
-        alloca_ptr: PointerValue<'tcx>,
-    ) -> (PointerValue<'tcx>, PointerValue<'tcx>) {
-        let malloc_ptr = builder.build_load(alloca_ptr, "load_box").into_pointer_value();
-
-        builder.build_call(
-            self.native_functions.print_addr,
-            &[builder.build_pointer_cast(malloc_ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
-            "print_malloc_addr",
-        );
-
-        let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
-        let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_retain_box_cast");
-        let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
-        (cast, rc_ptr)
     }
 
     /// builds generic `rc_release`
@@ -77,7 +52,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         let alloca_ptr = rc_release.get_first_param().unwrap().into_pointer_value();
 
-        self.build_print_str(&builder, "rc_release_count\n");
+        // self.build_print_str(&builder, "rc_release_count\n");
 
         let (cast, rc_ptr) = self.builder_get_box_pointers(&builder, lvalue, alloca_ptr);
         let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
@@ -85,11 +60,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let dec = builder.build_int_sub(refcount, self.vals.one32, "decrement");
         builder.build_store(rc_ptr, dec);
 
-        builder.build_call(
-            self.native_functions.print,
-            &[builder.build_int_cast(dec, self.types.int, "rc_release_count").into()],
-            "print_rc",
-        );
+        // builder.build_call(
+        //     self.native_functions.print,
+        //     &[builder.build_int_cast(dec, self.types.int, "rc_release_count").into()],
+        //     "print_rc",
+        // );
 
         let cmp = builder.build_int_compare(IntPredicate::EQ, dec, self.vals.zero32, "rc_cmp");
         builder.build_conditional_branch(cmp, then_block, else_block);
@@ -101,6 +76,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         builder.position_at_end(else_block);
         builder.build_return(None);
         rc_release
+    }
+
+    fn builder_get_box_pointers(
+        &self,
+        builder: &Builder<'tcx>,
+        lvalue: LvalueRef<'tcx>,
+        alloca_ptr: PointerValue<'tcx>,
+    ) -> (PointerValue<'tcx>, PointerValue<'tcx>) {
+        let malloc_ptr = builder.build_load(alloca_ptr, "load_box").into_pointer_value();
+
+        let boxed_ptr_ty = self.llvm_boxed_ty(lvalue.ty.deref_ty()).ptr_type(AddressSpace::Generic);
+        let cast = builder.build_pointer_cast(malloc_ptr, boxed_ptr_ty, "rc_retain_box_cast");
+        let rc_ptr = builder.build_struct_gep(cast, 1, "rc").unwrap();
+        (cast, rc_ptr)
     }
 
     crate fn build_print_str(&self, builder: &Builder<'tcx>, string: &str) {

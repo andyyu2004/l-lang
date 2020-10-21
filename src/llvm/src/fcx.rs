@@ -106,7 +106,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
-                return;
                 let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_release = self.build_rc_release(lvalue_ref);
@@ -221,13 +220,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 // important the refcount itself is boxed so it is shared
                 let boxed_ty = self.llvm_boxed_ty(operand_ty);
                 let ptr = self.build_malloc(boxed_ty, "box").unwrap();
-
-                self.build_print_str(&self.builder, "malloc box ");
-                self.build_call(
-                    self.native_functions.print_addr,
-                    &[self.build_pointer_cast(ptr, self.types.i8ptr, "cast_malloc_ptr").into()],
-                    "print_malloc_addr",
-                );
 
                 // the refcount is at index `1` in the implicit struct
                 let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();
