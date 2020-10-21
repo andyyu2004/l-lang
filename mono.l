@@ -7,12 +7,9 @@ extern {
 }
 
 fn main() -> int {
-    let x = 5;
-    let boxed = box 5;
-    take_box(boxed);
-    unsafe { print(*&x) };
-    0
-}
+    let x: int = *(box 5);
+    let y: int = unsafe { *&x };
+};
 
 fn take_box(boxed: &int) {
     print(*boxed);

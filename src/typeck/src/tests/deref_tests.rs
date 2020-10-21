@@ -17,3 +17,15 @@ fn struct_field_box_autoderef() {
     "#;
     typeck!(src);
 }
+
+/// checks that dereference works on both box and raw ptr types
+#[test]
+fn deref_box_and_raw() {
+    let src = r#"
+    fn main() -> int {
+        let x: int = *(box 5);
+        let y: int = unsafe { *&x };
+        0
+    }"#;
+    typeck!(src);
+}
