@@ -19,10 +19,11 @@ pub struct Ty<'ir> {
 
 #[derive(Debug)]
 pub enum TyKind<'ir> {
+    Box(Mutability, &'ir ir::Ty<'ir>),
+    Fn(&'ir [ir::Ty<'ir>], Option<&'ir ir::Ty<'ir>>),
     Path(&'ir ir::Path<'ir>),
     Array(&'ir ir::Ty<'ir>),
     Tuple(&'ir [ir::Ty<'ir>]),
-    Box(Mutability, &'ir ir::Ty<'ir>),
-    Fn(&'ir [ir::Ty<'ir>], Option<&'ir ir::Ty<'ir>>),
+    Ptr(&'ir ir::Ty<'ir>),
     Infer,
 }

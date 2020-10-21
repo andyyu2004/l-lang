@@ -33,6 +33,9 @@ impl<'a> Parse<'a> for TyParser {
             let m = parser.parse_mutability();
             let ty = self.parse(parser)?;
             Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Box(m, ty)))
+        } else if let Some(star) = parser.accept(TokenType::Star) {
+            let ty = self.parse(parser)?;
+            Ok(parser.mk_ty(star.span.merge(ty.span), TyKind::Ptr(ty)))
         } else if let Some(lsq) = parser.accept(TokenType::OpenSqBracket) {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;

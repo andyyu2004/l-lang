@@ -13,6 +13,7 @@ pub struct Ty {
 pub enum TyKind {
     Array(P<Ty>),
     Tuple(Vec<P<Ty>>),
+    /// (<ty>)
     Paren(P<Ty>),
     Path(Path),
     /// &mut <ty>
@@ -20,6 +21,9 @@ pub enum TyKind {
     Box(Mutability, P<Ty>),
     /// fn(<ty>...) (-> <ty>)?
     Fn(Vec<P<Ty>>, Option<P<Ty>>),
+    /// *<ty>
+    Ptr(P<Ty>),
+    /// _
     Infer,
 }
 

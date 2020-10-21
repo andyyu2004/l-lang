@@ -156,6 +156,7 @@ pub enum TyKind<'tcx> {
     Fn(SubstsRef<'tcx>, Ty<'tcx>),
     Tuple(SubstsRef<'tcx>),
     Infer(InferTy),
+    Ptr(Ty<'tcx>),
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
     Scheme(Generics<'tcx>, Ty<'tcx>),
@@ -316,13 +317,14 @@ impl<'tcx> TyS<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(..) => TyFlags::HAS_INFER,
             TyKind::Param(..) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
             TyKind::Adt(_, substs) => substs.ty_flags(),
+            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(_, ty) =>
+                ty.ty_flags(),
             TyKind::Discr
             | TyKind::Float
             | TyKind::Never
@@ -346,6 +348,7 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
+            TyKind::Ptr(ty) => write!(f, "*{}", ty),
             TyKind::Array(ty, n) => write!(f, "[{};{}]", ty, n),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
