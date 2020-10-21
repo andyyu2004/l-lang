@@ -8,7 +8,7 @@ extern crate colour;
 extern crate log;
 
 use ast::P;
-use ast_lowering::AstLoweringCtx;
+use astlowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
 use inkwell::context::Context as LLVMCtx;
@@ -66,7 +66,7 @@ pub struct Driver<'tcx> {
     sess: Session,
     tmp: PhantomData<&'tcx ()>,
     arena: CoreArenas<'tcx>,
-    ir_arena: ast_lowering::Arena<'tcx>,
+    ir_arena: astlowering::Arena<'tcx>,
     resolver_arenas: ResolverArenas<'tcx>,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
 }

@@ -104,8 +104,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Fn(params, ret))
     }
 
-    pub fn mk_ptr_ty(self, m: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Ptr(m, ty))
+    pub fn mk_box_ty(self, m: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Box(m, ty))
     }
 
     pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx) -> Ty<'tcx> {

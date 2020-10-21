@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ast_lowering"
+name = "astlowering"
 version = "0.1.0"
 dependencies = [
  "arena",
@@ -382,7 +382,7 @@ name = "ldriver"
 version = "0.1.0"
 dependencies = [
  "ast",
- "ast_lowering",
+ "astlowering",
  "clap",
  "colour",
  "error",

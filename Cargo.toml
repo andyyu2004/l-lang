@@ -16,7 +16,7 @@ members = [
     "src/util",
     "src/session",
     "src/resolve",
-    "src/ast_lowering",
+    "src/astlowering",
     "src/typeck",
     "src/tir",
     "src/mir",

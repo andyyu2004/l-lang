@@ -73,7 +73,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                 }
                 return opaque_ty.into();
             }
-            TyKind::Ptr(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
+            TyKind::Box(_, ty) => self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
             TyKind::Opaque(..) => todo!(),
             TyKind::Param(..)
             | TyKind::Scheme(..)

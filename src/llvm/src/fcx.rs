@@ -100,12 +100,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(var) => {
+                return;
                 let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_retain = self.build_rc_retain(lvalue_ref);
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
+                return;
                 let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_ptr());
                 let rc_release = self.build_rc_release(lvalue_ref);
@@ -228,7 +230,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let content_ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
                 self.build_store(content_ptr, operand.val);
 
-                let ty = self.tcx.mk_ptr_ty(Mutability::Mut, operand_ty);
+                let ty = self.tcx.mk_box_ty(Mutability::Mut, operand_ty);
                 #[cfg(debug_assertions)]
                 self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
                 ValueRef { ty, val: content_ptr.into() }

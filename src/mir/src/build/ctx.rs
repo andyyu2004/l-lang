@@ -161,7 +161,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
         // construct a mutable borrow expression to the captured upvar
         let borrow_expr = tir::Expr {
             span,
-            ty: self.mk_ptr_ty(Mutability::Mut, ty),
+            ty: self.mk_box_ty(Mutability::Mut, ty),
             kind: tir::ExprKind::Ref(captured),
         };
         borrow_expr

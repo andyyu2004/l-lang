@@ -19,7 +19,6 @@ pub trait TypeRelation<'tcx>: Sized {
         let tcx = self.tcx();
         match (a.kind, b.kind) {
             // ignore mutability for now
-            (Ptr(_m, t), Ptr(_n, u)) => self.relate(t, u),
             (Param(t), Param(u)) if t.idx == u.idx => Ok(a),
             (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),
             (Array(t, m), Array(u, n)) if m == n => self.relate(t, u),
@@ -29,6 +28,7 @@ pub trait TypeRelation<'tcx>: Sized {
             }
             (_, Never) => Ok(a),
             (Never, _) => Ok(b),
+            (Box(_m, t), Box(_n, u)) => self.relate(t, u),
             (Fn(a, b), Fn(t, u)) => {
                 let s = self.relate(a, t)?;
                 let r = self.relate(b, u)?;

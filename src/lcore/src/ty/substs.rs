@@ -134,7 +134,7 @@ impl<'tcx> TypeMatcher<'tcx> {
                 debug_assert!(self.map.insert(p, t).map_or(true, |ty| ty == t));
                 self.substs[p.idx.index()] = t;
             }
-            (Ptr(_m, t), Ptr(_n, u)) => self.unify_inner(t, u),
+            (Box(_m, t), Box(_n, u)) => self.unify_inner(t, u),
             (Tuple(xs), Tuple(ys)) => self.match_tuples(xs, ys),
             (Array(t, m), Array(u, n)) if m == n => self.unify_inner(t, u),
             (Adt(adtx, substsx), Adt(adty, substsy)) if adtx == adty =>

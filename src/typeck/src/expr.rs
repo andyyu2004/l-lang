@@ -40,17 +40,17 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             // TODO how to handle mutability?
             UnaryOp::Deref => {
                 let ty = self.new_infer_var(expr.span);
-                self.equate(expr.span, self.mk_ptr_ty(Mutability::Mut, ty), operand_ty);
+                self.equate(expr.span, self.mk_box_ty(Mutability::Mut, ty), operand_ty);
                 ty
             }
-            UnaryOp::Ref => self.mk_ptr_ty(Mutability::Mut, operand_ty),
+            UnaryOp::Ref => self.mk_box_ty(Mutability::Mut, operand_ty),
         }
     }
 
     fn check_box_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
         let ty = self.check_expr(expr);
         // TODO unsure how to treat mutability, just setting to mutable for now
-        self.mk_ptr_ty(Mutability::Mut, ty)
+        self.mk_box_ty(Mutability::Mut, ty)
     }
 
     fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {

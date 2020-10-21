@@ -101,14 +101,14 @@ impl<'tcx> TyS<'tcx> {
 
     pub fn is_ptr(&self) -> bool {
         match self.kind {
-            TyKind::Ptr(..) => true,
+            TyKind::Box(..) => true,
             _ => false,
         }
     }
 
     pub fn deref_ty(&self) -> Ty<'tcx> {
         match self.kind {
-            TyKind::Ptr(_, ty) => ty,
+            TyKind::Box(_, ty) => ty,
             _ => panic!("cannot dereference a non-pointer"),
         }
     }
@@ -164,7 +164,7 @@ pub enum TyKind<'tcx> {
     /// mutability inherited by the pointee?
     /// x: T -> box x: &T
     /// mut x: T -> box x: &mut T
-    Ptr(Mutability, Ty<'tcx>),
+    Box(Mutability, Ty<'tcx>),
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
@@ -316,7 +316,7 @@ impl<'tcx> TyS<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Ptr(_, ty) => ty.ty_flags(),
+            TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(_, ty) => ty.ty_flags(),
             TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(..) => TyFlags::HAS_INFER,
@@ -342,6 +342,7 @@ impl<'tcx> Debug for TyKind<'tcx> {
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
+            TyKind::Box(m, ty) => write!(f, "&{}{}", m, ty),
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
@@ -350,7 +351,6 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
             TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
             TyKind::Adt(adt, substs) => write!(f, "{}<{}>", adt.ident, substs),
-            TyKind::Ptr(m, ty) => write!(f, "&{}{}", m, ty),
             TyKind::Opaque(_, _) => write!(f, "opaque"),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
