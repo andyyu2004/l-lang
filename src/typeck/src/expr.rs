@@ -39,11 +39,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             // TODO how to handle mutability?
             UnaryOp::Deref => {
-                let ty = self.new_infer_var(expr.span);
-                self.equate(expr.span, self.mk_box_ty(Mutability::Mut, ty), operand_ty);
-                ty
+                let ty = self.partially_resolve_ty(expr.span, operand_ty);
+                match ty.kind {
+                    TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
+                    _ => self.emit_ty_err(expr.span, TypeError::InvalidDereference(ty)),
+                }
             }
-            UnaryOp::Ref => self.mk_box_ty(Mutability::Mut, operand_ty),
+            UnaryOp::Ref => {
+                if !self.in_unsafe_ctx() {
+                    self.emit_ty_err(expr.span, TypeError::RequireUnsafeCtx);
+                }
+                self.mk_ptr_ty(operand_ty)
+            }
         }
     }
 
@@ -132,7 +139,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ty = self.check_expr_path(path);
         let variant = match path.res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
-                Adt(adt, substs) => Some((adt.single_variant(), ty)),
+                Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
             ir::Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
@@ -332,6 +339,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn check_block(&mut self, block: &ir::Block) -> Ty<'tcx> {
+        if block.is_unsafe {
+            self.with_unsafe_ctx(|fcx| fcx.check_block_inner(block))
+        } else {
+            self.check_block_inner(block)
+        }
+    }
+
+    fn check_block_inner(&mut self, block: &ir::Block) -> Ty<'tcx> {
         block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
         match &block.expr {
             Some(expr) => self.check_expr(expr),

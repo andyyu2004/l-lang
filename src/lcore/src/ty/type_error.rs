@@ -21,6 +21,8 @@ pub enum TypeError<'tcx> {
     GenericArgCount(usize, usize),
     #[error("{0}")]
     Msg(String),
+    #[error("cannot dereference type `{0}`")]
+    InvalidDereference(Ty<'tcx>),
     #[error("`main` has type `{0}` but should be of type `fn() -> int`")]
     IncorrectMainType(Ty<'tcx>),
     #[error("field `{0}` already declared in `{1}`")]
@@ -29,6 +31,8 @@ pub enum TypeError<'tcx> {
     UnexpectedVariant(Res),
     #[error("occurs check failed: type variable `{0}` occurs in type `{1}`")]
     OccursCheck(TyVid, Ty<'tcx>),
+    #[error("operation requires unsafe context")]
+    RequireUnsafeCtx,
     #[error("type annotations required")]
     InferenceFailure,
 }

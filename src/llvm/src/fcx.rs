@@ -102,14 +102,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::StmtKind::Retain(var) => {
                 return;
                 let lvalue_ref = self.vars[var];
-                assert!(lvalue_ref.ty.is_ptr());
+                assert!(lvalue_ref.ty.is_box());
                 let rc_retain = self.build_rc_retain(lvalue_ref);
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
                 return;
                 let lvalue_ref = self.vars[var];
-                assert!(lvalue_ref.ty.is_ptr());
+                assert!(lvalue_ref.ty.is_box());
                 let rc_release = self.build_rc_release(lvalue_ref);
                 self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
             }
@@ -235,9 +235,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
                 ValueRef { ty, val: content_ptr.into() }
             }
-            mir::Rvalue::Ref(_lvalue) => {
-                // ValueRef { val: self.codegen_lvalue(*lvalue).ptr.into(), ty: todo!() },
-                panic!("unsupported");
+            mir::Rvalue::Ref(lvalue) => {
+                let lvalue_ref = self.codegen_lvalue(*lvalue);
+                ValueRef { val: lvalue_ref.ptr.into(), ty: self.tcx.mk_ptr_ty(lvalue_ref.ty) }
             }
             mir::Rvalue::Bin(op, l, r) => {
                 let lhs = self.codegen_operand(l);

@@ -10,14 +10,27 @@ use std::ops::Deref;
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a InheritedCtx<'a, 'tcx>,
-    pub(super) param_tys: SubstsRef<'tcx>,
-    pub(super) ret_ty: Ty<'tcx>,
+    unsafe_ctx: bool,
+    crate param_tys: SubstsRef<'tcx>,
+    crate ret_ty: Ty<'tcx>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(inherited: &'a InheritedCtx<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
         let (param_tys, ret_ty) = fn_ty.expect_fn();
-        Self { inherited, param_tys, ret_ty }
+        Self { inherited, param_tys, ret_ty, unsafe_ctx: false }
+    }
+
+    crate fn in_unsafe_ctx(&self) -> bool {
+        self.unsafe_ctx
+    }
+
+    crate fn with_unsafe_ctx<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        let old = self.unsafe_ctx;
+        self.unsafe_ctx = true;
+        let ret = f(self);
+        self.unsafe_ctx = old;
+        ret
     }
 }
 

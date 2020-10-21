@@ -99,7 +99,7 @@ impl<'tcx> TyS<'tcx> {
         }
     }
 
-    pub fn is_ptr(&self) -> bool {
+    pub fn is_box(&self) -> bool {
         match self.kind {
             TyKind::Box(..) => true,
             _ => false,
@@ -108,8 +108,8 @@ impl<'tcx> TyS<'tcx> {
 
     pub fn deref_ty(&self) -> Ty<'tcx> {
         match self.kind {
-            TyKind::Box(_, ty) => ty,
-            _ => panic!("cannot dereference a non-pointer"),
+            TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
+            _ => panic!("cannot dereference a non-pointer type"),
         }
     }
 

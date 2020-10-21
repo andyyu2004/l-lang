@@ -128,6 +128,27 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         substs
     }
 
+    /// if `ty` is an inference variable, attempts to resolve it at one level
+    pub fn partially_resolve_ty(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
+        match ty.kind {
+            TyKind::Infer(infer) => self.resolve_infer_var(span, infer),
+            _ => ty,
+        }
+    }
+
+    /// returns the concrete type for a type variable and reports an error if it is unknown
+    pub fn resolve_infer_var(&self, span: Span, infer: InferTy) -> Ty<'tcx> {
+        let mut inner = self.inner.borrow_mut();
+        let mut tyvars = inner.type_variables();
+        let value = match infer {
+            TyVar(tyvid) => tyvars.probe(tyvid),
+        };
+        match value {
+            TyVarValue::Known(ty) => ty,
+            TyVarValue::Unknown => self.emit_ty_err(span, TypeError::InferenceFailure),
+        }
+    }
+
     pub fn instantiate(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         match &ty.kind {
             TyKind::Scheme(forall, ty) =>

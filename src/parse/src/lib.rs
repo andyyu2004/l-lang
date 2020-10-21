@@ -473,6 +473,7 @@ impl<'a> Parse<'a> for GenericArgsParser {
 
 pub struct BlockParser {
     pub open_brace: Tok,
+    pub is_unsafe: bool,
 }
 
 impl<'a> Parse<'a> for BlockParser {
@@ -520,7 +521,7 @@ impl<'a> Parse<'a> for BlockParser {
             stmts.push(expr);
         }
 
-        Ok(box Block { span, id: parser.mk_id(), stmts })
+        Ok(box Block { span, is_unsafe: self.is_unsafe, id: parser.mk_id(), stmts })
     }
 }
 
@@ -538,7 +539,7 @@ impl<'a> Parse<'a> for ClosureParser {
         let name = parser.accept_ident();
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
         let body = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
-            let block = BlockParser { open_brace }.parse(parser)?;
+            let block = parser.parse_block(open_brace)?;
             parser.mk_expr(block.span, ExprKind::Block(block))
         } else {
             parser.expect(TokenType::RFArrow)?;
@@ -617,7 +618,7 @@ impl<'a> Parse<'a> for IfParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let cond = ExprParser.parse(parser)?;
         let open_brace = parser.expect(TokenType::OpenBrace)?;
-        let thn = BlockParser { open_brace }.parse(parser)?;
+        let thn = parser.parse_block(open_brace)?;
         let els = if let Some(else_kw) = parser.accept(TokenType::Else) {
             Some(ElseParser { else_kw }.parse(parser)?)
         } else {
@@ -639,7 +640,8 @@ impl<'a> Parse<'a> for ElseParser {
         if let Some(if_kw) = parser.accept(TokenType::If) {
             IfParser { if_kw }.parse(parser)
         } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
-            let (span, block) = BlockParser { open_brace }.spanned(true).parse(parser)?;
+            let (span, block) =
+                BlockParser { open_brace, is_unsafe: false }.spanned(true).parse(parser)?;
             Ok(parser.mk_expr(span, ExprKind::Block(block)))
         } else {
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))

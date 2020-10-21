@@ -56,15 +56,13 @@ pub trait Visitor<'tcx> {
 
     fn walk_rvalue(&mut self, rvalue: &Rvalue<'tcx>) {
         match rvalue {
-            Rvalue::Operand(operand) => self.visit_operand(operand),
-            Rvalue::Unary(_, operand) => self.visit_operand(operand),
+            Rvalue::Box(operand) | Rvalue::Operand(operand) | Rvalue::Unary(_, operand) =>
+                self.visit_operand(operand),
             Rvalue::Bin(_, l, r) => {
                 self.visit_operand(l);
                 self.visit_operand(r);
             }
-            Rvalue::Box(_) => {}
-            Rvalue::Ref(_) => unimplemented!(),
-            Rvalue::Discriminant(lvalue) => self.visit_lvalue(lvalue),
+            Rvalue::Ref(lvalue) | Rvalue::Discriminant(lvalue) => self.visit_lvalue(lvalue),
             Rvalue::Closure(_, _) => todo!(),
             Rvalue::Adt { adt, variant_idx, substs, fields } => {
                 let (..) = (adt, variant_idx, substs);

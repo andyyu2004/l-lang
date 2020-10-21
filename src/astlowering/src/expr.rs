@@ -107,8 +107,9 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         let ir_block = ir::Block {
             stmts: self.alloc_from_iter(stmts),
             id: self.lower_node_id(block.id),
-            expr,
+            is_unsafe: block.is_unsafe,
             span: block.span,
+            expr,
         };
         self.alloc(ir_block)
     }

@@ -13,7 +13,6 @@ pub struct Parser<'a> {
     tokens: Vec<Tok>,
     idx: usize,
     id_counter: Cell<usize>,
-    allow_unsafe: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -21,13 +20,7 @@ impl<'a> Parser<'a> {
     where
         I: IntoIterator<Item = Tok>,
     {
-        Self {
-            tokens: tokens.into_iter().collect(),
-            idx: 0,
-            id_counter: Cell::new(0),
-            allow_unsafe: false,
-            sess,
-        }
+        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0), sess }
     }
 
     pub fn dump_token_stream(&self) {
@@ -51,17 +44,6 @@ impl<'a> Parser<'a> {
             Some(_) => Mutability::Mut,
             None => Mutability::Imm,
         }
-    }
-
-    pub fn in_unsafe_ctx(&self) -> bool {
-        self.allow_unsafe
-    }
-
-    pub fn enter_unsafe_ctx<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
-        self.allow_unsafe = true;
-        let ret = f(self);
-        self.allow_unsafe = false;
-        ret
     }
 
     /// runs some parser and returns the result and the span that it consumed
@@ -140,6 +122,10 @@ impl<'a> Parser<'a> {
 
     pub fn parse_generics(&mut self) -> ParseResult<'a, Generics> {
         GenericsParser.parse(self)
+    }
+
+    pub fn parse_block(&mut self, open_brace: Tok) -> ParseResult<'a, P<Block>> {
+        BlockParser { open_brace, is_unsafe: false }.parse(self)
     }
 
     pub fn parse_ty(&mut self, allow_infer: bool) -> ParseResult<'a, P<Ty>> {

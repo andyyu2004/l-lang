@@ -282,6 +282,7 @@ pub struct PathSegment<'ir> {
 #[derive(Debug)]
 pub struct Block<'ir> {
     pub id: ir::Id,
+    pub is_unsafe: bool,
     pub span: Span,
     pub stmts: &'ir [ir::Stmt<'ir>],
     pub expr: Option<&'ir ir::Expr<'ir>>,

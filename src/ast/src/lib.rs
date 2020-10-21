@@ -154,6 +154,7 @@ impl Display for Ident {
 pub struct Block {
     pub span: Span,
     pub id: NodeId,
+    pub is_unsafe: bool,
     pub stmts: Vec<P<Stmt>>,
 }
 

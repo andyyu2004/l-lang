@@ -229,7 +229,7 @@ impl<'a> Parse<'a> for FnParser {
         let generics = GenericsParser.parse(parser)?;
         let sig = FnSigParser { require_type_annotations: true }.parse(parser)?;
         let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
-            Some(BlockParser { open_brace }.parse(parser)?)
+            Some(parser.parse_block(open_brace)?)
         } else {
             parser.expect(TokenType::Semi)?;
             None

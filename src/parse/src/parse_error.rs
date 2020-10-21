@@ -1,8 +1,6 @@
-use ast::{Expr, ItemKind, P};
+use ast::ItemKind;
 use error::DiagnosticBuilder;
 use lex::{Tok, TokenType};
-use span::Span;
-use std::fmt::{self, Display, Formatter};
 use thiserror::Error;
 
 pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
@@ -21,8 +19,6 @@ pub enum ParseError {
     RequireTypeAnnotations,
     #[error("expected semicolon after expression statement")]
     MissingSemi,
-    #[error("unsafe operation requries unsafe context")]
-    RequireUnsafeCtx,
     #[error("unimplemented in parser")]
     Unimpl,
     #[error("generic arguments not allowed in module paths")]

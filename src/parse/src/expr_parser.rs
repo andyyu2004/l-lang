@@ -93,9 +93,6 @@ impl<'a> Parse<'a> for UnaryExprParser {
             let unary_op = UnaryOp::from(t);
             let expr = self.parse(parser)?;
             let span = t.span.merge(expr.span);
-            if unary_op == UnaryOp::Ref && !parser.in_unsafe_ctx() {
-                parser.sess.emit_error(span, ParseError::RequireUnsafeCtx);
-            }
             Ok(parser.mk_expr(span, ExprKind::Unary(unary_op, expr)))
         } else {
             PostfixExprParser.parse(parser)
@@ -134,7 +131,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(open_paren) = parser.accept(TokenType::OpenParen) {
+        if let Some(_open_paren) = parser.accept(TokenType::OpenParen) {
             // we first try to parse as a parenthesization, if there is a comma then it will fail
             // and we will backtrack and parse it as a tuple instead
             let mut paren_parser = ParenParser { inner: ExprParser }.spanned(true);
@@ -156,7 +153,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
         } else if let Some(tok) = parser.accept(TokenType::True) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(true))))
         } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
-            let block = BlockParser { open_brace }.parse(parser)?;
+            let block = BlockParser { open_brace, is_unsafe: false }.parse(parser)?;
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
         } else if let Some(fn_kw) = parser.accept(TokenType::Fn) {
             ClosureParser { fn_kw }.parse(parser)
@@ -164,7 +161,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             IfParser { if_kw }.parse(parser)
         } else if let Some(unsafe_kw) = parser.accept(TokenType::Unsafe) {
             let open_brace = parser.expect(TokenType::OpenBrace)?;
-            let blk = parser.enter_unsafe_ctx(|parser| BlockParser { open_brace }.parse(parser))?;
+            let blk = BlockParser { open_brace, is_unsafe: true }.parse(parser)?;
             Ok(parser.mk_expr(unsafe_kw.span.merge(blk.span), ExprKind::Block(blk)))
         } else if let Some(match_kw) = parser.accept(TokenType::Match) {
             MatchParser { match_kw }.parse(parser)

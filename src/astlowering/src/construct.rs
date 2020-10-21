@@ -31,7 +31,13 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     pub(super) fn mk_empty_block(&mut self, span: Span) -> &'ir ir::Block<'ir> {
-        self.arena.alloc(ir::Block { id: self.new_id(), span, stmts: &[], expr: None })
+        self.arena.alloc(ir::Block {
+            id: self.new_id(),
+            span,
+            stmts: &[],
+            is_unsafe: false,
+            expr: None,
+        })
     }
 
     pub(super) fn mk_arm(
