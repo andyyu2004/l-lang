@@ -32,7 +32,7 @@ impl<'a> Parse<'a> for TyParser {
         } else if let Some(amp) = parser.accept(TokenType::And) {
             let m = parser.parse_mutability();
             let ty = self.parse(parser)?;
-            Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Ptr(m, ty)))
+            Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Box(m, ty)))
         } else if let Some(lsq) = parser.accept(TokenType::OpenSqBracket) {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;

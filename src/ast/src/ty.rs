@@ -17,7 +17,7 @@ pub enum TyKind {
     Path(Path),
     /// &mut <ty>
     /// &<ty>
-    Ptr(Mutability, P<Ty>),
+    Box(Mutability, P<Ty>),
     /// fn(<ty>...) (-> <ty>)?
     Fn(Vec<P<Ty>>, Option<P<Ty>>),
     Infer,

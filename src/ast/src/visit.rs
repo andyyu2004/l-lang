@@ -258,7 +258,7 @@ pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
             ret.iter().for_each(|ty| visitor.visit_ty(ty));
         }
         TyKind::Infer => {}
-        TyKind::Ptr(_, ty) => visitor.visit_ty(ty),
+        TyKind::Box(_, ty) => visitor.visit_ty(ty),
     }
 }
 
