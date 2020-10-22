@@ -81,7 +81,7 @@ fn llvm_recursive_struct() {
     let src = r#"
     struct Node {
         val: int,
-        next: NodeOption,
+            next: NodeOption,
     }
 
     enum NodeOption {

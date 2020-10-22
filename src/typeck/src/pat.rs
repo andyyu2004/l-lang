@@ -14,7 +14,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::PatternKind::Path(path) => self.check_pat_path(pat, path, ty),
             ir::PatternKind::Wildcard => ty,
         };
-        self.write_ty(pat.id, pat_ty)
+        self.record_ty(pat.id, pat_ty)
     }
 
     fn check_pat_box(&mut self, pat: &ir::Pattern, inner: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {

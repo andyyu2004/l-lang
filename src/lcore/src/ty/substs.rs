@@ -57,18 +57,18 @@ impl<'tcx> Substs<'tcx> {
 }
 
 /// substitute inference variables according to some substitution
-pub struct InferenceVarSubstFolder<'tcx> {
+pub struct InferVarSubstsFolder<'tcx> {
     tcx: TyCtx<'tcx>,
     substs: SubstsRef<'tcx>,
 }
 
-impl<'tcx> InferenceVarSubstFolder<'tcx> {
+impl<'tcx> InferVarSubstsFolder<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Self {
         Self { tcx, substs }
     }
 }
 
-impl<'tcx> TypeFolder<'tcx> for InferenceVarSubstFolder<'tcx> {
+impl<'tcx> TypeFolder<'tcx> for InferVarSubstsFolder<'tcx> {
     fn fold_ty(&mut self, ty: Ty<'tcx>) -> Ty<'tcx> {
         if !ty.has_infer_vars() {
             return ty;

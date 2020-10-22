@@ -26,7 +26,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
             ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
         };
-        self.write_ty(expr.id, ty)
+        self.record_ty(expr.id, ty)
     }
 
     fn check_unary_expr(&mut self, expr: &ir::Expr, op: UnaryOp, operand: &ir::Expr) -> Ty<'tcx> {
@@ -57,7 +57,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {
         let (autoderef, ty) = self.check_field_expr_inner(expr, base, ident);
         let adjustments = autoderef.get_adjustments();
-        self.write_adjustments(base.id, adjustments);
+        self.record_adjustments(base.id, adjustments);
         ty
     }
 
@@ -78,7 +78,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     {
                         // note the id belongs is the id of the entire field expression
                         // not just the identifier or base
-                        self.write_field_index(expr.id, idx);
+                        self.record_field_index(expr.id, idx);
                         field.ty(self.tcx, substs)
                     } else {
                         self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
@@ -89,7 +89,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     // `tuple.i` literally means the i'th element of tuple
                     // so we can weirdly parse the identifier as the actual index
                     let idx = ident.as_str().parse::<usize>().unwrap();
-                    self.write_field_index(expr.id, idx);
+                    self.record_field_index(expr.id, idx);
                     let ty = match tys.get(idx) {
                         Some(ty) => ty,
                         None =>
@@ -192,7 +192,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             match remaining_fields.remove(&field.ident) {
                 Some((idx, f)) => {
                     seen_fields.insert(field.ident, idx);
-                    self.write_field_index(field.id, idx);
+                    self.record_field_index(field.id, idx);
                     self.equate(field.span, f.ty(self.tcx, substs), ty);
                 }
                 None => {
@@ -200,7 +200,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     if let Some(&idx) = seen_fields.get(&field.ident) {
                         // write the index even on error to avoid missing
                         // entries in table later (may be unnecessary)
-                        self.write_field_index(field.id, idx);
+                        self.record_field_index(field.id, idx);
                         self.emit_ty_err(
                             field.span,
                             TypeError::Msg(format!("field `{}` set more than once", field.ident)),
@@ -297,7 +297,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // this is a special case due to return statements in the top level block expr
         // without this overwrite, if the final statement is diverging (i.e. return)
         // then the body function will be recorded to have type ! which is not correct
-        self.write_ty(body.id(), self.ret_ty);
+        self.record_ty(body.id(), self.ret_ty);
     }
 
     fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstsRef<'tcx> {

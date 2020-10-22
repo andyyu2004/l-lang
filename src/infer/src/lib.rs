@@ -104,7 +104,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         self.tcx.mk_ty_err()
     }
 
-    /// creates the substitutions for all inference variables
+    /// creates the conrete substitutions for all inference variables
     pub fn inference_substs(&self) -> SubstsRef<'tcx> {
         // let vec: Vec<_> = self.inner.borrow_mut().type_variables();
         let mut inner = self.inner.borrow_mut();
@@ -125,7 +125,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         // repeatedly substitute its inference variables for its value
         // until it contains no inference variables or failure
         // I think this will always terminate?
-        let mut folder = InferenceVarSubstFolder::new(self.tcx, substs);
+        let mut folder = InferVarSubstsFolder::new(self.tcx, substs);
         loop {
             let new_substs = substs.fold_with(&mut folder);
             if substs == new_substs {
@@ -133,7 +133,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
             }
             substs = new_substs;
         }
-        debug_assert!(substs.iter().all(|ty| !ty.has_infer_vars()));
+        assert!(substs.iter().all(|ty| !ty.has_infer_vars()));
         substs
     }
 
@@ -180,17 +180,17 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
 
     /// records the type for the given id in the tables
     /// returns the same type purely for convenience
-    pub fn write_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn record_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
         info!("fcx write ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
     }
 
-    pub fn write_adjustments(&self, id: ir::Id, adjustments: Vec<Adjustment<'tcx>>) {
+    pub fn record_adjustments(&self, id: ir::Id, adjustments: Vec<Adjustment<'tcx>>) {
         self.tables.borrow_mut().adjustments_mut().insert(id, adjustments);
     }
 
-    pub fn write_field_index(&self, id: ir::Id, idx: usize) {
+    pub fn record_field_index(&self, id: ir::Id, idx: usize) {
         info!("fcx write field_index {:?} : {}", id, idx);
         self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));
     }

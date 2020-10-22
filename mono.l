@@ -1,6 +1,6 @@
 
 fn f(s: S) {}
-struct S { }
+struct S { s: S<int> }
 
 extern {
     fn print(i: int);

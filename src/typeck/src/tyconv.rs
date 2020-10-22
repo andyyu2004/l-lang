@@ -11,18 +11,18 @@ pub trait TyConv<'tcx> {
     fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
-            ir::TyKind::Array(_ty) => {
-                // tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
-                todo!();
-            }
-            ir::TyKind::Path(path) => self.path_to_ty(path),
-            ir::TyKind::Tuple(tys) => tcx.mk_tup_iter(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
-            ir::TyKind::Ptr(ty) => tcx.mk_ptr_ty(self.ir_ty_to_ty(ty)),
             ir::TyKind::Box(m, ty) => tcx.mk_box_ty(*m, self.ir_ty_to_ty(ty)),
             ir::TyKind::Fn(params, ret) => tcx.mk_fn_ty(
                 tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
                 ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
             ),
+            ir::TyKind::Path(path) => self.path_to_ty(path),
+            ir::TyKind::Tuple(tys) => tcx.mk_tup_iter(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
+            ir::TyKind::Ptr(ty) => tcx.mk_ptr_ty(self.ir_ty_to_ty(ty)),
+            ir::TyKind::Array(_ty) => {
+                // tcx.mk_array_ty(self.ir_ty_to_ty(ty), todo!()),
+                todo!();
+            }
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
         }
     }

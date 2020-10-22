@@ -1,21 +1,50 @@
 use crate::TyConv;
 use ir::Visitor;
-use lcore::ty::{Substs, Ty, TyCtx};
+use lcore::ty::{AdtTy, Substs, Ty, TyCtx};
 
 struct AdtCollector<'tcx> {
     tcx: TyCtx<'tcx>,
+    /// holds a list of adt tys that needs to have their fields checked after collection
+    /// this because the fields are never lowered into ty::Ty representations and only as ir::Ty
+    /// due to the potentially recursive nature of adts
+    /// some validation is performed during `ir_ty_to_ty` and so we run every field in every
+    /// variant of every adt through `ir_ty_to_ty` to check for errors that would otherwise be
+    /// uncaught
+    adts: Vec<&'tcx AdtTy<'tcx>>,
+}
+
+impl<'tcx> AdtCollector<'tcx> {
+    fn new(tcx: TyCtx<'tcx>) -> Self {
+        Self { tcx, adts: Default::default() }
+    }
+
+    fn check_adt_variants(&self, adt: &AdtTy<'tcx>) {
+        for variant in &adt.variants {
+            for field in variant.fields {
+                self.tcx.ir_ty_to_ty(field.ir_ty);
+            }
+        }
+    }
 }
 
 impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
+    fn visit_ir(&mut self, ir: &'tcx ir::IR<'tcx>) {
+        ir::walk_ir(self, ir);
+        for &adt in &self.adts {
+            self.check_adt_variants(adt)
+        }
+    }
+
     fn visit_item(&mut self, item: &ir::Item<'tcx>) {
         let tcx = self.tcx;
-        let ty = match &item.kind {
+        match &item.kind {
             ir::ItemKind::Struct(generics, variant_kind) => {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
+                self.adts.push(adt_ty);
                 let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
-                Some(tcx.generalize(generics, ty))
+                tcx.collect_ty(item.id.def, tcx.generalize(generics, ty));
             }
             ir::ItemKind::Enum(generics, variants) => {
                 let variant_tys = variants
@@ -26,16 +55,14 @@ impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
                     .collect();
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
+                self.adts.push(adt_ty);
                 let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
-                Some(tcx.generalize(generics, ty))
+                tcx.collect_ty(item.id.def, tcx.generalize(generics, ty));
+                self.check_adt_variants(adt_ty);
             }
-            _ => None,
+            _ => {}
         };
-
-        if let Some(ty) = ty {
-            tcx.collect_ty(item.id.def, ty);
-        }
     }
 }
 
@@ -46,7 +73,7 @@ struct FnCollector<'tcx> {
 impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
     fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
         let tcx = self.tcx;
-        let ty = match &item.kind {
+        match &item.kind {
             ir::ItemKind::Fn(sig, generics, _) => {
                 let fn_ty = tcx.fn_sig_to_ty(sig);
                 let ty = tcx.generalize(generics, fn_ty);
@@ -132,15 +159,6 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
 pub fn collect_item_types<'tcx>(tcx: TyCtx<'tcx>) {
     // we must do this in multiple phases as functions
     // may need to refer to adt defintions
-    AdtCollector { tcx }.visit_prog(tcx.ir);
-    FnCollector { tcx }.visit_prog(tcx.ir);
-    CtorCollector { tcx }.visit_prog(tcx.ir);
-}
-
-/// this runs a separate collection pass as it requires the enum tys to be known
-struct CtorCollector<'tcx> {
-    tcx: TyCtx<'tcx>,
-}
-
-impl<'tcx> ir::Visitor<'tcx> for CtorCollector<'tcx> {
+    AdtCollector::new(tcx).visit_ir(tcx.ir);
+    FnCollector { tcx }.visit_ir(tcx.ir);
 }

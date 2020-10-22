@@ -3,6 +3,21 @@
 use super::*;
 
 #[test]
+fn incorrect_number_of_generic_args_in_struct_decl() {
+    let src = r#"
+    struct S<T> {
+        t: T
+    }
+
+    struct K<T, U> {
+        s: S<T, U>
+    }
+    "#;
+
+    expect_error!(src);
+}
+
+#[test]
 fn simple_generic_struct() {
     let src = r#"
     struct G<T> {
@@ -111,22 +126,6 @@ fn infer_generic_args_in_path() {
     }"#;
 
     typeck!(src);
-}
-
-// #[test]
-fn incorrect_number_of_generic_args_in_struct_decl() {
-    // TODO need to fix
-    let src = r#"
-    struct S<T> {
-        t: T
-    }
-
-    struct K<T, U> {
-        s: S<T, U>
-    }
-    "#;
-
-    expect_error!(src);
 }
 
 #[test]
