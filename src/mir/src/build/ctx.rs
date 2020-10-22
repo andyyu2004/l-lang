@@ -113,7 +113,8 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
         let &Self { id, span, kind } = self;
         let kind = match kind {
-            ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
+            ir::PatternKind::Box(pat) => tir::PatternKind::Box(box pat.to_tir(ctx)),
+            ir::PatternKind::Path(path) => ctx.lower_variant_pat(self, path, &[]),
             ir::PatternKind::Binding(ident, sub, m) => {
                 let subpat = sub.map(|pat| box pat.to_tir(ctx));
                 tir::PatternKind::Binding(m, ident, subpat)
@@ -121,7 +122,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(box expr.to_tir(ctx)),
             ir::PatternKind::Variant(path, pats) => ctx.lower_variant_pat(self, path, pats),
-            ir::PatternKind::Path(path) => ctx.lower_variant_pat(self, path, &[]),
+            ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
         };
         let ty = ctx.node_type(id);
         tir::Pattern { id, span, kind, ty }

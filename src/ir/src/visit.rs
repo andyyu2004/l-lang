@@ -295,7 +295,7 @@ pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, segment: &'ir ir::Path
 
 pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
     match &pat.kind {
-        ir::PatternKind::Wildcard => {}
+        ir::PatternKind::Box(pat) => v.visit_pat(pat),
         ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
         ir::PatternKind::Lit(expr) => v.visit_expr(expr),
         ir::PatternKind::Binding(ident, subpat, _m) => {
@@ -307,5 +307,6 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
             pats.iter().for_each(|pat| v.visit_pat(pat));
         }
         ir::PatternKind::Path(path) => v.visit_path(path),
+        ir::PatternKind::Wildcard => {}
     }
 }

@@ -26,8 +26,8 @@ impl Display for Mutability {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum PatternKind {
-    /// _
-    Wildcard,
+    /// &<pat>
+    Box(P<Pattern>),
     /// ident ( @ <subpattern> )?
     Ident(Ident, Option<P<Pattern>>, Mutability),
     Paren(P<Pattern>),
@@ -38,5 +38,8 @@ pub enum PatternKind {
     Variant(Path, Vec<P<Pattern>>),
     /// can refer to unit variants and structs
     Path(Path),
+    /// todo
     // Struct(Path, FieldPat),
+    /// _
+    Wildcard,
 }

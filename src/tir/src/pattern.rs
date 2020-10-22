@@ -29,10 +29,11 @@ pub struct Pattern<'tcx> {
 impl<'tcx> Pattern<'tcx> {
     pub fn is_refutable(&self) -> bool {
         match &self.kind {
-            PatternKind::Wildcard | PatternKind::Binding(..) => false,
+            PatternKind::Box(pat) => pat.is_refutable(),
             PatternKind::Field(fs) => fs.iter().any(|f| f.pat.is_refutable()),
             PatternKind::Lit(..) => true,
             PatternKind::Variant(.., pats) => pats.iter().any(|p| p.is_refutable()),
+            PatternKind::Wildcard | PatternKind::Binding(..) => false,
         }
     }
 }
@@ -43,6 +44,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             // we print out the `local_id` instead of the ident symbol number
             // as the identifier is referred to by id instead of name in the tir
             // in particular ExprKind::VarRef does not have access to the symbol only the `ir::Id`
+            PatternKind::Box(pat) => write!(f, "&{}", pat),
             PatternKind::Binding(m, ident, _) => write!(f, "{}{}", m, ident),
             PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
             PatternKind::Lit(expr) => {
@@ -66,7 +68,8 @@ impl<'tcx> Display for Pattern<'tcx> {
 
 #[derive(Debug)]
 pub enum PatternKind<'tcx> {
-    Wildcard,
+    /// &<pat>
+    Box(Box<tir::Pattern<'tcx>>),
     Binding(Mutability, Ident, Option<Box<tir::Pattern<'tcx>>>),
     /// generalization of tuple patterns
     /// used to match tuples, and single variant adts (i.e. structs)
@@ -76,4 +79,5 @@ pub enum PatternKind<'tcx> {
     Lit(Box<tir::Expr<'tcx>>),
     /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
     Variant(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>, VariantIdx, Vec<tir::Pattern<'tcx>>),
+    Wildcard,
 }

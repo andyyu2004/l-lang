@@ -15,6 +15,8 @@ pub enum TypeError<'tcx> {
     TupleSizeMismatch(usize, usize),
     #[error("unknown field `{1}` on `{0}`")]
     UnknownField(Ty<'tcx>, Ident),
+    #[error("cannot access fields on `{0}`")]
+    BadFieldAccess(Ty<'tcx>),
     #[error("attempted to index `.{0}` into a {1}-tuple")]
     TupleOutOfBounds(usize, usize),
     #[error("expected {0} generic parameters but received {1}")]

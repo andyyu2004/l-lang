@@ -17,6 +17,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         debug_assert!(!irref_pat.is_refutable());
         let info = self.span_info(irref_pat.span);
         match irref_pat.kind {
+            // we know `pat` is also irrefutable as the outer pat was irrefutable
+            tir::PatternKind::Box(ref pat) =>
+                self.bind_pat_to_lvalue(block, pat, self.tcx.project_deref(lvalue)),
             tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
                 let &tir::Pattern { id, span, ty, .. } = irref_pat;

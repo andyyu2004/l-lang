@@ -79,6 +79,15 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
+    /// attempts to get the dereferenced type of `ty`
+    pub fn deref_ty(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
+        let ty = self.partially_resolve_ty(span, ty);
+        match ty.kind {
+            TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
+            _ => self.emit_ty_err(span, TypeError::InvalidDereference(ty)),
+        }
+    }
+
     pub fn emit_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
         let diag = self.tcx.sess.build_error(span, err);
         self.emit_err(diag)

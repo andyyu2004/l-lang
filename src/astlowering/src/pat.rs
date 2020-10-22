@@ -13,7 +13,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_pattern_inner(&mut self, pat: &Pattern) -> ir::Pattern<'ir> {
         let &Pattern { id, span, ref kind } = pat;
         let kind = match kind {
-            PatternKind::Wildcard => ir::PatternKind::Wildcard,
+            PatternKind::Box(pat) => ir::PatternKind::Box(self.lower_pattern(pat)),
             PatternKind::Paren(pat) => return self.lower_pattern_inner(pat),
             PatternKind::Tuple(pats) => ir::PatternKind::Tuple(self.lower_patterns(pats)),
             PatternKind::Variant(path, patterns) =>
@@ -24,6 +24,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 ir::PatternKind::Binding(*ident, sub, *m)
             }
             PatternKind::Lit(expr) => ir::PatternKind::Lit(self.lower_expr(expr)),
+            PatternKind::Wildcard => ir::PatternKind::Wildcard,
         };
         ir::Pattern { id: self.lower_node_id(id), span, kind }
     }

@@ -7,9 +7,15 @@ extern {
 }
 
 fn main() -> int {
-    let x: int = *(box 5);
-    let y: int = unsafe { *&x };
+    let x: int = 9;
+    let y = return_dangling();
+    print(*y);
+    0
 };
+
+fn return_dangling() -> *int {
+    unsafe { &5 }
+}
 
 fn take_box(boxed: &int) {
     print(*boxed);

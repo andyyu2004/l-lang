@@ -11,6 +11,7 @@ use span::Span;
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
         let ty = match &expr.kind {
+            ir::ExprKind::Box(expr) => self.check_box_expr(expr),
             ir::ExprKind::Lit(lit) => self.check_lit(lit),
             ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
             ir::ExprKind::Unary(op, operand) => self.check_unary_expr(expr, *op, operand),
@@ -24,7 +25,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
             ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
             ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
-            ir::ExprKind::Box(expr) => self.check_box_expr(expr),
         };
         self.write_ty(expr.id, ty)
     }
@@ -38,13 +38,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.types.boolean
             }
             // TODO how to handle mutability?
-            UnaryOp::Deref => {
-                let ty = self.partially_resolve_ty(expr.span, operand_ty);
-                match ty.kind {
-                    TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
-                    _ => self.emit_ty_err(expr.span, TypeError::InvalidDereference(ty)),
-                }
-            }
+            UnaryOp::Deref => self.deref_ty(expr.span, operand_ty),
             UnaryOp::Ref => {
                 if !self.in_unsafe_ctx() {
                     self.emit_ty_err(expr.span, TypeError::RequireUnsafeCtx);
@@ -106,7 +100,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 _ => continue,
             }
         }
-        panic!("bad field access, todo proper error msg {}", base_ty);
+        (autoderef, self.emit_ty_err(expr.span, TypeError::BadFieldAccess(base_ty)))
     }
 
     /// return expressions have the type of the expression that follows the return

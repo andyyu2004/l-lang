@@ -11,10 +11,11 @@ pub struct Pattern<'ir> {
 
 #[derive(Debug, Copy, Clone)]
 pub enum PatternKind<'ir> {
-    Wildcard,
+    Box(&'ir ir::Pattern<'ir>),
     Lit(&'ir ir::Expr<'ir>),
     Binding(Ident, Option<&'ir ir::Pattern<'ir>>, Mutability),
     Tuple(&'ir [ir::Pattern<'ir>]),
     Variant(&'ir ir::Path<'ir>, &'ir [ir::Pattern<'ir>]),
     Path(&'ir ir::Path<'ir>),
+    Wildcard,
 }

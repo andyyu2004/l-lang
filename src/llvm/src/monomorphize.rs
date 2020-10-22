@@ -26,12 +26,12 @@ impl<'tcx> CodegenCtx<'tcx> {
 struct MonomorphizationCollector<'a, 'tcx> {
     cctx: &'a CodegenCtx<'tcx>,
     roots: &'a Vec<DefId>,
-    instances: RefCell<FxHashSet<Instance<'tcx>>>,
+    mono_instances: RefCell<FxHashSet<Instance<'tcx>>>,
 }
 
 impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
     fn new(cctx: &'a CodegenCtx<'tcx>, roots: &'a Vec<DefId>) -> Self {
-        Self { cctx, roots, instances: Default::default() }
+        Self { cctx, roots, mono_instances: Default::default() }
     }
 
     fn collect_instances(self) -> FxHashSet<Instance<'tcx>> {
@@ -39,7 +39,7 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
             let instance = Instance::mono_item(root);
             self.collect_instance(instance);
         }
-        self.instances.into_inner()
+        self.mono_instances.into_inner()
     }
 
     fn collect_item_instance(&self, instance: Instance<'tcx>) {
@@ -47,7 +47,6 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
             Some(&mir) => Ok(mir),
             None => {
                 let mir = self.tcx.mir_of_instance(instance);
-                // we put the print and insertion here so it doesn't print the same instance multiple times
                 if let Ok(mir) = mir {
                     println!("{} {}", self.tcx.defs().ident_of(instance.def_id), mir);
                 }
@@ -64,9 +63,10 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
     }
 
     fn collect_instance(&self, instance: Instance<'tcx>) {
-        self.instances.borrow_mut().insert(instance);
+        self.mono_instances.borrow_mut().insert(instance);
         match instance.kind {
             InstanceKind::Item => self.collect_item_instance(instance),
+            // no need to recurse on intrinsics as they do not have associated mir
             InstanceKind::Intrinsic => {}
         }
     }
@@ -124,16 +124,18 @@ impl<'a, 'tcx> Monomorphize<'tcx> for InstanceCollector<'a, 'tcx> {
 
 impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
     fn visit_operand(&mut self, operand: &Operand<'tcx>) {
-        // `Operand::Item` is the only way to reference a generic item
+        // `Operand::Item` is currently the only way to reference a generic item
         if let &Operand::Item(def_id, fn_ty) = operand {
-            // firstly, we must monomorphize the ty with its
-            // "parent" instance's substitutions
+            // note that `fn_ty` is not the fully generic type obtained through collection
+            // it is the type of the function after typechecking and so will only contain
+            // type parameters if it was called in a generic context.
+            // we monomorphize the function type with the "parent" instance's substitutions
+            // and this should provide concrete types for the type parameters
             let mono_ty = self.monomorphize(fn_ty);
             // `ty` should have no type parameters after monomorphization
             debug_assert!(!mono_ty.has_ty_params());
-            // this `substs` is the substitution
-            // applied to the generic function with def_id `def_id`
-            // to obtain its concrete type
+            // this `substs` is the substitution applied to the generic function with def_id
+            // `def_id` to obtain its concrete type
             let scheme = self.tcx.collected_ty(def_id);
             let substs = self.tcx.unify(scheme, mono_ty);
             let instance = Instance::resolve(self.tcx, def_id, substs);
@@ -144,7 +146,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
                 assert_eq!(prev, instance);
             }
 
-            if !self.instances.borrow().contains(&instance) {
+            if !self.mono_instances.borrow().contains(&instance) {
                 // recursively collect all its neighbours
                 self.collector.collect_instance(instance);
             }

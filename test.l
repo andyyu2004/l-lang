@@ -83,12 +83,12 @@ fn main() -> int {
 // }
 
 fn last2(list: &List) -> &List {
-    match *list {
-	List::Next(i, l) => {
+    match list {
+	&List::Next(i, l) => {
 	    print(addr(l));
 	    last2(l)
 	},
-	List::Null => list,
+	&List::Null => list,
     }
 }
 
@@ -102,9 +102,9 @@ fn last2(list: &List) -> &List {
 //
 fn eval(expr: &Expr) -> int {
     /* print(rc(expr)); */
-    match *expr {
-	Expr::Int(i) => i,
-	Expr::Add(l, r) => {
+    match expr {
+	&Expr::Int(i) => i,
+	&Expr::Add(l, r) => {
 	    print(addr(l));
 	    print(addr(r));
 	    eval(l) + eval(r)

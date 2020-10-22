@@ -232,7 +232,7 @@ pub fn walk_closure<'ast>(
 pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
     match &pat.kind {
         PatternKind::Wildcard => {}
-        PatternKind::Paren(pat) => visitor.visit_pattern(pat),
+        PatternKind::Box(pat) | PatternKind::Paren(pat) => visitor.visit_pattern(pat),
         PatternKind::Path(path) => visitor.visit_path(path),
         PatternKind::Tuple(pats) => pats.iter().for_each(|p| visitor.visit_pattern(p)),
         PatternKind::Ident(ident, pat, _) => {

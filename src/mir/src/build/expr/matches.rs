@@ -113,6 +113,10 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         let info = self.span_info(pat.span);
         match pat.kind {
             tir::PatternKind::Wildcard => {}
+            tir::PatternKind::Box(ref pat) => {
+                let deref_scrut = tcx.project_deref(scrut);
+                set!(pblock = self.build_arm_predicate(pblock, predicate, deref_scrut, pat));
+            }
             tir::PatternKind::Binding(_m, _ident, ref sub) => {
                 assert!(sub.is_none());
                 set!(pblock = self.bind_pat_to_lvalue(pblock, pat, scrut));
