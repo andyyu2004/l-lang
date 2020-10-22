@@ -137,10 +137,11 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         substs
     }
 
-    /// if `ty` is an inference variable, attempts to resolve it at one level
+    /// if `ty` is an inference variable, attempts to resolve it at least one level deep
     pub fn partially_resolve_ty(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         match ty.kind {
-            TyKind::Infer(infer) => self.resolve_infer_var(span, infer),
+            TyKind::Infer(infer) =>
+                self.partially_resolve_ty(span, self.resolve_infer_var(span, infer)),
             _ => ty,
         }
     }

@@ -1,58 +1,58 @@
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(1) to PrimTy(Int)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(6) to Def(0, Enum)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(11) to Def(0, Enum)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(18) to PrimTy(Int)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(22) to Def(3, Enum)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(34) to Def(8, TyParam(0))
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(39) to PrimTy(Int)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(46) to PrimTy(Int)
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(55) to Def(11, TyParam(0))
-[00:00:00.004] (7fb14efef940) INFO   resolving node NodeId(60) to PrimTy(Int)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(65) to PrimTy(Int)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(72) to Def(1, Ctor(Tuple))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(80) to Def(9, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(83) to Def(10, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(86) to Local(NodeId(69))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(96) to Def(1, Ctor(Tuple))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(104) to Def(9, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(107) to Def(10, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(110) to Local(NodeId(93))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(120) to Def(2, Ctor(Tuple))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(123) to Local(NodeId(69))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(126) to Local(NodeId(93))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(133) to Def(9, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(136) to Def(10, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(139) to Local(NodeId(117))
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(145) to Def(14, Fn)
-[00:00:00.005] (7fb14efef940) INFO   resolving node NodeId(148) to Local(NodeId(117))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(161) to Def(3, Enum)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(166) to Def(3, Enum)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(170) to Local(NodeId(159))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(174) to Def(4, Ctor(Tuple))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(184) to Def(9, Fn)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(187) to Def(10, Fn)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(190) to Local(NodeId(180))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(196) to Def(13, Fn)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(199) to Local(NodeId(180))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(208) to Def(5, Ctor(Unit))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(212) to Local(NodeId(159))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(224) to Def(0, Enum)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(229) to PrimTy(Int)
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(232) to Local(NodeId(222))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(236) to Def(1, Ctor(Tuple))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(243) to Local(NodeId(239))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(248) to Def(2, Ctor(Tuple))
-[00:00:00.006] (7fb14efef940) INFO   resolving node NodeId(258) to Def(9, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(261) to Def(10, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(264) to Local(NodeId(251))
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(270) to Def(9, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(273) to Def(10, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(276) to Local(NodeId(254))
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(282) to Def(14, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(285) to Local(NodeId(251))
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(289) to Def(14, Fn)
-[00:00:00.007] (7fb14efef940) INFO   resolving node NodeId(292) to Local(NodeId(254))
-[00:00:00.008] (7fb14efef940) INFO   IR {
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(1) to PrimTy(Int)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(6) to Def(0, Enum)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(11) to Def(0, Enum)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(18) to PrimTy(Int)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(22) to Def(3, Enum)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(34) to Def(8, TyParam(0))
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(39) to PrimTy(Int)
+[00:00:00.004] (7fa398a88940) INFO   resolving node NodeId(46) to PrimTy(Int)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(55) to Def(11, TyParam(0))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(60) to PrimTy(Int)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(65) to PrimTy(Int)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(72) to Def(1, Ctor(Tuple))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(80) to Def(9, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(83) to Def(10, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(86) to Local(NodeId(69))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(96) to Def(1, Ctor(Tuple))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(104) to Def(9, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(107) to Def(10, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(110) to Local(NodeId(93))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(120) to Def(2, Ctor(Tuple))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(123) to Local(NodeId(69))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(126) to Local(NodeId(93))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(133) to Def(9, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(136) to Def(10, Fn)
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(139) to Local(NodeId(117))
+[00:00:00.005] (7fa398a88940) INFO   resolving node NodeId(145) to Def(14, Fn)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(148) to Local(NodeId(117))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(161) to Def(3, Enum)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(166) to Def(3, Enum)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(170) to Local(NodeId(159))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(174) to Def(4, Ctor(Tuple))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(184) to Def(9, Fn)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(187) to Def(10, Fn)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(190) to Local(NodeId(180))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(196) to Def(13, Fn)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(199) to Local(NodeId(180))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(208) to Def(5, Ctor(Unit))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(212) to Local(NodeId(159))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(224) to Def(0, Enum)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(229) to PrimTy(Int)
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(232) to Local(NodeId(222))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(236) to Def(1, Ctor(Tuple))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(243) to Local(NodeId(239))
+[00:00:00.006] (7fa398a88940) INFO   resolving node NodeId(248) to Def(2, Ctor(Tuple))
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(258) to Def(9, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(261) to Def(10, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(264) to Local(NodeId(251))
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(270) to Def(9, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(273) to Def(10, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(276) to Local(NodeId(254))
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(282) to Def(14, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(285) to Local(NodeId(251))
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(289) to Def(14, Fn)
+[00:00:00.007] (7fa398a88940) INFO   resolving node NodeId(292) to Local(NodeId(254))
+[00:00:00.008] (7fa398a88940) INFO   IR {
     entry_id: Some(
         12,
     ),
@@ -3449,311 +3449,311 @@
     },
     impl_items: {},
 }
-[00:00:00.094] (7fb14efef940) INFO   collect item 0: ∀τ.Expr<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 3: ∀τ.List<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 1: ∀τ.fn(int)->Expr<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 2: ∀τ.fn(&Expr<>,&Expr<>)->Expr<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 4: ∀τ.fn(int,&List<>)->List<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 5: ∀τ.List<>
-[00:00:00.094] (7fb14efef940) INFO   collect item 7: ∀τT.fn(&τ0)->int
-[00:00:00.095] (7fb14efef940) INFO   collect item 9: ∀τ.fn(int)->()
-[00:00:00.095] (7fb14efef940) INFO   collect item 10: ∀τT.fn(&τ0)->int
-[00:00:00.095] (7fb14efef940) INFO   collect item 12: ∀τ.fn()->int
-[00:00:00.095] (7fb14efef940) INFO   collect item 13: ∀τ.fn(&List<>)->&List<>
-[00:00:00.095] (7fb14efef940) INFO   collect item 14: ∀τ.fn(&Expr<>)->int
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.5 : fn(int)->Expr<>
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.6 : int
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.7 : ?0
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.8 : &mut ?0
-[00:00:00.095] (7fb14efef940) INFO   deflocal 12.2 : &mut ?0
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.2 : &mut ?0
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.11 : fn(int)->()
-[00:00:00.095] (7fb14efef940) INFO   fcx write ty 12.13 : fn(&?3)->int
-[00:00:00.096] (7fb14efef940) INFO   lookup ty for local 12.2
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.15 : &mut ?0
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.16 : ?2
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.17 : ?1
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.23 : fn(int)->Expr<>
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.24 : int
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.25 : ?4
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.26 : &mut ?4
-[00:00:00.096] (7fb14efef940) INFO   deflocal 12.20 : &mut ?4
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.20 : &mut ?4
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.29 : fn(int)->()
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.31 : fn(&?7)->int
-[00:00:00.096] (7fb14efef940) INFO   lookup ty for local 12.20
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.33 : &mut ?4
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.34 : ?6
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.35 : ?5
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.41 : fn(&Expr<>,&Expr<>)->Expr<>
-[00:00:00.096] (7fb14efef940) INFO   lookup ty for local 12.2
-[00:00:00.096] (7fb14efef940) INFO   fcx write ty 12.43 : &mut ?0
-[00:00:00.096] (7fb14efef940) INFO   lookup ty for local 12.20
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.45 : &mut ?4
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.46 : ?8
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.47 : &mut ?8
-[00:00:00.097] (7fb14efef940) INFO   deflocal 12.38 : &mut ?8
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.38 : &mut ?8
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.50 : fn(int)->()
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.52 : fn(&?11)->int
-[00:00:00.097] (7fb14efef940) INFO   lookup ty for local 12.38
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.54 : &mut ?8
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.55 : ?10
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.56 : ?9
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.59 : fn(&Expr<>)->int
-[00:00:00.097] (7fb14efef940) INFO   lookup ty for local 12.38
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.61 : &mut ?8
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.62 : ?12
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.64 : int
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.67 : int
-[00:00:00.097] (7fb14efef940) INFO   fcx write ty 12.67 : int
-[00:00:00.097] (7fb14efef940) INFO   fcx query node type for 12.67
-[00:00:00.097] (7fb14efef940) INFO   fcx query node type for 12.8
-[00:00:00.097] (7fb14efef940) INFO   fcx query node type for 12.7
-[00:00:00.097] (7fb14efef940) INFO   fcx query node type for 12.5
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.6
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.2
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.17
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.11
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.16
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.13
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.15
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.26
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.25
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.23
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.24
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.20
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.35
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.29
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.34
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.31
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.33
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.47
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.46
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.41
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.43
-[00:00:00.098] (7fb14efef940) INFO   fcx query node type for 12.45
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.38
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.56
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.50
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.55
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.52
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.54
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.62
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.59
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.61
-[00:00:00.099] (7fb14efef940) INFO   fcx query node type for 12.64
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.67
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.2
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.8
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.7
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.5
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.6
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.17
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.11
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.16
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.13
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.15
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.20
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.26
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.25
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.23
-[00:00:00.099] (7fb14efef940) INFO   irloweringctx: query typeof 12.24
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.35
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.29
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.34
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.31
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.33
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.38
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.47
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.46
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.41
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.43
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.45
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.56
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.50
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.55
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.52
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.54
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.62
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.59
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.61
-[00:00:00.100] (7fb14efef940) INFO   irloweringctx: query typeof 12.64
-[00:00:00.101] (7fb14efef940) INFO   deflocal 14.2 : &Expr<>
-[00:00:00.101] (7fb14efef940) INFO   fcx write ty 14.2 : &Expr<>
-[00:00:00.101] (7fb14efef940) INFO   lookup ty for local 14.2
-[00:00:00.101] (7fb14efef940) INFO   fcx write ty 14.4 : &Expr<>
-[00:00:00.102] (7fb14efef940) INFO   deflocal 14.8 : ?0
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.8 : ?0
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.9 : Expr<>
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.10 : &Expr<>
-[00:00:00.102] (7fb14efef940) INFO   deflocal 14.16 : ?1
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.16 : ?1
-[00:00:00.102] (7fb14efef940) INFO   deflocal 14.17 : ?2
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.17 : ?2
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.18 : Expr<>
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.19 : &Expr<>
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.21 : fn(int)->()
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.23 : fn(&?5)->int
-[00:00:00.102] (7fb14efef940) INFO   lookup ty for local 14.16
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.25 : ?1
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.26 : ?4
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.27 : ?3
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.30 : fn(int)->()
-[00:00:00.102] (7fb14efef940) INFO   fcx write ty 14.32 : fn(&?8)->int
-[00:00:00.102] (7fb14efef940) INFO   lookup ty for local 14.17
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.34 : ?2
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.35 : ?7
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.36 : ?6
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.39 : fn(&Expr<>)->int
-[00:00:00.103] (7fb14efef940) INFO   lookup ty for local 14.16
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.41 : ?1
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.42 : ?9
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.44 : fn(&Expr<>)->int
-[00:00:00.103] (7fb14efef940) INFO   lookup ty for local 14.17
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.46 : ?2
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.47 : ?10
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.48 : ?9
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.51 : ?9
-[00:00:00.103] (7fb14efef940) INFO   lookup ty for local 14.8
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.12 : ?0
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.52 : ?9
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.55 : ?9
-[00:00:00.103] (7fb14efef940) INFO   fcx write ty 14.55 : int
-[00:00:00.103] (7fb14efef940) INFO   fcx query node type for 14.2
-[00:00:00.103] (7fb14efef940) INFO   fcx query node type for 14.55
-[00:00:00.103] (7fb14efef940) INFO   fcx query node type for 14.52
-[00:00:00.103] (7fb14efef940) INFO   fcx query node type for 14.4
-[00:00:00.103] (7fb14efef940) INFO   fcx query node type for 14.10
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.9
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.8
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.12
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.19
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.18
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.16
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.17
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.51
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.27
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.21
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.26
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.23
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.25
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.36
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.30
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.35
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.32
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.34
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.48
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.42
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.39
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.41
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.47
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.44
-[00:00:00.104] (7fb14efef940) INFO   fcx query node type for 14.46
-[00:00:00.104] (7fb14efef940) INFO   irloweringctx: query typeof 14.2
-[00:00:00.104] (7fb14efef940) INFO   irloweringctx: query typeof 14.55
-[00:00:00.104] (7fb14efef940) INFO   irloweringctx: query typeof 14.52
-[00:00:00.104] (7fb14efef940) INFO   irloweringctx: query typeof 14.4
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.9
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.8
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.9
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.10
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.12
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.18
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.16
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.17
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.18
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.19
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.51
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.27
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.21
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.26
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.23
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.25
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.36
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.30
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.35
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.32
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.34
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.48
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.42
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.39
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.41
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.47
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.44
-[00:00:00.105] (7fb14efef940) INFO   irloweringctx: query typeof 14.46
-[00:00:00.106] (7fb14efef940) INFO   deflocal 13.2 : &List<>
-[00:00:00.106] (7fb14efef940) INFO   fcx write ty 13.2 : &List<>
-[00:00:00.106] (7fb14efef940) INFO   lookup ty for local 13.2
-[00:00:00.106] (7fb14efef940) INFO   fcx write ty 13.4 : &List<>
-[00:00:00.106] (7fb14efef940) INFO   deflocal 13.8 : ?0
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.8 : ?0
-[00:00:00.107] (7fb14efef940) INFO   deflocal 13.9 : ?1
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.9 : ?1
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.10 : List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.11 : &List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.32 : List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.33 : &List<>
-[00:00:00.107] (7fb14efef940) INFO   lookup ty for local 13.2
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.35 : &List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.13 : fn(int)->()
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.15 : fn(&?4)->int
-[00:00:00.107] (7fb14efef940) INFO   lookup ty for local 13.9
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.17 : ?1
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.18 : ?3
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.19 : ?2
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.22 : fn(&List<>)->&List<>
-[00:00:00.107] (7fb14efef940) INFO   lookup ty for local 13.9
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.24 : ?1
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.25 : ?5
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.28 : ?5
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.36 : &List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.39 : &List<>
-[00:00:00.107] (7fb14efef940) INFO   fcx write ty 13.39 : &List<>
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.2
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.39
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.36
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.4
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.11
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.10
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.8
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.9
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.28
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.19
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.13
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.18
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.15
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.17
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.25
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.22
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.24
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.33
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.32
-[00:00:00.108] (7fb14efef940) INFO   fcx query node type for 13.35
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.2
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.39
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.36
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.4
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.10
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.8
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.9
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.10
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.11
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.28
-[00:00:00.108] (7fb14efef940) INFO   irloweringctx: query typeof 13.19
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.13
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.18
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.15
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.17
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.25
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.22
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.24
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.32
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.32
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.33
-[00:00:00.109] (7fb14efef940) INFO   irloweringctx: query typeof 13.35
-[00:00:00.109] (7fb14efef940) INFO   sizeof int 8
-[00:00:00.109] (7fb14efef940) INFO   sizeof &List<> 8
-[00:00:00.109] (7fb14efef940) INFO   sizeof int 8
-[00:00:00.110] (7fb14efef940) INFO   sizeof &Expr<> 8
-[00:00:00.110] (7fb14efef940) INFO   sizeof &Expr<> 8
+[00:00:00.095] (7fa398a88940) INFO   collect item 0: ∀τ.Expr<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 3: ∀τ.List<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 1: ∀τ.fn(int)->Expr<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 2: ∀τ.fn(&Expr<>,&Expr<>)->Expr<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 4: ∀τ.fn(int,&List<>)->List<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 5: ∀τ.List<>
+[00:00:00.095] (7fa398a88940) INFO   collect item 7: ∀τT.fn(&τ0)->int
+[00:00:00.095] (7fa398a88940) INFO   collect item 9: ∀τ.fn(int)->()
+[00:00:00.095] (7fa398a88940) INFO   collect item 10: ∀τT.fn(&τ0)->int
+[00:00:00.096] (7fa398a88940) INFO   collect item 12: ∀τ.fn()->int
+[00:00:00.096] (7fa398a88940) INFO   collect item 13: ∀τ.fn(&List<>)->&List<>
+[00:00:00.096] (7fa398a88940) INFO   collect item 14: ∀τ.fn(&Expr<>)->int
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.5 : fn(int)->Expr<>
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.6 : int
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.7 : ?0
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.8 : &mut ?0
+[00:00:00.096] (7fa398a88940) INFO   deflocal 12.2 : &mut ?0
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.2 : &mut ?0
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.11 : fn(int)->()
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.13 : fn(&?3)->int
+[00:00:00.096] (7fa398a88940) INFO   lookup ty for local 12.2
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.15 : &mut ?0
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.16 : ?2
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.17 : ?1
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.23 : fn(int)->Expr<>
+[00:00:00.096] (7fa398a88940) INFO   fcx write ty 12.24 : int
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.25 : ?4
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.26 : &mut ?4
+[00:00:00.097] (7fa398a88940) INFO   deflocal 12.20 : &mut ?4
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.20 : &mut ?4
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.29 : fn(int)->()
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.31 : fn(&?7)->int
+[00:00:00.097] (7fa398a88940) INFO   lookup ty for local 12.20
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.33 : &mut ?4
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.34 : ?6
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.35 : ?5
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.41 : fn(&Expr<>,&Expr<>)->Expr<>
+[00:00:00.097] (7fa398a88940) INFO   lookup ty for local 12.2
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.43 : &mut ?0
+[00:00:00.097] (7fa398a88940) INFO   lookup ty for local 12.20
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.45 : &mut ?4
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.46 : ?8
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.47 : &mut ?8
+[00:00:00.097] (7fa398a88940) INFO   deflocal 12.38 : &mut ?8
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.38 : &mut ?8
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.50 : fn(int)->()
+[00:00:00.097] (7fa398a88940) INFO   fcx write ty 12.52 : fn(&?11)->int
+[00:00:00.098] (7fa398a88940) INFO   lookup ty for local 12.38
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.54 : &mut ?8
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.55 : ?10
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.56 : ?9
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.59 : fn(&Expr<>)->int
+[00:00:00.098] (7fa398a88940) INFO   lookup ty for local 12.38
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.61 : &mut ?8
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.62 : ?12
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.64 : int
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.67 : int
+[00:00:00.098] (7fa398a88940) INFO   fcx write ty 12.67 : int
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.67
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.8
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.7
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.5
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.6
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.2
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.17
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.11
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.16
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.13
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.15
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.26
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.25
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.23
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.24
+[00:00:00.098] (7fa398a88940) INFO   fcx query node type for 12.20
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.35
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.29
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.34
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.31
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.33
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.47
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.46
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.41
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.43
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.45
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.38
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.56
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.50
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.55
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.52
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.54
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.62
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.59
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.61
+[00:00:00.099] (7fa398a88940) INFO   fcx query node type for 12.64
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.67
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.2
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.8
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.7
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.5
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.6
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.17
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.11
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.16
+[00:00:00.099] (7fa398a88940) INFO   irloweringctx: query typeof 12.13
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.15
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.20
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.26
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.25
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.23
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.24
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.35
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.29
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.34
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.31
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.33
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.38
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.47
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.46
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.41
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.43
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.45
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.56
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.50
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.55
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.52
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.54
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.62
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.59
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.61
+[00:00:00.100] (7fa398a88940) INFO   irloweringctx: query typeof 12.64
+[00:00:00.101] (7fa398a88940) INFO   deflocal 14.2 : &Expr<>
+[00:00:00.101] (7fa398a88940) INFO   fcx write ty 14.2 : &Expr<>
+[00:00:00.101] (7fa398a88940) INFO   lookup ty for local 14.2
+[00:00:00.101] (7fa398a88940) INFO   fcx write ty 14.4 : &Expr<>
+[00:00:00.101] (7fa398a88940) INFO   deflocal 14.8 : ?0
+[00:00:00.101] (7fa398a88940) INFO   fcx write ty 14.8 : ?0
+[00:00:00.101] (7fa398a88940) INFO   fcx write ty 14.9 : Expr<>
+[00:00:00.101] (7fa398a88940) INFO   fcx write ty 14.10 : &Expr<>
+[00:00:00.102] (7fa398a88940) INFO   deflocal 14.16 : ?1
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.16 : ?1
+[00:00:00.102] (7fa398a88940) INFO   deflocal 14.17 : ?2
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.17 : ?2
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.18 : Expr<>
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.19 : &Expr<>
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.21 : fn(int)->()
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.23 : fn(&?5)->int
+[00:00:00.102] (7fa398a88940) INFO   lookup ty for local 14.16
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.25 : ?1
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.26 : ?4
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.27 : ?3
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.30 : fn(int)->()
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.32 : fn(&?8)->int
+[00:00:00.102] (7fa398a88940) INFO   lookup ty for local 14.17
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.34 : ?2
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.35 : ?7
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.36 : ?6
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.39 : fn(&Expr<>)->int
+[00:00:00.102] (7fa398a88940) INFO   lookup ty for local 14.16
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.41 : ?1
+[00:00:00.102] (7fa398a88940) INFO   fcx write ty 14.42 : ?9
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.44 : fn(&Expr<>)->int
+[00:00:00.103] (7fa398a88940) INFO   lookup ty for local 14.17
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.46 : ?2
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.47 : ?10
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.48 : ?9
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.51 : ?9
+[00:00:00.103] (7fa398a88940) INFO   lookup ty for local 14.8
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.12 : ?0
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.52 : ?9
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.55 : ?9
+[00:00:00.103] (7fa398a88940) INFO   fcx write ty 14.55 : int
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.2
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.55
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.52
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.4
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.10
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.9
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.8
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.12
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.19
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.18
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.16
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.17
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.51
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.27
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.21
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.26
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.23
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.25
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.36
+[00:00:00.103] (7fa398a88940) INFO   fcx query node type for 14.30
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.35
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.32
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.34
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.48
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.42
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.39
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.41
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.47
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.44
+[00:00:00.104] (7fa398a88940) INFO   fcx query node type for 14.46
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.2
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.55
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.52
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.4
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.9
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.8
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.9
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.10
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.12
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.18
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.16
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.17
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.18
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.19
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.51
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.27
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.21
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.26
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.23
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.25
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.36
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.30
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.35
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.32
+[00:00:00.104] (7fa398a88940) INFO   irloweringctx: query typeof 14.34
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.48
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.42
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.39
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.41
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.47
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.44
+[00:00:00.105] (7fa398a88940) INFO   irloweringctx: query typeof 14.46
+[00:00:00.105] (7fa398a88940) INFO   deflocal 13.2 : &List<>
+[00:00:00.105] (7fa398a88940) INFO   fcx write ty 13.2 : &List<>
+[00:00:00.106] (7fa398a88940) INFO   lookup ty for local 13.2
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.4 : &List<>
+[00:00:00.106] (7fa398a88940) INFO   deflocal 13.8 : ?0
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.8 : ?0
+[00:00:00.106] (7fa398a88940) INFO   deflocal 13.9 : ?1
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.9 : ?1
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.10 : List<>
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.11 : &List<>
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.32 : List<>
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.33 : &List<>
+[00:00:00.106] (7fa398a88940) INFO   lookup ty for local 13.2
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.35 : &List<>
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.13 : fn(int)->()
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.15 : fn(&?4)->int
+[00:00:00.106] (7fa398a88940) INFO   lookup ty for local 13.9
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.17 : ?1
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.18 : ?3
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.19 : ?2
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.22 : fn(&List<>)->&List<>
+[00:00:00.106] (7fa398a88940) INFO   lookup ty for local 13.9
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.24 : ?1
+[00:00:00.106] (7fa398a88940) INFO   fcx write ty 13.25 : ?5
+[00:00:00.107] (7fa398a88940) INFO   fcx write ty 13.28 : ?5
+[00:00:00.107] (7fa398a88940) INFO   fcx write ty 13.36 : &List<>
+[00:00:00.107] (7fa398a88940) INFO   fcx write ty 13.39 : &List<>
+[00:00:00.107] (7fa398a88940) INFO   fcx write ty 13.39 : &List<>
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.2
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.39
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.36
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.4
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.11
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.10
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.8
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.9
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.28
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.19
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.13
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.18
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.15
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.17
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.25
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.22
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.24
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.33
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.32
+[00:00:00.107] (7fa398a88940) INFO   fcx query node type for 13.35
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.2
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.39
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.36
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.4
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.10
+[00:00:00.107] (7fa398a88940) INFO   irloweringctx: query typeof 13.8
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.9
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.10
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.11
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.28
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.19
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.13
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.18
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.15
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.17
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.25
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.22
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.24
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.32
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.32
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.33
+[00:00:00.108] (7fa398a88940) INFO   irloweringctx: query typeof 13.35
+[00:00:00.109] (7fa398a88940) INFO   sizeof int 8
+[00:00:00.109] (7fa398a88940) INFO   sizeof &Expr<> 8
+[00:00:00.109] (7fa398a88940) INFO   sizeof &Expr<> 8
+[00:00:00.109] (7fa398a88940) INFO   sizeof int 8
+[00:00:00.109] (7fa398a88940) INFO   sizeof &List<> 8

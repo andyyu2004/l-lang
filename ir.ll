@@ -1,8 +1,8 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"List<>" = type { i16, { i64, %"List<>"* } }
 %"Expr<>" = type { i16, { %"Expr<>"*, %"Expr<>"* } }
+%"List<>" = type { i16, { i64, %"List<>"* } }
 
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
@@ -43,12 +43,6 @@ printint:
 declare void @abort()
 
 declare void @exit(i32)
-
-define i64 @"addr<List<>>"(%"List<>"* %0) {
-addr_entry:
-  %ptr_to_int = ptrtoint %"List<>"* %0 to i64
-  ret i64 %ptr_to_int
-}
 
 define i64 @"addr<Expr<>>"(%"Expr<>"* %0) {
 addr_entry:
@@ -183,6 +177,12 @@ basic_blockbb12:                                  ; preds = %basic_blockbb11
   %iadd = add i64 %load48, %load49
   store i64 %iadd, i64* %ret
   br label %basic_blockbb5
+}
+
+define i64 @"addr<List<>>"(%"List<>"* %0) {
+addr_entry:
+  %ptr_to_int = ptrtoint %"List<>"* %0 to i64
+  ret i64 %ptr_to_int
 }
 
 define i64 @main() {
