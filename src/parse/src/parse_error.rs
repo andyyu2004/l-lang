@@ -11,8 +11,10 @@ pub enum ParseError {
     Expected(TokenType, Tok),
     #[error("expected one of `{0:?}` found `{:?}`", .1.ttype)]
     ExpectedOneOf(Vec<TokenType>, Tok),
-    #[error("invalid impl item kind {}", .0.descr())]
+    #[error("invalid impl item kind: {}", .0.descr())]
     InvalidImplItem(ItemKind),
+    #[error("invalid foreign item kind: {}", .0.descr())]
+    InvalidForeignItem(ItemKind),
     #[error("unexpected <eof>")]
     Eof,
     #[error("function signature requires explicit type annotations")]

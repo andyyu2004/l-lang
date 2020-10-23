@@ -30,6 +30,7 @@ impl<'tcx> AdtCollector<'tcx> {
 impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
     fn visit_ir(&mut self, ir: &'tcx ir::IR<'tcx>) {
         ir::walk_ir(self, ir);
+        // we run the checks after all adts are collected as they may reference one another
         for &adt in &self.adts {
             self.check_adt_variants(adt)
         }

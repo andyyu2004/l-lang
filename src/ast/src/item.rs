@@ -37,7 +37,10 @@ pub enum ItemKind {
 impl ItemKind {
     pub fn descr(&self) -> &str {
         match self {
-            ItemKind::Fn(..) => "function",
+            ItemKind::Fn(_, _, body) => match body {
+                Some(_) => "function with body",
+                None => "bodyless function",
+            },
             ItemKind::Enum(..) => "enum",
             ItemKind::Struct(..) => "struct",
             ItemKind::Impl { .. } => "impl block",

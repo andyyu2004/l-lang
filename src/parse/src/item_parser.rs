@@ -61,7 +61,7 @@ impl<'a> Parse<'a> for ExternParser {
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match ForeignItemKind::try_from(kind) {
                 Ok(kind) => foreign_items.push(box Item { span, id, vis, ident, kind }),
-                Err(kind) => parser.err(span, ParseError::InvalidImplItem(kind)).emit(),
+                Err(kind) => parser.err(span, ParseError::InvalidForeignItem(kind)).emit(),
             };
         };
 
