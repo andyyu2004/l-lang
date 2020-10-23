@@ -1,20 +1,72 @@
 use super::FnCtx;
+use crate::Typeof;
+use ast::Ident;
+use bimap::BiMap;
 use ir::{self, CtorKind, DefKind};
 use lcore::ty::*;
+use rustc_hash::FxHashMap;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// typechecks a given pattern with its expected type
     pub fn check_pat(&mut self, pat: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {
         let pat_ty = match &pat.kind {
             ir::PatternKind::Box(inner) => self.check_pat_box(pat, inner, ty),
-            ir::PatternKind::Binding(_, _, mtbl) => self.def_local(pat.id, ty, *mtbl),
+            ir::PatternKind::Binding(_, _, mtbl) => self.def_local(pat.id, *mtbl, ty),
             ir::PatternKind::Tuple(pats) => self.check_pat_tuple(pat, pats, ty),
             ir::PatternKind::Lit(expr) => self.check_pat_lit(expr, ty),
             ir::PatternKind::Variant(path, pats) => self.check_pat_variant(pat, path, pats, ty),
             ir::PatternKind::Path(path) => self.check_pat_path(pat, path, ty),
+            ir::PatternKind::Struct(path, fields) => self.check_pat_struct(pat, path, fields, ty),
             ir::PatternKind::Wildcard => ty,
         };
         self.record_ty(pat.id, pat_ty)
+    }
+
+    fn check_pat_struct(
+        &mut self,
+        pat: &ir::Pattern,
+        path: &ir::Path,
+        fields_pats: &[ir::FieldPat],
+        ty: Ty<'tcx>,
+    ) -> Ty<'tcx> {
+        let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(path) {
+            ret
+        } else {
+            return self.mk_ty_err();
+        };
+
+        self.equate(pat.span, ty, struct_ty);
+
+        let (_adt_ty, substs) = struct_ty.expect_adt();
+
+        // keep track of fields seen to avoid duplicate bindings
+        // however, we allow incomplete bindings like javascript
+        let mut seen = FxHashMap::default();
+        let variant_fields_idents: BiMap<usize, Ident> =
+            variant.fields.iter().enumerate().map(|(i, field)| (i, field.ident)).collect();
+
+        for field in fields_pats {
+            let field_ty = if !variant_fields_idents.contains_right(&field.ident) {
+                self.emit_ty_err(field.span, TypeError::UnknownField(struct_ty, field.ident))
+            } else {
+                if let Some(span) = seen.insert(field.ident, field.span) {
+                    self.emit_ty_err(
+                        std::array::IntoIter::new([span, field.span]),
+                        TypeError::Msg(format!(
+                            "field `{}` bound more than once in struct pattern",
+                            field.ident,
+                        )),
+                    );
+                }
+                let field_idx = variant_fields_idents.get_by_right(&field.ident).copied().unwrap();
+                self.record_field_index(field.pat.id, field_idx);
+                variant.fields[field_idx].ty(self.tcx, substs)
+            };
+            self.record_ty(field.pat.id, field_ty);
+            self.check_pat(field.pat, field_ty);
+        }
+
+        struct_ty
     }
 
     fn check_pat_box(&mut self, pat: &ir::Pattern, inner: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -37,7 +89,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::Res::Def(_, DefKind::Ctor(CtorKind::Tuple | CtorKind::Struct)) =>
                 return self.emit_ty_err(pat.span, TypeError::UnexpectedVariant(path.res)),
             ir::Res::Err => return self.set_ty_err(),
-            _ => unreachable!(),
+            res => unreachable!("unexpected res `{}`", res),
         };
         let path_ty = self.check_expr_path(path);
         self.equate(pat.span, ty, path_ty);

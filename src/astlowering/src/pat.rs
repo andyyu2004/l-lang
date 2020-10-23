@@ -19,6 +19,8 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             PatternKind::Variant(path, patterns) =>
                 ir::PatternKind::Variant(self.lower_path(path), self.lower_patterns(patterns)),
             PatternKind::Path(path) => ir::PatternKind::Path(self.lower_path(path)),
+            PatternKind::Struct(path, fields) =>
+                ir::PatternKind::Struct(self.lower_path(path), self.lower_field_pats(fields)),
             PatternKind::Ident(ident, sub, m) => {
                 let sub = sub.as_ref().map(|pat| self.lower_pattern(pat));
                 ir::PatternKind::Binding(*ident, sub, *m)
@@ -27,5 +29,14 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             PatternKind::Wildcard => ir::PatternKind::Wildcard,
         };
         ir::Pattern { id: self.lower_node_id(id), span, kind }
+    }
+
+    fn lower_field_pats(&mut self, field_pats: &[FieldPat]) -> &'ir [ir::FieldPat<'ir>] {
+        self.arena.alloc_from_iter(field_pats.iter().map(|field| self.lower_field_pat(field)))
+    }
+
+    fn lower_field_pat(&mut self, field_pat: &FieldPat) -> ir::FieldPat<'ir> {
+        let &FieldPat { span, ident, ref pat } = field_pat;
+        ir::FieldPat { span, ident, pat: self.lower_pattern(pat) }
     }
 }

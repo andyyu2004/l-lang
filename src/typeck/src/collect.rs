@@ -90,7 +90,6 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
                 for foreign_item in *foreign_items {
                     match foreign_item.kind {
                         ir::ForeignItemKind::Fn(sig, generics) => {
-                            println!("collect {}", foreign_item.id.def);
                             let fn_ty = tcx.fn_sig_to_ty(sig);
                             let ty = tcx.generalize(generics, fn_ty);
                             tcx.collect_ty(foreign_item.id.def, ty);

@@ -334,7 +334,7 @@ impl<'a> Parse<'a> for StructExprParser {
         let field_parser = |parser: &mut Parser<'a>| {
             let ident = parser.expect_ident()?;
             let expr = if parser.accept(TokenType::Colon).is_some() {
-                ExprParser.parse(parser)?
+                parser.parse_expr()?
             } else {
                 let span = parser.empty_span();
                 // construct a Path node which the a single segment with ident `ident`

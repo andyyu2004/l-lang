@@ -39,7 +39,14 @@ pub enum PatternKind {
     /// can refer to unit variants and structs
     Path(Path),
     /// todo
-    // Struct(Path, FieldPat),
+    Struct(Path, Vec<FieldPat>),
     /// _
     Wildcard,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FieldPat {
+    pub span: Span,
+    pub ident: Ident,
+    pub pat: Box<Pattern>,
 }

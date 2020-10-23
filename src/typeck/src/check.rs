@@ -136,7 +136,7 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
         fcx
     }
 
-    pub fn def_local(&self, id: ir::Id, ty: Ty<'tcx>, mtbl: Mutability) -> Ty<'tcx> {
+    pub fn def_local(&self, id: ir::Id, mtbl: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
         info!("deflocal {:?} : {}", id, ty);
         self.locals.borrow_mut().insert(id, LocalTy::new(ty, mtbl));
         ty

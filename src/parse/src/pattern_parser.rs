@@ -14,17 +14,20 @@ impl<'a> Parse<'a> for PatParser {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
         } else if parser.ident()?.is_some() {
             let path = parser.parse_path()?;
-            if path.segments.len() == 1 {
-                let ident = path.segments[0].ident;
-                return Ok(
-                    parser.mk_pat(ident.span, PatternKind::Ident(ident, None, Mutability::Imm))
-                );
-            }
             if parser.accept(TokenType::OpenBrace).is_some() {
-                todo!()
+                let (span, fields) =
+                    PunctuatedParser { inner: FieldPatParser, separator: TokenType::Comma }
+                        .spanned(false)
+                        .parse(parser)?;
+                parser.expect(TokenType::CloseBrace)?;
+                let span = path.span.merge(span);
+                Ok(parser.mk_pat(span, PatternKind::Struct(path, fields)))
             } else if parser.accept(TokenType::OpenParen).is_some() {
                 let (span, patterns) = parser.parse_tuple_pat()?;
                 Ok(parser.mk_pat(path.span.merge(span), PatternKind::Variant(path, patterns)))
+            } else if path.segments.len() == 1 {
+                let ident = path.segments[0].ident;
+                Ok(parser.mk_pat(ident.span, PatternKind::Ident(ident, None, Mutability::Imm)))
             } else {
                 Ok(parser.mk_pat(path.span, PatternKind::Path(path)))
             }
@@ -50,6 +53,25 @@ impl<'a> Parse<'a> for PatParser {
         } else {
             Err(parser.err(parser.empty_span(), ParseError::Unimpl))
         }
+    }
+}
+
+struct FieldPatParser;
+
+impl<'a> Parse<'a> for FieldPatParser {
+    type Output = FieldPat;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let ident = parser.expect_ident()?;
+        let pat = if parser.accept(TokenType::Colon).is_some() {
+            parser.parse_pattern()?
+        } else {
+            // struct shorthand
+            // let S { x } = s <=> let S { x: x } = s;
+            parser.mk_pat(ident.span, PatternKind::Ident(ident, None, Mutability::Imm))
+        };
+        let span = ident.span.merge(pat.span);
+        Ok(FieldPat { ident, pat, span })
     }
 }
 

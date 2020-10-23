@@ -14,6 +14,7 @@ infer = { path = "../infer" }
 tir = { path = "../tir" }
 rustc-hash = "1"
 itertools = "0.9"
+bimap = "0.5.2"
 log = "0.4.11"
 
 [dev-dependencies]

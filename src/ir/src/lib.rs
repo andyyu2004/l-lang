@@ -20,10 +20,9 @@ pub use ty::*;
 
 pub use def::*;
 pub use expr::{Expr, ExprKind};
-use index::Idx;
 pub use item::*;
 pub use item_visitor::*;
-pub use pat::{Pattern, PatternKind};
+pub use pat::{FieldPat, Pattern, PatternKind};
 use std::collections::BTreeMap;
 use std::fmt::{self, Debug, Display, Formatter};
 pub use stmt::{Stmt, StmtKind};
@@ -78,7 +77,7 @@ index::newtype_index!(
 
 impl DefId {
     pub fn dummy() -> Self {
-        DefId::new(usize::MAX)
+        Self::MAX
     }
 }
 
@@ -105,6 +104,11 @@ pub struct Id {
     pub local: LocalId,
 }
 
+impl Id {
+    pub fn dummy() -> Self {
+        Self { def: DefId::dummy(), local: LocalId::MAX }
+    }
+}
 impl Debug for Id {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)

@@ -88,7 +88,7 @@ pub fn build_variant_ctor_inner<'tcx>(
     };
 
     let mut cfg = Cfg::default();
-    let return_lvalue = alloc_var(info, VarKind::Ret, ret_ty).into();
+    let lvalue = alloc_var(info, VarKind::Ret, ret_ty).into();
 
     // the `fields` of the variant are essentially the parameters of the constructor function
     let fields = variant
@@ -100,7 +100,7 @@ pub fn build_variant_ctor_inner<'tcx>(
         .collect_vec();
 
     let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
-    cfg.push_assignment(info, ENTRY_BLOCK, return_lvalue, rvalue);
+    cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
     cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
     let body = Mir { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() };
     Some(tcx.alloc(body))

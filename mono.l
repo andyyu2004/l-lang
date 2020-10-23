@@ -1,23 +1,24 @@
 
 fn f(s: S) {}
-struct S { s: S<int> }
 
-extern {
-    fn print(i: int);
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+struct S {
+    b: bool,
+    x: int,
+    y: int,
 }
 
 fn main() -> int {
-    let x: int = 9;
-    let y = return_dangling();
-    print(*y);
-    0
-};
+    let s = S {
+	x: 9,
+	b: false,
+	y: 7,
+    };
 
-fn return_dangling() -> *int {
-    unsafe { &5 }
+    let S { x, y, x: i } = s;
+    x - y
 }
-
-fn take_box(boxed: &int) {
-    print(*boxed);
-}
-

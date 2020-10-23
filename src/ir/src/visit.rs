@@ -296,6 +296,13 @@ pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, segment: &'ir ir::Path
 pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
     match &pat.kind {
         ir::PatternKind::Box(pat) => v.visit_pat(pat),
+        ir::PatternKind::Struct(path, fields) => {
+            v.visit_path(path);
+            fields.iter().for_each(|field| {
+                v.visit_ident(field.ident);
+                v.visit_pat(field.pat);
+            });
+        }
         ir::PatternKind::Tuple(pats) => pats.iter().for_each(|p| v.visit_pat(p)),
         ir::PatternKind::Lit(expr) => v.visit_expr(expr),
         ir::PatternKind::Binding(ident, subpat, _m) => {

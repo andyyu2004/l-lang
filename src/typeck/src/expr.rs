@@ -129,8 +129,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         rty
     }
 
-    fn check_struct_path(&mut self, path: &ir::Path) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
+    crate fn check_struct_path(
+        &mut self,
+        path: &ir::Path,
+    ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
         let ty = self.check_expr_path(path);
+        // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match path.res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
@@ -164,15 +168,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Some(tys) => tys,
             None => return self.tcx.mk_ty_err(),
         };
-        let (adt_ty, substs) = ty.expect_adt();
-        self.check_struct_expr_fields(expr, adt_ty, substs, variant_ty, fields);
+        let (_adt_ty, substs) = ty.expect_adt();
+        self.check_struct_expr_fields(expr, substs, variant_ty, fields);
         ty
     }
 
     fn check_struct_expr_fields(
         &mut self,
         expr: &ir::Expr,
-        adt_ty: &AdtTy,
         substs: SubstsRef<'tcx>,
         variant: &VariantTy<'tcx>,
         fields: &[ir::Field],
@@ -279,7 +282,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // so we define an immutable local variable for it with the closure's type
         let clsr_ty = self.fn_sig_to_ty(sig);
         self.record_upvars(closure, body);
-        self.def_local(closure.id, clsr_ty, Mutability::Imm);
+        self.def_local(closure.id, Mutability::Imm, clsr_ty);
         let _fcx = self.check_fn(clsr_ty, body);
         clsr_ty
     }

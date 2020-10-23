@@ -39,7 +39,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 // y    <- pair.1;
                 //
                 for f in fs {
-                    let lvalue = self.tcx.project_field(lvalue, f.field, f.pat.ty);
+                    let lvalue = self.tcx.project_field(lvalue, f.index, f.pat.ty);
                     set!(block = self.bind_pat_to_lvalue(block, &f.pat, lvalue));
                 }
                 block.unit()

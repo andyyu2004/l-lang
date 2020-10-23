@@ -122,12 +122,12 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 set!(pblock = self.bind_pat_to_lvalue(pblock, pat, scrut));
             }
             tir::PatternKind::Field(ref pats) =>
-                for tir::FieldPat { field, pat } in pats {
+                for tir::FieldPat { index, pat } in pats {
                     set!(
                         pblock = self.build_arm_predicate(
                             pblock,
                             predicate,
-                            tcx.project_field(scrut, *field, pat.ty),
+                            tcx.project_field(scrut, *index, pat.ty),
                             pat
                         )
                     );

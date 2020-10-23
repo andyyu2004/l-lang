@@ -244,6 +244,13 @@ pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
             pats.iter().for_each(|p| visitor.visit_pattern(p));
         }
         PatternKind::Lit(expr) => visitor.visit_expr(expr),
+        PatternKind::Struct(path, pats) => {
+            visitor.visit_path(path);
+            pats.iter().for_each(|field| {
+                visitor.visit_ident(field.ident);
+                visitor.visit_pattern(&field.pat);
+            })
+        }
     }
 }
 

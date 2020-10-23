@@ -10,7 +10,7 @@ mod type_variables;
 
 use at::At;
 use equate::Equate;
-use error::DiagnosticBuilder;
+use error::{DiagnosticBuilder, MultiSpan};
 use index::Idx;
 use instantiate::InstantiationFolder;
 use ir::{DefId, FieldIdx};
@@ -88,7 +88,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
-    pub fn emit_ty_err(&self, span: Span, err: impl Error) -> Ty<'tcx> {
+    pub fn emit_ty_err(&self, span: impl Into<MultiSpan>, err: impl Error) -> Ty<'tcx> {
         let diag = self.tcx.sess.build_error(span, err);
         self.emit_err(diag)
     }

@@ -3,6 +3,29 @@
 use super::*;
 
 #[test]
+fn llvm_struct_pattern_test() {
+    let src = r#"
+    struct S {
+        b: bool,
+        x: int,
+        y: int,
+    }
+
+    fn main() -> int {
+        let s = S {
+            x: 9,
+            b: false,
+            y: 7,
+        };
+        let S { x, y } = s;
+        x - y
+    }
+    "#;
+
+    assert_eq!(llvm_exec!(src), 2);
+}
+
+#[test]
 fn llvm_unpack_tuple_in_let() {
     let src = r#"
     fn main() -> int {

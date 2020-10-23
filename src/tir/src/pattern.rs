@@ -8,7 +8,7 @@ use util;
 
 #[derive(Debug)]
 pub struct FieldPat<'tcx> {
-    pub field: FieldIdx,
+    pub index: FieldIdx,
     pub pat: Box<Pattern<'tcx>>,
 }
 

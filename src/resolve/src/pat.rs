@@ -27,8 +27,9 @@ impl<'a, 'b, 'r, 'ast> PatternResolutionCtx<'a, 'b, 'r, 'ast> {
                 self.names.insert(ident);
                 self.def_val(ident, Res::Local(pat.id));
             }
-            PatternKind::Path(path) | PatternKind::Variant(path, _) =>
-                self.resolve_path(path, NS::Value),
+            PatternKind::Struct(path, _)
+            | PatternKind::Path(path)
+            | PatternKind::Variant(path, _) => self.resolve_path(path, NS::Value),
             PatternKind::Lit(..)
             | PatternKind::Box(..)
             | PatternKind::Tuple(..)

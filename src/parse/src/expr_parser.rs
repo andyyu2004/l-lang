@@ -244,7 +244,7 @@ mod test {
 
     #[test]
     fn parse_call_expr() {
-        let expr = parse_expr!("f(2,3,x)");
+        let _expr = parse_expr!("f(2,3,x)");
     }
 
     #[test]

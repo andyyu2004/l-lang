@@ -17,5 +17,13 @@ pub enum PatternKind<'ir> {
     Tuple(&'ir [ir::Pattern<'ir>]),
     Variant(&'ir ir::Path<'ir>, &'ir [ir::Pattern<'ir>]),
     Path(&'ir ir::Path<'ir>),
+    Struct(&'ir ir::Path<'ir>, &'ir [ir::FieldPat<'ir>]),
     Wildcard,
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldPat<'ir> {
+    pub span: Span,
+    pub ident: Ident,
+    pub pat: &'ir ir::Pattern<'ir>,
 }

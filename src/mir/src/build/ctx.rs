@@ -4,11 +4,14 @@ use crate::build;
 use ast::{Lit, Mutability, UnaryOp};
 use index::Idx;
 use infer::InferCtx;
-use ir::{self, CtorKind, DefKind, Res, VariantIdx};
+use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};
+use itertools::Itertools;
 use lcore::mir::Mir;
 use lcore::ty::*;
+use span::Span;
 use std::marker::PhantomData;
 use std::ops::Deref;
+use typeck::Typeof;
 
 /// ir -> tir -> mir
 pub struct MirCtx<'a, 'tcx> {
@@ -55,7 +58,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         pats.iter()
             .enumerate()
             .map(|(i, pat)| tir::FieldPat {
-                field: ir::FieldIdx::new(i),
+                index: ir::FieldIdx::new(i),
                 pat: box pat.to_tir(self),
             })
             .collect()
@@ -115,6 +118,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
         let kind = match kind {
             ir::PatternKind::Box(pat) => tir::PatternKind::Box(box pat.to_tir(ctx)),
             ir::PatternKind::Path(path) => ctx.lower_variant_pat(self, path, &[]),
+            ir::PatternKind::Struct(path, fields) => ctx.lower_struct_pat(self, path, fields),
             ir::PatternKind::Binding(ident, sub, m) => {
                 let subpat = sub.map(|pat| box pat.to_tir(ctx));
                 tir::PatternKind::Binding(m, ident, subpat)
@@ -130,6 +134,40 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
 }
 
 impl<'tcx> MirCtx<'_, 'tcx> {
+    fn lower_struct_pat(
+        &mut self,
+        pat: &ir::Pattern<'tcx>,
+        _path: &ir::Path<'tcx>,
+        fields: &[ir::FieldPat<'tcx>],
+    ) -> tir::PatternKind<'tcx> {
+        let ty = self.node_ty(pat.id);
+        let (adt, substs) = ty.expect_adt();
+        let variant = adt.single_variant();
+
+        // we create a default pattern consisting of wildcards
+        // we do this as the fields may be inexhaustive but struct fields
+        // are matched by index, so we must fill them up with something
+        let mut vec = (0..variant.fields.len())
+            .map(|i| tir::FieldPat {
+                index: FieldIdx::new(i),
+                pat: box tir::Pattern {
+                    id: ir::Id::dummy(),
+                    span: Span::empty(),
+                    ty: variant.fields[i].ty(self.tcx, substs),
+                    kind: tir::PatternKind::Wildcard,
+                },
+            })
+            .collect_vec();
+
+        // then we manually set the pattern for the field indices we actually have bound
+        for field in fields {
+            let index = self.tables.field_index(field.pat.id).index();
+            vec[index] =
+                tir::FieldPat { index: FieldIdx::new(index), pat: box field.pat.to_tir(self) };
+        }
+        tir::PatternKind::Field(vec)
+    }
+
     fn lower_variant_pat(
         &mut self,
         pat: &ir::Pattern<'tcx>,

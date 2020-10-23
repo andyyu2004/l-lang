@@ -3,10 +3,12 @@ macro_rules! arena_types {
     ($macro:path, $args:tt, $tcx:lifetime) => (
         $macro!($args, [
             // HIR types
-            [few] hir_krate: ir::IR<$tcx>,
+            [few] ir: ir::IR<$tcx>,
             [] bodies: ir::Body<$tcx>,
             [] arm: ir::Arm<$tcx>,
             [] block: ir::Block<$tcx>,
+            [] field_decls: ir::FieldDecl<$tcx>,
+            [] field_pats: ir::FieldPat<$tcx>,
             [] generic_args: ir::GenericArgs<$tcx>,
             [] generics: ir::Generics<$tcx>,
             // [] generic_bound: ir::GenericBound<$tcx>,
@@ -23,7 +25,6 @@ macro_rules! arena_types {
             [] path: ir::Path<$tcx>,
             [] path_segment: ir::PathSegment<$tcx>,
             [] stmt: ir::Stmt<$tcx>,
-            [] field_decls: ir::FieldDecl<$tcx>,
             [] ty: ir::Ty<$tcx>,
         ], $tcx);
     )
