@@ -245,7 +245,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // expect identifier starting with uppercase letter
+    /// expect identifier starting with uppercase letter
+    /// see comments on `expect_lident` on return values
     crate fn expect_uident(&mut self) -> ParseResult<'a, Ident> {
         let ident = self.expect_ident()?;
         if !ident.is_upper() {
@@ -254,7 +255,8 @@ impl<'a> Parser<'a> {
         Ok(ident)
     }
 
-    // expect lowercase identifier (starts with lowercase letter or _)
+    /// expect lowercase identifier (starts with lowercase letter or _)
+    /// we return an `Ok` as we can still continue parsing, but we report an error immediately
     crate fn expect_lident(&mut self) -> ParseResult<'a, Ident> {
         let ident = self.expect_ident()?;
         if !ident.is_lower() {

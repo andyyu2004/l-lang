@@ -204,6 +204,7 @@ pub fn walk_lambda<'ir, V: Visitor<'ir>>(
 
 pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
     match &expr.kind {
+        ir::ExprKind::Err => {}
         ir::ExprKind::Unary(_, expr) => v.visit_expr(expr),
         ir::ExprKind::Block(block) => v.visit_block(block),
         ir::ExprKind::Path(path) => v.visit_path(path),
@@ -274,7 +275,7 @@ pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
         ir::TyKind::Box(_, ty) | ir::TyKind::Ptr(ty) | ir::TyKind::Array(ty) => v.visit_ty(ty),
         ir::TyKind::Path(path) => v.visit_path(path),
         ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
-        ir::TyKind::Infer => {}
+        ir::TyKind::Err | ir::TyKind::Infer => {}
     }
 }
 

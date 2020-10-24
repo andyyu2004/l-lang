@@ -28,7 +28,7 @@ impl Expr {
     /// takes a predicate and returns whether any subpattern satisfies it
     pub fn any(&self, p: fn(&Self) -> bool) -> bool {
         match &self.kind {
-            ExprKind::Lit(..) => false,
+            ExprKind::Err | ExprKind::Lit(..) => false,
             ExprKind::Assign(l, r) | ExprKind::Bin(_, l, r) => l.any(p) || r.any(p),
             ExprKind::Box(expr)
             | ExprKind::Field(expr, _)
@@ -58,6 +58,7 @@ impl Expr {
         match self.kind {
             ExprKind::Ret(_) => true,
             ExprKind::Lit(_)
+            | ExprKind::Err
             | ExprKind::Bin(..)
             | ExprKind::Unary(..)
             | ExprKind::Paren(_)
@@ -106,6 +107,7 @@ pub enum ExprKind {
     Field(P<Expr>, Ident),
     Box(P<Expr>),
     Match(P<Expr>, Vec<Arm>),
+    Err,
 }
 
 impl Display for ExprKind {
@@ -135,7 +137,8 @@ impl Display for ExprKind {
                 Some(r) => write!(fmt, "if {} {} {}", c, l, r),
                 None => write!(fmt, "if {} {}", c, l),
             },
-            ExprKind::Match(_, _) => todo!(),
+            Self::Match(_, _) => todo!(),
+            Self::Err => write!(fmt, "<expr-err>"),
         }
     }
 }

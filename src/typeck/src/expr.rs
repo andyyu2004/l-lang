@@ -11,6 +11,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
         let ty = match &expr.kind {
             ir::ExprKind::Box(expr) => self.check_box_expr(expr),
+            ir::ExprKind::Err => self.set_ty_err(),
             ir::ExprKind::Lit(lit) => self.check_lit(lit),
             ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
             ir::ExprKind::Unary(op, operand) => self.check_unary_expr(expr, *op, operand),

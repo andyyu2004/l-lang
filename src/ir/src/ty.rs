@@ -26,4 +26,5 @@ pub enum TyKind<'ir> {
     Tuple(&'ir [ir::Ty<'ir>]),
     Ptr(&'ir ir::Ty<'ir>),
     Infer,
+    Err,
 }

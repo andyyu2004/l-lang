@@ -25,6 +25,7 @@ pub enum TyKind {
     Ptr(P<Ty>),
     /// _
     Infer,
+    Err,
 }
 
 impl Display for Ty {

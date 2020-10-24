@@ -60,4 +60,5 @@ pub enum ExprKind<'ir> {
     Box(&'ir ir::Expr<'ir>),
     /// named field access `foo.x` or `tuple.1`
     Field(&'ir ir::Expr<'ir>, Ident),
+    Err,
 }

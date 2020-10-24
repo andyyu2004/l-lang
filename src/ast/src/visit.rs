@@ -173,7 +173,7 @@ pub fn walk_arm<'ast>(visitor: &mut impl Visitor<'ast>, arm: &'ast Arm) {
 
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     match &expr.kind {
-        ExprKind::Lit(_) => {}
+        ExprKind::Err | ExprKind::Lit(_) => {}
         ExprKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
         ExprKind::Paren(expr) => visitor.visit_expr(expr),
@@ -264,7 +264,7 @@ pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
             params.iter().for_each(|ty| visitor.visit_ty(ty));
             ret.iter().for_each(|ty| visitor.visit_ty(ty));
         }
-        TyKind::Infer => {}
+        TyKind::Err | TyKind::Infer => {}
     }
 }
 

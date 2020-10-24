@@ -45,6 +45,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 self.lower_arms(arms),
                 ir::MatchSource::Match,
             ),
+            ExprKind::Err => ir::ExprKind::Err,
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }

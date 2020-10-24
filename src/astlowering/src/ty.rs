@@ -22,6 +22,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             TyKind::Box(m, ty) => ir::TyKind::Box(*m, self.lower_ty(ty)),
             TyKind::Ptr(ty) => ir::TyKind::Ptr(self.lower_ty(ty)),
             TyKind::Infer => ir::TyKind::Infer,
+            TyKind::Err => ir::TyKind::Err,
         };
 
         ir::Ty { span, id: self.lower_node_id(id), kind }

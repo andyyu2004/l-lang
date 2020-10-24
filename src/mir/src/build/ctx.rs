@@ -389,6 +389,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
             ir::ExprKind::Field(base, _) =>
                 tir::ExprKind::Field(box base.to_tir(self), self.tables.field_index(expr.id)),
             ir::ExprKind::Box(expr) => tir::ExprKind::Box(box expr.to_tir(self)),
+            ir::ExprKind::Err => unreachable!(),
         };
         tir::Expr { span, kind, ty }
     }
