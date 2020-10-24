@@ -8,17 +8,17 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             let path = self.lower_path(path);
             return self.alloc(ir::QPath::Resolved(path));
         }
-        todo!()
+        todo!("impl partial res lowering to type relative paths")
     }
 
     crate fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
-        let segments = self
-            .arena
-            .alloc_from_iter(path.segments.iter().map(|seg| self.lower_path_segment(seg)));
-
         let partial_res = self.resolver.partial_res(path.id);
         assert_eq!(partial_res.unresolved, 0);
         let res = self.lower_res(partial_res.resolved);
+
+        let segments = self
+            .arena
+            .alloc_from_iter(path.segments.iter().map(|seg| self.lower_path_segment(seg)));
         self.alloc(ir::Path { span: path.span, segments, res })
     }
 

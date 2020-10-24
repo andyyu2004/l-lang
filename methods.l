@@ -3,7 +3,7 @@ extern {
 }
 
 fn main() -> int {
-    /* print(S::new().x); */
+    S::new();
     let k = Option::Some(5);
     match k {
 	Option::Some(x) => x,

@@ -2,23 +2,23 @@
 
 use crate::{LateResolver, ResResult, ResolutionError, NS};
 use ast::*;
-use ir::{ModuleId, Res};
+use ir::{ModuleId, PartialRes, Res};
 
 impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     /// `id` belongs to the `Ty` or `Expr`
     crate fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
-        let res = match ns {
+        let partial_res = match ns {
             NS::Value => self.resolve_val_path(path),
-            NS::Type => self.resolve_ty_path(path),
+            NS::Type => self.resolve_ty_path(path).map(PartialRes::resolved),
         }
         .unwrap_or_else(|err| {
             err.emit();
-            Res::Err
+            PartialRes::resolved(Res::Err)
         });
-        self.resolve_node(path.id, res)
+        self.partially_resolve_node(path.id, partial_res)
     }
 
-    fn resolve_val_path(&mut self, path: &'ast Path) -> ResResult<'a, Res<NodeId>> {
+    fn resolve_val_path(&mut self, path: &'ast Path) -> ResResult<'a, PartialRes> {
         self.resolve_val_path_segments(path, &path.segments)
     }
 
@@ -30,17 +30,21 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         &mut self,
         path: &'ast Path,
         segments: &'ast [PathSegment],
-    ) -> ResResult<'a, Res<NodeId>> {
+    ) -> ResResult<'a, PartialRes> {
         match &segments {
-            [segment] => self.resolve_path_segment(path, segment, NS::Value),
-            [segment, xs @ ..] => match self.resolve_module(segment.ident).and_then(|module| {
-                self.with_module(module, |this| this.resolve_val_path_segments(path, xs).ok())
-            }) {
-                // if the path is successfully resolved inside the module, return it
-                Some(res) => Ok(res),
-                // otherwise, try resolve a type relative path
-                None => self.resolve_type_relative(path, segment, xs),
-            },
+            [segment] =>
+                self.resolve_path_segment(path, segment, NS::Value).map(PartialRes::resolved),
+            [segment, segments @ ..] =>
+                match self.resolve_module(segment.ident).and_then(|module| {
+                    self.with_module(module, |this| {
+                        this.resolve_val_path_segments(path, segments).ok()
+                    })
+                }) {
+                    // if the path is successfully resolved inside the module, return it
+                    Some(res) => Ok(res),
+                    // otherwise, try resolve a type relative path
+                    None => self.resolve_type_relative(path, segments, segment),
+                },
             [] => panic!("empty val path"),
         }
     }
@@ -48,12 +52,16 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     fn resolve_type_relative(
         &mut self,
         path: &'ast Path,
-        segment: &'ast PathSegment,
         segments: &'ast [PathSegment],
-    ) -> ResResult<'a, Res<NodeId>> {
-        Err(self
-            .resolver
-            .build_error(path.span, ResolutionError::UnresolvedPath(segment.clone(), path.clone())))
+        segment: &'ast PathSegment,
+    ) -> ResResult<'a, PartialRes> {
+        let base_res = self.resolve_ty_path_segment(path, segment).map_err(|_| {
+            self.resolver.build_error(
+                path.span,
+                ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
+            )
+        })?;
+        Ok(PartialRes::new(base_res, segments.len()))
     }
 
     fn resolve_val_path_segment(
