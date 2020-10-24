@@ -22,3 +22,33 @@ fn typeck_struct_pattern_field_bound_more_than_once() {
 
     expect_error!(src);
 }
+
+#[test]
+fn typeck_invalid_struct_pattern_unknown_field() {
+    let src = r#"
+    struct S {}
+
+    fn main() -> int {
+        let s = S { };
+        let S { x } = s;
+        0
+    }
+    "#;
+
+    expect_error!(src);
+}
+
+#[test]
+fn typeck_empty_struct_pattern() {
+    let src = r#"
+    struct S {}
+
+    fn main() -> int {
+        let s = S {};
+        let S {} = s;
+        0
+    }
+    "#;
+
+    typeck!(src);
+}

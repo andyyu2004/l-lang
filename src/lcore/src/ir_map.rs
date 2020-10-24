@@ -2,6 +2,7 @@
 use crate::ty::TyCtx;
 use ast::Ident;
 use ir::{DefId, DefKind, DefNode};
+use span::Span;
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn impl_item(self, id: ir::ImplItemId) -> &'tcx ir::ImplItem<'tcx> {
@@ -25,6 +26,15 @@ impl<'ir> DefMap<'ir> {
 
     pub fn def_kind(&self, _def_id: DefId) -> DefKind {
         todo!()
+    }
+
+    pub fn span(&self, def_id: DefId) -> Span {
+        match self.get(def_id) {
+            ir::DefNode::Item(item) => item.span,
+            ir::DefNode::ImplItem(_) => todo!(),
+            ir::DefNode::ForeignItem(item) => item.span,
+            ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => variant.span,
+        }
     }
 
     pub fn ident_of(&self, def_id: DefId) -> Ident {

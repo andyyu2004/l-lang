@@ -131,6 +131,10 @@ impl<'tcx> CodegenCtx<'tcx> {
                 // we need a special case with main, as the name actually matters
                 // for lli etc
                 let name = if ident.symbol == sym::main {
+                    if ty != self.tcx.types.main {
+                        let span = self.tcx.defs().span(def_id);
+                        self.tcx.sess.emit_error(span, LLVMError::InvalidMainType(ty));
+                    }
                     ident.to_string()
                 } else {
                     format!("{}<{}>", ident, substs)

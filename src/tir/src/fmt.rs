@@ -30,13 +30,6 @@ macro_rules! indent_internal {
     }};
 }
 
-macro_rules! indent_internal_ln {
-    ($s:expr, $($x:expr),*) => {{
-        indent_internal!($s, $($x),*)?;
-        indent_internal!($s, "\n")
-    }};
-}
-
 macro_rules! indent {
     ($s:expr, $($x:expr),*) => {{
         // we need to indent every line that is written, not just the first
@@ -94,6 +87,7 @@ where
 
     pub fn fmt_expr(&mut self, expr: &tir::Expr) -> fmt::Result {
         match &expr.kind {
+            tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),
             tir::ExprKind::Const(c) => indent!(self, "{}", c),
             tir::ExprKind::Bin(op, l, r) => indent!(self, "({} {} {})", op, l, r),
             tir::ExprKind::Unary(op, expr) => indent!(self, "({}{})", op, expr),
@@ -102,7 +96,6 @@ where
             tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
             tir::ExprKind::ItemRef(_def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
-            tir::ExprKind::Box(expr) => indent!(self, "(box {})", expr),
             tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),
             tir::ExprKind::Deref(expr) => indent!(self, "(*{})", expr),
             tir::ExprKind::Ret(expr) => match expr {

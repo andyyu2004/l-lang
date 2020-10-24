@@ -3,6 +3,12 @@
 use super::*;
 
 #[test]
+fn llvm_invalid_main_type() {
+    let src = "fn main() {}";
+    llvm_expect_error!(src);
+}
+
+#[test]
 fn llvm_fib() {
     let src = r#"
     fn main() -> int { fib(10) }
