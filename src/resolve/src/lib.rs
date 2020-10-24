@@ -19,12 +19,12 @@ extern crate log;
 use late::LateResolver;
 use module::Module;
 use pat::PatternResolutionCtx;
-use resolution_error::ResolutionError;
+use resolution_error::{ResResult, ResolutionError};
 use scope::{Scope, Scopes};
 
 use arena::TypedArena;
 use ast::{Ident, NodeId, Prog};
-use error::MultiSpan;
+use error::{DiagnosticBuilder, MultiSpan};
 use index::IndexVec;
 use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
 use rustc_hash::FxHashMap;
@@ -113,6 +113,14 @@ impl<'a> Resolver<'a> {
 
     pub fn def_node(&mut self, def_id: DefId, node: ir::DefNode<'a>) {
         self.defs.def_node(def_id, node)
+    }
+
+    pub fn build_error(
+        &self,
+        span: impl Into<MultiSpan>,
+        err: impl Error,
+    ) -> DiagnosticBuilder<'a> {
+        self.sess.build_error(span, err)
     }
 
     pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> Res<NodeId> {

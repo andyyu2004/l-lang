@@ -1,5 +1,8 @@
 use ast::{Ident, Path, PathSegment};
+use error::DiagnosticBuilder;
 use thiserror::Error;
+
+pub type ResResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
 
 #[derive(Debug, Error)]
 pub enum ResolutionError {

@@ -203,6 +203,7 @@ impl<'a> Parser<'a> {
         box Item { span, id: self.mk_id(), ident, vis, kind }
     }
 
+    // same as next except the return value is suppressed
     crate fn bump(&mut self) {
         self.next();
     }
@@ -225,15 +226,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn safe_peek_ttype(&self) -> ParseResult<'a, TokenType> {
-        self.safe_peek().map(|t| t.ttype)
-    }
-
-    pub(super) fn peek(&self) -> Tok {
+    crate fn peek(&self) -> Tok {
         self.safe_peek().ok().unwrap()
     }
 
-    pub(super) fn prev(&self) -> Tok {
+    crate fn prev(&self) -> Tok {
         self.tokens[self.idx - 1]
     }
 
