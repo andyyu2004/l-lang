@@ -45,13 +45,20 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         self.tcx.alloc(build::build_fn(self, tir))
     }
 
-    pub fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
+    fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
         self.node_ty(expr.id)
     }
 
-    pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
+    fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
         info!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
+    }
+
+    fn resolve_qpath(&self, qpath: &ir::QPath) -> Res {
+        match qpath {
+            ir::QPath::Resolved(path) => path.res,
+            ir::QPath::TypeRelative(_, _) => todo!(),
+        }
     }
 
     fn lower_tuple_subpats(&mut self, pats: &[ir::Pattern<'tcx>]) -> Vec<tir::FieldPat<'tcx>> {
@@ -117,15 +124,15 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
         let &Self { id, span, kind } = self;
         let kind = match kind {
             ir::PatternKind::Box(pat) => tir::PatternKind::Box(box pat.to_tir(ctx)),
-            ir::PatternKind::Path(path) => ctx.lower_variant_pat(self, path, &[]),
-            ir::PatternKind::Struct(path, fields) => ctx.lower_struct_pat(self, path, fields),
+            ir::PatternKind::Path(qpath) => ctx.lower_variant_pat(self, qpath, &[]),
+            ir::PatternKind::Struct(qpath, fields) => ctx.lower_struct_pat(self, qpath, fields),
             ir::PatternKind::Binding(ident, sub, m) => {
                 let subpat = sub.map(|pat| box pat.to_tir(ctx));
                 tir::PatternKind::Binding(m, ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
             ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(box expr.to_tir(ctx)),
-            ir::PatternKind::Variant(path, pats) => ctx.lower_variant_pat(self, path, pats),
+            ir::PatternKind::Variant(qpath, pats) => ctx.lower_variant_pat(self, qpath, pats),
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
         };
         let ty = ctx.node_ty(id);
@@ -137,7 +144,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
     fn lower_struct_pat(
         &mut self,
         pat: &ir::Pattern<'tcx>,
-        _path: &ir::Path<'tcx>,
+        _path: &ir::QPath<'tcx>,
         fields: &[ir::FieldPat<'tcx>],
     ) -> tir::PatternKind<'tcx> {
         let ty = self.node_ty(pat.id);
@@ -171,12 +178,13 @@ impl<'tcx> MirCtx<'_, 'tcx> {
     fn lower_variant_pat(
         &mut self,
         pat: &ir::Pattern<'tcx>,
-        path: &ir::Path<'tcx>,
+        qpath: &ir::QPath<'tcx>,
         pats: &'tcx [ir::Pattern<'tcx>],
     ) -> tir::PatternKind<'tcx> {
         let ty = self.node_ty(pat.id);
         let (adt, substs) = ty.expect_adt();
-        let idx = adt.variant_idx_with_res(path.res);
+        let res = self.resolve_qpath(qpath);
+        let idx = adt.variant_idx_with_res(res);
         tir::PatternKind::Variant(adt, substs, idx, pats.to_tir(self))
     }
 
@@ -287,7 +295,7 @@ where
 impl<'tcx> MirCtx<'_, 'tcx> {
     fn lower_qpath(&self, expr: &ir::Expr<'tcx>, qpath: &ir::QPath<'tcx>) -> tir::ExprKind<'tcx> {
         match qpath {
-            ir::QPath::Resolved(ty, path) => self.lower_path(expr, path),
+            ir::QPath::Resolved(path) => self.lower_path(expr, path),
             ir::QPath::TypeRelative(_, _) => todo!(),
         }
     }
@@ -384,8 +392,9 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
                         fields: fields.to_tir(self),
                     },
                     AdtKind::Enum => {
-                        let variant_idx = adt.variant_idx_with_res(path.res);
-                        tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(self) }
+                        todo!();
+                        // let variant_idx = adt.variant_idx_with_res(path.res);
+                        // tir::ExprKind::Adt { adt, substs, variant_idx, fields: fields.to_tir(self) }
                     }
                 },
                 _ => unreachable!(),

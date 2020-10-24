@@ -21,7 +21,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Closure(sig, body) => self.check_closure_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
             ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
-            ir::ExprKind::Struct(path, fields) => self.check_struct_expr(expr, path, fields),
+            ir::ExprKind::Struct(qpath, fields) => self.check_struct_expr(expr, qpath, fields),
             ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
             ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
             ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
@@ -130,11 +130,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_struct_path(
         &mut self,
-        path: &ir::Path,
+        qpath: &ir::QPath,
     ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
-        let ty = self.check_expr_path(path);
+        let ty = self.check_expr_qpath(qpath);
+        let res = self.resolve_qpath(qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
-        let variant = match path.res {
+        let variant = match res {
             ir::Res::Def(_, DefKind::Struct) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
@@ -153,13 +154,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             },
             ir::Res::Local(_) => None,
             ir::Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
-            _ => unimplemented!("{} (res: {:?})", path, path.res),
+            _ => unimplemented!("{} (res: {:?})", qpath, res),
         };
 
         variant.or_else(|| {
             self.emit_ty_err(
-                path.span,
-                TypeError::Msg(format!("expected struct path, found {:?}", path)),
+                qpath.span(),
+                TypeError::Msg(format!("expected struct path, found {:?}", qpath)),
             );
             None
         })
@@ -168,10 +169,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_struct_expr(
         &mut self,
         expr: &ir::Expr,
-        path: &ir::Path,
+        qpath: &ir::QPath,
         fields: &[ir::Field],
     ) -> Ty<'tcx> {
-        let (variant_ty, ty) = match self.check_struct_path(path) {
+        let (variant_ty, ty) = match self.check_struct_path(qpath) {
             Some(tys) => tys,
             None => return self.tcx.mk_ty_err(),
         };
@@ -324,7 +325,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_expr_qpath(&mut self, qpath: &ir::QPath) -> Ty<'tcx> {
         match qpath {
-            ir::QPath::Resolved(base, path) => self.check_expr_path(path),
+            ir::QPath::Resolved(path) => self.check_expr_path(path),
             ir::QPath::TypeRelative(_, _) => todo!(),
         }
     }

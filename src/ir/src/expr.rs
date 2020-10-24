@@ -20,7 +20,7 @@ impl<'ir> ir::Expr<'ir> {
     pub fn is_lvalue(&self) -> bool {
         match self.kind {
             ir::ExprKind::Path(qpath) => match qpath {
-                ir::QPath::Resolved(_, path) => match path.res {
+                ir::QPath::Resolved(path) => match path.res {
                     ir::Res::Local(..) => true,
                     ir::Res::SelfTy { .. } => false,
                     // self could be an lvalue if it is a &self?
@@ -59,7 +59,7 @@ pub enum ExprKind<'ir> {
     Assign(&'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
-    Struct(&'ir ir::Path<'ir>, &'ir [ir::Field<'ir>]),
+    Struct(&'ir ir::QPath<'ir>, &'ir [ir::Field<'ir>]),
     Box(&'ir ir::Expr<'ir>),
     /// named field access `foo.x` or `tuple.1`
     Field(&'ir ir::Expr<'ir>, Ident),

@@ -1,5 +1,6 @@
 use super::{DefId, ParamIdx};
 use crate as ir;
+use ast::NodeId;
 use index::Idx;
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
@@ -15,6 +16,29 @@ pub enum Res<Id = ir::Id> {
     // value namespace
     Local(Id),
     SelfVal { impl_def: DefId },
+}
+
+/// partial resolution
+/// resolves things that can be resolved early such as modules and constructor paths
+/// foo::bar or Option::Some
+/// defers resolution of associated items (such as associated functions and associated types)
+/// for typechecking phase
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct PartialRes {
+    /// the resolution for the resolved portion of the path
+    pub resolved: Res<NodeId>,
+    /// the number of unresolved segments
+    pub unresolved: usize,
+}
+
+impl PartialRes {
+    pub fn new(resolved: Res<NodeId>, unresolved: usize) -> Self {
+        Self { resolved, unresolved }
+    }
+
+    pub fn resolved(resolved: Res<NodeId>) -> Self {
+        Self::new(resolved, 0)
+    }
 }
 
 pub trait HasDefKind {

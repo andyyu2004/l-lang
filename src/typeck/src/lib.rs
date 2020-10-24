@@ -14,6 +14,7 @@ mod check;
 mod collect;
 mod expr;
 mod pat;
+mod path;
 mod stmt;
 mod tyconv;
 mod type_of;

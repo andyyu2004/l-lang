@@ -14,9 +14,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::PatternKind::Binding(_, _, mtbl) => self.def_local(pat.id, *mtbl, ty),
             ir::PatternKind::Tuple(pats) => self.check_pat_tuple(pat, pats, ty),
             ir::PatternKind::Lit(expr) => self.check_pat_lit(expr, ty),
-            ir::PatternKind::Variant(path, pats) => self.check_pat_variant(pat, path, pats, ty),
-            ir::PatternKind::Path(path) => self.check_pat_path(pat, path, ty),
-            ir::PatternKind::Struct(path, fields) => self.check_pat_struct(pat, path, fields, ty),
+            ir::PatternKind::Variant(qpath, pats) => self.check_pat_variant(pat, qpath, pats, ty),
+            ir::PatternKind::Path(qpath) => self.check_pat_path(pat, qpath, ty),
+            ir::PatternKind::Struct(qpath, fields) => self.check_pat_struct(pat, qpath, fields, ty),
             ir::PatternKind::Wildcard => ty,
         };
         self.record_ty(pat.id, pat_ty)
@@ -25,11 +25,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_pat_struct(
         &mut self,
         pat: &ir::Pattern,
-        path: &ir::Path,
+        qpath: &ir::QPath,
         fields_pats: &[ir::FieldPat],
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
-        let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(path) {
+        let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(qpath) {
             ret
         } else {
             return self.mk_ty_err();
@@ -75,7 +75,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ty
     }
 
-    fn check_pat_path(&mut self, pat: &ir::Pattern, path: &ir::Path, ty: Ty<'tcx>) -> Ty<'tcx> {
+    fn check_pat_path(&mut self, pat: &ir::Pattern, qpath: &ir::QPath, ty: Ty<'tcx>) -> Ty<'tcx> {
         // before we use `check_expr_path` there are some cases we must handle
         // for example:
         // `Some` has type T -> Option<T>
@@ -83,15 +83,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // a valid use of the pattern would be `Some(x)`
         // this should be an error instead as it should be handled under
         // PatKind::Variant not PatKind::Path
-        match path.res {
+        let res = self.resolve_qpath(qpath);
+        match res {
             // this is the good case
             ir::Res::Def(_, DefKind::Ctor(CtorKind::Unit)) => (),
             ir::Res::Def(_, DefKind::Ctor(CtorKind::Tuple | CtorKind::Struct)) =>
-                return self.emit_ty_err(pat.span, TypeError::UnexpectedVariant(path.res)),
+                return self.emit_ty_err(pat.span, TypeError::UnexpectedVariant(res)),
             ir::Res::Err => return self.set_ty_err(),
             res => unreachable!("unexpected res `{}`", res),
         };
-        let path_ty = self.check_expr_path(path);
+        let path_ty = self.check_expr_qpath(qpath);
         self.equate(pat.span, ty, path_ty);
         path_ty
     }
@@ -99,11 +100,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_pat_variant(
         &mut self,
         pat: &ir::Pattern,
-        path: &ir::Path,
+        qpath: &ir::QPath,
         pats: &[ir::Pattern],
         pat_ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
-        let ctor_ty = self.check_expr_path(path);
+        let ctor_ty = self.check_expr_qpath(qpath);
         let params = self.tcx.mk_substs(pats.iter().map(|pat| self.new_infer_var(pat.span)));
         for (pat, ty) in pats.iter().zip(params) {
             self.check_pat(pat, ty);

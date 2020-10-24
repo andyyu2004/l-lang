@@ -3,6 +3,11 @@ use ast::*;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     crate fn lower_qpath(&mut self, path: &Path) -> &'ir ir::QPath<'ir> {
+        let partial_res = self.resolver.partial_res(path.id);
+        if partial_res.unresolved == 0 {
+            let path = self.lower_path(path);
+            return self.alloc(ir::QPath::Resolved(path));
+        }
         todo!()
     }
 
@@ -10,9 +15,11 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         let segments = self
             .arena
             .alloc_from_iter(path.segments.iter().map(|seg| self.lower_path_segment(seg)));
-        let res = self.lower_res(self.resolver.get_res(path.id));
-        let path = ir::Path { span: path.span, segments, res };
-        self.alloc(path)
+
+        let partial_res = self.resolver.partial_res(path.id);
+        assert_eq!(partial_res.unresolved, 0);
+        let res = self.lower_res(partial_res.resolved);
+        self.alloc(ir::Path { span: path.span, segments, res })
     }
 
     pub fn lower_path_segment(&mut self, segment: &PathSegment) -> ir::PathSegment<'ir> {

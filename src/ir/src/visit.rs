@@ -162,10 +162,7 @@ pub fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
 
 pub fn walk_qpath<'ir>(v: &mut impl Visitor<'ir>, qpath: &'ir ir::QPath<'ir>) {
     match qpath {
-        ir::QPath::Resolved(ty, path) => {
-            ty.iter().for_each(|ty| v.visit_ty(ty));
-            v.visit_path(path);
-        }
+        ir::QPath::Resolved(path) => v.visit_path(path),
         ir::QPath::TypeRelative(ty, segment) => {
             v.visit_ty(ty);
             v.visit_path_segment(segment);
@@ -242,8 +239,8 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(expr);
             arms.iter().for_each(|arm| v.visit_arm(arm));
         }
-        ir::ExprKind::Struct(path, fields) => {
-            v.visit_path(path);
+        ir::ExprKind::Struct(qpath, fields) => {
+            v.visit_qpath(qpath);
             fields.iter().for_each(|f| v.visit_field(f));
         }
         ir::ExprKind::Assign(l, r) => {
@@ -314,8 +311,8 @@ pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, segment: &'ir ir::Path
 pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
     match &pat.kind {
         ir::PatternKind::Box(pat) => v.visit_pat(pat),
-        ir::PatternKind::Struct(path, fields) => {
-            v.visit_path(path);
+        ir::PatternKind::Struct(qpath, fields) => {
+            v.visit_qpath(qpath);
             fields.iter().for_each(|field| {
                 v.visit_ident(field.ident);
                 v.visit_pat(field.pat);
@@ -327,11 +324,11 @@ pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
             v.visit_ident(*ident);
             subpat.iter().for_each(|p| v.visit_pat(p));
         }
-        ir::PatternKind::Variant(path, pats) => {
-            v.visit_path(path);
+        ir::PatternKind::Variant(qpath, pats) => {
+            v.visit_qpath(qpath);
             pats.iter().for_each(|pat| v.visit_pat(pat));
         }
-        ir::PatternKind::Path(path) => v.visit_path(path),
+        ir::PatternKind::Path(qpath) => v.visit_qpath(qpath),
         ir::PatternKind::Wildcard => {}
     }
 }

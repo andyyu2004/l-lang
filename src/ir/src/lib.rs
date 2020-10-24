@@ -249,8 +249,26 @@ pub struct FnSig<'ir> {
 /// qualified path
 #[derive(Debug, Clone)]
 pub enum QPath<'ir> {
-    Resolved(Option<&'ir ir::Ty<'ir>>, Path<'ir>),
+    Resolved(&'ir Path<'ir>),
     TypeRelative(&'ir ir::Ty<'ir>, &'ir PathSegment<'ir>),
+}
+
+impl<'ir> QPath<'ir> {
+    pub fn span(&self) -> Span {
+        match self {
+            QPath::Resolved(path) => path.span,
+            QPath::TypeRelative(ty, _) => ty.span,
+        }
+    }
+}
+
+impl<'ir> Display for QPath<'ir> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            QPath::Resolved(path) => write!(f, "{}", path),
+            QPath::TypeRelative(_, _) => todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

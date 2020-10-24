@@ -23,6 +23,7 @@ macro_rules! arena_types {
             [] param: ir::Param<$tcx>,
             [] pat: ir::Pattern<$tcx>,
             [] path: ir::Path<$tcx>,
+            [] qpath: ir::QPath<$tcx>,
             [] path_segment: ir::PathSegment<$tcx>,
             [] stmt: ir::Stmt<$tcx>,
             [] ty: ir::Ty<$tcx>,

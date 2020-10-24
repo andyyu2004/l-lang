@@ -26,7 +26,7 @@ use arena::TypedArena;
 use ast::{Ident, NodeId, Prog};
 use error::{DiagnosticBuilder, MultiSpan};
 use index::IndexVec;
-use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PrimTy, Res, ROOT_MODULE};
+use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PartialRes, PrimTy, Res, ROOT_MODULE};
 use rustc_hash::FxHashMap;
 use session::Session;
 use span::{kw, sym, Symbol};
@@ -48,7 +48,7 @@ pub struct Resolver<'a> {
     generic_arg_counts: FxHashMap<DefId, usize>,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
-    res_map: FxHashMap<NodeId, Res<NodeId>>,
+    partial_resolutions: FxHashMap<NodeId, PartialRes>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
     ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,
 }
@@ -67,7 +67,7 @@ impl<'a> Resolver<'a> {
             arenas,
             modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::root()), 1),
             generic_arg_counts: Default::default(),
-            res_map: Default::default(),
+            partial_resolutions: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
             primitive_types: Default::default(),
@@ -172,16 +172,18 @@ impl<'a> Resolver<'a> {
         })
     }
 
-    pub fn get_res(&self, id: NodeId) -> Res<NodeId> {
-        *self.res_map.get(&id).unwrap_or_else(|| panic!("unresolved node `{:?}`", id))
+    pub fn partial_res(&self, id: NodeId) -> PartialRes {
+        *self.partial_resolutions.get(&id).unwrap_or_else(|| panic!("unresolved node `{:?}`", id))
     }
 
     /// writes the resolution for a given `NodeId` into the map
     fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
-        info!("resolving node {:?} to {:?}", node_id, res);
-        if let Some(prev_res) = self.res_map.insert(node_id, res) {
-            // not sure why its resolving some stuff twice, but make sure its the same
-            assert_eq!(res, prev_res);
+        info!("fully resolved node {:?} to {:?}", node_id, res);
+        let partial_res = PartialRes::resolved(res);
+        if let Some(prev_res) = self.partial_resolutions.insert(node_id, PartialRes::resolved(res))
+        {
+            // not sure why its resolving some stuff twice, but make sure they are consistent
+            assert_eq!(partial_res, prev_res);
         }
     }
 

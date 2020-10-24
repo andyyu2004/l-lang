@@ -35,7 +35,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
             ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
             ExprKind::Struct(path, fields) => ir::ExprKind::Struct(
-                self.lower_path(path),
+                self.lower_qpath(path),
                 self.arena.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
             ),
             ExprKind::Assign(l, r) => ir::ExprKind::Assign(self.lower_expr(l), self.lower_expr(r)),
