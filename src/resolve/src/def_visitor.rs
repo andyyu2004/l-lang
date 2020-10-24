@@ -7,12 +7,11 @@ use ir::{CtorKind, DefKind, HasDefKind, ModuleId, ROOT_MODULE};
 pub struct DefVisitor<'a, 'r> {
     resolver: &'a mut Resolver<'r>,
     curr_mod: ModuleId,
-    curr_adt_id: Option<NodeId>,
 }
 
 impl<'a, 'r> DefVisitor<'a, 'r> {
     pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
-        Self { resolver, curr_mod: ROOT_MODULE, curr_adt_id: None }
+        Self { resolver, curr_mod: ROOT_MODULE }
     }
 
     pub fn with_module<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
@@ -34,10 +33,10 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
         match &item.kind {
             ItemKind::Enum(..) => {
                 // enums introduce a new namespace represented as a module
+                // where the variants are defined
                 let module = self.new_module(item.ident);
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
-            ItemKind::Impl { self_ty, .. } => ast::walk_item(self, item),
             _ => ast::walk_item(self, item),
         }
     }
@@ -48,7 +47,10 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     }
 
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
-        self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
+        // we allocate a `DefId` for these items,
+        // but we do not insert them into the module as are accessed
+        // in a type relative path
+        self.resolver.define(item.id);
         ast::walk_assoc_item(self, item);
     }
 
@@ -65,7 +67,7 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
     }
 
     fn visit_ty_param(&mut self, ty_param: &'ast TyParam) {
-        self.resolver.def(ty_param.ident, ty_param.id);
+        self.resolver.define(ty_param.id);
     }
 }
 

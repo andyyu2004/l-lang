@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
         self.idx -= u;
     }
 
-    pub fn err(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
+    pub fn build_err(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
         self.sess.build_error(span, err)
     }
 
@@ -144,13 +144,13 @@ impl<'a> Parser<'a> {
         PathParser { kind: PathKind::Expr }.parse(self)
     }
 
-    pub(super) fn mk_id(&self) -> NodeId {
+    crate fn mk_id(&self) -> NodeId {
         let id = self.id_counter.get();
         self.id_counter.set(id + 1);
         NodeId::new(id)
     }
 
-    pub(super) fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
+    crate fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
     where
         P: Parse<'a, Output = R>,
     {
@@ -163,63 +163,69 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub(super) fn mk_path(&self, span: Span, segments: Vec<PathSegment>) -> Path {
+    crate fn mk_path(&self, span: Span, segments: Vec<PathSegment>) -> Path {
         Path { id: self.mk_id(), span, segments }
     }
 
-    pub(super) fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
+    crate fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
         box Expr { span, id: self.mk_id(), kind }
     }
 
-    pub(super) fn mk_infer_ty(&self) -> P<Ty> {
+    crate fn mk_infer_ty(&self) -> P<Ty> {
         self.mk_ty(self.empty_span(), TyKind::Infer)
     }
 
-    pub(super) fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
+    crate fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
         box Ty { span, id: self.mk_id(), kind }
     }
 
-    pub(super) fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
+    crate fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
+        if let PatternKind::Ident(ident, _, _) = kind {
+            if !ident.is_lower() {
+                self.build_err(span, ParseError::ExpectLowercaseIdentifier(*ident)).emit();
+            }
+        }
         box Pattern { span, id: self.mk_id(), kind }
     }
 
-    pub(super) fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
+    crate fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
         box Stmt { span, id: self.mk_id(), kind }
     }
 
-    pub(super) fn mk_item(
-        &self,
-        span: Span,
-        vis: Visibility,
-        ident: Ident,
-        kind: ItemKind,
-    ) -> P<Item> {
+    crate fn mk_item(&self, span: Span, vis: Visibility, ident: Ident, kind: ItemKind) -> P<Item> {
+        match kind {
+            ItemKind::Fn(..) if !ident.is_lower() =>
+                self.build_err(span, ParseError::ExpectLowercaseIdentifier(*ident)).emit(),
+            ItemKind::Enum(..) | ItemKind::Struct(..) if !ident.is_upper() =>
+                self.build_err(span, ParseError::ExpectUppercaseIdentifier(*ident)).emit(),
+            _ => {}
+        }
         box Item { span, id: self.mk_id(), ident, vis, kind }
     }
 
-    pub(super) fn bump(&mut self) {
+    crate fn bump(&mut self) {
         self.next();
     }
 
-    pub(super) fn next(&mut self) -> Tok {
+    crate fn next(&mut self) -> Tok {
         let tok = self.peek();
         self.idx += 1;
         tok
     }
 
-    pub(super) fn reached_eof(&self) -> bool {
+    crate fn reached_eof(&self) -> bool {
         self.tokens[self.idx].ttype == TokenType::Eof
     }
 
-    pub(super) fn safe_peek(&self) -> ParseResult<'a, Tok> {
+    crate fn safe_peek(&self) -> ParseResult<'a, Tok> {
         if !self.reached_eof() {
             Ok(self.tokens[self.idx])
         } else {
-            Err(self.err(self.empty_span(), ParseError::Eof))
+            Err(self.build_err(self.empty_span(), ParseError::Eof))
         }
     }
 
-    pub(super) fn safe_peek_ttype(&self) -> ParseResult<'a, TokenType> {
+    crate fn safe_peek_ttype(&self) -> ParseResult<'a, TokenType> {
         self.safe_peek().map(|t| t.ttype)
     }
 
@@ -231,7 +237,7 @@ impl<'a> Parser<'a> {
         self.tokens[self.idx - 1]
     }
 
-    pub(super) fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
+    crate fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
         let Tok { span, ttype } = self.safe_peek().ok()?;
         match ttype {
             TokenType::Literal { kind, .. } => {
@@ -242,7 +248,26 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(super) fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
+    // expect identifier starting with uppercase letter
+    crate fn expect_uident(&mut self) -> ParseResult<'a, Ident> {
+        let ident = self.expect_ident()?;
+        if !ident.is_upper() {
+            self.build_err(ident.span, ParseError::ExpectUppercaseIdentifier(*ident)).emit();
+        }
+        Ok(ident)
+    }
+
+    // expect lowercase identifier (starts with lowercase letter or _)
+    crate fn expect_lident(&mut self) -> ParseResult<'a, Ident> {
+        let ident = self.expect_ident()?;
+        if !ident.is_lower() {
+            self.build_err(ident.span, ParseError::ExpectLowercaseIdentifier(*ident)).emit();
+        }
+        Ok(ident)
+    }
+
+    // use only for path segments where both lidents and uidents are valid
+    crate fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
         let tok = self.safe_peek()?;
         let Tok { span, ttype } = tok;
         match ttype {
@@ -250,43 +275,45 @@ impl<'a> Parser<'a> {
                 self.idx += 1;
                 Ok(Ident { span, symbol })
             }
-            _ => Err(self.err(tok.span, ParseError::Expected(TokenType::Ident(Symbol(0)), tok))),
+            _ =>
+                Err(self
+                    .build_err(tok.span, ParseError::Expected(TokenType::Ident(Symbol(0)), tok))),
         }
     }
 
-    pub(super) fn accept_ident(&mut self) -> Option<Ident> {
-        self.expect_ident().ok()
+    crate fn accept_lident(&mut self) -> Option<Ident> {
+        self.expect_lident().ok()
     }
 
-    pub(super) fn accept(&mut self, ttype: TokenType) -> Option<Tok> {
+    crate fn accept(&mut self, ttype: TokenType) -> Option<Tok> {
         self.expect(ttype).ok()
     }
 
-    pub(super) fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
+    crate fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
         ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
     }
 
-    pub(super) fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Tok> {
+    crate fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Tok> {
         let t = self.safe_peek()?;
         if t.ttype == ttype {
             self.idx += 1;
             Ok(t)
         } else {
-            Err(self.err(t.span, ParseError::Expected(ttype, t)))
+            Err(self.build_err(t.span, ParseError::Expected(ttype, t)))
         }
     }
 
-    pub(super) fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Tok>
+    crate fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Tok>
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
         self.accept_one_of(ttypes).ok_or_else(|| {
             let tok = self.peek();
             let err = ParseError::ExpectedOneOf(ttypes.into_iter().cloned().collect(), tok);
-            self.err(tok.span, err)
+            self.build_err(tok.span, err)
         })
     }
 }

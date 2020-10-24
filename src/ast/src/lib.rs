@@ -96,6 +96,15 @@ impl Ident {
         Self { span, symbol }
     }
 
+    pub fn is_upper(self) -> bool {
+        self.as_str().chars().nth(0).unwrap().is_uppercase()
+    }
+
+    pub fn is_lower(self) -> bool {
+        let fst = self.as_str().chars().nth(0).unwrap();
+        fst == '_' || fst.is_lowercase()
+    }
+
     pub fn unspanned(symbol: Symbol) -> Self {
         Self::new(Span::empty(), symbol)
     }

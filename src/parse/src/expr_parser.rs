@@ -166,7 +166,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
         } else if let Some(match_kw) = parser.accept(TokenType::Match) {
             MatchParser { match_kw }.parse(parser)
         } else {
-            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
+            Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }

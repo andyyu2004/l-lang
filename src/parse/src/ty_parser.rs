@@ -17,7 +17,7 @@ impl<'a> Parse<'a> for TyParser {
             Ok(parser.mk_ty(span, TyKind::Fn(inputs, output)))
         } else if let Some(uscore) = parser.accept(TokenType::Underscore) {
             if !self.allow_infer {
-                parser.err(uscore.span, ParseError::ElidedTypeNotAllowedInThisContext).emit()
+                parser.build_err(uscore.span, ParseError::ElidedTypeNotAllowedInThisContext).emit()
             }
             Ok(parser.mk_ty(uscore.span, TyKind::Infer))
         } else if let Some(_lparen) = parser.accept(TokenType::OpenParen) {
@@ -44,7 +44,7 @@ impl<'a> Parse<'a> for TyParser {
             let path = parser.parse_type_path()?;
             Ok(parser.mk_ty(path.span, TyKind::Path(path)))
         } else {
-            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
+            Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }

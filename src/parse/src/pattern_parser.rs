@@ -35,7 +35,7 @@ impl<'a> Parse<'a> for PatParser {
             let pat = parser.parse_pattern()?;
             Ok(parser.mk_pat(amp.span.merge(pat.span), PatternKind::Box(pat)))
         } else if let Some(m) = parser.accept(TokenType::Mut) {
-            let ident = parser.expect_ident()?;
+            let ident = parser.expect_lident()?;
             let pat = PatternKind::Ident(ident, None, Mutability::Mut);
             Ok(parser.mk_pat(m.span.merge(ident.span), pat))
         } else if let Some(_open_paren) = parser.accept(TokenType::OpenParen) {
@@ -51,7 +51,7 @@ impl<'a> Parse<'a> for PatParser {
             let expr = LiteralParser { kind, span }.parse(parser)?;
             Ok(parser.mk_pat(span, PatternKind::Lit(expr)))
         } else {
-            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
+            Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }

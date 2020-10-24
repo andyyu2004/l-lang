@@ -7,9 +7,9 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 pub struct LateResolver<'a, 'r, 'ast> {
-    resolver: &'a mut Resolver<'r>,
-    scopes: PerNS<Scopes<Res<NodeId>>>,
-    current_module: Vec<ModuleId>,
+    crate resolver: &'a mut Resolver<'r>,
+    crate scopes: PerNS<Scopes<Res<NodeId>>>,
+    crate current_module: Vec<ModuleId>,
     _pd: &'ast PhantomData<()>,
 }
 
@@ -72,17 +72,17 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         self.resolver.new_module(self.curr_module(), name)
     }
 
-    fn curr_module(&self) -> ModuleId {
+    crate fn curr_module(&self) -> ModuleId {
         self.current_module.last().copied().unwrap()
     }
 
     /// searches for an item with name = `ident` in the current module
-    fn try_resolve_item(&self, ident: Ident) -> Option<Res<NodeId>> {
+    crate fn try_resolve_item(&self, ident: Ident) -> Option<Res<NodeId>> {
         self.resolver.resolve_item(self.curr_module(), ident)
     }
 
     /// search for a local variable in the scopes otherwise look for a resolution to an item
-    fn resolve_var(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+    crate fn resolve_var(&mut self, ident: Ident) -> Option<Res<NodeId>> {
         match self.scopes[NS::Value].lookup(&ident) {
             Some(&res) => Some(res),
             None => self.try_resolve_item(ident),
@@ -142,12 +142,10 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             if trait_path.is_some() {
                 todo!()
             }
-            this.with_new_module(item.ident, |this| {
-                this.with_self(item.id, |this| {
-                    for item in assoc_items {
-                        this.resolve_assoc_item(item);
-                    }
-                })
+            this.with_self(item.id, |this| {
+                for item in assoc_items {
+                    this.resolve_assoc_item(item);
+                }
             })
         })
     }
@@ -162,91 +160,6 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
 
     fn resolve_adt(&mut self, generics: &'ast Generics, item: &'ast Item) {
         self.with_generics(generics, |this| ast::walk_item(this, item))
-    }
-
-    /// `id` belongs to the `Ty` or `Expr`
-    pub(super) fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
-        let res = match ns {
-            NS::Value => self.resolve_val_path(path),
-            NS::Type => self.resolve_ty_path(path),
-        };
-        self.resolve_node(path.id, res);
-    }
-
-    fn resolve_val_path(&mut self, path: &'ast Path) -> Res<NodeId> {
-        self.resolve_val_path_segments(path, &path.segments)
-    }
-
-    fn resolve_module(&mut self, ident: Ident) -> Option<ModuleId> {
-        self.resolver.find_module(self.curr_module(), ident)
-    }
-
-    fn resolve_val_path_segments(
-        &mut self,
-        path: &'ast Path,
-        segments: &'ast [PathSegment],
-    ) -> Res<NodeId> {
-        match &segments {
-            [] => panic!("empty val path"),
-            [segment] => self.resolve_path_segment(path, segment, NS::Value),
-            [segment, xs @ ..] => match self.resolve_module(segment.ident) {
-                Some(module) =>
-                    self.with_module(module, |this| this.resolve_val_path_segments(path, xs)),
-                None =>
-                    return self.resolver.emit_error(
-                        path.span,
-                        ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
-                    ),
-            },
-        }
-    }
-
-    fn resolve_val_path_segment(
-        &mut self,
-        path: &'ast Path,
-        segment: &'ast PathSegment,
-    ) -> Res<NodeId> {
-        self.resolve_var(segment.ident).unwrap_or_else(|| {
-            let err = ResolutionError::UnresolvedPath(segment.clone(), path.clone());
-            self.resolver.emit_error(path.span, err)
-        })
-    }
-
-    fn resolve_ty_path(&mut self, path: &'ast Path) -> Res<NodeId> {
-        match path.segments.as_slice() {
-            [] => panic!("empty ty path"),
-            [segment] => self.resolve_path_segment(path, segment, NS::Type),
-            [xs @ .., segment] => todo!(),
-        }
-    }
-
-    fn resolve_path_segment(
-        &mut self,
-        path: &'ast Path,
-        segment: &'ast PathSegment,
-        ns: NS,
-    ) -> Res<NodeId> {
-        self.visit_path_segment(segment);
-        match ns {
-            NS::Value => self.resolve_val_path_segment(path, segment),
-            NS::Type => self.resolve_ty_path_segment(path, segment),
-        }
-    }
-
-    fn resolve_ty_path_segment(
-        &mut self,
-        path: &'ast Path,
-        segment: &'ast PathSegment,
-    ) -> Res<NodeId> {
-        if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
-            res
-        } else if let Some(res) = self.try_resolve_item(segment.ident) {
-            res
-        } else if let Some(&ty) = self.resolver.primitive_types.get(&segment.ident.symbol) {
-            Res::PrimTy(ty)
-        } else {
-            self.emit_error(path.span, ResolutionError::UnresolvedType(path.clone()))
-        }
     }
 }
 

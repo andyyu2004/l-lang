@@ -61,7 +61,7 @@ impl<'a> Parse<'a> for ExternParser {
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match ForeignItemKind::try_from(kind) {
                 Ok(kind) => foreign_items.push(box Item { span, id, vis, ident, kind }),
-                Err(kind) => parser.err(span, ParseError::InvalidForeignItem(kind)).emit(),
+                Err(kind) => parser.build_err(span, ParseError::InvalidForeignItem(kind)).emit(),
             };
         };
 
@@ -103,7 +103,7 @@ impl<'a> Parse<'a> for ImplParser {
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match AssocItemKind::try_from(kind) {
                 Ok(kind) => items.push(box Item { span, id, vis, ident, kind }),
-                Err(kind) => parser.err(span, ParseError::InvalidImplItem(kind)).emit(),
+                Err(kind) => parser.build_err(span, ParseError::InvalidImplItem(kind)).emit(),
             };
         };
         let span = self.impl_kw.span.merge(close_brace.span);
@@ -140,7 +140,7 @@ impl<'a> Parse<'a> for FieldDeclParser {
         let vis = VisibilityParser.parse(parser)?;
         let ident = match self.form {
             FieldForm::Struct => {
-                let ident = parser.expect_ident()?;
+                let ident = parser.expect_lident()?;
                 parser.expect(TokenType::Colon)?;
                 Some(ident)
             }
@@ -158,7 +158,7 @@ impl<'a> Parse<'a> for VariantParser {
     type Output = Variant;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let ident = parser.expect_ident()?;
+        let ident = parser.expect_uident()?;
         let kind = VariantKindParser.parse(parser)?;
         let span = ident.span.merge(parser.empty_span());
         Ok(Variant { id: parser.mk_id(), span, kind, ident })

@@ -1,6 +1,7 @@
 use ast::ItemKind;
 use error::DiagnosticBuilder;
 use lex::{Tok, TokenType};
+use span::Symbol;
 use thiserror::Error;
 
 pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
@@ -29,4 +30,8 @@ pub enum ParseError {
     AmbiguousGenericArgsInExprPath,
     #[error("elided type annotation not allowed here")]
     ElidedTypeNotAllowedInThisContext,
+    #[error("expected uppercase identifier, found `{0}`")]
+    ExpectUppercaseIdentifier(Symbol),
+    #[error("expected lowercase identifier, found `{0}`")]
+    ExpectLowercaseIdentifier(Symbol),
 }

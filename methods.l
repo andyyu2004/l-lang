@@ -3,7 +3,7 @@ extern {
 }
 
 fn main() -> int {
-    print(new().x);
+    print(S::new().x);
     9
 }
 

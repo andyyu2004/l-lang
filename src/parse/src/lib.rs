@@ -1,4 +1,5 @@
 #![feature(box_syntax, box_patterns)]
+#![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
 mod expr_parser;
@@ -95,7 +96,7 @@ impl<'a> Parse<'a> for FieldAccessParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let ident = if let Some(ident) = parser.accept_ident() {
+        let ident = if let Some(ident) = parser.accept_lident() {
             ident
         } else if let Some((kind, span)) = parser.accept_literal() {
             // tuple field access can have integer after the dot
@@ -182,7 +183,7 @@ impl<'a> Parse<'a> for ParamParser {
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
             parser.parse_ty(!self.require_type_annotations)
         } else if self.require_type_annotations {
-            Err(parser.err(pattern.span, ParseError::RequireTypeAnnotations))
+            Err(parser.build_err(pattern.span, ParseError::RequireTypeAnnotations))
         } else {
             Ok(parser.mk_infer_ty())
         }?;
@@ -332,7 +333,7 @@ impl<'a> Parse<'a> for StructExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let field_parser = |parser: &mut Parser<'a>| {
-            let ident = parser.expect_ident()?;
+            let ident = parser.expect_lident()?;
             let expr = if parser.accept(TokenType::Colon).is_some() {
                 parser.parse_expr()?
             } else {
@@ -494,7 +495,7 @@ impl<'a> Parse<'a> for BlockParser {
                     loop {
                         match parser.peek().ttype {
                             TokenType::Eof =>
-                                return Err(parser.err(parser.empty_span(), ParseError::Eof)),
+                                return Err(parser.build_err(parser.empty_span(), ParseError::Eof)),
                             TokenType::CloseBrace => break,
                             TokenType::Semi => {
                                 parser.bump();
@@ -513,7 +514,7 @@ impl<'a> Parse<'a> for BlockParser {
             // check there are no missing semicolons in expression statements
             for stmt in &stmts[..len] {
                 if let StmtKind::Expr(_) = stmt.kind {
-                    return Err(parser.err(stmt.span, ParseError::MissingSemi));
+                    return Err(parser.build_err(stmt.span, ParseError::MissingSemi));
                 }
             }
             // for easier typechecking when the final statement is diverging
@@ -536,7 +537,7 @@ impl<'a> Parse<'a> for ClosureParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let name = parser.accept_ident();
+        let name = parser.accept_lident();
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
         let body = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
             let block = parser.parse_block(open_brace)?;
@@ -644,7 +645,7 @@ impl<'a> Parse<'a> for ElseParser {
                 BlockParser { open_brace, is_unsafe: false }.spanned(true).parse(parser)?;
             Ok(parser.mk_expr(span, ExprKind::Block(block)))
         } else {
-            Err(parser.err(parser.empty_span(), ParseError::Unimpl))
+            Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }
     }
 }

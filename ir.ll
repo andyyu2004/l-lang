@@ -43,15 +43,6 @@ declare void @abort()
 
 declare void @exit(i32)
 
-define %"S<>" @"new<>"() {
-basic_blockbb0:
-  %ret = alloca %"S<>"
-  %struct_gep = getelementptr inbounds %"S<>", %"S<>"* %ret, i32 0, i32 0
-  store i64 5, i64* %struct_gep
-  %load_ret = load %"S<>", %"S<>"* %ret
-  ret %"S<>" %load_ret
-}
-
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
@@ -72,4 +63,13 @@ basic_blockbb2:                                   ; preds = %basic_blockbb1
   store i64 9, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
+}
+
+define %"S<>" @"new<>"() {
+basic_blockbb0:
+  %ret = alloca %"S<>"
+  %struct_gep = getelementptr inbounds %"S<>", %"S<>"* %ret, i32 0, i32 0
+  store i64 5, i64* %struct_gep
+  %load_ret = load %"S<>", %"S<>"* %ret
+  ret %"S<>" %load_ret
 }

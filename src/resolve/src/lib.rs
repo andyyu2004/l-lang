@@ -9,6 +9,7 @@ mod def_visitor;
 mod late;
 mod module;
 mod pat;
+mod path;
 mod resolution_error;
 mod scope;
 
@@ -104,7 +105,7 @@ impl<'a> Resolver<'a> {
     }
 
     /// allocates a `DefId` for some given `NodeId`
-    pub fn def(&mut self, _name: Ident, node_id: NodeId) -> DefId {
+    pub fn define(&mut self, node_id: NodeId) -> DefId {
         let def_id = self.defs.alloc_def_id();
         assert!(self.node_id_to_def_id.insert(node_id, def_id).is_none());
         def_id
@@ -135,7 +136,7 @@ impl<'a> Resolver<'a> {
         node_id: NodeId,
         def_kind: DefKind,
     ) -> DefId {
-        let def_id = self.def(name, node_id);
+        let def_id = self.define(node_id);
         if name.symbol == kw::Empty {
             // nameless items such as extern blocks and impls don't need to be added to the
             // module's items as they cannot be referenced by identifier

@@ -35,9 +35,9 @@ pub fn main() -> ! {
 
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
-    let check = matches.is_present("check");
-    let emit_tir = matches.is_present("tir");
-    let emit_mir = matches.is_present("emit-mir");
+    let _check = matches.is_present("check");
+    let _emit_tir = matches.is_present("tir");
+    let _emit_mir = matches.is_present("emit-mir");
     // TODO take optimization level as parameter
 
     let path = matches.value_of("INPUT").unwrap();
