@@ -4,7 +4,7 @@ use error::*;
 use index::Idx;
 use lex::*;
 use session::Session;
-use span::{self, Span, Symbol};
+use span::{self, kw, Span, Symbol};
 use std::cell::Cell;
 use std::error::Error;
 
@@ -61,7 +61,7 @@ impl<'a> Parser<'a> {
 
     /// returns true if the current token is an ident
     /// similar to `accept_ident` except the token stream is not advanced
-    pub fn ident(&self) -> ParseResult<'a, Option<Ident>> {
+    pub fn is_ident(&self) -> ParseResult<'a, Option<Ident>> {
         let tok = self.safe_peek()?;
         Ok(if let TokenType::Ident(symbol) = tok.ttype {
             Some(Ident::new(tok.span, symbol))
@@ -265,16 +265,15 @@ impl<'a> Parser<'a> {
 
     // use only for path segments where both lidents and uidents are valid
     crate fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
-        let tok = self.safe_peek()?;
-        let Tok { span, ttype } = tok;
+        let token = self.safe_peek()?;
+        let Tok { span, ttype } = token;
         match ttype {
             TokenType::Ident(symbol) => {
                 self.idx += 1;
                 Ok(Ident { span, symbol })
             }
-            _ =>
-                Err(self
-                    .build_err(tok.span, ParseError::Expected(TokenType::Ident(Symbol(0)), tok))),
+            _ => Err(self
+                .build_err(token.span, ParseError::Expected(TokenType::Ident(kw::Empty), token))),
         }
     }
 

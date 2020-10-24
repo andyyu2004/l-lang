@@ -146,7 +146,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             LiteralParser { kind, span }.parse(parser)
         } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
             RetParser { ret_kw }.parse(parser)
-        } else if let TokenType::Ident(_) = parser.safe_peek()?.ttype {
+        } else if parser.is_ident()?.is_some() {
             PathExprParser.parse(parser)
         } else if let Some(tok) = parser.accept(TokenType::False) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(false))))

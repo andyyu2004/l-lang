@@ -40,7 +40,7 @@ impl<'a> Parse<'a> for TyParser {
             let ty = self.parse(parser)?;
             let rsq = parser.expect(TokenType::CloseSqBracket)?;
             Ok(parser.mk_ty(lsq.span.merge(rsq.span), TyKind::Array(ty)))
-        } else if parser.ident()?.is_some() {
+        } else if parser.is_ident()?.is_some() {
             let path = parser.parse_type_path()?;
             Ok(parser.mk_ty(path.span, TyKind::Path(path)))
         } else {

@@ -12,7 +12,7 @@ impl<'a> Parse<'a> for PatParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(token) = parser.accept(TokenType::Underscore) {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
-        } else if parser.ident()?.is_some() {
+        } else if parser.is_ident()?.is_some() {
             let path = parser.parse_path()?;
             if parser.accept(TokenType::OpenBrace).is_some() {
                 let (span, fields) =

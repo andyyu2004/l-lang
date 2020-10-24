@@ -333,7 +333,14 @@ impl<'a> Parse<'a> for StructExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let field_parser = |parser: &mut Parser<'a>| {
-            let ident = parser.expect_lident()?;
+            // we intentionally only expect an `ident` instead of an `lident` here
+            // this is due to the ambiguity between struct expressions and blocks
+            // which causes some annoyances with error messages
+            // this won't cause any issues down the line as when we declare structs
+            // we check all its fields are lowercase identifiers
+            // this will just result in a unknown field error during typechecking instead
+            // of an immediate parse error
+            let ident = parser.expect_ident()?;
             let expr = if parser.accept(TokenType::Colon).is_some() {
                 parser.parse_expr()?
             } else {
@@ -583,8 +590,7 @@ impl<'a> Parse<'a> for ArmParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = parser.parse_pattern()?;
-        let guard = parser.accept(TokenType::If).map(|if_kw| parser.parse_expr()).transpose()?;
-        let guard = None;
+        let guard = parser.accept(TokenType::If).map(|_| parser.parse_expr()).transpose()?;
         parser.expect(TokenType::RFArrow)?;
         let body = parser.parse_expr()?;
         let span = pat.span.merge(body.span);

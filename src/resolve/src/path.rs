@@ -32,18 +32,28 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         segments: &'ast [PathSegment],
     ) -> ResResult<'a, Res<NodeId>> {
         match &segments {
-            [] => panic!("empty val path"),
             [segment] => self.resolve_path_segment(path, segment, NS::Value),
-            [segment, xs @ ..] => match self.resolve_module(segment.ident) {
-                Some(module) =>
-                    self.with_module(module, |this| this.resolve_val_path_segments(path, xs)),
-                None =>
-                    return Err(self.resolver.build_error(
-                        path.span,
-                        ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
-                    )),
+            [segment, xs @ ..] => match self.resolve_module(segment.ident).and_then(|module| {
+                self.with_module(module, |this| this.resolve_val_path_segments(path, xs).ok())
+            }) {
+                // if the path is successfully resolved inside the module, return it
+                Some(res) => Ok(res),
+                // otherwise, try resolve a type relative path
+                None => self.resolve_type_relative(path, segment, xs),
             },
+            [] => panic!("empty val path"),
         }
+    }
+
+    fn resolve_type_relative(
+        &mut self,
+        path: &'ast Path,
+        segment: &'ast PathSegment,
+        segments: &'ast [PathSegment],
+    ) -> ResResult<'a, Res<NodeId>> {
+        Err(self
+            .resolver
+            .build_error(path.span, ResolutionError::UnresolvedPath(segment.clone(), path.clone())))
     }
 
     fn resolve_val_path_segment(
