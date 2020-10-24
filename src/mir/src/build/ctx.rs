@@ -285,6 +285,13 @@ where
 }
 
 impl<'tcx> MirCtx<'_, 'tcx> {
+    fn lower_qpath(&self, expr: &ir::Expr<'tcx>, qpath: &ir::QPath<'tcx>) -> tir::ExprKind<'tcx> {
+        match qpath {
+            ir::QPath::Resolved(ty, path) => self.lower_path(expr, path),
+            ir::QPath::TypeRelative(_, _) => todo!(),
+        }
+    }
+
     fn lower_path(&self, expr: &ir::Expr<'tcx>, path: &ir::Path<'tcx>) -> tir::ExprKind<'tcx> {
         match path.res {
             Res::Local(id) => tir::ExprKind::VarRef(id),
@@ -360,7 +367,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
             ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(box expr.to_tir(self)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, box expr.to_tir(self)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(box block.to_tir(self)),
-            ir::ExprKind::Path(path) => self.lower_path(expr, path),
+            ir::ExprKind::Path(qpath) => self.lower_qpath(expr, qpath),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(self)),
             ir::ExprKind::Closure(_sig, body) => self.lower_closure(expr, body),
             ir::ExprKind::Call(f, args) =>

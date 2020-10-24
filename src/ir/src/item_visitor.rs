@@ -3,7 +3,7 @@ use ast::Ident;
 
 /// visits all items in the `IR`
 pub trait ItemVisitor<'ir> {
-    fn visit_ir(&mut self, ir: &'ir ir::IR<'ir>) {
+    fn visit_ir(&mut self, ir: &'ir ir::Ir<'ir>) {
         ir.items.values().for_each(|item| self.visit_item(item));
         ir.impl_items.values().for_each(|item| self.visit_impl_item(item));
     }

@@ -16,26 +16,29 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
     }
 }
 
-impl<'ir> Expr<'ir> {
+impl<'ir> ir::Expr<'ir> {
     pub fn is_lvalue(&self) -> bool {
         match self.kind {
-            ExprKind::Path(p) => match p.res {
-                ir::Res::Local(..) => true,
-                ir::Res::SelfTy { .. } => false,
-                // self could be an lvalue if it is a &self?
-                ir::Res::SelfVal { .. } => todo!(),
-                ir::Res::Def(_, def_kind) => match def_kind {
-                    ir::DefKind::Fn
-                    | ir::DefKind::AssocFn
-                    | ir::DefKind::Enum
-                    | ir::DefKind::Struct
-                    | ir::DefKind::Impl
-                    | ir::DefKind::Extern
-                    | ir::DefKind::TyParam(_)
-                    | ir::DefKind::Ctor(..) => false,
+            ir::ExprKind::Path(qpath) => match qpath {
+                ir::QPath::Resolved(_, path) => match path.res {
+                    ir::Res::Local(..) => true,
+                    ir::Res::SelfTy { .. } => false,
+                    // self could be an lvalue if it is a &self?
+                    ir::Res::SelfVal { .. } => todo!(),
+                    ir::Res::Def(_, def_kind) => match def_kind {
+                        ir::DefKind::Fn
+                        | ir::DefKind::AssocFn
+                        | ir::DefKind::Enum
+                        | ir::DefKind::Struct
+                        | ir::DefKind::Impl
+                        | ir::DefKind::Extern
+                        | ir::DefKind::TyParam(_)
+                        | ir::DefKind::Ctor(..) => false,
+                    },
+                    ir::Res::Err => false,
+                    ir::Res::PrimTy(_) => unreachable!(),
                 },
-                ir::Res::Err => false,
-                ir::Res::PrimTy(_) => unreachable!(),
+                ir::QPath::TypeRelative(..) => todo!(),
             },
             ExprKind::Field(..) | ExprKind::Unary(UnaryOp::Deref, _) => true,
             _ => false,
@@ -50,7 +53,7 @@ pub enum ExprKind<'ir> {
     Unary(ast::UnaryOp, &'ir ir::Expr<'ir>),
     Ret(Option<&'ir ir::Expr<'ir>>),
     Block(&'ir ir::Block<'ir>),
-    Path(&'ir ir::Path<'ir>),
+    Path(&'ir ir::QPath<'ir>),
     Tuple(&'ir [ir::Expr<'ir>]),
     Closure(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
     Assign(&'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),

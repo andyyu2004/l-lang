@@ -214,14 +214,14 @@ pub struct GlobalCtx<'tcx> {
     pub arena: &'tcx CoreArenas<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
-    pub ir: &'tcx ir::IR<'tcx>,
+    pub ir: &'tcx ir::Ir<'tcx>,
     pub resolutions: Resolutions<'tcx>,
     pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
-        ir: &'tcx ir::IR<'tcx>,
+        ir: &'tcx ir::Ir<'tcx>,
         arena: &'tcx CoreArenas<'tcx>,
         resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,

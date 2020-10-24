@@ -31,7 +31,7 @@ pub use visit::*;
 
 /// top level IR ast
 #[derive(Debug)]
-pub struct IR<'ir> {
+pub struct Ir<'ir> {
     /// `DefId` of the entry/main function
     pub entry_id: Option<DefId>,
     pub items: BTreeMap<DefId, ir::Item<'ir>>,
@@ -244,6 +244,13 @@ pub struct FnSig<'ir> {
     // rest of parameter information is in `Body`
     pub inputs: &'ir [ir::Ty<'ir>],
     pub output: Option<&'ir ir::Ty<'ir>>,
+}
+
+/// qualified path
+#[derive(Debug, Clone)]
+pub enum QPath<'ir> {
+    Resolved(Option<&'ir ir::Ty<'ir>>, Path<'ir>),
+    TypeRelative(&'ir ir::Ty<'ir>, &'ir PathSegment<'ir>),
 }
 
 #[derive(Debug, Clone)]

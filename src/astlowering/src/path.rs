@@ -2,8 +2,11 @@ use super::AstLoweringCtx;
 use ast::*;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
-    /// the id belongs to the `Expr` or the `Ty` or the `Pat`
-    pub(super) fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
+    crate fn lower_qpath(&mut self, path: &Path) -> &'ir ir::QPath<'ir> {
+        todo!()
+    }
+
+    crate fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
         let segments = self
             .arena
             .alloc_from_iter(path.segments.iter().map(|seg| self.lower_path_segment(seg)));

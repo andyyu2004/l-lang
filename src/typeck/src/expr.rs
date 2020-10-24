@@ -16,7 +16,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
             ir::ExprKind::Unary(op, operand) => self.check_unary_expr(expr, *op, operand),
             ir::ExprKind::Block(block) => self.check_block(block),
-            ir::ExprKind::Path(path) => self.check_expr_path(path),
+            ir::ExprKind::Path(qpath) => self.check_expr_qpath(qpath),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
             ir::ExprKind::Closure(sig, body) => self.check_closure_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
@@ -320,6 +320,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let tcx = self.tcx;
         let tys = xs.iter().map(|expr| self.check_expr(expr));
         tcx.mk_tup_iter(tys)
+    }
+
+    crate fn check_expr_qpath(&mut self, qpath: &ir::QPath) -> Ty<'tcx> {
+        match qpath {
+            ir::QPath::Resolved(base, path) => self.check_expr_path(path),
+            ir::QPath::TypeRelative(_, _) => todo!(),
+        }
     }
 
     crate fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {

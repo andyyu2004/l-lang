@@ -3,7 +3,7 @@ macro_rules! arena_types {
     ($macro:path, $args:tt, $tcx:lifetime) => (
         $macro!($args, [
             // HIR types
-            [few] ir: ir::IR<$tcx>,
+            [few] ir: ir::Ir<$tcx>,
             [] bodies: ir::Body<$tcx>,
             [] arm: ir::Arm<$tcx>,
             [] block: ir::Block<$tcx>,

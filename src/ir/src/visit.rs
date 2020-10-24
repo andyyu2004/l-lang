@@ -2,7 +2,7 @@ use crate::*;
 use ast::{Ident, Visibility};
 
 pub trait Visitor<'ir>: Sized {
-    fn visit_ir(&mut self, prog: &'ir IR<'ir>) {
+    fn visit_ir(&mut self, prog: &'ir Ir<'ir>) {
         walk_ir(self, prog)
     }
 
@@ -64,6 +64,10 @@ pub trait Visitor<'ir>: Sized {
         walk_path(self, path)
     }
 
+    fn visit_qpath(&mut self, qpath: &'ir ir::QPath<'ir>) {
+        walk_qpath(self, qpath)
+    }
+
     fn visit_path_segment(&mut self, seg: &'ir ir::PathSegment<'ir>) {
         walk_path_segment(self, seg)
     }
@@ -101,7 +105,7 @@ pub trait Visitor<'ir>: Sized {
     }
 }
 
-pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::IR<'ir>) {
+pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::Ir<'ir>) {
     prog.items.values().for_each(|item| v.visit_item(item));
     prog.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
 }
@@ -156,6 +160,19 @@ pub fn walk_fn_sig<'ir, V: Visitor<'ir>>(v: &mut V, sig: &'ir ir::FnSig<'ir>) {
     sig.output.iter().for_each(|ty| v.visit_ty(ty));
 }
 
+pub fn walk_qpath<'ir>(v: &mut impl Visitor<'ir>, qpath: &'ir ir::QPath<'ir>) {
+    match qpath {
+        ir::QPath::Resolved(ty, path) => {
+            ty.iter().for_each(|ty| v.visit_ty(ty));
+            v.visit_path(path);
+        }
+        ir::QPath::TypeRelative(ty, segment) => {
+            v.visit_ty(ty);
+            v.visit_path_segment(segment);
+        }
+    }
+}
+
 pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
     v.visit_vis(item.vis);
     v.visit_ident(item.ident);
@@ -207,7 +224,7 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
         ir::ExprKind::Err => {}
         ir::ExprKind::Unary(_, expr) => v.visit_expr(expr),
         ir::ExprKind::Block(block) => v.visit_block(block),
-        ir::ExprKind::Path(path) => v.visit_path(path),
+        ir::ExprKind::Path(qpath) => v.visit_qpath(qpath),
         ir::ExprKind::Tuple(xs) => xs.iter().for_each(|x| v.visit_expr(x)),
         ir::ExprKind::Closure(sig, body) => v.visit_lambda(sig, body),
         ir::ExprKind::Box(expr) => v.visit_expr(expr),

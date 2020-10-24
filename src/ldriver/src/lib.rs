@@ -128,7 +128,7 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::IR<'tcx>, Resolutions)> {
+    pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Ir<'tcx>, Resolutions)> {
         let ast = self.parse()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
