@@ -116,8 +116,11 @@ impl<'a> Parser<'a> {
         ItemParser.parse(self)
     }
 
-    pub fn parse_expr(&mut self) -> ParseResult<'a, P<Expr>> {
-        ExprParser.parse(self)
+    pub fn parse_expr(&mut self) -> P<Expr> {
+        ExprParser.parse(self).unwrap_or_else(|err| {
+            err.emit();
+            self.mk_expr(err.get_span(), ExprKind::Err)
+        })
     }
 
     pub fn parse_generics(&mut self) -> ParseResult<'a, Generics> {
@@ -128,8 +131,11 @@ impl<'a> Parser<'a> {
         BlockParser { open_brace, is_unsafe: false }.parse(self)
     }
 
-    pub fn parse_ty(&mut self, allow_infer: bool) -> ParseResult<'a, P<Ty>> {
-        TyParser { allow_infer }.parse(self)
+    pub fn parse_ty(&mut self, allow_infer: bool) -> P<Ty> {
+        TyParser { allow_infer }.parse(self).unwrap_or_else(|err| {
+            err.emit();
+            self.mk_ty(err.get_span(), TyKind::Err)
+        })
     }
 
     pub fn parse_pattern(&mut self) -> ParseResult<'a, P<Pattern>> {

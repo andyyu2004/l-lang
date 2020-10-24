@@ -30,7 +30,7 @@ impl<'a> Parse<'a> for BoxExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         if let Some(kw) = parser.accept(TokenType::Box) {
-            let expr = parser.parse_expr()?;
+            let expr = parser.parse_expr();
             Ok(parser.mk_expr(kw.span.merge(expr.span), ExprKind::Box(expr)))
         } else {
             AssnExprParser.parse(parser)

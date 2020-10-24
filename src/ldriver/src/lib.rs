@@ -7,7 +7,7 @@ extern crate colour;
 #[macro_use]
 extern crate log;
 
-use ast::P;
+use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
@@ -109,11 +109,15 @@ impl<'tcx> Driver<'tcx> {
         Ok(tokens)
     }
 
-    // /// used for testing parsing
+    /// used for testing parsing
     pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
         let tokens = self.lex().unwrap();
         let mut parser = Parser::new(&self.sess, tokens);
-        parser.parse_expr().map_err(|err| err.emit()).ok()
+        let expr = parser.parse_expr();
+        match &expr.kind {
+            ExprKind::Err => None,
+            _ => Some(expr),
+        }
     }
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {

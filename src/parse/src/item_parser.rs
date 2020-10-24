@@ -89,7 +89,7 @@ impl<'a> Parse<'a> for ImplParser {
         let generics = parser.parse_generics()?;
         let mut trait_path = Some(parser.parse_path()?);
         let self_ty = if parser.accept(TokenType::For).is_some() {
-            parser.parse_ty(false)?
+            parser.parse_ty(false)
         } else {
             let ty_path = trait_path.take().unwrap();
             parser.mk_ty(ty_path.span, TyKind::Path(ty_path))
@@ -146,7 +146,7 @@ impl<'a> Parse<'a> for FieldDeclParser {
             }
             FieldForm::Tuple => None,
         };
-        let ty = parser.parse_ty(false)?;
+        let ty = parser.parse_ty(false);
         let span = vis.span.merge(ty.span);
         Ok(FieldDecl { id: parser.mk_id(), span, vis, ident, ty })
     }

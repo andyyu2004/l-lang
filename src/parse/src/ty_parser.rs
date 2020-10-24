@@ -58,8 +58,7 @@ impl<'a> Parse<'a> for FnTyParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         parser.expect(TokenType::OpenParen)?;
         let inputs = TupleParser { inner: TyParser { allow_infer: false } }.parse(parser)?;
-        let output =
-            parser.accept(TokenType::RArrow).map(|_| parser.parse_ty(false)).transpose()?;
+        let output = parser.accept(TokenType::RArrow).map(|_| parser.parse_ty(false));
         Ok((inputs, output))
     }
 }

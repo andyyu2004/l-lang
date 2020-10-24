@@ -53,6 +53,10 @@ impl Diagnostic {
         let span = span.into();
         Self { messages: vec![format!("{}", err)], span }
     }
+
+    pub fn get_span(&self) -> Span {
+        self.span.primary_spans[0]
+    }
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]

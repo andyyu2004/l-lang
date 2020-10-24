@@ -159,8 +159,7 @@ impl<'a> Parse<'a> for FnSigParser {
         };
         let inputs = param_parser.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
-        let mut output =
-            parser.accept(TokenType::RArrow).map(|_arrow| parser.parse_ty(false)).transpose()?;
+        let mut output = parser.accept(TokenType::RArrow).map(|_arrow| parser.parse_ty(false));
 
         if output.is_none() && !require_type_annotations {
             output = Some(parser.mk_infer_ty())
@@ -181,7 +180,7 @@ impl<'a> Parse<'a> for ParamParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pattern = PatParser.parse(parser)?;
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
-            parser.parse_ty(!self.require_type_annotations)
+            Ok(parser.parse_ty(!self.require_type_annotations))
         } else if self.require_type_annotations {
             Err(parser.build_err(pattern.span, ParseError::RequireTypeAnnotations))
         } else {
@@ -342,7 +341,7 @@ impl<'a> Parse<'a> for StructExprParser {
             // of an immediate parse error
             let ident = parser.expect_ident()?;
             let expr = if parser.accept(TokenType::Colon).is_some() {
-                parser.parse_expr()?
+                parser.parse_expr()
             } else {
                 let span = parser.empty_span();
                 // construct a Path node which the a single segment with ident `ident`
@@ -551,7 +550,7 @@ impl<'a> Parse<'a> for ClosureParser {
             parser.mk_expr(block.span, ExprKind::Block(block))
         } else {
             parser.expect(TokenType::RFArrow)?;
-            parser.parse_expr()?
+            parser.parse_expr()
         };
         let span = self.fn_kw.span.merge(body.span);
         Ok(parser.mk_expr(span, ExprKind::Closure(name, sig, body)))
@@ -590,9 +589,9 @@ impl<'a> Parse<'a> for ArmParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = parser.parse_pattern()?;
-        let guard = parser.accept(TokenType::If).map(|_| parser.parse_expr()).transpose()?;
+        let guard = parser.accept(TokenType::If).map(|_| parser.parse_expr());
         parser.expect(TokenType::RFArrow)?;
-        let body = parser.parse_expr()?;
+        let body = parser.parse_expr();
         let span = pat.span.merge(body.span);
         Ok(Arm { id: parser.mk_id(), span, pat, body, guard })
     }
@@ -606,7 +605,7 @@ impl<'a> Parse<'a> for MatchParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let scrutinee = parser.parse_expr()?;
+        let scrutinee = parser.parse_expr();
         parser.expect(TokenType::OpenBrace)?;
         let arms =
             PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }.parse(parser)?;
@@ -683,7 +682,7 @@ impl<'a> Parse<'a> for TyParamParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
-        let default = parser.accept(TokenType::Eq).map(|_| parser.parse_ty(false)).transpose()?;
+        let default = parser.accept(TokenType::Eq).map(|_| parser.parse_ty(false));
         // eventually parse bounds here
         Ok(TyParam { span: ident.span, id: parser.mk_id(), ident, default })
     }
