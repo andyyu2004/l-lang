@@ -24,4 +24,4 @@ use autoderef::Autoderef;
 pub use check::{FnCtx, InheritedCtx};
 pub use collect::{collect_item_types, TcxCollectExt};
 pub use tyconv::TyConv;
-pub use type_of::Typeof;
+pub use type_of::{TcxTypeofExt, Typeof};

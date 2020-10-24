@@ -15,12 +15,12 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 #[derive(Copy, Clone)]
-pub struct DefMap<'ir> {
-    tcx: TyCtx<'ir>,
+pub struct DefMap<'tcx> {
+    tcx: TyCtx<'tcx>,
 }
 
-impl<'ir> DefMap<'ir> {
-    pub fn get(&self, def_id: DefId) -> DefNode<'ir> {
+impl<'tcx> DefMap<'tcx> {
+    pub fn get(&self, def_id: DefId) -> DefNode<'tcx> {
         self.tcx.resolutions.defs.get_def_node(def_id)
     }
 
@@ -40,8 +40,8 @@ impl<'ir> DefMap<'ir> {
     pub fn ident_of(&self, def_id: DefId) -> Ident {
         match self.get(def_id) {
             ir::DefNode::Item(item) => item.ident,
-            ir::DefNode::ImplItem(_) => todo!(),
-            ir::DefNode::ForeignItem(item) => item.ident,
+            ir::DefNode::ImplItem(impl_item) => impl_item.ident,
+            ir::DefNode::ForeignItem(foreign_item) => foreign_item.ident,
             ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => {
                 let adt_ident = self.ident_of(variant.adt_def_id);
                 adt_ident.concat_as_path(variant.ident)

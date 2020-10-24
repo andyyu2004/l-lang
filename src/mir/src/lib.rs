@@ -41,7 +41,10 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
                     build_mir(self, def_id, sig, generics, body),
                 _ => panic!(),
             },
-            ir::DefNode::ImplItem(_) => todo!(),
+            ir::DefNode::ImplItem(item) => match item.kind {
+                ir::ImplItemKind::Fn(sig, body) =>
+                    build_mir(self, def_id, sig, item.generics, body),
+            },
             ir::DefNode::ForeignItem(_) => todo!(),
             ir::DefNode::Variant(_) => panic!(),
         }

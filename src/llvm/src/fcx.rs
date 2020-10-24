@@ -275,7 +275,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 },
                 ConstKind::Bool(b) => ValueRef {
                     val: self.types.boolean.const_int(b as u64, true).into(),
-                    ty: self.tcx.types.boolean,
+                    ty: self.tcx.types.bool,
                 },
                 ConstKind::Unit => ValueRef { val: self.vals.unit.into(), ty: self.tcx.types.unit },
             },
@@ -366,7 +366,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
                 unreachable!(),
         };
-        ValueRef { val: val.into(), ty: self.tcx.types.boolean }
+        ValueRef { val: val.into(), ty: self.tcx.types.bool }
     }
 
     fn compile_fcmp(
@@ -386,7 +386,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             BinOp::And | BinOp::Or | BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub =>
                 unreachable!(),
         };
-        ValueRef { val: val.into(), ty: self.tcx.types.boolean }
+        ValueRef { val: val.into(), ty: self.tcx.types.bool }
     }
 
     fn codegen_terminator(&mut self, terminator: &mir::Terminator<'tcx>) {

@@ -127,8 +127,8 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn mk_prim_ty(self, prim_ty: ir::PrimTy) -> Ty<'tcx> {
         match prim_ty {
-            ir::PrimTy::Char => self.types.character,
-            ir::PrimTy::Bool => self.types.boolean,
+            ir::PrimTy::Char => self.types.char,
+            ir::PrimTy::Bool => self.types.bool,
             ir::PrimTy::Float => self.types.float,
             ir::PrimTy::Int => self.types.int,
         }
@@ -271,10 +271,10 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 pub struct CommonTypes<'tcx> {
+    pub char: Ty<'tcx>,
+    pub bool: Ty<'tcx>,
     pub unit: Ty<'tcx>,
-    pub boolean: Ty<'tcx>,
     pub discr: Ty<'tcx>,
-    pub character: Ty<'tcx>,
     pub float: Ty<'tcx>,
     pub int: Ty<'tcx>,
     pub never: Ty<'tcx>,
@@ -287,8 +287,8 @@ impl<'tcx> CommonTypes<'tcx> {
         let mk = |ty| interners.intern_ty(ty);
         let int = mk(TyKind::Int);
         CommonTypes {
-            boolean: mk(TyKind::Bool),
-            character: mk(TyKind::Char),
+            bool: mk(TyKind::Bool),
+            char: mk(TyKind::Char),
             discr: mk(TyKind::Discr),
             never: mk(TyKind::Never),
             float: mk(TyKind::Float),

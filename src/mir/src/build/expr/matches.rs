@@ -84,7 +84,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         let tcx = self.tcx;
         let dest = self.dest;
         // if `predicate` is true, then its corresponding branch will be executed
-        let predicate = self.alloc_tmp(info, tcx.types.boolean).into();
+        let predicate = self.alloc_tmp(info, tcx.types.bool).into();
         // predicate starts off as true by default
         let b = self.mk_const_bool(true);
         self.push_assignment(info, pblock, predicate, Rvalue::Operand(Operand::Const(b)));
@@ -140,13 +140,13 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     pblock = self.build_binary_op(
                         pblock,
                         pat.span,
-                        tcx.types.boolean,
+                        tcx.types.bool,
                         BinOp::Eq,
                         Operand::Lvalue(tmp),
                         Operand::Lvalue(scrut),
                     )
                 );
-                let cmp_lvalue = self.alloc_tmp(info, tcx.types.boolean).into();
+                let cmp_lvalue = self.alloc_tmp(info, tcx.types.bool).into();
                 self.push_assignment(info, pblock, cmp_lvalue, cmp_rvalue);
                 // TODO factor this out somehow
                 // `and` the predicate
@@ -154,7 +154,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     pblock = self.build_binary_op(
                         pblock,
                         pat.span,
-                        tcx.types.boolean,
+                        tcx.types.bool,
                         BinOp::And,
                         Operand::Lvalue(cmp_lvalue),
                         Operand::Lvalue(predicate),
@@ -177,7 +177,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                     pblock = self.build_binary_op(
                         pblock,
                         pat.span,
-                        tcx.types.boolean,
+                        tcx.types.bool,
                         BinOp::Eq,
                         Operand::Const(discr),
                         Operand::Lvalue(discriminant_lvalue),
@@ -186,13 +186,13 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
 
                 // TODO factor this out somehow
                 // `and` the predicate
-                let cmp_lvalue = self.alloc_tmp(info, tcx.types.boolean).into();
+                let cmp_lvalue = self.alloc_tmp(info, tcx.types.bool).into();
                 self.push_assignment(info, pblock, cmp_lvalue, cmp_rvalue);
                 let and = set!(
                     pblock = self.build_binary_op(
                         pblock,
                         pat.span,
-                        tcx.types.boolean,
+                        tcx.types.bool,
                         BinOp::And,
                         Operand::Lvalue(cmp_lvalue),
                         Operand::Lvalue(predicate),

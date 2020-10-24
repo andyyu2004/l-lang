@@ -26,9 +26,9 @@ impl<'tcx> Instance<'tcx> {
     pub fn resolve(tcx: TyCtx<'tcx>, def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
         match tcx.defs().get(def_id) {
             // can just treat constructors as normal items
-            ir::DefNode::Item(..) | ir::DefNode::Ctor(..) => Instance::item(def_id, substs),
+            ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
+                Instance::item(def_id, substs),
             ir::DefNode::ForeignItem(..) => Instance::intrinsic(def_id, substs),
-            ir::DefNode::ImplItem(..) => todo!(),
             ir::DefNode::Variant(..) => todo!(),
         }
     }

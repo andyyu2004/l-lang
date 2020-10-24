@@ -34,8 +34,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match op {
             UnaryOp::Neg => todo!(),
             UnaryOp::Not => {
-                self.equate(expr.span, self.types.boolean, operand_ty);
-                self.types.boolean
+                self.equate(expr.span, self.types.bool, operand_ty);
+                self.types.bool
             }
             // TODO how to handle mutability?
             UnaryOp::Deref => self.deref_ty(expr.span, operand_ty),
@@ -111,7 +111,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     /// checks the expressions is a lvalue and mutable, hence assignable
-    // TODO mutability checks
     fn check_lvalue(&mut self, l: &ir::Expr) {
         if !l.is_lvalue() {
             self.emit_ty_err(
@@ -234,7 +233,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         let expr_ty = self.check_expr(expr);
         match src {
-            ir::MatchSource::If => self.equate(expr.span, self.tcx.types.boolean, expr_ty),
+            ir::MatchSource::If => self.equate(expr.span, self.tcx.types.bool, expr_ty),
             ir::MatchSource::Match => {}
         };
 
@@ -255,7 +254,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             let arm_ty = self.check_expr(arm.body);
             arm.guard.iter().for_each(|guard| {
                 let guard_ty = self.check_expr(guard);
-                self.equate(guard.span, self.tcx.types.boolean, guard_ty);
+                self.equate(guard.span, self.tcx.types.bool, guard_ty);
             });
             self.equate(arm.span, expected_ty, arm_ty);
         });
@@ -321,16 +320,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
             ir::Res::Err => self.set_ty_err(),
-            ir::Res::SelfTy => todo!(),
+            ir::Res::SelfTy { .. } => todo!(),
         }
     }
 
     fn check_expr_path_def(&mut self, span: Span, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
         match def_kind {
             // instantiate ty params
-            DefKind::Fn | DefKind::Enum | DefKind::Struct | DefKind::Ctor(..) =>
-                self.instantiate(span, self.collected_ty(def_id)),
-            DefKind::AssocFn => todo!(),
+            DefKind::Fn
+            | DefKind::AssocFn
+            | DefKind::Enum
+            | DefKind::Struct
+            | DefKind::Ctor(..) => self.instantiate(span, self.collected_ty(def_id)),
             DefKind::Extern | DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
         }
     }
@@ -365,7 +366,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 // TODO deal with floats
                 self.equate(l.span, self.tcx.types.int, tl);
                 self.equate(r.span, tl, tr);
-                self.tcx.types.boolean
+                self.tcx.types.bool
             }
             BinOp::Eq => todo!(),
             BinOp::Neq => todo!(),
@@ -379,8 +380,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_lit(&self, lit: &ast::Lit) -> Ty<'tcx> {
         match lit {
+            Lit::Bool(_) => self.tcx.types.bool,
             Lit::Float(_) => self.tcx.types.float,
-            Lit::Bool(_) => self.tcx.types.boolean,
             Lit::Int(_) => self.tcx.types.int,
         }
     }

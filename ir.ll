@@ -41,10 +41,31 @@ declare void @abort()
 
 declare void @exit(i32)
 
-define {} @main() {
+define i64 @"new<>"() {
 basic_blockbb0:
-  %ret = alloca {}
-  store {} undef, {}* %ret
-  %load_ret = load {}, {}* %ret
-  ret {} %load_ret
+  %ret = alloca i64
+  store i64 9, i64* %ret
+  %load_ret = load i64, i64* %ret
+  ret i64 %load_ret
+}
+
+define i64 @main() {
+basic_blockbb0:
+  %ret = alloca i64
+  %tmp = alloca {}
+  %tmp1 = alloca i64
+  %fcall = call i64 @"new<>"()
+  store i64 %fcall, i64* %tmp1
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load = load i64, i64* %tmp1
+  %fcall2 = call {} @print(i64 %load)
+  store {} %fcall2, {}* %tmp
+  br label %basic_blockbb2
+
+basic_blockbb2:                                   ; preds = %basic_blockbb1
+  store i64 9, i64* %ret
+  %load_ret = load i64, i64* %ret
+  ret i64 %load_ret
 }

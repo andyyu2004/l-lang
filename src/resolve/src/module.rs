@@ -4,8 +4,6 @@ use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::marker::PhantomData;
 
-use super::Resolver;
-
 #[derive(Default, Debug)]
 pub struct Module<'a> {
     pub items: RefCell<FxHashMap<Ident, Res<NodeId>>>,

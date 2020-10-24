@@ -84,7 +84,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
-                self.resolve_impl(generics, trait_path.as_ref(), self_ty, items),
+                self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Extern(_) => ast::walk_item(self, item),
         }
     }
@@ -96,22 +96,24 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
-    fn with_self_ty<R>(&mut self, _ty: &'ast Ty, f: impl FnOnce(&mut Self) -> R) -> R {
+    fn with_self_ty<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
-            this.scopes[NS::Type].def(Ident::unspanned(kw::UpperSelf), Res::SelfTy);
+            let impl_def = this.resolver.def_id(impl_id);
+            this.scopes[NS::Type].def(Ident::unspanned(kw::UpperSelf), Res::SelfTy { impl_def });
             f(this)
         })
     }
 
     fn resolve_impl(
         &mut self,
+        item: &'ast Item,
         generics: &'ast Generics,
         trait_path: Option<&'ast Path>,
         self_ty: &'ast Ty,
         items: &'ast [Box<AssocItem>],
     ) {
         self.with_generics(generics, |this| {
-            this.with_self_ty(self_ty, |this| {
+            this.with_self_ty(item.id, |this| {
                 if let Some(path) = trait_path {
                     this.resolve_path(path, NS::Type);
                 }

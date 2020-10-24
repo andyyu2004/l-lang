@@ -1,5 +1,4 @@
 use ast::{Ident, Path, PathSegment};
-use ir::DefKind;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -10,8 +9,8 @@ pub enum ResolutionError {
     UnresolvedType(Path),
     #[error("let binding to named closure")]
     BindingToNamedClosure,
-    #[error("{0} with name `{1}` already defined")]
-    DuplicateDefinition(DefKind, Ident),
+    #[error("item with name `{0}` already defined")]
+    DuplicateDefinition(Ident),
     #[error("module with name `{0}` already defined")]
     DuplicateModuleDefinition(Ident),
     #[error("identifier `{0}` bound more than once in the same pattern")]

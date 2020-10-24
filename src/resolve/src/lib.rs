@@ -135,13 +135,18 @@ impl<'a> Resolver<'a> {
         def_kind: DefKind,
     ) -> DefId {
         let def_id = self.def(name, node_id);
+        if name.symbol == kw::Empty {
+            // nameless items such as extern blocks and impls don't need to be added to the
+            // module's items as they cannot be referenced by identifier
+            return def_id;
+        }
         if self.modules[module]
             .items
             .borrow_mut()
             .insert(name, Res::Def(def_id, def_kind))
             .is_some()
         {
-            self.emit_error(name.span, ResolutionError::DuplicateDefinition(def_kind, name));
+            self.emit_error(name.span, ResolutionError::DuplicateDefinition(name));
         };
         def_id
     }

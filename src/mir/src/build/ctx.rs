@@ -4,7 +4,7 @@ use crate::build;
 use ast::{Lit, Mutability, UnaryOp};
 use index::Idx;
 use infer::InferCtx;
-use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};
+use ir::{self, CtorKind, DefId, DefKind, FieldIdx, Res, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::Mir;
 use lcore::ty::*;
@@ -298,19 +298,26 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                         variant_idx: adt.variant_idx_with_ctor(def_id),
                     }
                 }
-                // functions and function-like variant constructors
-                // we deal with monomorphizations here
-                DefKind::Ctor(CtorKind::Tuple, ..) | ir::DefKind::Fn =>
+                // functions and variant constructors
+                ir::DefKind::Fn | DefKind::Ctor(CtorKind::Tuple, ..) | DefKind::AssocFn =>
                     tir::ExprKind::ItemRef(def_id),
-                DefKind::AssocFn => todo!(),
+                // unit structs
+                DefKind::Struct => {
+                    let (adt, substs) = self.node_type(expr.id).expect_adt();
+                    tir::ExprKind::Adt {
+                        adt,
+                        substs,
+                        fields: vec![],
+                        variant_idx: VariantIdx::new(0),
+                    }
+                }
+                DefKind::Ctor(..) => todo!(),
+                DefKind::TyParam(_) => panic!(),
                 DefKind::Extern => todo!(),
                 DefKind::Impl => todo!(),
-                DefKind::Ctor(..) => todo!(),
-                DefKind::TyParam(_) => todo!(),
                 DefKind::Enum => todo!(),
-                DefKind::Struct => todo!(),
             },
-            Res::SelfTy => todo!(),
+            Res::SelfTy { .. } => todo!(),
             Res::Err | Res::PrimTy(_) => unreachable!(),
         }
     }
@@ -403,7 +410,7 @@ impl<'tcx> Tir<'tcx> for Lit {
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
         let c = match *self {
             Lit::Float(n) => Const::new(ConstKind::Float(n), ctx.tcx.types.float),
-            Lit::Bool(b) => Const::new(ConstKind::Bool(b), ctx.tcx.types.boolean),
+            Lit::Bool(b) => Const::new(ConstKind::Bool(b), ctx.tcx.types.bool),
             Lit::Int(i) => Const::new(ConstKind::Int(i), ctx.tcx.types.int),
         };
         ctx.intern_const(c)

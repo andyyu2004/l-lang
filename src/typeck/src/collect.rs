@@ -146,7 +146,8 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
         let ty = match impl_item.kind {
             ir::ImplItemKind::Fn(sig, _) => self.fn_sig_to_ty(sig),
         };
-        self.collect_ty(impl_item.id.def, ty);
+        let generalized = self.generalize(impl_item.generics, ty);
+        self.collect_ty(impl_item.id.def, generalized);
     }
 
     fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {

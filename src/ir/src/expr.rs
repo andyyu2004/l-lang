@@ -20,8 +20,8 @@ impl<'ir> Expr<'ir> {
     pub fn is_lvalue(&self) -> bool {
         match self.kind {
             ExprKind::Path(p) => match p.res {
-                ir::Res::Local(_) => true,
-                ir::Res::SelfTy => false,
+                ir::Res::Local(..) => true,
+                ir::Res::SelfTy { .. } => false,
                 ir::Res::Def(_, def_kind) => match def_kind {
                     ir::DefKind::Fn
                     | ir::DefKind::AssocFn

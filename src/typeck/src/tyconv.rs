@@ -1,5 +1,6 @@
 //! conversion of ir::Ty to ty::Ty
 
+use crate::TcxTypeofExt;
 use lcore::ty::{Generics, Subst, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
@@ -60,7 +61,7 @@ pub trait TyConv<'tcx> {
                 ir::DefKind::AssocFn | ir::DefKind::Impl | ir::DefKind::Fn => todo!(),
                 ir::DefKind::Extern => todo!(),
             },
-            ir::Res::SelfTy => todo!(),
+            ir::Res::SelfTy { impl_def } => tcx.type_of(impl_def),
             ir::Res::Err => tcx.mk_ty_err(),
             ir::Res::Local(_) => panic!("unexpected resolution"),
         }
