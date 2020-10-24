@@ -3,14 +3,14 @@ extern {
 }
 
 fn main() -> int {
-    print(new());
+    print(new().x);
     9
 }
 
-struct S;
+struct S { x: int }
 
 impl S {
-    fn new() -> int {
-	9
+    fn new() -> Self {
+	Self { x: 5 }
     }
 }

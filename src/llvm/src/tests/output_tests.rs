@@ -9,6 +9,12 @@ fn llvm_invalid_main_type() {
 }
 
 #[test]
+fn llvm_construct_empty_struct() {
+    let src = "struct S; fn main() -> int { S; 0 }";
+    llvm_exec!(src);
+}
+
+#[test]
 fn llvm_fib() {
     let src = r#"
     fn main() -> int { fib(10) }

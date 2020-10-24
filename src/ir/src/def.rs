@@ -7,11 +7,14 @@ use std::fmt::{self, Display, Formatter};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Res<Id = ir::Id> {
-    PrimTy(ir::PrimTy),
-    Def(DefId, DefKind),
-    Local(Id),
-    SelfTy { impl_def: DefId },
     Err,
+    Def(DefId, DefKind),
+    // type namespace
+    PrimTy(ir::PrimTy),
+    SelfTy { impl_def: DefId },
+    // value namespace
+    Local(Id),
+    SelfVal { impl_def: DefId },
 }
 
 pub trait HasDefKind {
@@ -53,8 +56,9 @@ impl<Id> Display for Res<Id> {
             Res::Def(_, kind) => return write!(f, "{}", kind),
             Res::PrimTy(..) => "builtin type",
             Res::Local(..) => "local variable",
-            Res::SelfTy { .. } => "Self",
+            Res::SelfTy { .. } => "Self type",
             Res::Err => "unresolved item",
+            Res::SelfVal { .. } => "Self value",
         };
         write!(f, "{}", description)
     }
@@ -125,6 +129,7 @@ impl<Id> Res<Id> {
             Res::Local(id) => Res::Local(f(id)),
             Res::Def(def_id, def_kind) => Res::Def(def_id, def_kind),
             Res::SelfTy { impl_def } => Res::SelfTy { impl_def },
+            Res::SelfVal { impl_def } => Res::SelfVal { impl_def },
             Res::Err => Res::Err,
         }
     }

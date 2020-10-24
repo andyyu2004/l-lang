@@ -2,6 +2,7 @@ use crate::*;
 use ast::*;
 use index::Idx;
 use ir::{ModuleId, ParamIdx, Res, ROOT_MODULE};
+use span::kw;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
@@ -29,6 +30,11 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         ret
     }
 
+    pub fn with_new_module<R>(&mut self, ident: Ident, f: impl FnOnce(&mut Self) -> R) -> R {
+        let new_module = self.new_module(ident);
+        self.with_module(new_module, f)
+    }
+
     pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         self.scopes[NS::Value].push(Scope::default());
         let ret = f(self);
@@ -54,12 +60,16 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         })
     }
 
-    pub(super) fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
+    crate fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
         self.scopes[NS::Value].def(ident, res);
     }
 
     fn resolve_pattern(&mut self, pat: &'ast Pattern) {
         PatternResolutionCtx::new(self).resolve_pattern(pat);
+    }
+
+    fn new_module(&mut self, name: Ident) -> ModuleId {
+        self.resolver.new_module(self.curr_module(), name)
     }
 
     fn curr_module(&self) -> ModuleId {
@@ -96,6 +106,18 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
+    fn with_self<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.with_self_ty(impl_id, |this| this.with_self_val(impl_id, f))
+    }
+
+    fn with_self_val<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
+        self.with_val_scope(|this| {
+            let impl_def = this.resolver.def_id(impl_id);
+            this.def_val(Ident::unspanned(kw::UpperSelf), Res::SelfVal { impl_def });
+            f(this)
+        })
+    }
+
     fn with_self_ty<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
             let impl_def = this.resolver.def_id(impl_id);
@@ -110,20 +132,22 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         generics: &'ast Generics,
         trait_path: Option<&'ast Path>,
         self_ty: &'ast Ty,
-        items: &'ast [Box<AssocItem>],
+        assoc_items: &'ast [Box<AssocItem>],
     ) {
         self.with_generics(generics, |this| {
-            this.with_self_ty(item.id, |this| {
-                if let Some(path) = trait_path {
-                    this.resolve_path(path, NS::Type);
-                }
-                this.visit_ty(self_ty);
-                if trait_path.is_some() {
-                    todo!()
-                }
-                for item in items {
-                    this.resolve_assoc_item(item);
-                }
+            if let Some(path) = trait_path {
+                this.resolve_path(path, NS::Type);
+            }
+            this.visit_ty(self_ty);
+            if trait_path.is_some() {
+                todo!()
+            }
+            this.with_new_module(item.ident, |this| {
+                this.with_self(item.id, |this| {
+                    for item in assoc_items {
+                        this.resolve_assoc_item(item);
+                    }
+                })
             })
         })
     }

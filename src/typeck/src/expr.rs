@@ -1,7 +1,6 @@
 use super::FnCtx;
-use crate::{Autoderef, TyConv, Typeof};
-use ast::{BinOp, Lit};
-use ast::{Ident, Mutability, UnaryOp};
+use crate::{Autoderef, TcxTypeofExt, TyConv, Typeof};
+use ast::{BinOp, Ident, Lit, Mutability, UnaryOp};
 use ir::{CtorKind, DefId, DefKind};
 use itertools::Itertools;
 use lcore::ty::*;
@@ -139,12 +138,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
+            ir::Res::SelfVal { impl_def } => {
+                let self_ty = self.type_of(impl_def);
+                assert_eq!(self_ty, ty);
+                match self_ty.kind {
+                    Adt(adt, _substs) => Some((adt.single_variant(), self_ty)),
+                    _ => unreachable!(),
+                }
+            }
             ir::Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.variant_with_ctor(def_id), ty)),
                 _ => unreachable!(),
             },
             ir::Res::Local(_) => None,
-            ir::Res::PrimTy(_) => unreachable!(),
+            ir::Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
             _ => unimplemented!("{} (res: {:?})", path, path.res),
         };
 
@@ -318,6 +325,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match path.res {
             ir::Res::Local(id) => self.local_ty(id).ty,
             ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
+            ir::Res::SelfVal { impl_def } => self.type_of(impl_def),
             ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
             ir::Res::Err => self.set_ty_err(),
             ir::Res::SelfTy { .. } => todo!(),

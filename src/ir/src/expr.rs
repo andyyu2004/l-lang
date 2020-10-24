@@ -22,6 +22,8 @@ impl<'ir> Expr<'ir> {
             ExprKind::Path(p) => match p.res {
                 ir::Res::Local(..) => true,
                 ir::Res::SelfTy { .. } => false,
+                // self could be an lvalue if it is a &self?
+                ir::Res::SelfVal { .. } => todo!(),
                 ir::Res::Def(_, def_kind) => match def_kind {
                     ir::DefKind::Fn
                     | ir::DefKind::AssocFn

@@ -4,14 +4,14 @@ use crate::build;
 use ast::{Lit, Mutability, UnaryOp};
 use index::Idx;
 use infer::InferCtx;
-use ir::{self, CtorKind, DefId, DefKind, FieldIdx, Res, VariantIdx};
+use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::Mir;
 use lcore::ty::*;
 use span::Span;
 use std::marker::PhantomData;
 use std::ops::Deref;
-use typeck::Typeof;
+use typeck::{TcxTypeofExt, Typeof};
 
 /// ir -> tir -> mir
 pub struct MirCtx<'a, 'tcx> {
@@ -46,10 +46,10 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     }
 
     pub fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
-        self.node_type(expr.id)
+        self.node_ty(expr.id)
     }
 
-    pub fn node_type(&self, id: ir::Id) -> Ty<'tcx> {
+    pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
         info!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
     }
@@ -128,7 +128,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
             ir::PatternKind::Variant(path, pats) => ctx.lower_variant_pat(self, path, pats),
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
         };
-        let ty = ctx.node_type(id);
+        let ty = ctx.node_ty(id);
         tir::Pattern { id, span, kind, ty }
     }
 }
@@ -174,7 +174,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
         path: &ir::Path<'tcx>,
         pats: &'tcx [ir::Pattern<'tcx>],
     ) -> tir::PatternKind<'tcx> {
-        let ty = self.node_type(pat.id);
+        let ty = self.node_ty(pat.id);
         let (adt, substs) = ty.expect_adt();
         let idx = adt.variant_idx_with_res(path.res);
         tir::PatternKind::Variant(adt, substs, idx, pats.to_tir(self))
@@ -194,7 +194,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
     fn capture_upvar(&mut self, closure: &ir::Expr, upvar: UpvarId) -> tir::Expr<'tcx> {
         let id = upvar.var_id;
         let span = closure.span;
-        let ty = self.node_type(id);
+        let ty = self.node_ty(id);
         // rebuild the `VarRef` expressions that the upvar refers to
         let captured = box tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) };
         // construct a mutable borrow expression to the captured upvar
@@ -290,7 +290,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
             Res::Local(id) => tir::ExprKind::VarRef(id),
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::Ctor(CtorKind::Unit, ..) => {
-                    let (adt, substs) = self.node_type(expr.id).expect_adt();
+                    let (adt, substs) = self.node_ty(expr.id).expect_adt();
                     tir::ExprKind::Adt {
                         adt,
                         substs,
@@ -303,7 +303,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                     tir::ExprKind::ItemRef(def_id),
                 // unit structs
                 DefKind::Struct => {
-                    let (adt, substs) = self.node_type(expr.id).expect_adt();
+                    let (adt, substs) = self.node_ty(expr.id).expect_adt();
                     tir::ExprKind::Adt {
                         adt,
                         substs,
@@ -318,7 +318,24 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                 DefKind::Enum => todo!(),
             },
             Res::SelfTy { .. } => todo!(),
-            Res::Err | Res::PrimTy(_) => unreachable!(),
+            Res::SelfVal { impl_def } => {
+                let ty = self.expr_ty(expr);
+                assert_eq!(self.tcx.type_of(impl_def), ty);
+                // there are two possibilities of using `Self` as a value
+                // it could either be a unit struct
+                // or it could be a tuple struct constructor
+                match ty.kind {
+                    TyKind::Adt(adt, substs) => tir::ExprKind::Adt {
+                        adt,
+                        substs,
+                        fields: vec![],
+                        variant_idx: VariantIdx::new(0),
+                    },
+                    TyKind::Fn(..) => tir::ExprKind::ItemRef(impl_def),
+                    _ => unreachable!(),
+                }
+            }
+            Res::Err | Res::PrimTy(..) => unreachable!(),
         }
     }
 }
@@ -334,7 +351,7 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
 impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
-        let ty = self.node_type(expr.id);
+        let ty = self.node_ty(expr.id);
         let kind = match kind {
             ir::ExprKind::Bin(op, l, r) =>
                 tir::ExprKind::Bin(*op, box l.to_tir(self), box r.to_tir(self)),
