@@ -49,6 +49,7 @@ dependencies = [
  "ir",
  "itertools",
  "ldriver",
+ "log",
  "resolve",
  "rustc-hash",
  "session",

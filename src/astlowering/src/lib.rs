@@ -2,6 +2,9 @@
 #![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
+#[macro_use]
+extern crate log;
+
 mod construct;
 mod expr;
 mod item;

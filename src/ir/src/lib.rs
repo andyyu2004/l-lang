@@ -266,7 +266,7 @@ impl<'ir> Display for QPath<'ir> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             QPath::Resolved(path) => write!(f, "{}", path),
-            QPath::TypeRelative(_, _) => todo!(),
+            QPath::TypeRelative(ty, segment) => write!(f, "<{}>::{}", ty, segment),
         }
     }
 }
@@ -289,7 +289,7 @@ impl<'ir> Path<'ir> {
 
 impl<'ir> Display for Path<'ir> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.segments.iter().map(|s| s.ident), "::"))
+        write!(f, "{}", util::join2(self.segments, "::"))
     }
 }
 
@@ -306,6 +306,12 @@ pub struct PathSegment<'ir> {
     pub ident: Ident,
     pub id: ir::Id,
     pub args: Option<&'ir ir::GenericArgs<'ir>>,
+}
+
+impl<'ir> Display for PathSegment<'ir> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ident)
+    }
 }
 
 #[derive(Debug)]

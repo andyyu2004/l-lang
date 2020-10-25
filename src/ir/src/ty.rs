@@ -1,6 +1,7 @@
 use crate as ir;
 use ast::Mutability;
 use span::Span;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum PrimTy {
@@ -27,4 +28,14 @@ pub enum TyKind<'ir> {
     Ptr(&'ir ir::Ty<'ir>),
     Infer,
     Err,
+}
+
+impl<'ir> Display for Ty<'ir> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self.kind {
+            ir::TyKind::Box(_, ty) => write!(f, "box {}", ty),
+            ir::TyKind::Path(qpath) => write!(f, "{}", qpath),
+            _ => todo!(),
+        }
+    }
 }

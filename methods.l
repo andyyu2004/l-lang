@@ -4,6 +4,7 @@ extern {
 
 fn main() -> int {
     S::new();
+    S::Item::new();
     9
 }
 
