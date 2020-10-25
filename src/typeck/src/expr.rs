@@ -1,14 +1,12 @@
 use super::FnCtx;
-use crate::{Autoderef, TcxTypeofExt, TyConv, Typeof};
+use crate::{Autoderef, TyConv, Typeof};
 use ast::{BinOp, Ident, Lit, Mutability, UnaryOp};
-use ir::{CtorKind, DefId, DefKind};
 use itertools::Itertools;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
-use span::Span;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn check_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
+    pub fn check_expr(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let ty = match &expr.kind {
             ir::ExprKind::Box(expr) => self.check_box_expr(expr),
             ir::ExprKind::Err => self.set_ty_err(),
@@ -29,7 +27,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.record_ty(expr.id, ty)
     }
 
-    fn check_unary_expr(&mut self, expr: &ir::Expr, op: UnaryOp, operand: &ir::Expr) -> Ty<'tcx> {
+    fn check_unary_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        op: UnaryOp,
+        operand: &ir::Expr<'tcx>,
+    ) -> Ty<'tcx> {
         let operand_ty = self.check_expr(operand);
         match op {
             UnaryOp::Neg => todo!(),
@@ -48,13 +51,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_box_expr(&mut self, expr: &ir::Expr) -> Ty<'tcx> {
+    fn check_box_expr(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let ty = self.check_expr(expr);
         // TODO unsure how to treat mutability, just setting to mutable for now
         self.mk_box_ty(Mutability::Mut, ty)
     }
 
-    fn check_field_expr(&mut self, expr: &ir::Expr, base: &ir::Expr, ident: Ident) -> Ty<'tcx> {
+    fn check_field_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        base: &ir::Expr<'tcx>,
+        ident: Ident,
+    ) -> Ty<'tcx> {
         let (autoderef, ty) = self.check_field_expr_inner(expr, base, ident);
         let adjustments = autoderef.get_adjustments();
         self.record_adjustments(base.id, adjustments);
@@ -63,8 +71,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_field_expr_inner(
         &mut self,
-        expr: &ir::Expr,
-        base: &ir::Expr,
+        expr: &ir::Expr<'tcx>,
+        base: &ir::Expr<'tcx>,
         ident: Ident,
     ) -> (Autoderef<'_, 'tcx>, Ty<'tcx>) {
         let base_ty = self.check_expr(base);
@@ -104,7 +112,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     /// return expressions have the type of the expression that follows the return
-    fn check_ret_expr(&mut self, expr: &ir::Expr, ret_expr: Option<&ir::Expr>) -> Ty<'tcx> {
+    fn check_ret_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        ret_expr: Option<&ir::Expr<'tcx>>,
+    ) -> Ty<'tcx> {
         let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
         self.equate(expr.span, self.ret_ty, ty);
         self.tcx.types.never
@@ -120,7 +132,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_assign_expr(&mut self, expr: &ir::Expr, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
+    fn check_assign_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        l: &ir::Expr<'tcx>,
+        r: &ir::Expr<'tcx>,
+    ) -> Ty<'tcx> {
         self.check_lvalue(l);
         let lty = self.check_expr(l);
         let rty = self.check_expr(r);
@@ -130,9 +147,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_struct_expr(
         &mut self,
-        expr: &ir::Expr,
-        qpath: &ir::QPath,
-        fields: &[ir::Field],
+        expr: &ir::Expr<'tcx>,
+        qpath: &ir::QPath<'tcx>,
+        fields: &[ir::Field<'tcx>],
     ) -> Ty<'tcx> {
         let (variant_ty, ty) = match self.check_struct_path(qpath) {
             Some(tys) => tys,
@@ -145,10 +162,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_struct_expr_fields(
         &mut self,
-        expr: &ir::Expr,
+        expr: &ir::Expr<'tcx>,
         substs: SubstsRef<'tcx>,
         variant: &VariantTy<'tcx>,
-        fields: &[ir::Field],
+        fields: &[ir::Field<'tcx>],
     ) -> bool {
         // note we preserve the field declaration order of the struct
         let mut remaining_fields = variant
@@ -198,8 +215,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_match_expr(
         &mut self,
-        expr: &ir::Expr,
-        arms: &[ir::Arm],
+        expr: &ir::Expr<'tcx>,
+        arms: &[ir::Arm<'tcx>],
         src: &ir::MatchSource,
     ) -> Ty<'tcx> {
         let expr_ty = self.check_expr(expr);
@@ -233,7 +250,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         expected_ty
     }
 
-    fn check_call_expr(&mut self, expr: &ir::Expr, f: &ir::Expr, args: &[ir::Expr]) -> Ty<'tcx> {
+    fn check_call_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        f: &ir::Expr<'tcx>,
+        args: &[ir::Expr<'tcx>],
+    ) -> Ty<'tcx> {
         let ret_ty = self.new_infer_var(expr.span);
         let f_ty = self.check_expr(f);
         let arg_tys = self.check_expr_list(args);
@@ -244,9 +266,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_closure_expr(
         &mut self,
-        closure: &ir::Expr,
-        sig: &ir::FnSig,
-        body: &ir::Body,
+        closure: &ir::Expr<'tcx>,
+        sig: &ir::FnSig<'tcx>,
+        body: &ir::Body<'tcx>,
     ) -> Ty<'tcx> {
         // the resolver resolved the closure name to the id of the entire closure expr
         // so we define an immutable local variable for it with the closure's type
@@ -259,7 +281,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// inputs are the types from the type signature (or inference variables)
     /// adds the parameters to locals and typechecks the expr of the body
-    pub fn check_body(&mut self, body: &ir::Body) {
+    pub fn check_body(&mut self, body: &ir::Body<'tcx>) {
         for (param, ty) in body.params.iter().zip(self.param_tys) {
             self.check_pat(param.pat, ty);
         }
@@ -273,19 +295,19 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.record_ty(body.id(), self.ret_ty);
     }
 
-    fn check_expr_list(&mut self, xs: &[ir::Expr]) -> SubstsRef<'tcx> {
+    fn check_expr_list(&mut self, xs: &[ir::Expr<'tcx>]) -> SubstsRef<'tcx> {
         let tcx = self.tcx;
         let tys = xs.iter().map(|expr| self.check_expr(expr));
         tcx.mk_substs(tys)
     }
 
-    fn check_expr_tuple(&mut self, xs: &[ir::Expr]) -> Ty<'tcx> {
+    fn check_expr_tuple(&mut self, xs: &[ir::Expr<'tcx>]) -> Ty<'tcx> {
         let tcx = self.tcx;
         let tys = xs.iter().map(|expr| self.check_expr(expr));
         tcx.mk_tup_iter(tys)
     }
 
-    fn check_block(&mut self, block: &ir::Block) -> Ty<'tcx> {
+    fn check_block(&mut self, block: &ir::Block<'tcx>) -> Ty<'tcx> {
         if block.is_unsafe {
             self.with_unsafe_ctx(|fcx| fcx.check_block_inner(block))
         } else {
@@ -293,7 +315,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_block_inner(&mut self, block: &ir::Block) -> Ty<'tcx> {
+    fn check_block_inner(&mut self, block: &ir::Block<'tcx>) -> Ty<'tcx> {
         block.stmts.iter().for_each(|stmt| self.check_stmt(stmt));
         match &block.expr {
             Some(expr) => self.check_expr(expr),
@@ -301,7 +323,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_binop(&mut self, op: ast::BinOp, l: &ir::Expr, r: &ir::Expr) -> Ty<'tcx> {
+    fn check_binop(&mut self, op: ast::BinOp, l: &ir::Expr<'tcx>, r: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {

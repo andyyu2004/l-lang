@@ -1,4 +1,4 @@
-use crate::{FnCtx, TcxTypeofExt};
+use crate::{FnCtx, TcxTypeofExt, TyConv};
 use ir::{CtorKind, DefId, DefKind, QPath, Res};
 use lcore::ty::*;
 use span::Span;
@@ -13,7 +13,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_struct_path(
         &mut self,
-        qpath: &ir::QPath,
+        qpath: &ir::QPath<'tcx>,
     ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
         let ty = self.check_expr_qpath(qpath);
         let res = self.resolve_qpath(qpath);
@@ -49,11 +49,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         })
     }
 
-    crate fn check_expr_qpath(&mut self, qpath: &ir::QPath) -> Ty<'tcx> {
+    crate fn check_expr_qpath(&mut self, qpath: &ir::QPath<'tcx>) -> Ty<'tcx> {
         match qpath {
             ir::QPath::Resolved(path) => self.check_expr_path(path),
-            ir::QPath::TypeRelative(_, _) => todo!(),
+            ir::QPath::TypeRelative(ty, segment) =>
+                self.check_type_relative_path(self.ir_ty_to_ty(ty), segment),
         }
+    }
+
+    crate fn check_type_relative_path(
+        &mut self,
+        ty: Ty<'tcx>,
+        segment: &ir::PathSegment<'tcx>,
+    ) -> Ty<'tcx> {
+        todo!()
     }
 
     crate fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {

@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// typechecks a given pattern with its expected type
-    pub fn check_pat(&mut self, pat: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn check_pat(&mut self, pat: &ir::Pattern<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         let pat_ty = match &pat.kind {
             ir::PatternKind::Box(inner) => self.check_pat_box(pat, inner, ty),
             ir::PatternKind::Binding(_, _, mtbl) => self.def_local(pat.id, *mtbl, ty),
@@ -24,9 +24,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_pat_struct(
         &mut self,
-        pat: &ir::Pattern,
-        qpath: &ir::QPath,
-        fields_pats: &[ir::FieldPat],
+        pat: &ir::Pattern<'tcx>,
+        qpath: &ir::QPath<'tcx>,
+        fields_pats: &[ir::FieldPat<'tcx>],
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
         let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(qpath) {
@@ -69,13 +69,23 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         struct_ty
     }
 
-    fn check_pat_box(&mut self, pat: &ir::Pattern, inner: &ir::Pattern, ty: Ty<'tcx>) -> Ty<'tcx> {
+    fn check_pat_box(
+        &mut self,
+        pat: &ir::Pattern<'tcx>,
+        inner: &ir::Pattern<'tcx>,
+        ty: Ty<'tcx>,
+    ) -> Ty<'tcx> {
         let deref_ty = self.deref_ty(pat.span, ty);
         self.check_pat(inner, deref_ty);
         ty
     }
 
-    fn check_pat_path(&mut self, pat: &ir::Pattern, qpath: &ir::QPath, ty: Ty<'tcx>) -> Ty<'tcx> {
+    fn check_pat_path(
+        &mut self,
+        pat: &ir::Pattern,
+        qpath: &ir::QPath<'tcx>,
+        ty: Ty<'tcx>,
+    ) -> Ty<'tcx> {
         // before we use `check_expr_path` there are some cases we must handle
         // for example:
         // `Some` has type T -> Option<T>
@@ -99,9 +109,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_pat_variant(
         &mut self,
-        pat: &ir::Pattern,
-        qpath: &ir::QPath,
-        pats: &[ir::Pattern],
+        pat: &ir::Pattern<'tcx>,
+        qpath: &ir::QPath<'tcx>,
+        pats: &[ir::Pattern<'tcx>],
         pat_ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
         let ctor_ty = self.check_expr_qpath(qpath);
@@ -115,7 +125,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         pat_ty
     }
 
-    fn check_pat_lit(&mut self, expr: &ir::Expr, expected: Ty<'tcx>) -> Ty<'tcx> {
+    fn check_pat_lit(&mut self, expr: &ir::Expr<'tcx>, expected: Ty<'tcx>) -> Ty<'tcx> {
         let lit_ty = self.check_expr(expr);
         self.equate(expr.span, expected, lit_ty);
         lit_ty
@@ -123,8 +133,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_pat_tuple(
         &mut self,
-        pat: &ir::Pattern,
-        pats: &[ir::Pattern],
+        pat: &ir::Pattern<'tcx>,
+        pats: &[ir::Pattern<'tcx>],
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
         // create inference variables for each element

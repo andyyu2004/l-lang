@@ -1,11 +1,11 @@
-[00:00:00.001] (7f7013f45940) INFO   resolved node NodeId(4) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.001] (7f7013f45940) INFO   resolved node NodeId(10) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.001] (7f7013f45940) INFO   resolved node NodeId(14) to PartialRes { resolved: Def(3, Struct), unresolved: 1 }
-[00:00:00.002] (7f7013f45940) INFO   resolved node NodeId(24) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.002] (7f7013f45940) INFO   resolved node NodeId(29) to PartialRes { resolved: Def(3, Struct), unresolved: 0 }
-[00:00:00.002] (7f7013f45940) INFO   resolved node NodeId(32) to PartialRes { resolved: SelfTy { impl_def: 4 }, unresolved: 0 }
-[00:00:00.002] (7f7013f45940) INFO   resolved node NodeId(35) to PartialRes { resolved: SelfVal { impl_def: 4 }, unresolved: 0 }
-[00:00:00.003] (7f7013f45940) INFO   Ir {
+[00:00:00.001] (7f6bf7708940) INFO   resolved node NodeId(4) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.001] (7f6bf7708940) INFO   resolved node NodeId(10) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.002] (7f6bf7708940) INFO   resolved node NodeId(14) to PartialRes { resolved: Def(3, Struct), unresolved: 1 }
+[00:00:00.002] (7f6bf7708940) INFO   resolved node NodeId(24) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.002] (7f6bf7708940) INFO   resolved node NodeId(29) to PartialRes { resolved: Def(3, Struct), unresolved: 0 }
+[00:00:00.002] (7f6bf7708940) INFO   resolved node NodeId(32) to PartialRes { resolved: SelfTy { impl_def: 4 }, unresolved: 0 }
+[00:00:00.002] (7f6bf7708940) INFO   resolved node NodeId(35) to PartialRes { resolved: SelfVal { impl_def: 4 }, unresolved: 0 }
+[00:00:00.002] (7f6bf7708940) INFO   Ir {
     entry_id: Some(
         2,
     ),
@@ -632,7 +632,7 @@
         },
     },
 }
-[00:00:00.015] (7f7013f45940) INFO   collect item 3: ∀τ.S<>
-[00:00:00.016] (7f7013f45940) INFO   collect item 1: ∀τ.fn(int)->()
-[00:00:00.016] (7f7013f45940) INFO   collect item 2: ∀τ.fn()->int
-[00:00:00.016] (7f7013f45940) INFO   collect item 5: ∀τ.fn()->S<>
+[00:00:00.014] (7f6bf7708940) INFO   collect item 3: ∀τ.S<>
+[00:00:00.015] (7f6bf7708940) INFO   collect item 1: ∀τ.fn(int)->()
+[00:00:00.015] (7f6bf7708940) INFO   collect item 2: ∀τ.fn()->int
+[00:00:00.015] (7f6bf7708940) INFO   collect item 5: ∀τ.fn()->S<>

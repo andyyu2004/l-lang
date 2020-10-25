@@ -113,9 +113,9 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     pub fn check_fn_item(
         &'a self,
         def_id: DefId,
-        sig: &ir::FnSig,
-        _generics: &ir::Generics,
-        body: &ir::Body,
+        sig: &ir::FnSig<'tcx>,
+        _generics: &ir::Generics<'tcx>,
+        body: &ir::Body<'tcx>,
     ) -> FnCtx<'a, 'tcx> {
         let fn_ty = self.tcx.collected_ty(def_id);
         // don't instantiate anything and typeck the body using the param tys
@@ -130,7 +130,7 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
         self.check_fn(ty, body)
     }
 
-    pub fn check_fn(&'a self, fn_ty: Ty<'tcx>, body: &ir::Body) -> FnCtx<'a, 'tcx> {
+    pub fn check_fn(&'a self, fn_ty: Ty<'tcx>, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
         let mut fcx = FnCtx::new(self, fn_ty);
         fcx.check_body(body);
         fcx
