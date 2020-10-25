@@ -1,4 +1,5 @@
 use crate::ty::{List, Ty, TyCtx, TyKind};
+use crate::ArenaAllocatable;
 use smallvec::SmallVec;
 
 pub trait TypeFoldable<'tcx>: Sized {
@@ -117,7 +118,7 @@ impl<'tcx> TypeFoldable<'tcx> for &'tcx List<Ty<'tcx>> {
 
 impl<'tcx, T> TypeFoldable<'tcx> for &'tcx [T]
 where
-    T: TypeFoldable<'tcx>,
+    T: TypeFoldable<'tcx> + ArenaAllocatable<'tcx>,
 {
     fn inner_fold_with<F>(&self, folder: &mut F) -> Self
     where

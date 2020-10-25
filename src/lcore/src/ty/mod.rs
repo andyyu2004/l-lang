@@ -30,15 +30,15 @@ use std::hash::{Hash, Hasher};
 use std::ptr;
 use util;
 
-pub type Ty<'tcx> = &'tcx TyS<'tcx>;
+pub type Ty<'tcx> = &'tcx Type<'tcx>;
 
 #[derive(Debug, Eq)]
-pub struct TyS<'tcx> {
+pub struct Type<'tcx> {
     pub flags: TyFlags,
     pub kind: TyKind<'tcx>,
 }
 
-impl<'tcx> TyS<'tcx> {
+impl<'tcx> Type<'tcx> {
     pub fn is_unit(&self) -> bool {
         match self.kind {
             TyKind::Tuple(tys) => tys.is_empty(),
@@ -73,7 +73,7 @@ impl<'tcx> TypeVisitor<'tcx> for TyVidVisitor {
     }
 }
 
-impl<'tcx> TyS<'tcx> {
+impl<'tcx> Type<'tcx> {
     pub fn contains_tyvid(&self, tyvid: TyVid) -> bool {
         self.visit_with(&mut TyVidVisitor { tyvid })
     }
@@ -121,15 +121,15 @@ impl<'tcx> TyS<'tcx> {
     }
 }
 
-impl<'tcx> Hash for TyS<'tcx> {
+impl<'tcx> Hash for Type<'tcx> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (self as *const TyS<'tcx>).hash(state)
+        (self as *const Type<'tcx>).hash(state)
     }
 }
 
 /// we can perform equality using pointers as we ensure that at most one of each TyS is allocated
 /// (by doing a deep compare on TyKind during allocation)
-impl<'tcx> PartialEq for TyS<'tcx> {
+impl<'tcx> PartialEq for Type<'tcx> {
     fn eq(&self, other: &Self) -> bool {
         ptr::eq(self, other)
     }
@@ -284,7 +284,7 @@ pub trait TyFlag {
     fn ty_flags(&self) -> TyFlags;
 }
 
-impl<'tcx> TyFlag for TyS<'tcx> {
+impl<'tcx> TyFlag for Type<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         self.kind.ty_flags()
     }
@@ -296,7 +296,7 @@ impl<'tcx> TyFlag for SubstsRef<'tcx> {
     }
 }
 
-impl<'tcx> TyS<'tcx> {
+impl<'tcx> Type<'tcx> {
     pub fn has_flags(&self, flags: TyFlags) -> bool {
         self.flags.intersects(flags)
     }
@@ -412,7 +412,7 @@ pub struct UpvarId {
     pub var_id: ir::Id,
 }
 
-impl<'tcx> Display for TyS<'tcx> {
+impl<'tcx> Display for Type<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.kind)
     }

@@ -11,12 +11,12 @@
 #[macro_use]
 extern crate log;
 
-mod arenas;
+mod arena;
 mod interners;
 mod ir_map;
 pub mod mir;
 pub mod ty;
 
-pub use arenas::CoreArenas;
+pub use crate::arena::{Arena, ArenaAllocatable};
 use interners::CtxInterners;
 pub use ty::{GlobalCtx, TyCtx};

@@ -37,7 +37,10 @@ pub mod tls {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn alloc<T>(self, t: T) -> &'tcx T {
+    pub fn alloc<T>(self, t: T) -> &'tcx T
+    where
+        T: ArenaAllocatable<'tcx>,
+    {
         // these types have their own typed arena
         debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<TyKind>());
         debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<Const>());
@@ -47,8 +50,9 @@ impl<'tcx> TyCtx<'tcx> {
     pub fn alloc_iter<I, T>(self, iter: I) -> &'tcx [T]
     where
         I: IntoIterator<Item = T>,
+        T: ArenaAllocatable<'tcx>,
     {
-        self.interners.arena.alloc_iter(iter)
+        self.interners.arena.alloc_from_iter(iter)
     }
 
     pub fn mk_struct_ty(
@@ -211,7 +215,7 @@ impl<'tcx> TyCtx<'tcx> {
 
 pub struct GlobalCtx<'tcx> {
     interners: CtxInterners<'tcx>,
-    pub arena: &'tcx CoreArenas<'tcx>,
+    pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::Ir<'tcx>,
@@ -222,7 +226,7 @@ pub struct GlobalCtx<'tcx> {
 impl<'tcx> GlobalCtx<'tcx> {
     pub fn new(
         ir: &'tcx ir::Ir<'tcx>,
-        arena: &'tcx CoreArenas<'tcx>,
+        arena: &'tcx Arena<'tcx>,
         resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,
     ) -> Self {
@@ -251,7 +255,7 @@ impl<'tcx> TyCtx<'tcx> {
         variant_kind: &ir::VariantKind<'tcx>,
     ) -> VariantTy<'tcx> {
         let mut seen = FxHashMap::default();
-        let fields = self.arena.alloc_iter(variant_kind.fields().iter().map(|f| {
+        let fields = self.alloc_iter(variant_kind.fields().iter().map(|f| {
             if let Some(span) = seen.insert(f.ident, f.span) {
                 self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
             }

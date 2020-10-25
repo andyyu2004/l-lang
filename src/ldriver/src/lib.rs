@@ -14,7 +14,7 @@ use error::{LError, LResult};
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
 use inkwell::OptimizationLevel;
-use lcore::{CoreArenas, GlobalCtx, TyCtx};
+use lcore::{GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
 use llvm::CodegenCtx;
 use log::LevelFilter;
@@ -26,7 +26,6 @@ use resolve::ResolverArenas;
 use session::Session;
 use span::{SourceMap, SPAN_GLOBALS};
 use std::lazy::OnceCell;
-use std::marker::PhantomData;
 use std::rc::Rc;
 
 pub fn main() -> ! {
@@ -64,11 +63,11 @@ pub fn main() -> ! {
 
 pub struct Driver<'tcx> {
     sess: Session,
-    tmp: PhantomData<&'tcx ()>,
-    arena: CoreArenas<'tcx>,
+    core_arena: lcore::Arena<'tcx>,
     ir_arena: astlowering::Arena<'tcx>,
     resolver_arenas: ResolverArenas<'tcx>,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
+    llvm_ctx: LLVMCtx,
 }
 
 #[macro_export]
@@ -94,12 +93,12 @@ impl<'tcx> Driver<'tcx> {
         SPAN_GLOBALS
             .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(src))));
         Self {
-            tmp: PhantomData,
             resolver_arenas: Default::default(),
-            arena: Default::default(),
+            core_arena: Default::default(),
             ir_arena: Default::default(),
-            global_ctx: OnceCell::new(),
+            global_ctx: Default::default(),
             sess: Default::default(),
+            llvm_ctx: LLVMCtx::create(),
         }
     }
 
@@ -143,7 +142,7 @@ impl<'tcx> Driver<'tcx> {
         let (ir, resolutions) = self.gen_ir()?;
         let gcx = self
             .global_ctx
-            .get_or_init(|| GlobalCtx::new(ir, &self.arena, resolutions, &self.sess));
+            .get_or_init(|| GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess));
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }
@@ -157,8 +156,7 @@ impl<'tcx> Driver<'tcx> {
     // }
 
     pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
-        let llvm_ctx = LLVMCtx::create();
-        self.with_tcx(|tcx| CodegenCtx::new(tcx, self.arena.alloc(llvm_ctx)))
+        self.with_tcx(|tcx| CodegenCtx::new(tcx, &self.llvm_ctx))
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {

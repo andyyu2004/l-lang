@@ -1,4 +1,4 @@
-use crate::CoreArenas;
+use crate::Arena;
 use std::alloc::Layout;
 use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
@@ -46,14 +46,14 @@ impl<T: Display> Display for List<T> {
 
 impl<T: Copy> List<T> {
     #[inline]
-    pub fn from_arena<'tcx>(arena: &'tcx CoreArenas<'tcx>, slice: &[T]) -> &'tcx List<T> {
+    pub fn from_arena<'tcx>(arena: &'tcx Arena<'tcx>, slice: &[T]) -> &'tcx List<T> {
         assert!(!mem::needs_drop::<T>());
         assert!(mem::size_of::<T>() != 0);
         assert!(!slice.is_empty());
 
         let (layout, _offset) =
             Layout::new::<usize>().extend(Layout::for_value::<[T]>(slice)).unwrap();
-        let mem = arena.alloc_raw(layout);
+        let mem = arena.dropless.alloc_raw(layout);
         unsafe {
             let result = &mut *(mem as *mut List<T>);
             // Write the length

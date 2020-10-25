@@ -1,5 +1,5 @@
 use crate::ty::*;
-use crate::CoreArenas;
+use crate::Arena;
 use rustc_hash::{FxHashMap, FxHasher};
 use std::cell::RefCell;
 use std::collections::hash_map::RawEntryMut;
@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 
 pub struct CtxInterners<'tcx> {
     /// general arena
-    pub arena: &'tcx CoreArenas<'tcx>,
+    pub arena: &'tcx Arena<'tcx>,
     /// map from tykind to the allocated ty ptr
     types: RefCell<FxHashMap<TyKind<'tcx>, Ty<'tcx>>>,
     /// map from a slice of tys to a allocated SubstsRef
@@ -20,7 +20,7 @@ pub struct CtxInterners<'tcx> {
 }
 
 impl<'tcx> CtxInterners<'tcx> {
-    pub fn new(arena: &'tcx CoreArenas<'tcx>) -> Self {
+    pub fn new(arena: &'tcx Arena<'tcx>) -> Self {
         Self {
             arena,
             types: Default::default(),
@@ -35,7 +35,8 @@ impl<'tcx> CtxInterners<'tcx> {
         match types.get(&kind) {
             Some(ty) => *ty,
             None => {
-                let ty = self.arena.alloc_ty(kind.clone());
+                let flags = kind.ty_flags();
+                let ty = self.arena.alloc(Type { kind, flags });
                 types.insert(kind, ty);
                 ty
             }
@@ -65,7 +66,7 @@ impl<'tcx> CtxInterners<'tcx> {
         match entry {
             RawEntryMut::Occupied(e) => e.key(),
             RawEntryMut::Vacant(e) => {
-                let c = self.arena.alloc_const(c);
+                let c = self.arena.alloc(c);
                 e.insert_hashed_nocheck(hash, c, ());
                 c
             }
