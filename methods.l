@@ -4,17 +4,7 @@ extern {
 
 fn main() -> int {
     S::new();
-    let k = Option::Some(5);
-    match k {
-	Option::Some(x) => x,
-	_ => x,
-    };
     9
-}
-
-enum Option<T> {
-    Some(T),
-    None,
 }
 
 struct S { x: int }

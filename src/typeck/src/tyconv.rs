@@ -18,7 +18,7 @@ pub trait TyConv<'tcx> {
                 tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
                 ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
             ),
-            ir::TyKind::Path(path) => self.path_to_ty(path),
+            ir::TyKind::Path(qpath) => self.qpath_to_ty(qpath),
             ir::TyKind::Tuple(tys) => tcx.mk_tup_iter(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Ptr(ty) => tcx.mk_ptr_ty(self.ir_ty_to_ty(ty)),
             ir::TyKind::Array(_ty) => {
@@ -26,6 +26,13 @@ pub trait TyConv<'tcx> {
                 todo!();
             }
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
+        }
+    }
+
+    fn qpath_to_ty(&self, qpath: &ir::QPath) -> Ty<'tcx> {
+        match qpath {
+            ir::QPath::Resolved(path) => self.path_to_ty(path),
+            ir::QPath::TypeRelative(_, _) => todo!(),
         }
     }
 

@@ -287,7 +287,7 @@ pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
             v.visit_ty(ty);
         }
         ir::TyKind::Box(_, ty) | ir::TyKind::Ptr(ty) | ir::TyKind::Array(ty) => v.visit_ty(ty),
-        ir::TyKind::Path(path) => v.visit_path(path),
+        ir::TyKind::Path(qpath) => v.visit_qpath(qpath),
         ir::TyKind::Tuple(tys) => tys.iter().for_each(|ty| v.visit_ty(ty)),
         ir::TyKind::Err | ir::TyKind::Infer => {}
     }
