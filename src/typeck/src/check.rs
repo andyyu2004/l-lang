@@ -137,13 +137,13 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     }
 
     pub fn def_local(&self, id: ir::Id, mtbl: Mutability, ty: Ty<'tcx>) -> Ty<'tcx> {
-        info!("deflocal {:?} : {}", id, ty);
+        dbg!("deflocal {:?} : {}", id, ty);
         self.locals.borrow_mut().insert(id, LocalTy::new(ty, mtbl));
         ty
     }
 
     pub fn local_ty(&self, id: ir::Id) -> LocalTy<'tcx> {
-        info!("lookup ty for local {:?}", id);
+        dbg!("lookup ty for local {:?}", id);
         self.locals.borrow().get(&id).cloned().expect("no entry for local variable")
     }
 }

@@ -50,7 +50,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     }
 
     fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        info!("irloweringctx: query typeof {:?}", id);
+        dbg!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
     }
 

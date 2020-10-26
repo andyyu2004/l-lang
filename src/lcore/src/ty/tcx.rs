@@ -243,7 +243,7 @@ impl<'tcx> GlobalCtx<'tcx> {
 impl<'tcx> TyCtx<'tcx> {
     /// write collected ty to tcx map
     pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        info!("collect item {}: {}", def, ty);
+        dbg!("collect item {}: {}", def, ty);
         assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
         ty
     }
