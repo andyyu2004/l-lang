@@ -1,5 +1,6 @@
 mod closure_tests;
 mod enum_tests;
+mod impl_tests;
 mod match_tests;
 mod monomorphization_tests;
 mod output_tests;

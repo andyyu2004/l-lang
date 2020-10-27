@@ -12,6 +12,7 @@ ast = { path = "../ast" }
 session = { path = "../session" }
 error = { path = "../error" }
 thiserror = "1"
+salsa = "0.16.0"
 
 [dev-dependencies]
 ldriver = { path = "../ldriver" }

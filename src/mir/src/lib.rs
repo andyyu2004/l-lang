@@ -113,7 +113,6 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
 }
 
 pub fn dump_mir<'tcx>(tcx: TyCtx<'tcx>, writer: &mut dyn Write) {
-    typeck::collect_item_types(tcx);
     MirDump { writer, tcx }.visit_ir(tcx.ir);
 }
 

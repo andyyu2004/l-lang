@@ -139,16 +139,6 @@ impl<'tcx> TyCtx<'tcx> {
         }
     }
 
-    /// finds the type of an item that was obtained during the collection phase
-    pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
-        self.collected_ty_opt(def_id)
-            .unwrap_or_else(|| panic!("no collected type found for `{}`", def_id))
-    }
-
-    pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
-        self.collected_tys.borrow().get(&def_id).copied()
-    }
-
     pub fn mk_tup(self, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Tuple(substs))
     }
@@ -209,46 +199,6 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.intern_const(c)
     }
 
-    pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
-        if slice.is_empty() { Substs::empty() } else { self.interners.intern_substs(slice) }
-    }
-}
-
-pub struct GlobalCtx<'tcx> {
-    pub arena: &'tcx Arena<'tcx>,
-    pub types: CommonTypes<'tcx>,
-    pub sess: &'tcx Session,
-    pub ir: &'tcx ir::Ir<'tcx>,
-    pub resolutions: Resolutions<'tcx>,
-    interners: CtxInterners<'tcx>,
-    collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
-}
-
-impl<'tcx> GlobalCtx<'tcx> {
-    pub fn new(
-        ir: &'tcx ir::Ir<'tcx>,
-        arena: &'tcx Arena<'tcx>,
-        resolutions: Resolutions<'tcx>,
-        sess: &'tcx Session,
-    ) -> Self {
-        let interners = CtxInterners::new(arena);
-        let types = CommonTypes::new(&interners);
-        Self { types, ir, arena, interners, resolutions, sess, collected_tys: Default::default() }
-    }
-
-    pub fn enter_tcx<R>(&self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
-        tls::enter_tcx(self, f)
-    }
-}
-
-impl<'tcx> TyCtx<'tcx> {
-    /// write collected ty to tcx map
-    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        debug!("collect item {}: {}", def, ty);
-        assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
-        ty
-    }
-
     pub fn variant_ty(
         self,
         ident: Ident,
@@ -264,6 +214,78 @@ impl<'tcx> TyCtx<'tcx> {
             FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
         }));
         VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
+    }
+
+    pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
+        if slice.is_empty() { Substs::empty() } else { self.interners.intern_substs(slice) }
+    }
+}
+
+pub struct GlobalCtx<'tcx> {
+    pub arena: &'tcx Arena<'tcx>,
+    pub sess: &'tcx Session,
+    pub ir: &'tcx ir::Ir<'tcx>,
+    pub types: CommonTypes<'tcx>,
+    pub resolutions: Resolutions<'tcx>,
+    interners: CtxInterners<'tcx>,
+    /// maps an item's DefId to its type
+    collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
+    /// maps a types DefId to the DefId's of its inherent impl blocks
+    inherent_impls: RefCell<FxHashMap<DefId, Vec<DefId>>>,
+}
+
+impl<'tcx> GlobalCtx<'tcx> {
+    pub fn new(
+        ir: &'tcx ir::Ir<'tcx>,
+        arena: &'tcx Arena<'tcx>,
+        resolutions: Resolutions<'tcx>,
+        sess: &'tcx Session,
+    ) -> Self {
+        let interners = CtxInterners::new(arena);
+        let types = CommonTypes::new(&interners);
+        Self {
+            types,
+            ir,
+            arena,
+            interners,
+            resolutions,
+            sess,
+            collected_tys: Default::default(),
+            inherent_impls: Default::default(),
+        }
+    }
+
+    pub fn enter_tcx<R>(&self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+        tls::enter_tcx(self, f)
+    }
+}
+
+impl<'tcx> TyCtx<'tcx> {
+    /// write collected ty to tcx map
+    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
+        debug!("collect item {}: {}", def, ty);
+        assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
+        ty
+    }
+
+    /// finds the type of an item that was obtained during the collection phase
+    pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
+        self.collected_ty_opt(def_id)
+            .unwrap_or_else(|| panic!("no collected type found for `{}`", def_id))
+    }
+
+    pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
+        self.collected_tys.borrow().get(&def_id).copied()
+    }
+
+    // we just set the refcell once to avoid repeated borrows
+    pub fn set_inherent_impls(self, inherent_impls: FxHashMap<DefId, Vec<DefId>>) {
+        debug_assert!(self.inherent_impls.borrow().is_empty());
+        *self.inherent_impls.borrow_mut() = inherent_impls;
+    }
+
+    pub fn inherent_impls_of_def(self, def_id: DefId) -> Vec<DefId> {
+        self.inherent_impls.borrow()[&def_id].to_vec()
     }
 }
 

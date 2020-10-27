@@ -1,4 +1,4 @@
-use crate as ir;
+use crate::{self as ir, DefKind};
 use ast::{Ident, Visibility};
 use span::Span;
 
@@ -73,6 +73,14 @@ pub struct ImplItem<'ir> {
 #[derive(Debug, Copy, Clone)]
 pub enum ImplItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
+}
+
+impl<'ir> ImplItemKind<'ir> {
+    pub fn def_kind(&self) -> DefKind {
+        match self {
+            ImplItemKind::Fn(..) => DefKind::AssocFn,
+        }
+    }
 }
 
 pub enum TraitItemKind<'ir> {

@@ -38,7 +38,7 @@ impl ItemKind {
     pub fn descr(&self) -> &str {
         match self {
             ItemKind::Fn(_, _, body) => match body {
-                Some(_) => "function with body",
+                Some(_) => "function",
                 None => "bodyless function",
             },
             ItemKind::Enum(..) => "enum",

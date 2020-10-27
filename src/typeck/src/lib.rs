@@ -20,6 +20,6 @@ mod writeback;
 
 use autoderef::Autoderef;
 pub use check::{FnCtx, InheritedCtx};
-pub use collect::{collect_item_types, TcxCollectExt};
+pub use collect::TcxCollectExt;
 pub use tyconv::TyConv;
 pub use type_of::{TcxTypeofExt, Typeof};

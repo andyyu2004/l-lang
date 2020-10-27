@@ -3,15 +3,14 @@ extern {
 }
 
 fn main() -> int {
-    S::new();
-    S::Item::new();
+    print(S::fuck());
     9
 }
 
 struct S { x: int }
 
 impl S {
-    fn new() -> Self {
-	Self { x: 5 }
+    fn fuck() -> int {
+	5
     }
 }

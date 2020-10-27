@@ -33,7 +33,7 @@ pub mod kw {
     keywords!();
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Symbol(pub usize);
 
 fn with_interner<T, F: FnOnce(&mut Interner) -> T>(f: F) -> T {
@@ -58,11 +58,18 @@ impl Symbol {
     }
 }
 
+impl Debug for Symbol {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
 }
+
 pub struct Interner {
     arena: DroplessArena,
     symbols: FxHashMap<&'static str, Symbol>,

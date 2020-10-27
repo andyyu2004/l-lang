@@ -2,7 +2,7 @@ use super::{Item, P};
 use std::fmt::{self, Display, Formatter};
 
 /// top level ast representation that stores entire contents of the program being compiled
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
     pub items: Vec<P<Item>>,
 }

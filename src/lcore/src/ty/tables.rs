@@ -1,5 +1,5 @@
 use crate::ty::{Adjustment, Ty, UpvarId};
-use ir::{self, DefId, FieldIdx, LocalId};
+use ir::{self, DefId, FieldIdx, LocalId, Res};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry;
 
@@ -8,10 +8,11 @@ use std::collections::hash_map::Entry;
 pub struct TypeckTables<'tcx> {
     /// the `DefId` that the `LocalId`s in this table are relative to
     def_id: DefId,
+    adjustments: FxHashMap<LocalId, Vec<Adjustment<'tcx>>>,
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
-    adjustments: FxHashMap<LocalId, Vec<Adjustment<'tcx>>>,
+    type_relative_resolutions: FxHashMap<LocalId, Res>,
     upvar_captures: FxHashMap<ir::Id, FxHashSet<UpvarId>>,
 }
 
@@ -22,6 +23,7 @@ impl<'tcx> TypeckTables<'tcx> {
             node_types: Default::default(),
             adjustments: Default::default(),
             field_indices: Default::default(),
+            type_relative_resolutions: Default::default(),
             upvar_captures: Default::default(),
         }
     }
@@ -65,6 +67,10 @@ impl<'tcx> TypeckTables<'tcx> {
         self.node_types().get(id).copied()
     }
 
+    pub fn type_relative_res(&self, expat: &impl ir::ExprOrPat<'tcx>) -> Res {
+        self.type_relative_resolutions().get(expat.id()).copied().unwrap()
+    }
+
     pub fn node_types(&self) -> TableDefIdValidator<Ty<'tcx>> {
         TableDefIdValidator { def_id: self.def_id, table: &self.node_types }
     }
@@ -83,7 +89,7 @@ impl<'tcx> TypeckTables<'tcx> {
 
     pub fn adjustments_for_expr(&self, expr: &ir::Expr) -> &[Adjustment<'tcx>] {
         // can't use `self.adjustments()` due to lifetime issues
-        validate_id(self.def_id, expr.id);
+        assert_eq!(self.def_id, expr.id.def);
         self.adjustments.get(&expr.id.local).map_or(&[], |xs| &xs[..])
     }
 
@@ -93,6 +99,14 @@ impl<'tcx> TypeckTables<'tcx> {
 
     pub fn adjustments_mut(&mut self) -> TableDefIdValidatorMut<Vec<Adjustment<'tcx>>> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.adjustments }
+    }
+
+    pub fn type_relative_resolutions(&self) -> TableDefIdValidator<Res> {
+        TableDefIdValidator { def_id: self.def_id, table: &self.type_relative_resolutions }
+    }
+
+    pub fn type_relative_resolutions_mut(&mut self) -> TableDefIdValidatorMut<Res> {
+        TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.type_relative_resolutions }
     }
 }
 
@@ -107,7 +121,7 @@ impl<'a, T> TableDefIdValidator<'a, T> {
     }
 
     pub fn get(&self, id: ir::Id) -> Option<&T> {
-        validate_id(self.def_id, id);
+        self.validate_id(id);
         self.table.get(&id.local)
     }
 }
@@ -117,18 +131,18 @@ pub struct TableDefIdValidatorMut<'a, T> {
     table: &'a mut FxHashMap<LocalId, T>,
 }
 
-fn validate_id(def_id: DefId, id: ir::Id) {
-    assert_eq!(def_id, id.def);
-}
-
 impl<'a, T> TableDefIdValidatorMut<'a, T> {
+    fn validate_id(&self, id: ir::Id) {
+        assert_eq!(self.def_id, id.def);
+    }
+
     pub fn insert(&mut self, id: ir::Id, value: T) -> Option<T> {
-        validate_id(self.def_id, id);
+        self.validate_id(id);
         self.table.insert(id.local, value)
     }
 
     pub fn remove(&mut self, id: ir::Id) -> Option<T> {
-        validate_id(self.def_id, id);
+        self.validate_id(id);
         self.table.remove(&id.local)
     }
 

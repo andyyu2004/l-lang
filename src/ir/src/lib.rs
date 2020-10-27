@@ -29,6 +29,32 @@ pub use stmt::{Stmt, StmtKind};
 pub use ty::*;
 pub use visit::*;
 
+/// certain things such as qpaths generalize over both expressions and patterns
+pub trait ExprOrPat<'ir> {
+    fn span(&self) -> Span;
+    fn id(&self) -> ir::Id;
+}
+
+impl<'ir> ExprOrPat<'ir> for ir::Expr<'ir> {
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn id(&self) -> ir::Id {
+        self.id
+    }
+}
+
+impl<'ir> ExprOrPat<'ir> for ir::Pattern<'ir> {
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn id(&self) -> ir::Id {
+        self.id
+    }
+}
+
 /// top level IR ast
 #[derive(Debug)]
 pub struct Ir<'ir> {

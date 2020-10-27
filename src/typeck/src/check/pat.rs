@@ -29,7 +29,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         fields_pats: &[ir::FieldPat<'tcx>],
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
-        let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(qpath) {
+        let (variant, struct_ty) = if let Some(ret) = self.check_struct_path(pat, qpath) {
             ret
         } else {
             return self.mk_ty_err();
@@ -82,7 +82,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_pat_path(
         &mut self,
-        pat: &ir::Pattern,
+        pat: &ir::Pattern<'tcx>,
         qpath: &ir::QPath<'tcx>,
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
@@ -102,7 +102,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Res::Err => return self.set_ty_err(),
             res => unreachable!("unexpected res `{}`", res),
         };
-        let path_ty = self.check_expr_qpath(qpath);
+        let path_ty = self.check_qpath(pat, qpath);
         self.equate(pat.span, ty, path_ty);
         path_ty
     }
@@ -114,7 +114,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         pats: &[ir::Pattern<'tcx>],
         pat_ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
-        let ctor_ty = self.check_expr_qpath(qpath);
+        let ctor_ty = self.check_qpath(pat, qpath);
         let params = self.tcx.mk_substs(pats.iter().map(|pat| self.new_infer_var(pat.span)));
         for (pat, ty) in pats.iter().zip(params) {
             self.check_pat(pat, ty);

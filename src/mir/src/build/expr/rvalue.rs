@@ -75,8 +75,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub(super) fn build_binary_op(
         &mut self,
         block: BlockId,
-        span: Span,
-        ty: Ty<'tcx>,
+        _span: Span,
+        _ty: Ty<'tcx>,
         op: ast::BinOp,
         lhs: Operand<'tcx>,
         rhs: Operand<'tcx>,

@@ -1,6 +1,15 @@
-use crate::TyConv;
+//! collect item types
+
+use crate::{TcxCollectExt, TyConv};
 use ir::Visitor;
-use lcore::ty::{AdtTy, Substs, Ty, TyCtx};
+use lcore::ty::{AdtTy, Substs, TyCtx};
+
+crate fn collect<'tcx>(tcx: TyCtx<'tcx>) {
+    // we must do this in multiple phases as functions
+    // may need to refer to adt defintions
+    AdtCollector::new(tcx).visit_ir(tcx.ir);
+    FnCollector { tcx }.visit_ir(tcx.ir);
+}
 
 struct AdtCollector<'tcx> {
     tcx: TyCtx<'tcx>,
@@ -82,7 +91,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
             }
             ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
                 for impl_item_ref in *impl_item_refs {
-                    tcx.collect_impl_item(impl_item_ref);
+                    collect_impl_item(tcx, impl_item_ref);
                 }
                 return;
             }
@@ -130,36 +139,11 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
     }
 }
 
-pub trait TcxCollectExt<'tcx> {
-    fn collect_item_types(self);
-    fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef);
-    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx>;
-}
-
-impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
-    fn collect_item_types(self) {
-        collect_item_types(self)
-    }
-
-    fn collect_impl_item(self, impl_item_ref: &ir::ImplItemRef) {
-        let impl_item = self.impl_item(impl_item_ref.id);
-        let ty = match impl_item.kind {
-            ir::ImplItemKind::Fn(sig, _) => self.fn_sig_to_ty(sig),
-        };
-        let generalized = self.generalize(impl_item.generics, ty);
-        self.collect_ty(impl_item.id.def, generalized);
-    }
-
-    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
-        let generics = self.lower_generics(generics);
-        self.mk_ty_scheme(generics, ty)
-    }
-}
-
-/// run type collection on items and constructors
-pub fn collect_item_types<'tcx>(tcx: TyCtx<'tcx>) {
-    // we must do this in multiple phases as functions
-    // may need to refer to adt defintions
-    AdtCollector::new(tcx).visit_ir(tcx.ir);
-    FnCollector { tcx }.visit_ir(tcx.ir);
+fn collect_impl_item<'tcx>(tcx: TyCtx<'tcx>, impl_item_ref: &ir::ImplItemRef) {
+    let impl_item = tcx.impl_item(impl_item_ref.id);
+    let ty = match impl_item.kind {
+        ir::ImplItemKind::Fn(sig, _) => tcx.fn_sig_to_ty(sig),
+    };
+    let generalized = tcx.generalize(impl_item.generics, ty);
+    tcx.collect_ty(impl_item.id.def, generalized);
 }

@@ -154,6 +154,7 @@ impl<'tcx> Driver<'tcx> {
     fn init_gcx(&self, gcx: &GlobalCtx<'tcx>) {
         gcx.enter_tcx(|tcx| {
             tcx.collect_item_types();
+            tcx.collect_inherent_impls();
         })
     }
 

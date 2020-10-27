@@ -237,7 +237,7 @@ mod test {
 
     #[test]
     fn parse_nested_if() {
-        let expr = parse_expr!("if false { 5 } else if true { 6 } else { 7 }");
+        let _expr = parse_expr!("if false { 5 } else if true { 6 } else { 7 }");
     }
 
     #[test]

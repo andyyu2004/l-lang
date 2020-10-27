@@ -54,10 +54,10 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         self.tables.node_type(id)
     }
 
-    fn resolve_qpath(&self, qpath: &ir::QPath) -> Res {
+    fn resolve_qpath(&self, expat: &impl ir::ExprOrPat<'tcx>, qpath: &ir::QPath<'tcx>) -> Res {
         match qpath {
             ir::QPath::Resolved(path) => path.res,
-            ir::QPath::TypeRelative(_, _) => todo!(),
+            ir::QPath::TypeRelative(..) => self.tables.type_relative_res(expat),
         }
     }
 
@@ -183,7 +183,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
     ) -> tir::PatternKind<'tcx> {
         let ty = self.node_ty(pat.id);
         let (adt, substs) = ty.expect_adt();
-        let res = self.resolve_qpath(qpath);
+        let res = self.resolve_qpath(pat, qpath);
         let idx = adt.variant_idx_with_res(res);
         tir::PatternKind::Variant(adt, substs, idx, pats.to_tir(self))
     }
@@ -294,14 +294,12 @@ where
 
 impl<'tcx> MirCtx<'_, 'tcx> {
     fn lower_qpath(&self, expr: &ir::Expr<'tcx>, qpath: &ir::QPath<'tcx>) -> tir::ExprKind<'tcx> {
-        match qpath {
-            ir::QPath::Resolved(path) => self.lower_path(expr, path),
-            ir::QPath::TypeRelative(_, _) => todo!(),
-        }
+        let res = self.resolve_qpath(expr, qpath);
+        self.lower_res(expr, res)
     }
 
-    fn lower_path(&self, expr: &ir::Expr<'tcx>, path: &ir::Path<'tcx>) -> tir::ExprKind<'tcx> {
-        match path.res {
+    fn lower_res(&self, expr: &ir::Expr<'tcx>, res: Res) -> tir::ExprKind<'tcx> {
+        match res {
             Res::Local(id) => tir::ExprKind::VarRef(id),
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::Ctor(CtorKind::Unit, ..) => {
@@ -383,7 +381,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir(self)),
             ir::ExprKind::Match(expr, arms, _) =>
                 tir::ExprKind::Match(box expr.to_tir(self), arms.to_tir(self)),
-            ir::ExprKind::Struct(path, fields) => match ty.kind {
+            ir::ExprKind::Struct(_path, fields) => match ty.kind {
                 TyKind::Adt(adt, substs) => match adt.kind {
                     AdtKind::Struct => tir::ExprKind::Adt {
                         adt,

@@ -13,7 +13,7 @@ use equate::Equate;
 use error::{DiagnosticBuilder, MultiSpan};
 use index::Idx;
 use instantiate::InstantiationFolder;
-use ir::{DefId, FieldIdx};
+use ir::{DefId, FieldIdx, Res};
 use lcore::ty::*;
 use span::Span;
 use std::cell::{Cell, RefCell};
@@ -181,17 +181,23 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     /// records the type for the given id in the tables
     /// returns the same type purely for convenience
     pub fn record_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
-        debug!("fcx write ty {:?} : {}", id, ty);
+        debug!("record ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
     }
 
+    pub fn record_type_relative_res(&self, id: ir::Id, res: Res) {
+        debug!("record type relative res {:?} : {}", id, res);
+        self.tables.borrow_mut().type_relative_resolutions_mut().insert(id, res);
+    }
+
     pub fn record_adjustments(&self, id: ir::Id, adjustments: Vec<Adjustment<'tcx>>) {
+        debug!("record adjustments {:?} : {:?}", id, adjustments);
         self.tables.borrow_mut().adjustments_mut().insert(id, adjustments);
     }
 
     pub fn record_field_index(&self, id: ir::Id, idx: usize) {
-        debug!("fcx write field_index {:?} : {}", id, idx);
+        debug!("record field_index {:?} : {}", id, idx);
         self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));
     }
 }

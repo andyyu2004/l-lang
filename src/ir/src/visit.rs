@@ -2,8 +2,8 @@ use crate::*;
 use ast::{Ident, Visibility};
 
 pub trait Visitor<'ir>: Sized {
-    fn visit_ir(&mut self, prog: &'ir Ir<'ir>) {
-        walk_ir(self, prog)
+    fn visit_ir(&mut self, ir: &'ir Ir<'ir>) {
+        walk_ir(self, ir)
     }
 
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
@@ -105,9 +105,9 @@ pub trait Visitor<'ir>: Sized {
     }
 }
 
-pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, prog: &'ir ir::Ir<'ir>) {
-    prog.items.values().for_each(|item| v.visit_item(item));
-    prog.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
+pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, ir: &'ir ir::Ir<'ir>) {
+    ir.items.values().for_each(|item| v.visit_item(item));
+    ir.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
 }
 
 pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplItem<'ir>) {
