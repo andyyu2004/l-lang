@@ -13,7 +13,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn sizeof_ty(&self, ty: Ty<'tcx>) -> u64 {
         let size = self.sizeof(self.llvm_ty(ty));
-        dbg!("sizeof {} {}", ty, size);
+        debug!("sizeof {} {}", ty, size);
         size
     }
 

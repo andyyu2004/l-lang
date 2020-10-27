@@ -50,7 +50,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     }
 
     fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        dbg!("irloweringctx: query typeof {:?}", id);
+        debug!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
     }
 
@@ -314,7 +314,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                     }
                 }
                 // functions and variant constructors
-                ir::DefKind::Fn | DefKind::Ctor(CtorKind::Tuple, ..) | DefKind::AssocFn =>
+                DefKind::Fn | DefKind::Ctor(CtorKind::Tuple, ..) | DefKind::AssocFn =>
                     tir::ExprKind::ItemRef(def_id),
                 // unit structs
                 DefKind::Struct => {

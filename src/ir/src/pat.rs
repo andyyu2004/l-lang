@@ -1,4 +1,4 @@
-use crate as ir;
+use crate::{self as ir, QPath};
 use ast::{Ident, Mutability};
 use span::Span;
 
@@ -15,9 +15,9 @@ pub enum PatternKind<'ir> {
     Lit(&'ir ir::Expr<'ir>),
     Binding(Ident, Option<&'ir ir::Pattern<'ir>>, Mutability),
     Tuple(&'ir [ir::Pattern<'ir>]),
-    Variant(&'ir ir::QPath<'ir>, &'ir [ir::Pattern<'ir>]),
-    Path(&'ir ir::QPath<'ir>),
-    Struct(&'ir ir::QPath<'ir>, &'ir [ir::FieldPat<'ir>]),
+    Variant(&'ir QPath<'ir>, &'ir [ir::Pattern<'ir>]),
+    Path(&'ir QPath<'ir>),
+    Struct(&'ir QPath<'ir>, &'ir [ir::FieldPat<'ir>]),
     Wildcard,
 }
 

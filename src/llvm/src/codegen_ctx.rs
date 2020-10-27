@@ -164,7 +164,6 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     /// returns the main function
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
-        self.tcx.collect_item_types();
         let instances = self.collect_monomorphization_instances();
         if self.tcx.sess.has_errors() {
             return None;

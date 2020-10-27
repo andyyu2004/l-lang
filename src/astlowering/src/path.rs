@@ -17,7 +17,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             qpath = self.alloc(ir::QPath::TypeRelative(ty, segment));
         }
 
-        dbg!("qpath {}", qpath);
+        debug!("qpath {}", qpath);
         qpath
     }
 

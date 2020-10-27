@@ -233,13 +233,11 @@ mod test {
     fn parse_assign() {
         let _expr = parse_expr!("x = y");
         let _expr = parse_expr!("x = y = 2");
-        dbg!(_expr);
     }
 
     #[test]
     fn parse_nested_if() {
         let expr = parse_expr!("if false { 5 } else if true { 6 } else { 7 }");
-        dbg!(expr);
     }
 
     #[test]
@@ -256,7 +254,6 @@ mod test {
     #[test]
     fn test_parser_span() {
         let expr = parse_expr!("    3");
-        dbg!(&expr);
         assert_eq!(
             expr,
             box Expr::new(Span::new(4, 5), NodeId::new(0), ExprKind::Lit(Lit::Int(3)))
@@ -272,7 +269,6 @@ mod test {
     #[test]
     fn parse_struct_expr() {
         let _expr = parse_expr!("SomeStruct { x: int, y: bool }");
-        dbg!(_expr);
     }
 
     #[test]

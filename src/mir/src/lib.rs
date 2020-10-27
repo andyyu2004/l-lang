@@ -88,7 +88,6 @@ pub fn build_mir<'tcx>(
 }
 
 pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
-    tcx.collect_item_types();
     let prog = tcx.ir;
     let mut items = BTreeMap::new();
 

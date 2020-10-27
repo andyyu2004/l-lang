@@ -43,7 +43,7 @@ pub trait TyConv<'tcx> {
             Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
-                DefKind::Struct | ir::DefKind::Enum => {
+                DefKind::Struct | DefKind::Enum => {
                     let expected_argc = tcx.resolutions.generic_arg_counts[&def_id];
                     // TODO assume for now only the last path segment has generic args
                     // this may not always be true e.g.
@@ -67,7 +67,7 @@ pub trait TyConv<'tcx> {
                     ty.subst(tcx, substs)
                 }
                 DefKind::Ctor(..) => todo!(),
-                DefKind::AssocFn | ir::DefKind::Impl | ir::DefKind::Fn => todo!(),
+                DefKind::AssocFn | DefKind::Impl | DefKind::Fn => todo!(),
                 DefKind::Extern => todo!(),
             },
             Res::SelfTy { impl_def } => tcx.type_of(impl_def),

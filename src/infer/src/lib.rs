@@ -174,14 +174,14 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     pub fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        dbg!("fcx query node type for {:?}", id);
+        debug!("fcx query node type for {:?}", id);
         self.tables.borrow().node_type(id)
     }
 
     /// records the type for the given id in the tables
     /// returns the same type purely for convenience
     pub fn record_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
-        dbg!("fcx write ty {:?} : {}", id, ty);
+        debug!("fcx write ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
     }
@@ -191,7 +191,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     pub fn record_field_index(&self, id: ir::Id, idx: usize) {
-        dbg!("fcx write field_index {:?} : {}", id, idx);
+        debug!("fcx write field_index {:?} : {}", id, idx);
         self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));
     }
 }

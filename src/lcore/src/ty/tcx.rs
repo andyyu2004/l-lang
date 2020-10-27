@@ -11,6 +11,7 @@ use session::Session;
 use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 
+/// typing context
 #[derive(Copy, Clone)]
 pub struct TyCtx<'tcx> {
     gcx: &'tcx GlobalCtx<'tcx>,
@@ -23,7 +24,7 @@ pub mod tls {
     // stores a pointer to the gcx
     thread_local! (static GCX: Cell<usize> = Cell::new(0));
 
-    crate fn enter_tcx<'tcx, R>(gcx: &'tcx GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+    crate fn enter_tcx<'tcx, R>(gcx: &GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
         GCX.with(|ptr| ptr.set(gcx as *const _ as _));
         with_tcx(f)
     }
@@ -214,13 +215,13 @@ impl<'tcx> TyCtx<'tcx> {
 }
 
 pub struct GlobalCtx<'tcx> {
-    interners: CtxInterners<'tcx>,
     pub arena: &'tcx Arena<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub sess: &'tcx Session,
     pub ir: &'tcx ir::Ir<'tcx>,
     pub resolutions: Resolutions<'tcx>,
-    pub(super) collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
+    interners: CtxInterners<'tcx>,
+    collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -235,7 +236,7 @@ impl<'tcx> GlobalCtx<'tcx> {
         Self { types, ir, arena, interners, resolutions, sess, collected_tys: Default::default() }
     }
 
-    pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+    pub fn enter_tcx<R>(&self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
         tls::enter_tcx(self, f)
     }
 }
@@ -243,7 +244,7 @@ impl<'tcx> GlobalCtx<'tcx> {
 impl<'tcx> TyCtx<'tcx> {
     /// write collected ty to tcx map
     pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        dbg!("collect item {}: {}", def, ty);
+        debug!("collect item {}: {}", def, ty);
         assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
         ty
     }

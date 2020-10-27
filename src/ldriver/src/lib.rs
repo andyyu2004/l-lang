@@ -27,6 +27,7 @@ use session::Session;
 use span::{SourceMap, SPAN_GLOBALS};
 use std::lazy::OnceCell;
 use std::rc::Rc;
+use typeck::TcxCollectExt;
 
 pub fn main() -> ! {
     let _ = std::fs::remove_file("log.txt");
@@ -134,17 +135,26 @@ impl<'tcx> Driver<'tcx> {
         let lctx = AstLoweringCtx::new(&self.ir_arena, &self.sess, &mut resolver);
         let ir = lctx.lower_prog(&ast);
         let resolutions = resolver.complete();
-        dbg!("{:#?}", ir);
+        debug!("{:#?}", ir);
         Ok((ir, resolutions))
     }
 
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, resolutions) = self.gen_ir()?;
-        let gcx = self
-            .global_ctx
-            .get_or_init(|| GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess));
+        let gcx = self.global_ctx.get_or_init(|| {
+            let gcx = GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess);
+            self.init_gcx(&gcx);
+            gcx
+        });
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
+    }
+
+    // run all the necessary passes to initialize the context
+    fn init_gcx(&self, gcx: &GlobalCtx<'tcx>) {
+        gcx.enter_tcx(|tcx| {
+            tcx.collect_item_types();
+        })
     }
 
     pub fn dump_mir(&'tcx self) -> LResult<()> {

@@ -1,4 +1,4 @@
-use crate as ir;
+use crate::{self as ir, QPath};
 use ast::Mutability;
 use span::Span;
 use std::fmt::{self, Display, Formatter};
@@ -22,7 +22,7 @@ pub struct Ty<'ir> {
 pub enum TyKind<'ir> {
     Box(Mutability, &'ir ir::Ty<'ir>),
     Fn(&'ir [ir::Ty<'ir>], Option<&'ir ir::Ty<'ir>>),
-    Path(&'ir ir::QPath<'ir>),
+    Path(&'ir QPath<'ir>),
     Array(&'ir ir::Ty<'ir>),
     Tuple(&'ir [ir::Ty<'ir>]),
     Ptr(&'ir ir::Ty<'ir>),

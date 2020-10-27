@@ -178,7 +178,7 @@ impl<'a> Resolver<'a> {
 
     /// writes the resolution for a given `NodeId` into the map
     fn partially_resolve_node(&mut self, node_id: NodeId, partial_res: PartialRes) {
-        dbg!("resolved node {:?} to {:?}", node_id, partial_res);
+        debug!("resolved node {:?} to {:?}", node_id, partial_res);
         if let Some(prev_res) = self.partial_resolutions.insert(node_id, partial_res) {
             // not sure why its resolving some stuff twice, but make sure they are consistent
             assert_eq!(partial_res, prev_res);
