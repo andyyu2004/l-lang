@@ -11,11 +11,8 @@ mod tests;
 
 mod autoderef;
 mod check;
+mod coherence;
 mod collect;
-mod expr;
-mod pat;
-mod path;
-mod stmt;
 mod tyconv;
 mod type_of;
 mod upvars;

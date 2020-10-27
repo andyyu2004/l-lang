@@ -1,6 +1,7 @@
 //! conversion of ir::Ty to ty::Ty
 
 use crate::TcxTypeofExt;
+use ir::{DefKind, QPath, Res};
 use lcore::ty::{Generics, Subst, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
@@ -31,18 +32,18 @@ pub trait TyConv<'tcx> {
 
     fn qpath_to_ty(&self, qpath: &ir::QPath) -> Ty<'tcx> {
         match qpath {
-            ir::QPath::Resolved(path) => self.path_to_ty(path),
-            ir::QPath::TypeRelative(_, _) => todo!(),
+            QPath::Resolved(path) => self.path_to_ty(path),
+            QPath::TypeRelative(_, _) => todo!(),
         }
     }
 
     fn path_to_ty(&self, path: &ir::Path) -> Ty<'tcx> {
         let tcx = self.tcx();
         match path.res {
-            ir::Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
-            ir::Res::Def(def_id, def_kind) => match def_kind {
-                ir::DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
-                ir::DefKind::Struct | ir::DefKind::Enum => {
+            Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
+            Res::Def(def_id, def_kind) => match def_kind {
+                DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx),
+                DefKind::Struct | ir::DefKind::Enum => {
                     let expected_argc = tcx.resolutions.generic_arg_counts[&def_id];
                     // TODO assume for now only the last path segment has generic args
                     // this may not always be true e.g.
@@ -65,14 +66,14 @@ pub trait TyConv<'tcx> {
                     let (_forall, ty) = tcx.collected_ty(def_id).expect_scheme();
                     ty.subst(tcx, substs)
                 }
-                ir::DefKind::Ctor(..) => todo!(),
-                ir::DefKind::AssocFn | ir::DefKind::Impl | ir::DefKind::Fn => todo!(),
-                ir::DefKind::Extern => todo!(),
+                DefKind::Ctor(..) => todo!(),
+                DefKind::AssocFn | ir::DefKind::Impl | ir::DefKind::Fn => todo!(),
+                DefKind::Extern => todo!(),
             },
-            ir::Res::SelfTy { impl_def } => tcx.type_of(impl_def),
-            ir::Res::SelfVal { impl_def } => todo!(),
-            ir::Res::Err => tcx.mk_ty_err(),
-            ir::Res::Local(_) => panic!("unexpected resolution"),
+            Res::SelfTy { impl_def } => tcx.type_of(impl_def),
+            Res::SelfVal { impl_def } => todo!(),
+            Res::Err => tcx.mk_ty_err(),
+            Res::Local(_) => panic!("unexpected resolution"),
         }
     }
 

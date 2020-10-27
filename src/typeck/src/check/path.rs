@@ -19,11 +19,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let res = self.resolve_qpath(qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {
-            ir::Res::Def(_, DefKind::Struct) => match ty.kind {
+            Res::Def(_, DefKind::Struct) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
                 _ => unreachable!(),
             },
-            ir::Res::SelfVal { impl_def } => {
+            Res::SelfVal { impl_def } => {
                 let self_ty = self.type_of(impl_def);
                 assert_eq!(self_ty, ty);
                 match self_ty.kind {
@@ -31,12 +31,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
-            ir::Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
+            Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.variant_with_ctor(def_id), ty)),
                 _ => unreachable!(),
             },
-            ir::Res::Local(_) => None,
-            ir::Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
+            Res::Local(_) => None,
+            Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
             _ => unimplemented!("{} (res: {:?})", qpath, res),
         };
 
@@ -49,10 +49,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         })
     }
 
-    crate fn check_expr_qpath(&mut self, qpath: &ir::QPath<'tcx>) -> Ty<'tcx> {
+    crate fn check_expr_qpath(&mut self, qpath: &QPath<'tcx>) -> Ty<'tcx> {
         match qpath {
-            ir::QPath::Resolved(path) => self.check_expr_path(path),
-            ir::QPath::TypeRelative(ty, segment) =>
+            QPath::Resolved(path) => self.check_expr_path(path),
+            QPath::TypeRelative(ty, segment) =>
                 self.check_type_relative_path(self.ir_ty_to_ty(ty), segment),
         }
     }
@@ -67,12 +67,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {
         match path.res {
-            ir::Res::Local(id) => self.local_ty(id).ty,
-            ir::Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
-            ir::Res::SelfVal { impl_def } => self.type_of(impl_def),
-            ir::Res::PrimTy(_) => panic!("found type resolution in value namespace"),
-            ir::Res::Err => self.set_ty_err(),
-            ir::Res::SelfTy { .. } => todo!(),
+            Res::Local(id) => self.local_ty(id).ty,
+            Res::Def(def_id, def_kind) => self.check_expr_path_def(path.span, def_id, def_kind),
+            Res::SelfVal { impl_def } => self.type_of(impl_def),
+            Res::PrimTy(_) => panic!("found type resolution in value namespace"),
+            Res::Err => self.set_ty_err(),
+            Res::SelfTy { .. } => todo!(),
         }
     }
 

@@ -2,7 +2,7 @@ use super::FnCtx;
 use crate::Typeof;
 use ast::Ident;
 use bimap::BiMap;
-use ir::{self, CtorKind, DefKind};
+use ir::{self, CtorKind, DefKind, Res};
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
 
@@ -96,10 +96,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let res = self.resolve_qpath(qpath);
         match res {
             // this is the good case
-            ir::Res::Def(_, DefKind::Ctor(CtorKind::Unit)) => (),
-            ir::Res::Def(_, DefKind::Ctor(CtorKind::Tuple | CtorKind::Struct)) =>
+            Res::Def(_, DefKind::Ctor(CtorKind::Unit)) => (),
+            Res::Def(_, DefKind::Ctor(CtorKind::Tuple | CtorKind::Struct)) =>
                 return self.emit_ty_err(pat.span, TypeError::UnexpectedVariant(res)),
-            ir::Res::Err => return self.set_ty_err(),
+            Res::Err => return self.set_ty_err(),
             res => unreachable!("unexpected res `{}`", res),
         };
         let path_ty = self.check_expr_qpath(qpath);

@@ -1,3 +1,8 @@
+mod expr;
+mod pat;
+mod path;
+mod stmt;
+
 use crate::TyConv;
 use ast::Mutability;
 use infer::{InferCtx, InferCtxBuilder, TyCtxtInferExt};
