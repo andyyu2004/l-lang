@@ -44,7 +44,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         scope.releases.push(ReleaseInfo { var, info });
     }
 
-    fn exit_scope(&mut self, info: SpanInfo, block: BlockId) {
+    fn exit_scope(&mut self, _info: SpanInfo, block: BlockId) {
         let scope = self.scopes.pop_scope();
         for release in scope.releases.into_iter().rev() {
             self.push_release(block, release);

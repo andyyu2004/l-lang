@@ -71,7 +71,7 @@ pub trait TyConv<'tcx> {
                 DefKind::Extern => todo!(),
             },
             Res::SelfTy { impl_def } => tcx.type_of(impl_def),
-            Res::SelfVal { impl_def } => todo!(),
+            Res::SelfVal { impl_def: _ } => todo!(),
             Res::Err => tcx.mk_ty_err(),
             Res::Local(_) => panic!("unexpected resolution"),
         }

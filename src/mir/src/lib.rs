@@ -18,7 +18,7 @@ use lcore::mir::Mir;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
 use std::collections::BTreeMap;
 use std::io::Write;
-use typeck::{InheritedCtx, TcxCollectExt};
+use typeck::{InheritedCtx};
 
 macro halt_on_error($tcx:expr) {{
     if $tcx.sess.has_errors() {

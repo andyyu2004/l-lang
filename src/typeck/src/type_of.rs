@@ -34,7 +34,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
         ir::DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(sig, ..) => tcx.fn_sig_to_ty(sig),
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => tcx.collected_ty(def_id),
-            ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } =>
+            ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
             _ => unreachable!("unexpected item kind in type_of"),
         },

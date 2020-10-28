@@ -188,7 +188,7 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_variant_kind(kind);
         }
         ir::ItemKind::Extern(items) => items.iter().for_each(|item| v.visit_foreign_item(item)),
-        ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
+        ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs: _ } => {
             v.visit_generics(generics);
             trait_path.iter().for_each(|path| v.visit_path(path));
             v.visit_ty(self_ty);

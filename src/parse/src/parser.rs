@@ -78,7 +78,7 @@ impl<'a> Parser<'a> {
         let span = token.span;
 
         let s = match token.ttype {
-            TokenType::Literal { kind: LiteralKind::Float { .. }, suffix_start } =>
+            TokenType::Literal { kind: LiteralKind::Float { .. }, suffix_start: _ } =>
                 span.to_string(),
             _ => unreachable!(),
         };

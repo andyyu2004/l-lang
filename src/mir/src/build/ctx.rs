@@ -1,7 +1,7 @@
 //! context for lowering from ir to tir/mir
 
 use crate::build;
-use ast::{Lit, Mutability, UnaryOp};
+use ast::{Lit, UnaryOp};
 use index::Idx;
 use infer::InferCtx;
 use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};

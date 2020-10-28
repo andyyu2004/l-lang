@@ -240,7 +240,7 @@ impl<'tcx> MirFmt<'tcx> for mir::TerminatorKind<'tcx> {
             mir::TerminatorKind::Branch(block) => writeln!(fmt, "branch {:?}", block),
             mir::TerminatorKind::Return => writeln!(fmt, "return"),
             mir::TerminatorKind::Unreachable => writeln!(fmt, "unreachable"),
-            mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
+            mir::TerminatorKind::Call { f, args, lvalue, target, unwind: _ } => {
                 lvalue.mir_fmt(fmt)?;
                 let ty = fmt.mir.vars[lvalue.id].ty;
                 write!(fmt, ":{} ← call ", ty)?;

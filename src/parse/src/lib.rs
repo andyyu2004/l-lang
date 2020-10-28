@@ -574,7 +574,7 @@ impl<'a> Parse<'a> for LiteralParser {
                 }
                 Lit::Float(slice.parse().unwrap())
             }
-            LiteralKind::Str { terminated } => todo!(),
+            LiteralKind::Str { terminated: _ } => todo!(),
             LiteralKind::Int { base, .. } =>
                 Lit::Int(i64::from_str_radix(&slice, base as u32).unwrap()),
             _ => todo!(),

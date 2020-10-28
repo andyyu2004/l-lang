@@ -119,7 +119,7 @@ pub struct TypeAliasParser {
 impl<'a> Parse<'a> for TypeAliasParser {
     type Output = ItemKind;
 
-    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+    fn parse(&mut self, _parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         todo!()
     }
 }
@@ -242,7 +242,7 @@ impl<'a> Parse<'a> for FnParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use span::Span;
+    
 
     macro parse($src:expr) {{
         let driver = ldriver::Driver::new($src);

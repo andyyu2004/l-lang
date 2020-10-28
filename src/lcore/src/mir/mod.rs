@@ -195,7 +195,7 @@ impl<'tcx> Terminator<'tcx> {
             | TerminatorKind::Call { target: block, unwind: None, .. } => vec![block],
             TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
             TerminatorKind::Cond(_, a, b) => vec![a, b],
-            TerminatorKind::Switch { ref arms, default, .. } =>
+            TerminatorKind::Switch { ref arms, default: _, .. } =>
                 arms.iter().map(|(_, b)| *b).collect(),
             TerminatorKind::Abort | TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
         }

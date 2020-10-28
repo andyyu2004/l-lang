@@ -1,6 +1,6 @@
 use crate::ty::*;
 use crate::*;
-use ast::{Ident, Mutability};
+use ast::{Ident};
 use index::IndexVec;
 use ir::CtorKind;
 use ir::{DefId, FieldIdx, ParamIdx, VariantIdx};

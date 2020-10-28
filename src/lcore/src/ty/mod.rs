@@ -20,7 +20,7 @@ pub use type_error::{TypeError, TypeResult};
 pub use InferTy::*;
 pub use TyKind::*;
 
-use ast::{Ident, Mutability, Visibility};
+use ast::{Ident, Visibility};
 use bitflags::bitflags;
 use index::{Idx, IndexVec};
 use ir::{self, CtorKind, DefId, FieldIdx, ParamIdx, Res, VariantIdx};

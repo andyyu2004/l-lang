@@ -89,7 +89,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
                 let ty = tcx.generalize(generics, fn_ty);
                 tcx.collect_ty(item.id.def, ty);
             }
-            ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs } => {
+            ir::ItemKind::Impl { generics: _, trait_path: _, self_ty: _, impl_item_refs } => {
                 for impl_item_ref in *impl_item_refs {
                     collect_impl_item(tcx, impl_item_ref);
                 }
