@@ -1,6 +1,6 @@
 use crate::ty::*;
 use crate::*;
-use ast::{Ident};
+use ast::Ident;
 use index::IndexVec;
 use ir::CtorKind;
 use ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
@@ -193,6 +193,37 @@ impl<'tcx> TyCtx<'tcx> {
         } else {
             self.interners.intern_lvalue_projections(projs)
         }
+    }
+
+    pub fn mk_const_int(self, i: i64) -> &'tcx Const<'tcx> {
+        self.mk_const(ConstKind::Int(i))
+    }
+
+    pub fn mk_const_float(self, f: f64) -> &'tcx Const<'tcx> {
+        self.mk_const(ConstKind::Float(f))
+    }
+
+    pub fn mk_const_bool(self, b: bool) -> &'tcx Const<'tcx> {
+        self.mk_const(ConstKind::Bool(b))
+    }
+
+    pub fn mk_const_discr(self, discr: i16) -> &'tcx Const<'tcx> {
+        self.mk_const(ConstKind::Discr(discr))
+    }
+
+    pub fn mk_const_unit(self) -> &'tcx Const<'tcx> {
+        self.mk_const(ConstKind::Unit)
+    }
+
+    pub fn mk_const(self, kind: ConstKind) -> &'tcx Const<'tcx> {
+        let ty = match kind {
+            ConstKind::Float(_) => self.types.float,
+            ConstKind::Int(_) => self.types.int,
+            ConstKind::Discr(_) => self.types.discr,
+            ConstKind::Bool(_) => self.types.bool,
+            ConstKind::Unit => self.types.unit,
+        };
+        self.intern_const(Const { kind, ty })
     }
 
     pub fn intern_const(self, c: Const<'tcx>) -> &'tcx Const<'tcx> {

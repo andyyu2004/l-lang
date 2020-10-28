@@ -86,7 +86,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
         // if `predicate` is true, then its corresponding branch will be executed
         let predicate = self.alloc_tmp(info, tcx.types.bool).into();
         // predicate starts off as true by default
-        let b = self.mk_const_bool(true);
+        let b = tcx.mk_const_bool(true);
         self.push_assignment(info, pblock, predicate, Rvalue::Operand(Operand::Const(b)));
         set!(pblock = self.build_arm_predicate(pblock, predicate, scrut, &arm.pat));
         self.terminate(
@@ -172,7 +172,8 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                 );
                 // recall `idx` is the discriminant
                 // so we compare this with the discriminant of the scrutinee
-                let discr = self.mk_const_int(idx.index() as i64);
+                assert!(idx.index() < i16::MAX as usize);
+                let discr = tcx.mk_const_discr(idx.index() as i16);
                 let cmp_rvalue = set!(
                     pblock = self.build_binary_op(
                         pblock,

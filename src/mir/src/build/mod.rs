@@ -20,12 +20,12 @@ use span::Span;
 use typeck::Typeof;
 
 /// lowers `tir::Body` into `mir::Body`
-pub fn build_fn<'a, 'tcx>(ctx: &'a MirCtx<'a, 'tcx>, body: tir::Body<'tcx>) -> Mir<'tcx> {
+pub fn build_fn<'a, 'tcx>(ctx: &'a MirCtx<'a, 'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
     let mut builder = Builder::new(ctx, &body);
     let _ = builder.build_body();
-    let mir = builder.complete();
-    // mir::analyse(&mir, &ctx);
-    // mir::validate(&mir, &ctx);
+    let mir = ctx.alloc(builder.complete());
+    // crate::analyse(&mir, &ctx);
+    crate::typecheck(&ctx, &mir);
     // eprintln!("{}", mir);
     mir
 }
@@ -184,6 +184,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             panic!("two mir vars allocated for id `{}`", id);
         }
         var_id
+    }
+
+    fn operand_ty(&self, operand: Operand<'tcx>) -> Ty<'tcx> {
+        operand.ty(self.tcx, self)
     }
 
     fn lvalue_ty(&self, lvalue: Lvalue<'tcx>) -> Ty<'tcx> {

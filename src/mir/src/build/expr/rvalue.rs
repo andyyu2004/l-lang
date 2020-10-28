@@ -37,7 +37,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.build_closure(block, expr, upvars, body),
             tir::ExprKind::Unary(op, ref expr) => {
                 let operand = set!(block = self.as_operand(block, &expr));
-                block.and(Rvalue::Unary(op, operand))
+                block.and(Rvalue::Unary(op.into(), operand))
             }
             // assign is a bit out of place here,
             // as there is no direct rvalue variant for it
@@ -72,7 +72,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
-    pub(super) fn build_binary_op(
+    crate fn build_binary_op(
         &mut self,
         block: BlockId,
         _span: Span,
@@ -82,6 +82,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         rhs: Operand<'tcx>,
     ) -> BlockAnd<Rvalue<'tcx>> {
         // TODO some checks
+        assert_eq!(self.operand_ty(lhs), self.operand_ty(rhs));
         block.and(Rvalue::Bin(op, lhs, rhs))
     }
 }

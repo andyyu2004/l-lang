@@ -277,6 +277,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     val: self.types.boolean.const_int(b as u64, true).into(),
                     ty: self.tcx.types.bool,
                 },
+                ConstKind::Discr(d) => ValueRef {
+                    val: self.types.discr.const_int(d as u64, true).into(),
+                    ty: self.tcx.types.discr,
+                },
                 ConstKind::Unit => ValueRef { val: self.vals.unit.into(), ty: self.tcx.types.unit },
             },
             mir::Operand::Lvalue(lvalue) => {

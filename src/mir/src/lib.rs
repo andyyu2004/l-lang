@@ -4,6 +4,7 @@
 
 mod build;
 mod traverse;
+mod typecheck;
 
 #[macro_use]
 extern crate log;
@@ -18,7 +19,8 @@ use lcore::mir::Mir;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
 use std::collections::BTreeMap;
 use std::io::Write;
-use typeck::{InheritedCtx};
+use typecheck::typecheck;
+use typeck::InheritedCtx;
 
 macro halt_on_error($tcx:expr) {{
     if $tcx.sess.has_errors() {

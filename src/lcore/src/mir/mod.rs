@@ -151,12 +151,41 @@ pub enum VarKind {
     Upvar,
 }
 
+/// we introduce a new enumeration of unary ops at mir level
+/// as there are less valid operations now
+/// namely, dereferences and references become explicit expressions
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum UnaryOp {
+    Neg,
+    Not,
+}
+
+impl From<ast::UnaryOp> for UnaryOp {
+    fn from(op: ast::UnaryOp) -> Self {
+        match op {
+            ast::UnaryOp::Neg => Self::Neg,
+            ast::UnaryOp::Not => Self::Not,
+            ast::UnaryOp::Deref | ast::UnaryOp::Ref =>
+                panic!("invalid unary op at mir level `{}`", op),
+        }
+    }
+}
+
+impl std::fmt::Display for UnaryOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UnaryOp::Neg => write!(f, "-"),
+            UnaryOp::Not => write!(f, "!"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
     /// x
     Operand(Operand<'tcx>),
     /// - x
-    Unary(ast::UnaryOp, Operand<'tcx>),
+    Unary(UnaryOp, Operand<'tcx>),
     /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
     /// box x

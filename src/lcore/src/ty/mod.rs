@@ -423,20 +423,13 @@ pub struct Const<'tcx> {
     pub ty: Ty<'tcx>,
 }
 
-impl<'tcx> Const<'tcx> {
-    pub fn new(kind: ConstKind, ty: Ty<'tcx>) -> Self {
-        Self { kind, ty }
-    }
-
-    pub fn unit(tcx: TyCtx<'tcx>) -> Self {
-        Self::new(ConstKind::Unit, tcx.types.unit)
-    }
-}
-
-#[derive(Debug, Clone)]
+// deriving partialeq even with custom hash impl should be fine
+// just avoid the nasty NaN business
+#[derive(Debug, Clone, PartialEq)]
 pub enum ConstKind {
     Float(f64),
     Int(i64),
+    Discr(i16),
     Bool(bool),
     Unit,
 }
@@ -445,23 +438,11 @@ pub enum ConstKind {
 impl Eq for ConstKind {
 }
 
-impl PartialEq for ConstKind {
-    fn eq(&self, other: &Self) -> bool {
-        use ConstKind::*;
-        match (self, other) {
-            (Float(a), Float(b)) => a.to_bits() == b.to_bits(),
-            (Int(i), Int(j)) => i == j,
-            (Bool(b), Bool(c)) => b == c,
-            (Unit, Unit) => true,
-            _ => false,
-        }
-    }
-}
-
 impl std::hash::Hash for ConstKind {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
             ConstKind::Float(f) => f.to_bits().hash(state),
+            ConstKind::Discr(d) => d.hash(state),
             ConstKind::Int(i) => i.hash(state),
             ConstKind::Bool(b) => b.hash(state),
             ConstKind::Unit => {}
@@ -474,6 +455,7 @@ impl<'tcx> Display for Const<'tcx> {
         match self.kind {
             ConstKind::Float(d) => write!(f, "{:?}", d),
             ConstKind::Int(i) => write!(f, "{}", i),
+            ConstKind::Discr(d) => write!(f, "{}", d),
             ConstKind::Bool(b) => write!(f, "{}", b),
             ConstKind::Unit => write!(f, "()"),
         }

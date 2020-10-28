@@ -42,7 +42,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
-        self.tcx.alloc(build::build_fn(self, tir))
+        build::build_fn(self, tir)
     }
 
     fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {
@@ -437,12 +437,11 @@ impl<'tcx> Tir<'tcx> for Lit {
     type Output = &'tcx Const<'tcx>;
 
     fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
-        let c = match *self {
-            Lit::Float(n) => Const::new(ConstKind::Float(n), ctx.tcx.types.float),
-            Lit::Bool(b) => Const::new(ConstKind::Bool(b), ctx.tcx.types.bool),
-            Lit::Int(i) => Const::new(ConstKind::Int(i), ctx.tcx.types.int),
-        };
-        ctx.intern_const(c)
+        match *self {
+            Lit::Float(f) => ctx.mk_const_float(f),
+            Lit::Bool(b) => ctx.mk_const_bool(b),
+            Lit::Int(i) => ctx.mk_const_int(i),
+        }
     }
 }
 

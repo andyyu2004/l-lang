@@ -1,16 +1,8 @@
 use super::*;
 use lcore::mir::BlockId;
-use lcore::ty::{Const, ConstKind};
+use lcore::ty::Const;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    pub fn mk_const_int(&self, i: i64) -> &'tcx Const<'tcx> {
-        self.tcx.intern_const(Const::new(ConstKind::Int(i), self.tcx.types.int))
-    }
-
-    pub fn mk_const_bool(&self, b: bool) -> &'tcx Const<'tcx> {
-        self.tcx.intern_const(Const::new(ConstKind::Bool(b), self.tcx.types.int))
-    }
-
     pub fn as_const(
         &mut self,
         block: BlockId,
