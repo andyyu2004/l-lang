@@ -14,7 +14,7 @@ pub trait TyConv<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
             ir::TyKind::Err => tcx.mk_ty_err(),
-            ir::TyKind::Box(m, ty) => tcx.mk_box_ty(*m, self.ir_ty_to_ty(ty)),
+            ir::TyKind::Box(ty) => tcx.mk_box_ty(self.ir_ty_to_ty(ty)),
             ir::TyKind::Fn(params, ret) => tcx.mk_fn_ty(
                 tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
                 ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),

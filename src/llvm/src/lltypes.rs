@@ -75,7 +75,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             }
             // boxes and pointers have the same runtime type
             // however, boxes will have a refcount implicitly stored after the content
-            TyKind::Box(_, ty) | TyKind::Ptr(ty) =>
+            TyKind::Box(ty) | TyKind::Ptr(ty) =>
                 self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
             TyKind::Opaque(..) => todo!(),
             TyKind::Param(..)

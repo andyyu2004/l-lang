@@ -1,5 +1,4 @@
 use crate::{self as ir, QPath};
-use ast::Mutability;
 use span::Span;
 use std::fmt::{self, Display, Formatter};
 
@@ -20,7 +19,7 @@ pub struct Ty<'ir> {
 
 #[derive(Debug)]
 pub enum TyKind<'ir> {
-    Box(Mutability, &'ir ir::Ty<'ir>),
+    Box(&'ir ir::Ty<'ir>),
     Fn(&'ir [ir::Ty<'ir>], Option<&'ir ir::Ty<'ir>>),
     Path(&'ir QPath<'ir>),
     Array(&'ir ir::Ty<'ir>),
@@ -33,7 +32,7 @@ pub enum TyKind<'ir> {
 impl<'ir> Display for Ty<'ir> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ir::TyKind::Box(_, ty) => write!(f, "box {}", ty),
+            ir::TyKind::Box(ty) => write!(f, "box {}", ty),
             ir::TyKind::Path(qpath) => write!(f, "{}", qpath),
             _ => todo!(),
         }

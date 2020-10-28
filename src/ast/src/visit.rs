@@ -256,7 +256,7 @@ pub fn walk_pat<'ast>(visitor: &mut impl Visitor<'ast>, pat: &'ast Pattern) {
 
 pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
     match &ty.kind {
-        TyKind::Box(_, ty) | TyKind::Array(ty) | TyKind::Ptr(ty) | TyKind::Paren(ty) =>
+        TyKind::Box(ty) | TyKind::Array(ty) | TyKind::Ptr(ty) | TyKind::Paren(ty) =>
             visitor.visit_ty(ty),
         TyKind::Tuple(tys) => tys.iter().for_each(|ty| visitor.visit_ty(ty)),
         TyKind::Path(path) => visitor.visit_path(path),

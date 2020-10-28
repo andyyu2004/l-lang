@@ -83,7 +83,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn deref_ty(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         let ty = self.partially_resolve_ty(span, ty);
         match ty.kind {
-            TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
+            TyKind::Box(ty) | TyKind::Ptr(ty) => ty,
             _ => self.emit_ty_err(span, TypeError::InvalidDereference(ty)),
         }
     }

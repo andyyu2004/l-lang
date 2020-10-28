@@ -28,7 +28,7 @@ pub trait TypeRelation<'tcx>: Sized {
             }
             (_, Never) => Ok(a),
             (Never, _) => Ok(b),
-            (Box(_m, t), Box(_n, u)) => self.relate(t, u),
+            (Box(t), Box(u)) => self.relate(t, u),
             (Fn(a, b), Fn(t, u)) => {
                 let s = self.relate(a, t)?;
                 let r = self.relate(b, u)?;

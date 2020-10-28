@@ -30,9 +30,8 @@ impl<'a> Parse<'a> for TyParser {
                 Ok(parser.mk_ty(span, TyKind::Tuple(tys)))
             }
         } else if let Some(amp) = parser.accept(TokenType::And) {
-            let m = parser.parse_mutability();
             let ty = self.parse(parser)?;
-            Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Box(m, ty)))
+            Ok(parser.mk_ty(amp.span.merge(ty.span), TyKind::Box(ty)))
         } else if let Some(star) = parser.accept(TokenType::Star) {
             let ty = self.parse(parser)?;
             Ok(parser.mk_ty(star.span.merge(ty.span), TyKind::Ptr(ty)))

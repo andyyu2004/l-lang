@@ -1,4 +1,4 @@
-use super::{Mutability, NodeId, Path, P};
+use super::{NodeId, Path, P};
 use span::Span;
 use std::fmt::{self, Display, Formatter};
 
@@ -16,9 +16,8 @@ pub enum TyKind {
     /// (<ty>)
     Paren(P<Ty>),
     Path(Path),
-    /// &mut <ty>
     /// &<ty>
-    Box(Mutability, P<Ty>),
+    Box(P<Ty>),
     /// fn(<ty>...) (-> <ty>)?
     Fn(Vec<P<Ty>>, Option<P<Ty>>),
     /// *<ty>

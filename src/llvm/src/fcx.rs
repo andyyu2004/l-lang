@@ -230,7 +230,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let content_ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
                 self.build_store(content_ptr, operand.val);
 
-                let ty = self.tcx.mk_box_ty(Mutability::Mut, operand_ty);
+                let ty = self.tcx.mk_box_ty(operand_ty);
                 #[cfg(debug_assertions)]
                 self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
                 ValueRef { ty, val: content_ptr.into() }

@@ -24,6 +24,7 @@
 // }
 //
 
+
 enum Expr {
     Int(int),
     Add(&Expr, &Expr)
@@ -42,6 +43,7 @@ extern {
 
 
 fn main() -> int {
+
     /* let tail = box List::Null; */
     /* let head = box List::Next(4, tail); */
 

@@ -37,7 +37,7 @@ impl<'a, 'tcx> Iterator for &mut Autoderef<'a, 'tcx> {
     fn next(&mut self) -> Option<Self::Item> {
         let ty = self.curr_ty?;
         self.curr_ty = match ty.kind {
-            TyKind::Box(_, ty) => {
+            TyKind::Box(ty) => {
                 self.adjustments.push(Adjustment::new_deref(ty));
                 Some(ty)
             }

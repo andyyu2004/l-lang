@@ -108,7 +108,7 @@ impl<'tcx> Type<'tcx> {
 
     pub fn deref_ty(&self) -> Ty<'tcx> {
         match self.kind {
-            TyKind::Box(_, ty) | TyKind::Ptr(ty) => ty,
+            TyKind::Box(ty) | TyKind::Ptr(ty) => ty,
             _ => panic!("cannot dereference a non-pointer type"),
         }
     }
@@ -160,12 +160,10 @@ pub enum TyKind<'tcx> {
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
     Scheme(Generics<'tcx>, Ty<'tcx>),
-    /// pointer to a type
+    /// box pointer to a type
     /// created by box expressions
-    /// mutability inherited by the pointee?
-    /// x: T -> box x: &T
-    /// mut x: T -> box x: &mut T
-    Box(Mutability, Ty<'tcx>),
+    /// x: T => box x: &T
+    Box(Ty<'tcx>),
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
@@ -323,7 +321,7 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Param(..) => TyFlags::HAS_PARAM,
             TyKind::Error => TyFlags::HAS_ERROR,
             TyKind::Adt(_, substs) => substs.ty_flags(),
-            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(_, ty) =>
+            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(ty) =>
                 ty.ty_flags(),
             TyKind::Discr
             | TyKind::Float
@@ -344,11 +342,11 @@ impl<'tcx> Debug for TyKind<'tcx> {
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            TyKind::Box(m, ty) => write!(f, "&{}{}", m, ty),
+            TyKind::Box(ty) => write!(f, "&{}", ty),
+            TyKind::Ptr(ty) => write!(f, "*{}", ty),
             TyKind::Fn(params, ret) =>
                 write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
-            TyKind::Ptr(ty) => write!(f, "*{}", ty),
             TyKind::Array(ty, n) => write!(f, "[{};{}]", ty, n),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),

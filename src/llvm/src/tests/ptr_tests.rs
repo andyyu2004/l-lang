@@ -43,7 +43,7 @@ fn test_box_deref_assign() {
         *ptr
     }
 
-    fn mutate(ptr: &mut int) {
+    fn mutate(ptr: &int) {
         *ptr = 99;
     }
     "#;

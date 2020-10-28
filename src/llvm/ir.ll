@@ -41,22 +41,44 @@ declare void @abort()
 
 declare void @exit(i32)
 
-define i64 @"five<>"() {
+define {} @"mutate<>"(i64* %0) {
 basic_blockbb0:
-  %ret = alloca i64
-  store i64 5, i64* %ret
-  %load_ret = load i64, i64* %ret
-  ret i64 %load_ret
+  %ret = alloca {}
+  %ptr = alloca i64*
+  store i64* %0, i64** %ptr
+  %load_deref = load i64*, i64** %ptr
+  store i64 99, i64* %load_deref
+  store {} undef, {}* %ret
+  %load_ret = load {}, {}* %ret
+  ret {} %load_ret
 }
 
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %fcall = call i64 @"five<>"()
-  store i64 %fcall, i64* %ret
+  %tmp = alloca i64*
+  %ptr = alloca i64*
+  %tmp1 = alloca {}
+  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ i64, i32 }* getelementptr ({ i64, i32 }, { i64, i32 }* null, i32 1) to i32))
+  %box = bitcast i8* %malloccall to { i64, i32 }*
+  %rc_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %box, i32 0, i32 1
+  store i32 0, i32* %rc_gep
+  %box_gep = getelementptr inbounds { i64, i32 }, { i64, i32 }* %box, i32 0, i32 0
+  store i64 5, i64* %box_gep
+  store i64* %box_gep, i64** %tmp
+  %load = load i64*, i64** %tmp
+  store i64* %load, i64** %ptr
+  %load2 = load i64*, i64** %ptr
+  %fcall = call {} @"mutate<>"(i64* %load2)
+  store {} %fcall, {}* %tmp1
   br label %basic_blockbb1
 
 basic_blockbb1:                                   ; preds = %basic_blockbb0
+  %load_deref = load i64*, i64** %ptr
+  %load3 = load i64, i64* %load_deref
+  store i64 %load3, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
 }
+
+declare noalias i8* @malloc(i32)

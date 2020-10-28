@@ -7,7 +7,9 @@ fn main() -> int {
     9
 }
 
-struct S { x: int }
+struct S {
+    x: int
+}
 
 impl S {
     fn fuck() -> int {

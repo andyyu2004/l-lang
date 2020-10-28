@@ -205,12 +205,9 @@ impl<'tcx> MirCtx<'_, 'tcx> {
         let ty = self.node_ty(id);
         // rebuild the `VarRef` expressions that the upvar refers to
         let captured = box tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) };
-        // construct a mutable borrow expression to the captured upvar
-        let borrow_expr = tir::Expr {
-            span,
-            ty: self.mk_box_ty(Mutability::Mut, ty),
-            kind: tir::ExprKind::Ref(captured),
-        };
+        // construct a mutable pointer expression to the captured upvar
+        let borrow_expr =
+            tir::Expr { span, ty: self.mk_ptr_ty(ty), kind: tir::ExprKind::Ref(captured) };
         borrow_expr
     }
 }

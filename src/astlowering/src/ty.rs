@@ -19,7 +19,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             TyKind::Path(path) => ir::TyKind::Path(self.lower_qpath(path)),
             TyKind::Fn(params, ret) =>
                 ir::TyKind::Fn(self.lower_tys(params), ret.as_ref().map(|ty| self.lower_ty(ty))),
-            TyKind::Box(m, ty) => ir::TyKind::Box(*m, self.lower_ty(ty)),
+            TyKind::Box(ty) => ir::TyKind::Box(self.lower_ty(ty)),
             TyKind::Ptr(ty) => ir::TyKind::Ptr(self.lower_ty(ty)),
             TyKind::Infer => ir::TyKind::Infer,
             TyKind::Err => ir::TyKind::Err,

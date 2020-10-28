@@ -40,7 +40,7 @@ impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
             ty::Ptr(_) => todo!(),
             ty::Param(_) => todo!(),
             ty::Scheme(_, _) => todo!(),
-            ty::Box(_, _) => todo!(),
+            ty::Box(_) => todo!(),
             ty::Opaque(_, _) => todo!(),
             ty::Bool | ty::Discr | ty::Char | ty::Float | ty::Int => todo!(),
             ty::Error | ty::Never => todo!(),

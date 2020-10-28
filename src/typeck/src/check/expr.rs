@@ -53,8 +53,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_box_expr(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let ty = self.check_expr(expr);
-        // TODO unsure how to treat mutability, just setting to mutable for now
-        self.mk_box_ty(Mutability::Mut, ty)
+        self.mk_box_ty(ty)
     }
 
     fn check_field_expr(
