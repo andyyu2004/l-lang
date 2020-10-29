@@ -1,11 +1,10 @@
-extern {
-    fn print(i: int);
-}
+// extern {
+//     fn print(i: int);
+// }
 
 
 fn main() -> int {
-    S::new(5);
-    9
+    S::new(5)
 }
 
 
@@ -14,7 +13,7 @@ struct S<T> {
 }
 
 impl<T> S<T> {
-    fn new(t: T) -> Self {
+    fn new(t: T) -> S<T> {
 	Self { t }
     }
 }

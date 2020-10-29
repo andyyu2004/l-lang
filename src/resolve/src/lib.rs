@@ -43,9 +43,6 @@ pub struct Resolver<'a> {
     primitive_types: PrimitiveTypes,
     modules: IndexVec<ModuleId, &'a Module<'a>>,
     defs: Definitions<'a>,
-    /// (usize, usize) is (min, max) number of type parameters expected
-    /// (as some may be default parameters)
-    generic_arg_counts: FxHashMap<DefId, usize>,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
     partial_resolutions: FxHashMap<NodeId, PartialRes>,
@@ -57,7 +54,6 @@ pub struct Resolver<'a> {
 #[derive(Debug, Default)]
 pub struct Resolutions<'a> {
     pub defs: Definitions<'a>,
-    pub generic_arg_counts: FxHashMap<DefId, usize>,
 }
 
 impl<'a> Resolver<'a> {
@@ -66,7 +62,6 @@ impl<'a> Resolver<'a> {
             sess,
             arenas,
             modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::root()), 1),
-            generic_arg_counts: Default::default(),
             partial_resolutions: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
@@ -82,8 +77,8 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn complete(self) -> Resolutions<'a> {
-        let Resolver { defs, generic_arg_counts, .. } = self;
-        Resolutions { defs, generic_arg_counts }
+        let Resolver { defs, .. } = self;
+        Resolutions { defs }
     }
 
     pub fn find_module(&mut self, par: ModuleId, ident: Ident) -> Option<ModuleId> {
@@ -183,10 +178,6 @@ impl<'a> Resolver<'a> {
             // not sure why its resolving some stuff twice, but make sure they are consistent
             assert_eq!(partial_res, prev_res);
         }
-    }
-
-    pub fn record_generic_arg_count(&mut self, def_id: DefId, argc: usize) {
-        assert!(self.generic_arg_counts.insert(def_id, argc).is_none())
     }
 }
 

@@ -10,10 +10,6 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.with_owner(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
             let id = lctx.lower_node_id(id);
-            if let Some(generics) = item.generics() {
-                let generic_arg_count = generics.params.len();
-                lctx.resolver.record_generic_arg_count(id.def, generic_arg_count);
-            }
             let kind = match &kind {
                 ItemKind::Fn(sig, generics, expr) => {
                     if ident.symbol == sym::main {

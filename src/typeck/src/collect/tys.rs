@@ -145,7 +145,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
 
 fn collect_impl_item<'tcx>(
     tcx: TyCtx<'tcx>,
-    impl_generics: &ir::Generics,
+    impl_generics: &ir::Generics<'tcx>,
     impl_item_ref: &ir::ImplItemRef,
 ) {
     let impl_item = tcx.impl_item(impl_item_ref.id);

@@ -10,7 +10,7 @@ pub trait TyConv<'tcx> {
 
     fn infer_ty(&self, span: Span) -> Ty<'tcx>;
 
-    fn ir_ty_to_ty(&self, ir_ty: &ir::Ty) -> Ty<'tcx> {
+    fn ir_ty_to_ty(&self, ir_ty: &ir::Ty<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
             ir::TyKind::Err => tcx.mk_ty_err(),
@@ -30,25 +30,28 @@ pub trait TyConv<'tcx> {
         }
     }
 
-    fn qpath_to_ty(&self, qpath: &ir::QPath) -> Ty<'tcx> {
+    fn qpath_to_ty(&self, qpath: &ir::QPath<'tcx>) -> Ty<'tcx> {
         match qpath {
             QPath::Resolved(path) => self.path_to_ty(path),
             QPath::TypeRelative(_, _) => todo!(),
         }
     }
 
-    fn path_to_ty(&self, path: &ir::Path) -> Ty<'tcx> {
+    fn path_to_ty(&self, path: &ir::Path<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
         match path.res {
             Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident_of(def_id)),
                 DefKind::Struct | DefKind::Enum => {
-                    let expected_argc = tcx.resolutions.generic_arg_counts[&def_id];
-                    // TODO assume for now only the last path segment has generic args
-                    // this may not always be true e.g.
-                    // ADT<T, U>::method<V>();
-                    let generic_args = path.segments.last().unwrap().args;
+                    let (forall, ty) = tcx.collected_ty(def_id).expect_scheme();
+                    let expected_argc = forall.params.len();
+                    // there should only be generic args in the very last position
+                    // the previous segments should be module path, and the segments
+                    // afterwards are type relative
+                    let (last, segs) = path.segments.split_last().unwrap();
+                    self.ensure_no_generic_args(segs);
+                    let generic_args = last.args;
                     // replace each generic parameter with either an inference variable
                     // or the specified type
                     let substs = match generic_args {
@@ -63,7 +66,6 @@ pub trait TyConv<'tcx> {
                             },
                         None => tcx.mk_substs((0..expected_argc).map(|_| self.infer_ty(path.span))),
                     };
-                    let (_forall, ty) = tcx.collected_ty(def_id).expect_scheme();
                     ty.subst(tcx, substs)
                 }
                 DefKind::Ctor(..) => todo!(),
@@ -77,7 +79,15 @@ pub trait TyConv<'tcx> {
         }
     }
 
-    fn lower_generics(&self, generics: &ir::Generics) -> Generics<'tcx> {
+    fn ensure_no_generic_args(&self, segments: &[ir::PathSegment<'tcx>]) {
+        for segments in segments {
+            if segments.args.is_some() {
+                panic!()
+            }
+        }
+    }
+
+    fn lower_generics(&self, generics: &ir::Generics<'tcx>) -> Generics<'tcx> {
         let params =
             generics.params.iter().map(|&ir::TyParam { id, index, ident, span, default }| {
                 TyParam { id, span, ident, index, default: default.map(|ty| self.ir_ty_to_ty(ty)) }
@@ -85,7 +95,7 @@ pub trait TyConv<'tcx> {
         Generics { params: self.tcx().alloc_iter(params) }
     }
 
-    fn fn_sig_to_ty(&self, sig: &ir::FnSig) -> Ty<'tcx> {
+    fn fn_sig_to_ty(&self, sig: &ir::FnSig<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
         // None return type on fn sig implies unit type
         let ret_ty = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);

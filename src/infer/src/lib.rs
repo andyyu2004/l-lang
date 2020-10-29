@@ -113,6 +113,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         let mut substs = self.tcx.mk_substs((0..type_variables.storage.tyvid_count).map(|index| {
             let vid = TyVid { index };
             let val = type_variables.probe(vid);
+            println!("{} {:?}", index, val);
             match val {
                 TyVarValue::Known(ty) => type_variables.instantiate_if_known(ty),
                 TyVarValue::Unknown => {
