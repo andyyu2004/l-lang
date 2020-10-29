@@ -12,7 +12,6 @@ use rustc_hash::FxHashMap;
 use span::{sym, Span};
 use std::cell::RefCell;
 use std::ops::Deref;
-use typeck::TcxCollectExt;
 
 pub struct CodegenCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,

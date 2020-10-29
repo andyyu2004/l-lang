@@ -273,6 +273,7 @@ pub struct GlobalCtx<'tcx> {
     collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
     /// maps a types DefId to the DefId's of its inherent impl blocks
     inherent_impls: RefCell<FxHashMap<DefId, Vec<DefId>>>,
+    generics: RefCell<FxHashMap<DefId, Generics<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -293,6 +294,7 @@ impl<'tcx> GlobalCtx<'tcx> {
             sess,
             collected_tys: Default::default(),
             inherent_impls: Default::default(),
+            generics: Default::default(),
         }
     }
 
@@ -301,6 +303,7 @@ impl<'tcx> GlobalCtx<'tcx> {
     }
 }
 
+/// collection methods
 impl<'tcx> TyCtx<'tcx> {
     /// write collected ty to tcx map
     pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -317,6 +320,14 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
         self.collected_tys.borrow().get(&def_id).copied()
+    }
+
+    pub fn generics_of(self, def_id: DefId) -> Generics<'tcx> {
+        self.generics.borrow().get(&def_id).copied().unwrap()
+    }
+
+    pub fn cache_generics(self, def_id: DefId, generics: Generics<'tcx>) {
+        assert!(self.generics.borrow_mut().insert(def_id, generics).is_none());
     }
 
     // we just set the refcell once to avoid repeated borrows

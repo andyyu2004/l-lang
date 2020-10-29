@@ -67,8 +67,8 @@ impl<'tcx> TypeckTables<'tcx> {
         self.node_types().get(id).copied()
     }
 
-    pub fn type_relative_res(&self, expat: &impl ir::ExprOrPat<'tcx>) -> Res {
-        self.type_relative_resolutions().get(expat.id()).copied().unwrap()
+    pub fn type_relative_res(&self, xpat: &impl ir::ExprOrPat<'tcx>) -> Res {
+        self.type_relative_resolutions().get(xpat.id()).copied().unwrap()
     }
 
     pub fn node_types(&self) -> TableDefIdValidator<Ty<'tcx>> {

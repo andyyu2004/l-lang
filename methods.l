@@ -4,16 +4,18 @@
 
 
 fn main() -> int {
-    S::new(5)
+    let s = S::new(5, false);
+    s.u
 }
 
 
-struct S<T> {
+struct S<T, U> {
     t: T,
+    u: U,
 }
 
-impl<T> S<T> {
-    fn new(t: T) -> S<T> {
-	Self { t }
+impl<T, U> S<T, U> {
+    fn new(u: U, t: T) -> Self {
+	Self { t, u }
     }
 }

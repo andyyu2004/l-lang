@@ -1,4 +1,4 @@
-use crate::ty::*;
+use crate::ty::{self, *};
 use itertools::Itertools;
 
 pub trait TypeRelation<'tcx>: Sized {
@@ -26,8 +26,8 @@ pub trait TypeRelation<'tcx>: Sized {
                 let substs = self.relate(substsx, substsy)?;
                 Ok(tcx.mk_adt_ty(adtx, substs))
             }
-            (_, Never) => Ok(a),
-            (Never, _) => Ok(b),
+            (_, ty::Never) => Ok(a),
+            (ty::Never, _) => Ok(b),
             (Box(t), Box(u)) => self.relate(t, u),
             (Fn(a, b), Fn(t, u)) => {
                 let s = self.relate(a, t)?;

@@ -12,7 +12,6 @@ use at::At;
 use equate::Equate;
 use error::{DiagnosticBuilder, MultiSpan};
 use index::Idx;
-use instantiate::InstantiationFolder;
 use ir::{DefId, FieldIdx, Res};
 use lcore::ty::*;
 use span::Span;
@@ -113,7 +112,6 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         let mut substs = self.tcx.mk_substs((0..type_variables.storage.tyvid_count).map(|index| {
             let vid = TyVid { index };
             let val = type_variables.probe(vid);
-            println!("{} {:?}", index, val);
             match val {
                 TyVarValue::Known(ty) => type_variables.instantiate_if_known(ty),
                 TyVarValue::Unknown => {
@@ -160,10 +158,27 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
-    pub fn instantiate(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
+    /// instantiates a type scheme with a given partial substitution
+    /// the rest of the `forall` will be given fresh inference variables
+    pub fn instantiate(
+        &self,
+        span: Span,
+        ty: Ty<'tcx>,
+        partial_substs: SubstsRef<'tcx>,
+    ) -> Ty<'tcx> {
         match &ty.kind {
-            TyKind::Scheme(forall, ty) =>
-                ty.fold_with(&mut InstantiationFolder::new(self, span, forall)),
+            TyKind::Scheme(forall, ty) => {
+                let mut substs = partial_substs.to_vec();
+                // for the remaining params not covered by the partial substitution
+                // generate fresh inference variables
+                for _ in 0..forall.params.len() - substs.len() {
+                    substs.push(self.new_infer_var(span));
+                }
+                debug_assert_eq!(substs.len(), forall.params.len());
+                let substs = self.intern_substs(&substs);
+                dbg!(substs);
+                ty.subst(self.tcx, substs)
+            }
             _ => ty,
         }
     }

@@ -6,6 +6,7 @@ use mir::{TyCtxMirExt, Visitor};
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
+use typeck::TyConv;
 
 pub trait Monomorphize<'tcx> {
     fn monomorphize<T>(&self, t: T) -> T
@@ -95,9 +96,10 @@ impl<'tcx> FnVisitor<'tcx> for RootCollector<'tcx> {
         def_id: ir::DefId,
         _ident: ast::Ident,
         _sig: &'tcx ir::FnSig<'tcx>,
-        generics: &'tcx ir::Generics<'tcx>,
+        _generics: &'tcx ir::Generics<'tcx>,
         _body: &'tcx ir::Body<'tcx>,
     ) {
+        let generics = self.tcx.generics_of(def_id);
         if !generics.params.is_empty() {
             return;
         }

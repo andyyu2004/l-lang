@@ -14,10 +14,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_struct_path(
         &mut self,
-        expat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &impl ir::ExprOrPat<'tcx>,
         qpath: &ir::QPath<'tcx>,
     ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
-        let ty = self.check_qpath(expat, qpath);
+        let ty = self.check_qpath(xpat, qpath);
         let res = self.resolve_qpath(qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {
@@ -53,26 +53,53 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_qpath(
         &mut self,
-        expat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &impl ir::ExprOrPat<'tcx>,
         qpath: &QPath<'tcx>,
     ) -> Ty<'tcx> {
         match qpath {
             QPath::Resolved(path) => self.check_expr_path(path),
-            QPath::TypeRelative(ty, segment) =>
-                self.check_type_relative_path(expat, qpath, self.ir_ty_to_ty(ty), segment),
+            QPath::TypeRelative(self_ty, segment) =>
+                self.check_type_relative_path(xpat, qpath, self.ir_ty_to_ty(self_ty), segment),
         }
     }
 
     crate fn check_type_relative_path(
         &mut self,
-        expat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &impl ir::ExprOrPat<'tcx>,
         qpath: &QPath<'tcx>,
-        ty: Ty<'tcx>,
+        self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Ty<'tcx> {
-        let res = self.resolve_type_relative_path(ty, segment);
-        self.record_type_relative_res(expat.id(), res);
-        self.check_res(qpath.span(), res)
+        let res = self.resolve_type_relative_path(self_ty, segment);
+        self.record_type_relative_res(xpat.id(), res);
+        let (def_id, def_kind) = res.expect_def();
+        // these substitutions are used to partially initialize
+        // the type scheme of the resolved type
+        // consider the following example
+        // struct S<T> { t: T }
+        // impl<T> S<T> {
+        //     fn new(t: T) -> Self {
+        //         Self { t }
+        //     }
+        // }
+        // fn main() { S::new(5) }
+        //
+        // S::new will resolve to a type relative path on struct S
+        // in tyconv, we will implicitly create a new inference variable on S,
+        // S::<?0>::new
+        //
+        // S::new will resolve to the appropriate function
+        // however, if we instantiate S::new with entirely fresh inference variables like normal,
+        // it loses its connection to ?0 and we will have a false `type annotations required`
+        // error (on ?0 and S::new)
+        //
+        // the current solution to this is to pass a "partial substitution" so we
+        // instantiate the type scheme of `S::new` with ?0 instead of some new variable ?1
+        let substs = match self_ty.kind {
+            Adt(_, substs) => substs,
+            _ => todo!(),
+        };
+        self.check_res_def_with_partial_substs(qpath.span(), def_id, def_kind, substs)
     }
 
     crate fn check_expr_path(&mut self, path: &ir::Path) -> Ty<'tcx> {
@@ -90,15 +117,26 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_res_def(&mut self, span: Span, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
+    fn check_res_def_with_partial_substs(
+        &mut self,
+        span: Span,
+        def_id: DefId,
+        def_kind: DefKind,
+        partial_substs: SubstsRef<'tcx>,
+    ) -> Ty<'tcx> {
         match def_kind {
             // instantiate ty params
             DefKind::Fn
             | DefKind::AssocFn
             | DefKind::Enum
             | DefKind::Struct
-            | DefKind::Ctor(..) => self.instantiate(span, self.collected_ty(def_id)),
+            | DefKind::Ctor(..) =>
+                self.instantiate(span, self.collected_ty(def_id), partial_substs),
             DefKind::Extern | DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
         }
+    }
+
+    fn check_res_def(&mut self, span: Span, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
+        self.check_res_def_with_partial_substs(span, def_id, def_kind, Substs::empty())
     }
 }

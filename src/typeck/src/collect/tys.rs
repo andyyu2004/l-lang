@@ -89,6 +89,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
             ir::ItemKind::Fn(sig, generics, _) => {
                 let fn_ty = tcx.fn_sig_to_ty(sig);
                 let generics = tcx.lower_generics(generics);
+                tcx.cache_generics(item.id.def, generics);
                 let ty = tcx.generalize(generics, fn_ty);
                 tcx.collect_ty(item.id.def, ty);
             }
@@ -104,6 +105,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
                         ir::ForeignItemKind::Fn(sig, generics) => {
                             let fn_ty = tcx.fn_sig_to_ty(sig);
                             let generics = tcx.lower_generics(generics);
+                            tcx.cache_generics(item.id.def, generics);
                             let ty = tcx.generalize(generics, fn_ty);
                             tcx.collect_ty(foreign_item.id.def, ty);
                         }
@@ -155,6 +157,7 @@ fn collect_impl_item<'tcx>(
     let impl_generics = tcx.lower_generics(impl_generics);
     let item_generics = tcx.lower_generics(impl_item.generics);
     let generics = tcx.concat_generics(impl_generics, item_generics);
+    tcx.cache_generics(impl_item.id.def, generics);
     let generalized = tcx.generalize(generics, ty);
     tcx.collect_ty(impl_item.id.def, generalized);
 }

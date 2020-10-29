@@ -18,6 +18,15 @@ pub enum Res<Id = ir::Id> {
     SelfVal { impl_def: DefId },
 }
 
+impl<Id> Res<Id> {
+    pub fn expect_def(self) -> (DefId, DefKind) {
+        match self {
+            Res::Def(def_id, def_kind) => (def_id, def_kind),
+            _ => panic!(),
+        }
+    }
+}
+
 /// partial resolution
 /// resolves things that can be resolved early such as modules and constructor paths
 /// foo::bar or Option::Some

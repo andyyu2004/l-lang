@@ -54,10 +54,10 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
         self.tables.node_type(id)
     }
 
-    fn resolve_qpath(&self, expat: &impl ir::ExprOrPat<'tcx>, qpath: &ir::QPath<'tcx>) -> Res {
+    fn resolve_qpath(&self, xpat: &impl ir::ExprOrPat<'tcx>, qpath: &ir::QPath<'tcx>) -> Res {
         match qpath {
             ir::QPath::Resolved(path) => path.res,
-            ir::QPath::TypeRelative(..) => self.tables.type_relative_res(expat),
+            ir::QPath::TypeRelative(..) => self.tables.type_relative_res(xpat),
         }
     }
 

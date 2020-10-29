@@ -44,7 +44,8 @@ pub trait TyConv<'tcx> {
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident_of(def_id)),
                 DefKind::Struct | DefKind::Enum => {
-                    let (forall, ty) = tcx.collected_ty(def_id).expect_scheme();
+                    let ty = tcx.collected_ty(def_id);
+                    let (forall, adt_ty) = ty.expect_scheme();
                     let expected_argc = forall.params.len();
                     // there should only be generic args in the very last position
                     // the previous segments should be module path, and the segments
@@ -64,9 +65,10 @@ pub trait TyConv<'tcx> {
                             } else {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
                             },
-                        None => tcx.mk_substs((0..expected_argc).map(|_| self.infer_ty(path.span))),
+                        None =>
+                            tcx.mk_substs(forall.params.iter().map(|_| self.infer_ty(path.span))),
                     };
-                    ty.subst(tcx, substs)
+                    adt_ty.subst(tcx, substs)
                 }
                 DefKind::Ctor(..) => todo!(),
                 DefKind::AssocFn | DefKind::Impl | DefKind::Fn => todo!(),
