@@ -30,19 +30,21 @@ impl<'tcx> DefMap<'tcx> {
 
     pub fn span(&self, def_id: DefId) -> Span {
         match self.get(def_id) {
-            ir::DefNode::Item(item) => item.span,
-            ir::DefNode::ImplItem(_) => todo!(),
-            ir::DefNode::ForeignItem(item) => item.span,
-            ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => variant.span,
+            DefNode::Item(item) => item.span,
+            DefNode::ImplItem(_) => todo!(),
+            DefNode::ForeignItem(item) => item.span,
+            DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => variant.span,
+            DefNode::TyParam(param) => param.span,
         }
     }
 
     pub fn ident_of(&self, def_id: DefId) -> Ident {
         match self.get(def_id) {
-            ir::DefNode::Item(item) => item.ident,
-            ir::DefNode::ImplItem(impl_item) => impl_item.ident,
-            ir::DefNode::ForeignItem(foreign_item) => foreign_item.ident,
-            ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => {
+            DefNode::TyParam(param) => param.ident,
+            DefNode::Item(item) => item.ident,
+            DefNode::ImplItem(impl_item) => impl_item.ident,
+            DefNode::ForeignItem(foreign_item) => foreign_item.ident,
+            DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => {
                 let adt_ident = self.ident_of(variant.adt_def_id);
                 adt_ident.concat_as_path(variant.ident)
             }

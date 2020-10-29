@@ -61,7 +61,7 @@ pub struct Ir<'ir> {
     /// `DefId` of the entry/main function
     pub entry_id: Option<DefId>,
     pub items: BTreeMap<DefId, ir::Item<'ir>>,
-    pub impl_items: BTreeMap<ImplItemId, ImplItem<'ir>>,
+    pub impl_items: BTreeMap<ImplItemId, ir::ImplItem<'ir>>,
 }
 
 index::newtype_index!(

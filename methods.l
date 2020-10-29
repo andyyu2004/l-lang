@@ -2,17 +2,19 @@ extern {
     fn print(i: int);
 }
 
+
 fn main() -> int {
-    print(S::fuck());
+    S::new(5);
     9
 }
 
-struct S {
-    x: int
+
+struct S<T> {
+    t: T,
 }
 
-impl S {
-    fn fuck() -> int {
-	5
+impl<T> S<T> {
+    fn new(t: T) -> Self {
+	Self { t }
     }
 }

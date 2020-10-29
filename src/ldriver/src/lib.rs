@@ -31,7 +31,7 @@ use typeck::TcxCollectExt;
 
 pub fn main() -> ! {
     let _ = std::fs::remove_file("log.txt");
-    simple_logging::log_to_file("log.txt", LevelFilter::Info).unwrap();
+    simple_logging::log_to_file("log.txt", LevelFilter::Trace).unwrap();
 
     let yaml = clap::load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();

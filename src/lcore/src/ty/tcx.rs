@@ -117,8 +117,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Box(ty))
     }
 
-    pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Param(ParamTy { def_id, idx }))
+    pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx, ident: Ident) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Param(ParamTy { def_id, idx, ident }))
     }
 
     /// returns the new type after applying a projection
@@ -148,6 +148,16 @@ impl<'tcx> TyCtx<'tcx> {
         I: Iterator<Item = Ty<'tcx>>,
     {
         self.mk_tup(self.mk_substs(iter))
+    }
+
+    pub fn concat_generics(
+        self,
+        g: ty::Generics<'tcx>,
+        h: ty::Generics<'tcx>,
+    ) -> ty::Generics<'tcx> {
+        let mut params = g.params.to_vec();
+        params.extend(h.params);
+        ty::Generics { params: self.alloc_iter(params) }
     }
 
     pub fn mk_ty_err(self) -> Ty<'tcx> {
@@ -294,7 +304,7 @@ impl<'tcx> GlobalCtx<'tcx> {
 impl<'tcx> TyCtx<'tcx> {
     /// write collected ty to tcx map
     pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        debug!("collect item {}: {}", def, ty);
+        info!("collect item {}: {}", def, ty);
         assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
         ty
     }
@@ -316,7 +326,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn inherent_impls_of_def(self, def_id: DefId) -> Vec<DefId> {
-        self.inherent_impls.borrow()[&def_id].to_vec()
+        self.inherent_impls.borrow().get(&def_id).cloned().unwrap_or_else(Vec::new)
     }
 }
 

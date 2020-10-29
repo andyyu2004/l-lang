@@ -372,19 +372,32 @@ impl<'tcx> Display for TyParam<'tcx> {
 
 impl<'tcx> Display for Generics<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "τ{}", util::join2(self.params.iter(), ","))
+        write!(f, "{}", util::join2(self.params.iter(), ","))
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ParamTy {
     pub def_id: DefId,
     pub idx: ParamIdx,
+    pub ident: Ident,
+}
+
+impl Ord for ParamTy {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.idx.cmp(&other.idx)
+    }
+}
+
+impl PartialOrd for ParamTy {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.idx.partial_cmp(&other.idx)
+    }
 }
 
 impl Display for ParamTy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "τ{}", self.idx)
+        write!(f, "{}", self.ident)
     }
 }
 

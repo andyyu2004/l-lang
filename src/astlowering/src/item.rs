@@ -52,7 +52,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     /// inserts DefId -> DefNode mapping into the `DefMap`
     /// returns the same T for convenience
-    fn def_node<T>(&mut self, def_id: DefId, node: T) -> T
+    crate fn def_node<T>(&mut self, def_id: DefId, node: T) -> T
     where
         T: Into<DefNode<'ir>> + Copy,
     {

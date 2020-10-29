@@ -48,7 +48,7 @@ impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
                     build_mir(self, def_id, sig, item.generics, body),
             },
             ir::DefNode::ForeignItem(_) => todo!(),
-            ir::DefNode::Variant(_) => panic!(),
+            ir::DefNode::Variant(_) | ir::DefNode::TyParam(_) => panic!(),
         }
     }
 

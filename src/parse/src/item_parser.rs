@@ -87,10 +87,11 @@ impl<'a> Parse<'a> for ImplParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = parser.parse_generics()?;
-        let mut trait_path = Some(parser.parse_path()?);
+        let mut trait_path = Some(parser.parse_type_path()?);
         let self_ty = if parser.accept(TokenType::For).is_some() {
             parser.parse_ty(false)
         } else {
+            // reinterpret the trait path as the self type
             let ty_path = trait_path.take().unwrap();
             parser.mk_ty(ty_path.span, TyKind::Path(ty_path))
         };
@@ -242,7 +243,6 @@ impl<'a> Parse<'a> for FnParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     macro parse($src:expr) {{
         let driver = ldriver::Driver::new($src);

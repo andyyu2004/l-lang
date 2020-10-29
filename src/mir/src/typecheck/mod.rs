@@ -73,6 +73,5 @@ impl<'a, 'tcx> Visitor<'tcx> for Typechecker<'a, 'tcx> {
         let lvalue_ty = self.lvalue_ty(lvalue);
         let rvalue_ty = self.rvalue_ty(rvalue);
         assert_eq!(lvalue_ty, rvalue_ty);
-        dbg!(lvalue_ty);
     }
 }

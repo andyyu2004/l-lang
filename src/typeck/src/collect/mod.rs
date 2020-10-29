@@ -4,14 +4,13 @@
 mod inherent;
 mod tys;
 
-use crate::TyConv;
-use lcore::ty::{Ty, TyCtx};
+use lcore::ty::{self, Ty, TyCtx};
 
 /// stateful queries that populate the inner data structures of the typing context
 pub trait TcxCollectExt<'tcx> {
     fn collect_item_types(self);
     fn collect_inherent_impls(self);
-    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx>;
+    fn generalize(self, generics: ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx>;
 }
 
 impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
@@ -20,8 +19,7 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
         tys::collect(self);
     }
 
-    fn generalize(self, generics: &ir::Generics, ty: Ty<'tcx>) -> Ty<'tcx> {
-        let generics = self.lower_generics(generics);
+    fn generalize(self, generics: ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty_scheme(generics, ty)
     }
 

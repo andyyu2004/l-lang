@@ -53,7 +53,6 @@ impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
 
     fn resolve(mut self) -> Res {
         self.collect_inherent_candidates();
-        dbg!(&self.inherent_candidates);
         self.resolve_candidates()
     }
 
@@ -62,6 +61,8 @@ impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
         if self.inherent_candidates.len() == 1 {
             let selected = self.inherent_candidates.pop().unwrap();
             Res::Def(selected.def_id, selected.def_kind)
+        } else if self.inherent_candidates.len() < 1 {
+            panic!("no candidates found")
         } else {
             todo!("more than one candidate")
         }

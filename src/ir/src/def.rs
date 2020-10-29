@@ -167,11 +167,18 @@ pub enum DefNode<'ir> {
     /// the node is considered a ctor iff it is a tuple variant
     Ctor(ir::Variant<'ir>),
     Variant(ir::Variant<'ir>),
+    TyParam(&'ir ir::TyParam<'ir>),
 }
 
 impl<'ir> Into<DefNode<'ir>> for ir::Item<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::Item(self)
+    }
+}
+
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::TyParam<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        DefNode::TyParam(self)
     }
 }
 

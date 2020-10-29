@@ -52,7 +52,8 @@ impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
                 let variant_ty = tcx.variant_ty(item.ident, None, variant_kind);
                 let adt_ty = tcx.mk_struct_ty(item.id.def, item.ident, variant_ty);
                 self.adts.push(adt_ty);
-                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
+                let generics = tcx.lower_generics(generics);
+                let substs = Substs::id_for_generics(tcx, generics);
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.collect_ty(item.id.def, tcx.generalize(generics, ty));
             }
@@ -66,7 +67,8 @@ impl<'tcx> ir::Visitor<'tcx> for AdtCollector<'tcx> {
 
                 let adt_ty = tcx.mk_enum_ty(item.id.def, item.ident, variant_tys);
                 self.adts.push(adt_ty);
-                let substs = Substs::id_for_generics(tcx, tcx.lower_generics(generics));
+                let generics = tcx.lower_generics(generics);
+                let substs = Substs::id_for_generics(tcx, generics);
                 let ty = tcx.mk_adt_ty(adt_ty, substs);
                 tcx.collect_ty(item.id.def, tcx.generalize(generics, ty));
                 self.check_adt_variants(adt_ty);
@@ -86,12 +88,13 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
         match &item.kind {
             ir::ItemKind::Fn(sig, generics, _) => {
                 let fn_ty = tcx.fn_sig_to_ty(sig);
+                let generics = tcx.lower_generics(generics);
                 let ty = tcx.generalize(generics, fn_ty);
                 tcx.collect_ty(item.id.def, ty);
             }
-            ir::ItemKind::Impl { generics: _, trait_path: _, self_ty: _, impl_item_refs } => {
+            ir::ItemKind::Impl { generics, trait_path: _, self_ty: _, impl_item_refs } => {
                 for impl_item_ref in *impl_item_refs {
-                    collect_impl_item(tcx, impl_item_ref);
+                    collect_impl_item(tcx, generics, impl_item_ref);
                 }
                 return;
             }
@@ -100,6 +103,7 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
                     match foreign_item.kind {
                         ir::ForeignItemKind::Fn(sig, generics) => {
                             let fn_ty = tcx.fn_sig_to_ty(sig);
+                            let generics = tcx.lower_generics(generics);
                             let ty = tcx.generalize(generics, fn_ty);
                             tcx.collect_ty(foreign_item.id.def, ty);
                         }
@@ -139,11 +143,18 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
     }
 }
 
-fn collect_impl_item<'tcx>(tcx: TyCtx<'tcx>, impl_item_ref: &ir::ImplItemRef) {
+fn collect_impl_item<'tcx>(
+    tcx: TyCtx<'tcx>,
+    impl_generics: &ir::Generics,
+    impl_item_ref: &ir::ImplItemRef,
+) {
     let impl_item = tcx.impl_item(impl_item_ref.id);
     let ty = match impl_item.kind {
         ir::ImplItemKind::Fn(sig, _) => tcx.fn_sig_to_ty(sig),
     };
-    let generalized = tcx.generalize(impl_item.generics, ty);
+    let impl_generics = tcx.lower_generics(impl_generics);
+    let item_generics = tcx.lower_generics(impl_item.generics);
+    let generics = tcx.concat_generics(impl_generics, item_generics);
+    let generalized = tcx.generalize(generics, ty);
     tcx.collect_ty(impl_item.id.def, generalized);
 }

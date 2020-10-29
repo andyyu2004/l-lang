@@ -1,6 +1,6 @@
 use self::mir::MirTy;
 use crate::*;
-use ast::{BinOp, Mutability};
+use ast::BinOp;
 use index::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
 use inkwell::types::BasicType;

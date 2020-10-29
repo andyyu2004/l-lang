@@ -51,7 +51,7 @@ pub type Substs<'tcx> = List<Ty<'tcx>>;
 impl<'tcx> Substs<'tcx> {
     /// crates an identity substitution given the generics for some item
     pub fn id_for_generics(tcx: TyCtx<'tcx>, generics: Generics) -> SubstsRef<'tcx> {
-        let params = generics.params.iter().map(|p| tcx.mk_ty_param(p.id.def, p.index));
+        let params = generics.params.iter().map(|p| tcx.mk_ty_param(p.id.def, p.index, p.ident));
         tcx.mk_substs(params)
     }
 }
