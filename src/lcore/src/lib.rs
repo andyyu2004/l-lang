@@ -15,6 +15,7 @@ mod arena;
 mod interners;
 mod ir_map;
 pub mod mir;
+pub mod queries;
 pub mod ty;
 
 pub use crate::arena::{Arena, ArenaAllocatable};

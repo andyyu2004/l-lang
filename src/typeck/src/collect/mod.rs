@@ -2,7 +2,7 @@
 //! this includes type collection, and impl collection
 
 mod inherent;
-mod tys;
+pub mod tys;
 
 use lcore::ty::{self, Ty, TyCtx};
 

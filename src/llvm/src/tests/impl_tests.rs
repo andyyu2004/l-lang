@@ -18,7 +18,7 @@ fn associated_fn() {
 }
 
 #[test]
-fn e() {
+fn generic_impl() {
     let src = r#"
     fn main() -> int {
         let s = S::new(5, false);

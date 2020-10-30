@@ -1,5 +1,8 @@
+#![feature(crate_visibility_modifier)]
 #![feature(once_cell)]
 #![feature(decl_macro)]
+
+mod queries;
 
 #[macro_use]
 extern crate colour;
@@ -142,7 +145,8 @@ impl<'tcx> Driver<'tcx> {
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, resolutions) = self.gen_ir()?;
         let gcx = self.global_ctx.get_or_init(|| {
-            let gcx = GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess);
+            let gcx =
+                GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess, queries::queries());
             self.init_gcx(&gcx);
             gcx
         });
@@ -150,7 +154,8 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ret)
     }
 
-    // run all the necessary passes to initialize the context
+    /// run all the necessary passes to initialize the context
+    // we put this code here as it reference crates that depend on lcore
     fn init_gcx(&self, gcx: &GlobalCtx<'tcx>) {
         gcx.enter_tcx(|tcx| {
             tcx.collect_item_types();

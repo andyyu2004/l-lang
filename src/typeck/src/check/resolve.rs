@@ -1,9 +1,9 @@
 //! resolves methods and associated functions relative to a type
 
-use crate::FnCtx;
+use crate::{FnCtx, TcxTypeofExt};
 use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
-use lcore::ty::{self, Ty};
+use lcore::ty::{self, Subst, SubstsRef, Ty};
 use std::ops::Deref;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -32,7 +32,7 @@ impl<'tcx> Candidate<'tcx> {
 
 crate struct ResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
-    base_ty: Ty<'tcx>,
+    self_ty: Ty<'tcx>,
     ident: Ident,
     inherent_candidates: Vec<Candidate<'tcx>>,
 }
@@ -42,12 +42,12 @@ trait InherentCandidates<'tcx> {
 }
 
 impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
-    fn new(fcx: &'a FnCtx<'a, 'tcx>, base_ty: Ty<'tcx>, ident: Ident) -> Self {
-        Self { fcx, base_ty, ident, inherent_candidates: Default::default() }
+    fn new(fcx: &'a FnCtx<'a, 'tcx>, self_ty: Ty<'tcx>, ident: Ident) -> Self {
+        Self { fcx, self_ty, ident, inherent_candidates: Default::default() }
     }
 
     fn collect_inherent_candidates(&mut self) {
-        let ty = self.base_ty;
+        let ty = self.self_ty;
         ty.inherent_candidates(self)
     }
 
@@ -71,6 +71,10 @@ impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
     fn add_candidate(&mut self, candidate: Candidate<'tcx>) {
         self.inherent_candidates.push(candidate);
     }
+
+    fn impl_ty_and_substs(&self, impl_def_id: DefId) -> (Ty<'tcx>, SubstsRef<'tcx>) {
+        (self.type_of(impl_def_id), self.fresh_substs_for_item(impl_def_id))
+    }
 }
 
 impl<'tcx> InherentCandidates<'tcx> for Ty<'tcx> {
@@ -85,8 +89,12 @@ impl<'tcx> InherentCandidates<'tcx> for Ty<'tcx> {
 impl<'tcx> InherentCandidates<'tcx> for DefId {
     fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
         let inherent_impls = rcx.inherent_impls_of_def(*self);
+
         for impl_def_id in inherent_impls {
             let impl_block = rcx.ir.items[&impl_def_id];
+            // let (impl_self_ty, impl_substs) = rcx.impl_ty_and_substs(impl_def_id);
+            // let _impl_self_ty = impl_self_ty.subst(rcx.tcx, impl_substs);
+
             match impl_block.kind {
                 ir::ItemKind::Impl { impl_item_refs, .. } =>
                     impl_item_refs.inherent_candidates(rcx),

@@ -2,7 +2,7 @@
 
 use crate::{TcxCollectExt, TyConv};
 use ir::Visitor;
-use lcore::ty::{AdtTy, Substs, TyCtx};
+use lcore::ty::{self, AdtTy, Substs, TyCtx};
 
 crate fn collect<'tcx>(tcx: TyCtx<'tcx>) {
     // we must do this in multiple phases as functions
@@ -94,8 +94,10 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
                 tcx.collect_ty(item.id.def, ty);
             }
             ir::ItemKind::Impl { generics, trait_path: _, self_ty: _, impl_item_refs } => {
+                let impl_generics = tcx.lower_generics(generics);
+                tcx.cache_generics(item.id.def, impl_generics);
                 for impl_item_ref in *impl_item_refs {
-                    collect_impl_item(tcx, generics, impl_item_ref);
+                    collect_impl_item(tcx, impl_generics, impl_item_ref);
                 }
                 return;
             }
@@ -147,14 +149,13 @@ impl<'tcx> ir::Visitor<'tcx> for FnCollector<'tcx> {
 
 fn collect_impl_item<'tcx>(
     tcx: TyCtx<'tcx>,
-    impl_generics: &ir::Generics<'tcx>,
+    impl_generics: ty::Generics<'tcx>,
     impl_item_ref: &ir::ImplItemRef,
 ) {
     let impl_item = tcx.impl_item(impl_item_ref.id);
     let ty = match impl_item.kind {
         ir::ImplItemKind::Fn(sig, _) => tcx.fn_sig_to_ty(sig),
     };
-    let impl_generics = tcx.lower_generics(impl_generics);
     let item_generics = tcx.lower_generics(impl_item.generics);
     let generics = tcx.concat_generics(impl_generics, item_generics);
     tcx.cache_generics(impl_item.id.def, generics);

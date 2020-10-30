@@ -19,3 +19,9 @@ impl<T, U> S<T, U> {
 	Self { t, u }
     }
 }
+
+impl S<int, int> {
+    fn new(u: int, t: int) -> Self {
+	Self { t, u }
+    }
+}

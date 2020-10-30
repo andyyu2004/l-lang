@@ -227,3 +227,12 @@ impl<'tcx> TyCtxtInferExt<'tcx> for TyCtx<'tcx> {
         InferCtxBuilder::new(self, def_id)
     }
 }
+
+impl<'a, 'tcx> InferCtx<'a, 'tcx> {
+    pub fn fresh_substs_for_item(&self, def_id: DefId) -> SubstsRef<'tcx> {
+        let generics = self.generics_of(def_id);
+        let span = self.defs().span(def_id);
+        let params = generics.params.iter().map(|_| self.new_infer_var(span));
+        self.mk_substs(params)
+    }
+}

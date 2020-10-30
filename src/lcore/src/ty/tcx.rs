@@ -1,3 +1,4 @@
+use crate::queries::Queries;
 use crate::ty::*;
 use crate::*;
 use ast::Ident;
@@ -25,6 +26,7 @@ pub mod tls {
     thread_local! (static GCX: Cell<usize> = Cell::new(0));
 
     crate fn enter_tcx<'tcx, R>(gcx: &GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+        // permanently sets the pointer
         GCX.with(|ptr| ptr.set(gcx as *const _ as _));
         with_tcx(f)
     }
@@ -268,7 +270,10 @@ pub struct GlobalCtx<'tcx> {
     pub ir: &'tcx ir::Ir<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub resolutions: Resolutions<'tcx>,
+    queries: Queries<'tcx>,
     interners: CtxInterners<'tcx>,
+    // caches below
+    // these should be populated during collection
     /// maps an item's DefId to its type
     collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
     /// maps a types DefId to the DefId's of its inherent impl blocks
@@ -282,6 +287,7 @@ impl<'tcx> GlobalCtx<'tcx> {
         arena: &'tcx Arena<'tcx>,
         resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,
+        queries: Queries<'tcx>,
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
@@ -292,6 +298,7 @@ impl<'tcx> GlobalCtx<'tcx> {
             interners,
             resolutions,
             sess,
+            queries,
             collected_tys: Default::default(),
             inherent_impls: Default::default(),
             generics: Default::default(),
@@ -383,5 +390,13 @@ impl<'tcx> Deref for TyCtx<'tcx> {
 
     fn deref(&self) -> &Self::Target {
         &self.gcx
+    }
+}
+
+impl<'tcx> Deref for GlobalCtx<'tcx> {
+    type Target = Queries<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.queries
     }
 }

@@ -12,7 +12,7 @@ mod tests;
 mod autoderef;
 mod check;
 mod coherence;
-mod collect;
+pub mod collect;
 mod tyconv;
 mod type_of;
 mod upvars;

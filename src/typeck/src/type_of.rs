@@ -45,6 +45,6 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
             ir::ForeignItemKind::Fn(sig, ..) => tcx.fn_sig_to_ty(sig),
         },
         ir::DefNode::Ctor(..) => tcx.collected_ty(def_id),
-        ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) => panic!(),
+        ir::DefNode::Variant(..) | ir::DefNode::TyParam(_) => panic!(),
     }
 }
