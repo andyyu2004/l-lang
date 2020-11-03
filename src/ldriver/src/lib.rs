@@ -14,7 +14,6 @@ use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
-use index::Idx;
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
 use inkwell::OptimizationLevel;
@@ -28,8 +27,12 @@ use resolve::Resolutions;
 use resolve::Resolver;
 use resolve::ResolverArenas;
 use session::Session;
-use span::{FileIdx, SourceMap, SPAN_GLOBALS};
+use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
+use std::env::temp_dir;
+use std::fs::File;
+use std::io::Write;
 use std::lazy::OnceCell;
+use std::path::Path;
 use std::rc::Rc;
 use typeck::TcxCollectExt;
 
@@ -45,9 +48,7 @@ pub fn main() -> ! {
     // TODO take optimization level as parameter
 
     let path = matches.value_of("INPUT").unwrap();
-    let src = std::fs::read_to_string(path).unwrap();
-
-    let driver = Driver::new(&src);
+    let driver = Driver::new(path);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),
         Err(..) => std::process::exit(1),
@@ -94,9 +95,21 @@ macro check_errors($self:expr, $ret:expr) {{
 }}
 
 impl<'tcx> Driver<'tcx> {
-    pub fn new(src: &str) -> Self {
+    /// creates a temporary file and proceeds as usual
+    pub fn from_src(src: &str) -> Self {
+        let mut path = temp_dir();
+        // a crude attempt at making the file name sufficiently unique
+        // to avoid the tests overwriting each other's files
+        path.push(format!("tmp{}.l", src.len()));
+        dbg!(&path);
+        let mut file = File::create(&path).unwrap();
+        file.write(src.as_bytes()).unwrap();
+        Self::new(path)
+    }
+
+    pub fn new(path: impl AsRef<Path>) -> Self {
         SPAN_GLOBALS
-            .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(src))));
+            .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(path))));
         Self {
             resolver_arenas: Default::default(),
             core_arena: Default::default(),
@@ -109,7 +122,7 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
         // assume one file for now
-        let mut parser = Parser::new(&self.sess, FileIdx::new(1));
+        let mut parser = Parser::new(&self.sess, ROOT_FILE_IDX);
         let ast = parser.parse();
         // error!("{:#?}", ast);
         check_errors!(self, ast.unwrap())
@@ -180,13 +193,13 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn lex(&self) -> LResult<Vec<Tok>> {
         let mut lexer = Lexer::new();
-        let tokens = lexer.lex(FileIdx::new(1));
+        let tokens = lexer.lex(ROOT_FILE_IDX);
         Ok(tokens)
     }
 
     /// used for testing parsing
     pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
-        let mut parser = Parser::new(&self.sess, FileIdx::new(1));
+        let mut parser = Parser::new(&self.sess, ROOT_FILE_IDX);
         let expr = parser.parse_expr();
         match &expr.kind {
             ExprKind::Err => None,

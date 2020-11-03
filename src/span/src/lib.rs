@@ -8,7 +8,7 @@ extern crate macros;
 mod source_map;
 mod symbol;
 
-pub use source_map::{FileIdx, SourceMap};
+pub use source_map::{FileIdx, SourceMap, ROOT_FILE_IDX};
 pub use symbol::{kw, sym, Symbol};
 
 use codespan::ByteIndex;
@@ -43,7 +43,7 @@ pub struct Span {
 
 impl Default for Span {
     fn default() -> Self {
-        Self { file: FileIdx::new(0), span: Default::default() }
+        Self { file: ROOT_FILE_IDX, span: Default::default() }
     }
 }
 

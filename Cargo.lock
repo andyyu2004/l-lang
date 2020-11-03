@@ -247,6 +247,7 @@ dependencies = [
  "codespan-reporting",
  "colour",
  "span",
+ "termcolor",
 ]
 
 [[package]]

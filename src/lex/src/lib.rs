@@ -1,6 +1,5 @@
 mod lexing;
 
-use index::Idx;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use lexing::TokenKind;
@@ -42,11 +41,11 @@ pub struct Tok {
     pub ttype: TokenType,
 }
 
-pub struct Lexer;
+pub struct Lexer {}
 
 impl Lexer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// transforms the rustc token with len into one with span

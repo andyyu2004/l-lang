@@ -56,28 +56,11 @@ basic_blockbb0:
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %tmp = alloca %"S<>"
-  %s = alloca %"S<>"
-  %x = alloca i64
-  %y = alloca i64
-  %struct_gep = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 0
-  store i1 false, i1* %struct_gep
-  %struct_gep1 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 1
-  store i64 9, i64* %struct_gep1
-  %struct_gep2 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 2
-  store i64 7, i64* %struct_gep2
-  %load = load %"S<>", %"S<>"* %tmp
-  store %"S<>" %load, %"S<>"* %s
-  %struct_gep3 = getelementptr inbounds %"S<>", %"S<>"* %s, i32 0, i32 1
-  %load4 = load i64, i64* %struct_gep3
-  store i64 %load4, i64* %x
-  %struct_gep5 = getelementptr inbounds %"S<>", %"S<>"* %s, i32 0, i32 2
-  %load6 = load i64, i64* %struct_gep5
-  store i64 %load6, i64* %y
-  %load7 = load i64, i64* %x
-  %load8 = load i64, i64* %y
-  %isub = sub i64 %load7, %load8
-  store i64 %isub, i64* %ret
+  store i64 9, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
+
+basic_blockbb1:                                   ; No predecessors!
+  %load_ret1 = load i64, i64* %ret
+  ret i64 %load_ret1
 }

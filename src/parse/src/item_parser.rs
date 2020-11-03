@@ -245,7 +245,7 @@ mod tests {
     use super::*;
 
     macro parse($src:expr) {{
-        let driver = ldriver::Driver::new($src);
+        let driver = ldriver::Driver::from_src($src);
         driver.parse().unwrap()
     }}
 

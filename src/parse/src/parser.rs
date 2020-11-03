@@ -20,7 +20,6 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     pub fn new(sess: &'a Session, file: FileIdx) -> Self {
         let tokens = Lexer::new().lex(file);
-        dbg!(&tokens);
         Self { tokens: tokens.into_iter().collect(), file, idx: 0, id_counter: Cell::new(0), sess }
     }
 
@@ -127,7 +126,7 @@ impl<'a> Parser<'a> {
     pub fn parse_expr(&mut self) -> P<Expr> {
         ExprParser.parse(self).unwrap_or_else(|err| {
             err.emit();
-            self.mk_expr(err.get_span(), ExprKind::Err)
+            self.mk_expr(err.get_first_span(), ExprKind::Err)
         })
     }
 
@@ -142,7 +141,7 @@ impl<'a> Parser<'a> {
     pub fn parse_ty(&mut self, allow_infer: bool) -> P<Ty> {
         TyParser { allow_infer }.parse(self).unwrap_or_else(|err| {
             err.emit();
-            self.mk_ty(err.get_span(), TyKind::Err)
+            self.mk_ty(err.get_first_span(), TyKind::Err)
         })
     }
 

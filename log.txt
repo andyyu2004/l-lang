@@ -1,33 +1,23 @@
-[00:00:00.013] (7f05ac1b2940) DEBUG  resolved node NodeId(4) to PartialRes { resolved: Def(5, Struct), unresolved: 0 }
-[00:00:00.013] (7f05ac1b2940) DEBUG  resolved node NodeId(12) to PartialRes { resolved: Def(2, TyParam(0)), unresolved: 0 }
-[00:00:00.013] (7f05ac1b2940) DEBUG  resolved node NodeId(19) to PartialRes { resolved: PrimTy(Bool), unresolved: 0 }
-[00:00:00.013] (7f05ac1b2940) DEBUG  resolved node NodeId(23) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.013] (7f05ac1b2940) DEBUG  resolved node NodeId(27) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(32) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(38) to PartialRes { resolved: Def(5, Struct), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(54) to PartialRes { resolved: Local(NodeId(36)), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(49) to PartialRes { resolved: Def(5, Struct), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(59) to PartialRes { resolved: Local(NodeId(50)), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  resolved node NodeId(62) to PartialRes { resolved: Local(NodeId(51)), unresolved: 0 }
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath S
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath T
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath bool
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath int
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath int
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath S
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath S
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath s
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath x
-[00:00:00.014] (7f05ac1b2940) DEBUG  qpath y
-[00:00:00.015] (7f05ac1b2940) DEBUG  qpath int
-[00:00:00.015] (7f05ac1b2940) DEBUG  Ir {
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(4) to PartialRes { resolved: Def(5, Struct), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(12) to PartialRes { resolved: Def(2, TyParam(0)), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(19) to PartialRes { resolved: PrimTy(Bool), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(23) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(27) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  resolved node NodeId(32) to PartialRes { resolved: PrimTy(Int), unresolved: 0 }
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath S
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath T
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath bool
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath int
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath int
+[00:00:00.002] (7f2cd7d88940) DEBUG  qpath int
+[00:00:00.003] (7f2cd7d88940) DEBUG  Ir {
     entry_id: Some(
         6,
     ),
     items: {
         0: Item {
             span: Span {
-                file: 1,
+                file: 0,
                 span: Span {
                     start: ByteIndex(1),
                     end: ByteIndex(14),
@@ -36,7 +26,7 @@
             id: 0.0,
             vis: Spanned {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(1),
                         end: ByteIndex(1),
@@ -46,7 +36,7 @@
             },
             ident: Ident {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(4),
                         end: ByteIndex(5),
@@ -60,7 +50,7 @@
                         Ty {
                             id: 0.6,
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(9),
                                     end: ByteIndex(10),
@@ -70,7 +60,7 @@
                                 Resolved(
                                     Path {
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(9),
                                                 end: ByteIndex(10),
@@ -84,7 +74,7 @@
                                             PathSegment {
                                                 ident: Ident {
                                                     span: Span {
-                                                        file: 1,
+                                                        file: 0,
                                                         span: Span {
                                                             start: ByteIndex(9),
                                                             end: ByteIndex(10),
@@ -105,7 +95,7 @@
                 },
                 Generics {
                     span: Span {
-                        file: 1,
+                        file: 0,
                         span: Span {
                             start: ByteIndex(5),
                             end: ByteIndex(5),
@@ -117,7 +107,7 @@
                     params: [
                         Param {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(6),
                                     end: ByteIndex(10),
@@ -127,7 +117,7 @@
                             pat: Pattern {
                                 id: 0.2,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(6),
                                         end: ByteIndex(7),
@@ -136,7 +126,7 @@
                                 kind: Binding(
                                     Ident {
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(6),
                                                 end: ByteIndex(7),
@@ -152,7 +142,7 @@
                     ],
                     expr: Expr {
                         span: Span {
-                            file: 1,
+                            file: 0,
                             span: Span {
                                 start: ByteIndex(12),
                                 end: ByteIndex(14),
@@ -164,7 +154,7 @@
                                 id: 0.3,
                                 is_unsafe: false,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(12),
                                         end: ByteIndex(14),
@@ -180,7 +170,7 @@
         },
         1: Item {
             span: Span {
-                file: 1,
+                file: 0,
                 span: Span {
                     start: ByteIndex(16),
                     end: ByteIndex(57),
@@ -189,7 +179,7 @@
             id: 1.0,
             vis: Spanned {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(16),
                         end: ByteIndex(16),
@@ -199,7 +189,7 @@
             },
             ident: Ident {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(21),
                         end: ByteIndex(27),
@@ -210,7 +200,7 @@
             kind: Enum(
                 Generics {
                     span: Span {
-                        file: 1,
+                        file: 0,
                         span: Span {
                             start: ByteIndex(27),
                             end: ByteIndex(30),
@@ -219,7 +209,7 @@
                     params: [
                         TyParam {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(28),
                                     end: ByteIndex(29),
@@ -228,7 +218,7 @@
                             id: 2.0,
                             ident: Ident {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(28),
                                         end: ByteIndex(29),
@@ -246,7 +236,7 @@
                         id: 3.0,
                         ident: Ident {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(37),
                                     end: ByteIndex(41),
@@ -255,7 +245,7 @@
                             symbol: Some,
                         },
                         span: Span {
-                            file: 1,
+                            file: 0,
                             span: Span {
                                 start: ByteIndex(37),
                                 end: ByteIndex(44),
@@ -267,7 +257,7 @@
                             [
                                 FieldDecl {
                                     span: Span {
-                                        file: 1,
+                                        file: 0,
                                         span: Span {
                                             start: ByteIndex(42),
                                             end: ByteIndex(43),
@@ -275,7 +265,7 @@
                                     },
                                     ident: Ident {
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(42),
                                                 end: ByteIndex(43),
@@ -285,7 +275,7 @@
                                     },
                                     vis: Spanned {
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(42),
                                                 end: ByteIndex(42),
@@ -297,7 +287,7 @@
                                     ty: Ty {
                                         id: 3.3,
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(42),
                                                 end: ByteIndex(43),
@@ -307,7 +297,7 @@
                                             Resolved(
                                                 Path {
                                                     span: Span {
-                                                        file: 1,
+                                                        file: 0,
                                                         span: Span {
                                                             start: ByteIndex(42),
                                                             end: ByteIndex(43),
@@ -323,7 +313,7 @@
                                                         PathSegment {
                                                             ident: Ident {
                                                                 span: Span {
-                                                                    file: 1,
+                                                                    file: 0,
                                                                     span: Span {
                                                                         start: ByteIndex(42),
                                                                         end: ByteIndex(43),
@@ -347,7 +337,7 @@
                         id: 4.0,
                         ident: Ident {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(50),
                                     end: ByteIndex(54),
@@ -356,7 +346,7 @@
                             symbol: None,
                         },
                         span: Span {
-                            file: 1,
+                            file: 0,
                             span: Span {
                                 start: ByteIndex(50),
                                 end: ByteIndex(54),
@@ -371,7 +361,7 @@
         },
         5: Item {
             span: Span {
-                file: 1,
+                file: 0,
                 span: Span {
                     start: ByteIndex(59),
                     end: ByteIndex(108),
@@ -380,7 +370,7 @@
             id: 5.0,
             vis: Spanned {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(59),
                         end: ByteIndex(59),
@@ -390,7 +380,7 @@
             },
             ident: Ident {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(66),
                         end: ByteIndex(67),
@@ -401,7 +391,7 @@
             kind: Struct(
                 Generics {
                     span: Span {
-                        file: 1,
+                        file: 0,
                         span: Span {
                             start: ByteIndex(68),
                             end: ByteIndex(68),
@@ -413,7 +403,7 @@
                     [
                         FieldDecl {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(74),
                                     end: ByteIndex(81),
@@ -421,7 +411,7 @@
                             },
                             ident: Ident {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(74),
                                         end: ByteIndex(75),
@@ -431,7 +421,7 @@
                             },
                             vis: Spanned {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(74),
                                         end: ByteIndex(74),
@@ -443,7 +433,7 @@
                             ty: Ty {
                                 id: 5.3,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(77),
                                         end: ByteIndex(81),
@@ -453,7 +443,7 @@
                                     Resolved(
                                         Path {
                                             span: Span {
-                                                file: 1,
+                                                file: 0,
                                                 span: Span {
                                                     start: ByteIndex(77),
                                                     end: ByteIndex(81),
@@ -466,7 +456,7 @@
                                                 PathSegment {
                                                     ident: Ident {
                                                         span: Span {
-                                                            file: 1,
+                                                            file: 0,
                                                             span: Span {
                                                                 start: ByteIndex(77),
                                                                 end: ByteIndex(81),
@@ -485,7 +475,7 @@
                         },
                         FieldDecl {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(87),
                                     end: ByteIndex(93),
@@ -493,7 +483,7 @@
                             },
                             ident: Ident {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(87),
                                         end: ByteIndex(88),
@@ -503,7 +493,7 @@
                             },
                             vis: Spanned {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(87),
                                         end: ByteIndex(87),
@@ -515,7 +505,7 @@
                             ty: Ty {
                                 id: 5.6,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(90),
                                         end: ByteIndex(93),
@@ -525,7 +515,7 @@
                                     Resolved(
                                         Path {
                                             span: Span {
-                                                file: 1,
+                                                file: 0,
                                                 span: Span {
                                                     start: ByteIndex(90),
                                                     end: ByteIndex(93),
@@ -538,7 +528,7 @@
                                                 PathSegment {
                                                     ident: Ident {
                                                         span: Span {
-                                                            file: 1,
+                                                            file: 0,
                                                             span: Span {
                                                                 start: ByteIndex(90),
                                                                 end: ByteIndex(93),
@@ -557,7 +547,7 @@
                         },
                         FieldDecl {
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(99),
                                     end: ByteIndex(105),
@@ -565,7 +555,7 @@
                             },
                             ident: Ident {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(99),
                                         end: ByteIndex(100),
@@ -575,7 +565,7 @@
                             },
                             vis: Spanned {
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(99),
                                         end: ByteIndex(99),
@@ -587,7 +577,7 @@
                             ty: Ty {
                                 id: 5.9,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(102),
                                         end: ByteIndex(105),
@@ -597,7 +587,7 @@
                                     Resolved(
                                         Path {
                                             span: Span {
-                                                file: 1,
+                                                file: 0,
                                                 span: Span {
                                                     start: ByteIndex(102),
                                                     end: ByteIndex(105),
@@ -610,7 +600,7 @@
                                                 PathSegment {
                                                     ident: Ident {
                                                         span: Span {
-                                                            file: 1,
+                                                            file: 0,
                                                             span: Span {
                                                                 start: ByteIndex(102),
                                                                 end: ByteIndex(105),
@@ -633,16 +623,16 @@
         },
         6: Item {
             span: Span {
-                file: 1,
+                file: 0,
                 span: Span {
                     start: ByteIndex(110),
-                    end: ByteIndex(213),
+                    end: ByteIndex(131),
                 },
             },
             id: 6.0,
             vis: Spanned {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(110),
                         end: ByteIndex(110),
@@ -652,7 +642,7 @@
             },
             ident: Ident {
                 span: Span {
-                    file: 1,
+                    file: 0,
                     span: Span {
                         start: ByteIndex(113),
                         end: ByteIndex(117),
@@ -665,9 +655,9 @@
                     inputs: [],
                     output: Some(
                         Ty {
-                            id: 6.29,
+                            id: 6.4,
                             span: Span {
-                                file: 1,
+                                file: 0,
                                 span: Span {
                                     start: ByteIndex(123),
                                     end: ByteIndex(126),
@@ -677,7 +667,7 @@
                                 Resolved(
                                     Path {
                                         span: Span {
-                                            file: 1,
+                                            file: 0,
                                             span: Span {
                                                 start: ByteIndex(123),
                                                 end: ByteIndex(126),
@@ -690,7 +680,7 @@
                                             PathSegment {
                                                 ident: Ident {
                                                     span: Span {
-                                                        file: 1,
+                                                        file: 0,
                                                         span: Span {
                                                             start: ByteIndex(123),
                                                             end: ByteIndex(126),
@@ -698,7 +688,7 @@
                                                     },
                                                     symbol: int,
                                                 },
-                                                id: 6.28,
+                                                id: 6.3,
                                                 args: None,
                                             },
                                         ],
@@ -710,7 +700,7 @@
                 },
                 Generics {
                     span: Span {
-                        file: 1,
+                        file: 0,
                         span: Span {
                             start: ByteIndex(117),
                             end: ByteIndex(117),
@@ -722,522 +712,26 @@
                     params: [],
                     expr: Expr {
                         span: Span {
-                            file: 1,
+                            file: 0,
                             span: Span {
                                 start: ByteIndex(127),
-                                end: ByteIndex(213),
+                                end: ByteIndex(131),
                             },
                         },
-                        id: 6.27,
+                        id: 6.2,
                         kind: Block(
                             Block {
-                                id: 6.26,
+                                id: 6.1,
                                 is_unsafe: false,
                                 span: Span {
-                                    file: 1,
+                                    file: 0,
                                     span: Span {
                                         start: ByteIndex(127),
-                                        end: ByteIndex(213),
+                                        end: ByteIndex(131),
                                     },
                                 },
-                                stmts: [
-                                    Stmt {
-                                        id: 6.11,
-                                        span: Span {
-                                            file: 1,
-                                            span: Span {
-                                                start: ByteIndex(133),
-                                                end: ByteIndex(176),
-                                            },
-                                        },
-                                        kind: Let(
-                                            Let {
-                                                id: 6.1,
-                                                span: Span {
-                                                    file: 1,
-                                                    span: Span {
-                                                        start: ByteIndex(133),
-                                                        end: ByteIndex(176),
-                                                    },
-                                                },
-                                                pat: Pattern {
-                                                    id: 6.2,
-                                                    span: Span {
-                                                        file: 1,
-                                                        span: Span {
-                                                            start: ByteIndex(137),
-                                                            end: ByteIndex(138),
-                                                        },
-                                                    },
-                                                    kind: Binding(
-                                                        Ident {
-                                                            span: Span {
-                                                                file: 1,
-                                                                span: Span {
-                                                                    start: ByteIndex(137),
-                                                                    end: ByteIndex(138),
-                                                                },
-                                                            },
-                                                            symbol: s,
-                                                        },
-                                                        None,
-                                                        Imm,
-                                                    ),
-                                                },
-                                                ty: None,
-                                                init: Some(
-                                                    Expr {
-                                                        span: Span {
-                                                            file: 1,
-                                                            span: Span {
-                                                                start: ByteIndex(143),
-                                                                end: ByteIndex(169),
-                                                            },
-                                                        },
-                                                        id: 6.10,
-                                                        kind: Struct(
-                                                            Resolved(
-                                                                Path {
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(141),
-                                                                            end: ByteIndex(142),
-                                                                        },
-                                                                    },
-                                                                    res: Def(
-                                                                        5,
-                                                                        Struct,
-                                                                    ),
-                                                                    segments: [
-                                                                        PathSegment {
-                                                                            ident: Ident {
-                                                                                span: Span {
-                                                                                    file: 1,
-                                                                                    span: Span {
-                                                                                        start: ByteIndex(141),
-                                                                                        end: ByteIndex(142),
-                                                                                    },
-                                                                                },
-                                                                                symbol: S,
-                                                                            },
-                                                                            id: 6.3,
-                                                                            args: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                            [
-                                                                Field {
-                                                                    id: 6.4,
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(146),
-                                                                            end: ByteIndex(150),
-                                                                        },
-                                                                    },
-                                                                    ident: Ident {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(146),
-                                                                                end: ByteIndex(147),
-                                                                            },
-                                                                        },
-                                                                        symbol: x,
-                                                                    },
-                                                                    expr: Expr {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(149),
-                                                                                end: ByteIndex(150),
-                                                                            },
-                                                                        },
-                                                                        id: 6.5,
-                                                                        kind: Lit(
-                                                                            Int(
-                                                                                9,
-                                                                            ),
-                                                                        ),
-                                                                    },
-                                                                },
-                                                                Field {
-                                                                    id: 6.6,
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(153),
-                                                                            end: ByteIndex(161),
-                                                                        },
-                                                                    },
-                                                                    ident: Ident {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(153),
-                                                                                end: ByteIndex(154),
-                                                                            },
-                                                                        },
-                                                                        symbol: b,
-                                                                    },
-                                                                    expr: Expr {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(156),
-                                                                                end: ByteIndex(161),
-                                                                            },
-                                                                        },
-                                                                        id: 6.7,
-                                                                        kind: Lit(
-                                                                            Bool(
-                                                                                false,
-                                                                            ),
-                                                                        ),
-                                                                    },
-                                                                },
-                                                                Field {
-                                                                    id: 6.8,
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(164),
-                                                                            end: ByteIndex(168),
-                                                                        },
-                                                                    },
-                                                                    ident: Ident {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(164),
-                                                                                end: ByteIndex(165),
-                                                                            },
-                                                                        },
-                                                                        symbol: y,
-                                                                    },
-                                                                    expr: Expr {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(167),
-                                                                                end: ByteIndex(168),
-                                                                            },
-                                                                        },
-                                                                        id: 6.9,
-                                                                        kind: Lit(
-                                                                            Int(
-                                                                                7,
-                                                                            ),
-                                                                        ),
-                                                                    },
-                                                                },
-                                                            ],
-                                                        ),
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                    Stmt {
-                                        id: 6.19,
-                                        span: Span {
-                                            file: 1,
-                                            span: Span {
-                                                start: ByteIndex(182),
-                                                end: ByteIndex(201),
-                                            },
-                                        },
-                                        kind: Let(
-                                            Let {
-                                                id: 6.12,
-                                                span: Span {
-                                                    file: 1,
-                                                    span: Span {
-                                                        start: ByteIndex(182),
-                                                        end: ByteIndex(201),
-                                                    },
-                                                },
-                                                pat: Pattern {
-                                                    id: 6.16,
-                                                    span: Span {
-                                                        file: 1,
-                                                        span: Span {
-                                                            start: ByteIndex(186),
-                                                            end: ByteIndex(194),
-                                                        },
-                                                    },
-                                                    kind: Struct(
-                                                        Resolved(
-                                                            Path {
-                                                                span: Span {
-                                                                    file: 1,
-                                                                    span: Span {
-                                                                        start: ByteIndex(186),
-                                                                        end: ByteIndex(187),
-                                                                    },
-                                                                },
-                                                                res: Def(
-                                                                    5,
-                                                                    Struct,
-                                                                ),
-                                                                segments: [
-                                                                    PathSegment {
-                                                                        ident: Ident {
-                                                                            span: Span {
-                                                                                file: 1,
-                                                                                span: Span {
-                                                                                    start: ByteIndex(186),
-                                                                                    end: ByteIndex(187),
-                                                                                },
-                                                                            },
-                                                                            symbol: S,
-                                                                        },
-                                                                        id: 6.13,
-                                                                        args: None,
-                                                                    },
-                                                                ],
-                                                            },
-                                                        ),
-                                                        [
-                                                            FieldPat {
-                                                                span: Span {
-                                                                    file: 1,
-                                                                    span: Span {
-                                                                        start: ByteIndex(190),
-                                                                        end: ByteIndex(191),
-                                                                    },
-                                                                },
-                                                                ident: Ident {
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(190),
-                                                                            end: ByteIndex(191),
-                                                                        },
-                                                                    },
-                                                                    symbol: x,
-                                                                },
-                                                                pat: Pattern {
-                                                                    id: 6.14,
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(190),
-                                                                            end: ByteIndex(191),
-                                                                        },
-                                                                    },
-                                                                    kind: Binding(
-                                                                        Ident {
-                                                                            span: Span {
-                                                                                file: 1,
-                                                                                span: Span {
-                                                                                    start: ByteIndex(190),
-                                                                                    end: ByteIndex(191),
-                                                                                },
-                                                                            },
-                                                                            symbol: x,
-                                                                        },
-                                                                        None,
-                                                                        Imm,
-                                                                    ),
-                                                                },
-                                                            },
-                                                            FieldPat {
-                                                                span: Span {
-                                                                    file: 1,
-                                                                    span: Span {
-                                                                        start: ByteIndex(193),
-                                                                        end: ByteIndex(194),
-                                                                    },
-                                                                },
-                                                                ident: Ident {
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(193),
-                                                                            end: ByteIndex(194),
-                                                                        },
-                                                                    },
-                                                                    symbol: y,
-                                                                },
-                                                                pat: Pattern {
-                                                                    id: 6.15,
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(193),
-                                                                            end: ByteIndex(194),
-                                                                        },
-                                                                    },
-                                                                    kind: Binding(
-                                                                        Ident {
-                                                                            span: Span {
-                                                                                file: 1,
-                                                                                span: Span {
-                                                                                    start: ByteIndex(193),
-                                                                                    end: ByteIndex(194),
-                                                                                },
-                                                                            },
-                                                                            symbol: y,
-                                                                        },
-                                                                        None,
-                                                                        Imm,
-                                                                    ),
-                                                                },
-                                                            },
-                                                        ],
-                                                    ),
-                                                },
-                                                ty: None,
-                                                init: Some(
-                                                    Expr {
-                                                        span: Span {
-                                                            file: 1,
-                                                            span: Span {
-                                                                start: ByteIndex(199),
-                                                                end: ByteIndex(200),
-                                                            },
-                                                        },
-                                                        id: 6.18,
-                                                        kind: Path(
-                                                            Resolved(
-                                                                Path {
-                                                                    span: Span {
-                                                                        file: 1,
-                                                                        span: Span {
-                                                                            start: ByteIndex(199),
-                                                                            end: ByteIndex(200),
-                                                                        },
-                                                                    },
-                                                                    res: Local(
-                                                                        6.2,
-                                                                    ),
-                                                                    segments: [
-                                                                        PathSegment {
-                                                                            ident: Ident {
-                                                                                span: Span {
-                                                                                    file: 1,
-                                                                                    span: Span {
-                                                                                        start: ByteIndex(199),
-                                                                                        end: ByteIndex(200),
-                                                                                    },
-                                                                                },
-                                                                                symbol: s,
-                                                                            },
-                                                                            id: 6.17,
-                                                                            args: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        ),
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                ],
-                                expr: Some(
-                                    Expr {
-                                        span: Span {
-                                            file: 1,
-                                            span: Span {
-                                                start: ByteIndex(206),
-                                                end: ByteIndex(211),
-                                            },
-                                        },
-                                        id: 6.24,
-                                        kind: Bin(
-                                            Sub,
-                                            Expr {
-                                                span: Span {
-                                                    file: 1,
-                                                    span: Span {
-                                                        start: ByteIndex(206),
-                                                        end: ByteIndex(207),
-                                                    },
-                                                },
-                                                id: 6.21,
-                                                kind: Path(
-                                                    Resolved(
-                                                        Path {
-                                                            span: Span {
-                                                                file: 1,
-                                                                span: Span {
-                                                                    start: ByteIndex(206),
-                                                                    end: ByteIndex(207),
-                                                                },
-                                                            },
-                                                            res: Local(
-                                                                6.14,
-                                                            ),
-                                                            segments: [
-                                                                PathSegment {
-                                                                    ident: Ident {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(206),
-                                                                                end: ByteIndex(207),
-                                                                            },
-                                                                        },
-                                                                        symbol: x,
-                                                                    },
-                                                                    id: 6.20,
-                                                                    args: None,
-                                                                },
-                                                            ],
-                                                        },
-                                                    ),
-                                                ),
-                                            },
-                                            Expr {
-                                                span: Span {
-                                                    file: 1,
-                                                    span: Span {
-                                                        start: ByteIndex(210),
-                                                        end: ByteIndex(211),
-                                                    },
-                                                },
-                                                id: 6.23,
-                                                kind: Path(
-                                                    Resolved(
-                                                        Path {
-                                                            span: Span {
-                                                                file: 1,
-                                                                span: Span {
-                                                                    start: ByteIndex(210),
-                                                                    end: ByteIndex(211),
-                                                                },
-                                                            },
-                                                            res: Local(
-                                                                6.15,
-                                                            ),
-                                                            segments: [
-                                                                PathSegment {
-                                                                    ident: Ident {
-                                                                        span: Span {
-                                                                            file: 1,
-                                                                            span: Span {
-                                                                                start: ByteIndex(210),
-                                                                                end: ByteIndex(211),
-                                                                            },
-                                                                        },
-                                                                        symbol: y,
-                                                                    },
-                                                                    id: 6.22,
-                                                                    args: None,
-                                                                },
-                                                            ],
-                                                        },
-                                                    ),
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                ),
+                                stmts: [],
+                                expr: None,
                             },
                         ),
                     },
@@ -1247,71 +741,19 @@
     },
     impl_items: {},
 }
-[00:00:00.041] (7f05ac1b2940) INFO   collect item 1: ∀T.Option<T>
-[00:00:00.041] (7f05ac1b2940) INFO   collect item 5: ∀.S<>
-[00:00:00.042] (7f05ac1b2940) INFO   collect item 0: ∀.fn(S<>)->()
-[00:00:00.042] (7f05ac1b2940) INFO   collect item 3: ∀T.fn(T)->Option<T>
-[00:00:00.042] (7f05ac1b2940) INFO   collect item 4: ∀T.Option<T>
-[00:00:00.042] (7f05ac1b2940) INFO   collect item 6: ∀.fn()->int
-[00:00:00.042] (7f05ac1b2940) DEBUG  deflocal 0.2 : S<>
-[00:00:00.042] (7f05ac1b2940) DEBUG  record ty 0.2 : S<>
-[00:00:00.042] (7f05ac1b2940) DEBUG  record ty 0.4 : ()
-[00:00:00.042] (7f05ac1b2940) DEBUG  record ty 0.4 : ()
-[00:00:00.042] (7f05ac1b2940) DEBUG  fcx query node type for 0.2
-[00:00:00.042] (7f05ac1b2940) DEBUG  fcx query node type for 0.4
-[00:00:00.042] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 0.2
-[00:00:00.042] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 0.4
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.5 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  record field_index 6.4 : 1
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.7 : bool
-[00:00:00.043] (7f05ac1b2940) DEBUG  record field_index 6.6 : 0
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.9 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  record field_index 6.8 : 2
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.10 : S<>
-[00:00:00.043] (7f05ac1b2940) DEBUG  deflocal 6.2 : S<>
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.2 : S<>
-[00:00:00.043] (7f05ac1b2940) DEBUG  lookup ty for local 6.2
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.18 : S<>
-[00:00:00.043] (7f05ac1b2940) DEBUG  record field_index 6.14 : 1
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.14 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  deflocal 6.14 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.14 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  record field_index 6.15 : 2
-[00:00:00.043] (7f05ac1b2940) DEBUG  record ty 6.15 : int
-[00:00:00.043] (7f05ac1b2940) DEBUG  deflocal 6.15 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.15 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.16 : S<>
-[00:00:00.044] (7f05ac1b2940) DEBUG  lookup ty for local 6.14
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.21 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  lookup ty for local 6.15
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.23 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.24 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.27 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  record ty 6.27 : int
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.27
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.10
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.5
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.7
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.9
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.2
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.18
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.16
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.14
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.15
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.24
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.21
-[00:00:00.044] (7f05ac1b2940) DEBUG  fcx query node type for 6.23
-[00:00:00.044] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.27
-[00:00:00.044] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.2
-[00:00:00.044] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.10
-[00:00:00.044] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.5
-[00:00:00.044] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.7
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.9
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.16
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.14
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.15
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.16
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.18
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.24
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.21
-[00:00:00.045] (7f05ac1b2940) DEBUG  irloweringctx: query typeof 6.23
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 1: ∀T.Option<T>
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 5: ∀.S<>
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 0: ∀.fn(S<>)->()
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 3: ∀T.fn(T)->Option<T>
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 4: ∀T.Option<T>
+[00:00:00.016] (7f2cd7d88940) INFO   collect item 6: ∀.fn()->int
+[00:00:00.016] (7f2cd7d88940) DEBUG  deflocal 0.2 : S<>
+[00:00:00.016] (7f2cd7d88940) DEBUG  record ty 0.2 : S<>
+[00:00:00.017] (7f2cd7d88940) DEBUG  record ty 0.4 : ()
+[00:00:00.017] (7f2cd7d88940) DEBUG  record ty 0.4 : ()
+[00:00:00.017] (7f2cd7d88940) DEBUG  fcx query node type for 0.2
+[00:00:00.017] (7f2cd7d88940) DEBUG  fcx query node type for 0.4
+[00:00:00.017] (7f2cd7d88940) DEBUG  irloweringctx: query typeof 0.2
+[00:00:00.017] (7f2cd7d88940) DEBUG  irloweringctx: query typeof 0.4
+[00:00:00.017] (7f2cd7d88940) DEBUG  record ty 6.2 : ()
+[00:00:00.017] (7f2cd7d88940) DEBUG  record ty 6.2 : int

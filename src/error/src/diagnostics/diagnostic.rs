@@ -47,26 +47,24 @@ type DiagnosticInner = codespan_reporting::diagnostic::Diagnostic<FileIdx>;
 /// a single diagnostic error message
 #[derive(Clone, Debug)]
 pub struct Diagnostic {
-    inner: DiagnosticInner,
+    crate inner: DiagnosticInner,
 }
 
 impl Diagnostic {
     pub fn from_err(span: impl Into<MultiSpan>, err: impl Error) -> Self {
-        let mspan = span.into();
-        let mut inner = DiagnosticInner::error();
-        inner.message = err.to_string();
-        inner.labels = mspan
-            .primary_spans
-            .iter()
-            .map(|&span| Label::new(LabelStyle::Primary, span.file, *span))
-            .collect();
+        let span = span.into();
+        let inner = DiagnosticInner::error().with_message(err.to_string()).with_labels(
+            span.primary_spans
+                .iter()
+                .map(|&span| Label::new(LabelStyle::Primary, span.file, *span))
+                .collect(),
+        );
         Self { inner }
     }
 
-    pub fn get_span(&self) -> Span {
-        Span::default()
-        // todo!()
-        // self.span.primary_spans[0]
+    pub fn get_first_span(&self) -> Span {
+        let label = self.inner.labels.iter().nth(0).unwrap();
+        Span::new(label.file_id, label.range.start, label.range.end)
     }
 }
 

@@ -200,10 +200,10 @@ where
 mod test {
     use super::*;
     use index::Idx;
-    use span::{FileIdx, Span};
+    use span::{Span, ROOT_FILE_IDX};
 
     macro parse_expr($src:expr) {{
-        let driver = ldriver::Driver::new($src);
+        let driver = ldriver::Driver::from_src($src);
         driver.parse_expr().unwrap()
     }}
 
@@ -257,7 +257,7 @@ mod test {
         assert_eq!(
             expr,
             box Expr::new(
-                Span::new(FileIdx::new(1), 4, 5),
+                Span::new(ROOT_FILE_IDX, 4, 5),
                 NodeId::new(0),
                 ExprKind::Lit(Lit::Int(3))
             )
@@ -269,11 +269,7 @@ mod test {
         let expr = parse_expr!("()");
         assert_eq!(
             expr,
-            box Expr::new(
-                Span::new(FileIdx::new(1), 0, 2),
-                NodeId::new(0),
-                ExprKind::Tuple(vec![])
-            )
+            box Expr::new(Span::new(ROOT_FILE_IDX, 0, 2), NodeId::new(0), ExprKind::Tuple(vec![]))
         );
     }
 
@@ -288,16 +284,16 @@ mod test {
         assert_eq!(
             expr,
             box Expr::new(
-                Span::new(FileIdx::new(1), 0, 6),
+                Span::new(ROOT_FILE_IDX, 0, 6),
                 NodeId::new(2),
                 ExprKind::Tuple(vec![
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 1, 2),
+                        Span::new(ROOT_FILE_IDX, 1, 2),
                         NodeId::new(0),
                         ExprKind::Lit(Lit::Int(2))
                     ),
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 4, 5),
+                        Span::new(ROOT_FILE_IDX, 4, 5),
                         NodeId::new(1),
                         ExprKind::Lit(Lit::Int(3))
                     )
@@ -312,7 +308,7 @@ mod test {
         assert_eq!(
             expr,
             box Expr::new(
-                Span::new(FileIdx::new(1), 0, 1),
+                Span::new(ROOT_FILE_IDX, 0, 1),
                 NodeId::new(0),
                 ExprKind::Lit(Lit::Int(2))
             )
@@ -325,17 +321,17 @@ mod test {
         assert_eq!(
             expr,
             box Expr::new(
-                Span::new(FileIdx::new(1), 0, 5),
+                Span::new(ROOT_FILE_IDX, 0, 5),
                 NodeId::new(2),
                 ExprKind::Bin(
                     BinOp::Add,
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 0, 1),
+                        Span::new(ROOT_FILE_IDX, 0, 1),
                         NodeId::new(0),
                         ExprKind::Lit(Lit::Int(2))
                     ),
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 4, 5),
+                        Span::new(ROOT_FILE_IDX, 4, 5),
                         NodeId::new(1),
                         ExprKind::Lit(Lit::Int(3))
                     ),
@@ -370,27 +366,27 @@ mod test {
         assert_eq!(
             expr,
             box Expr::new(
-                Span::new(FileIdx::new(1), 0, 9),
+                Span::new(ROOT_FILE_IDX, 0, 9),
                 NodeId::new(4),
                 ExprKind::Bin(
                     BinOp::Add,
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 0, 1),
+                        Span::new(ROOT_FILE_IDX, 0, 1),
                         NodeId::new(0),
                         ExprKind::Lit(Lit::Int(2))
                     ),
                     box Expr::new(
-                        Span::new(FileIdx::new(1), 4, 9),
+                        Span::new(ROOT_FILE_IDX, 4, 9),
                         NodeId::new(3),
                         ExprKind::Bin(
                             BinOp::Mul,
                             box Expr::new(
-                                Span::new(FileIdx::new(1), 4, 5),
+                                Span::new(ROOT_FILE_IDX, 4, 5),
                                 NodeId::new(1),
                                 ExprKind::Lit(Lit::Int(3))
                             ),
                             box Expr::new(
-                                Span::new(FileIdx::new(1), 8, 9),
+                                Span::new(ROOT_FILE_IDX, 8, 9),
                                 NodeId::new(2),
                                 ExprKind::Lit(Lit::Int(4))
                             ),

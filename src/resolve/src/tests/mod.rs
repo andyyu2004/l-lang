@@ -3,12 +3,12 @@ mod pattern;
 
 /// just runs the compiler up to and including the ir lowering stage which includes resolution
 macro resolve($src:expr) {{
-    let driver = ldriver::Driver::new($src);
+    let driver = ldriver::Driver::from_src($src);
     driver.gen_ir().unwrap();
 }}
 
 macro expect_error($src:expr) {{
-    let driver = ldriver::Driver::new($src);
+    let driver = ldriver::Driver::from_src($src);
     let _ = driver.gen_ir();
     // unwrapping ir is not sufficient as we continue with typechecking even if there are some
     // ir will only return an error if parsing fails

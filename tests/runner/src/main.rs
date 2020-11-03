@@ -38,8 +38,7 @@ impl TestCtx {
 
     fn run_test(&self, path: &Path) -> io::Result<()> {
         let dir_path = path.parent().unwrap();
-        let src = fs::read_to_string(path)?;
-        let driver = ldriver::Driver::new(&src);
+        let driver = ldriver::Driver::new(&dir_path);
         // Command::new("cargo rj");
         dbg!(driver.llvm_exec()).unwrap();
         Ok(())

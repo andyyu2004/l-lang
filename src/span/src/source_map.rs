@@ -1,7 +1,8 @@
 use crate::Span;
 use codespan_reporting::files::{line_starts, Files};
-use index::{newtype_index, Idx, IndexVec};
+use index::{newtype_index, IndexVec};
 use std::ops::{Deref, Index};
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct SourceMap {
@@ -10,13 +11,20 @@ pub struct SourceMap {
 
 #[derive(Debug, Clone)]
 pub struct SourceFile {
+    name: String,
     src: String,
     line_starts: Vec<usize>,
 }
 
 impl SourceFile {
-    pub fn new(src: &str) -> Self {
-        Self { src: src.to_owned(), line_starts: line_starts(src).collect() }
+    pub fn new(path: impl AsRef<Path>) -> Self {
+        let path = path.as_ref();
+        let src = std::fs::read_to_string(path).unwrap();
+        Self {
+            name: path.file_name().unwrap().to_str().unwrap().to_owned(),
+            line_starts: line_starts(&src).collect(),
+            src,
+        }
     }
 
     fn line_start(&self, line_index: usize) -> Option<usize> {
@@ -40,7 +48,8 @@ impl Deref for SourceFile {
 
 newtype_index!(
     pub struct FileIdx {
-        DEBUG_FORMAT = "{}"
+        DEBUG_FORMAT = "{}",
+        const ROOT_FILE_IDX = 0,
     }
 );
 
@@ -51,9 +60,8 @@ impl<'a> Files<'a> for SourceMap {
     type Name = &'a str;
     type Source = &'a str;
 
-    fn name(&'a self, _id: Self::FileId) -> Option<Self::Name> {
-        // TODO
-        None
+    fn name(&'a self, id: Self::FileId) -> Option<Self::Name> {
+        Some(&self.files[id].name)
     }
 
     fn source(&'a self, id: Self::FileId) -> Option<Self::Source> {
@@ -78,11 +86,9 @@ impl<'a> Files<'a> for SourceMap {
 
 impl SourceMap {
     // just one sourcefile for now
-    pub fn new(src: &str) -> Self {
+    pub fn new(path: impl AsRef<Path>) -> Self {
         let mut source_map = Self { files: Default::default() };
-        // some "null" file used for Default spans
-        source_map.files.push(SourceFile::new(""));
-        source_map.files.push(SourceFile::new(src));
+        source_map.files.push(SourceFile::new(path));
         source_map
     }
 

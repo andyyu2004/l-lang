@@ -1,5 +1,6 @@
 use crate::Diagnostic;
-use span::Span;
+use codespan_reporting::term::{emit, Config};
+use termcolor::{BufferedStandardStream, ColorChoice};
 
 /// trait for an object that formats diagnostics
 pub trait Emitter {
@@ -10,20 +11,12 @@ pub trait Emitter {
 #[derive(Default)]
 pub struct TextEmitter {}
 
-impl TextEmitter {
-    fn emit_span(&mut self, span: Span) {
-        eprintln!("source: {}", span.to_string())
-    }
-}
-
 impl Emitter for TextEmitter {
     fn emit(&mut self, diagnostic: &Diagnostic) {
-        e_red!("error: {:?}", diagnostic);
-        // let Diagnostic { span, messages } = diagnostic;
-        // for message in messages {
-        //     e_red_ln!("{}", message)
-        // }
-        // span.primary_spans.iter().for_each(|&s| self.emit_span(s));
-        // eprintln!()
+        let mut writer = BufferedStandardStream::stderr(ColorChoice::Auto);
+        span::with_source_map(|files| {
+            emit(&mut writer, &Config::default(), files, &diagnostic.inner)
+        })
+        .unwrap()
     }
 }

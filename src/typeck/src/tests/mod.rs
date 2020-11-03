@@ -15,14 +15,14 @@ fn wrap_in_main(src: &str) -> String {
 }
 
 macro expect_error($src:expr) {{
-    let driver = ldriver::Driver::new($src);
+    let driver = ldriver::Driver::from_src($src);
     driver.gen_tir().unwrap_err();
 }}
 
 macro expect_error_expr($src:expr) {{ expect_error!(&wrap_in_main($src)) }}
 
 macro typeck($src:expr) {{
-    let driver = ldriver::Driver::new($src);
+    let driver = ldriver::Driver::from_src($src);
     let tir = driver.gen_tir().unwrap();
     tir.to_string()
 }}

@@ -20,7 +20,7 @@ impl<'a> Parse<'a> for ProgParser {
 mod test {
     macro_rules! parse {
         ($src:expr) => {{
-            let driver = ldriver::Driver::new($src);
+            let driver = ldriver::Driver::from_src($src);
             driver.parse()
         }};
     }

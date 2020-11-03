@@ -9,7 +9,7 @@ mod ptr_tests;
 mod struct_tests;
 
 pub macro llvm_exec_inner($src:expr) {
-    ldriver::Driver::new($src).llvm_exec()
+    ldriver::Driver::from_src($src).llvm_exec()
 }
 pub macro llvm_exec($src:expr) {
     llvm_exec_inner!($src).unwrap()

@@ -13,12 +13,5 @@ struct S {
 }
 
 fn main() -> int {
-    let s = S {
-	x: 9,
-	b: false,
-	y: 7,
-    };
 
-    let S { x, y } = s;
-    x - y
 }
