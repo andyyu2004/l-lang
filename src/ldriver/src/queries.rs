@@ -2,11 +2,11 @@ use ir::DefId;
 use lcore::queries::{Queries, QueryProviders};
 use lcore::ty::{self, Ty, TyCtx};
 
-fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
+fn type_of<'tcx>(_tcx: TyCtx<'tcx>, _def_id: DefId) -> Ty<'tcx> {
     todo!()
 }
 
-fn generics_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> ty::Generics<'tcx> {
+fn generics_of<'tcx>(_tcx: TyCtx<'tcx>, _def_id: DefId) -> ty::Generics<'tcx> {
     todo!()
 }
 

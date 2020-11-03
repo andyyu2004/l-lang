@@ -3,7 +3,7 @@
 use super::{BasicBlock, BlockId, Builder, ReleaseInfo, ENTRY_BLOCK};
 use index::IndexVec;
 use lcore::mir::*;
-use lcore::ty::Const;
+
 
 pub struct Cfg<'tcx> {
     pub(super) basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,

@@ -3,7 +3,7 @@
 use crate::{FnCtx, TcxTypeofExt};
 use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
-use lcore::ty::{self, Subst, SubstsRef, Ty};
+use lcore::ty::{self, Subst, Ty};
 use span::Span;
 use std::ops::Deref;
 
