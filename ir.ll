@@ -1,7 +1,7 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"S<bool,int>" = type { i1, i64 }
+%"S<>" = type { i1, i64, i64 }
 
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
@@ -43,38 +43,41 @@ declare void @abort()
 
 declare void @exit(i32)
 
+define {} @"f<>"(%"S<>" %0) {
+basic_blockbb0:
+  %ret = alloca {}
+  %s = alloca %"S<>"
+  store %"S<>" %0, %"S<>"* %s
+  store {} undef, {}* %ret
+  %load_ret = load {}, {}* %ret
+  ret {} %load_ret
+}
+
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %tmp = alloca %"S<bool,int>"
-  %s = alloca %"S<bool,int>"
-  %fcall = call %"S<bool,int>" @"new<bool,int>"(i64 5, i1 false)
-  store %"S<bool,int>" %fcall, %"S<bool,int>"* %tmp
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %load = load %"S<bool,int>", %"S<bool,int>"* %tmp
-  store %"S<bool,int>" %load, %"S<bool,int>"* %s
-  %struct_gep = getelementptr inbounds %"S<bool,int>", %"S<bool,int>"* %s, i32 0, i32 1
-  %load1 = load i64, i64* %struct_gep
-  store i64 %load1, i64* %ret
+  %tmp = alloca %"S<>"
+  %s = alloca %"S<>"
+  %x = alloca i64
+  %y = alloca i64
+  %struct_gep = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 0
+  store i1 false, i1* %struct_gep
+  %struct_gep1 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 1
+  store i64 9, i64* %struct_gep1
+  %struct_gep2 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 2
+  store i64 7, i64* %struct_gep2
+  %load = load %"S<>", %"S<>"* %tmp
+  store %"S<>" %load, %"S<>"* %s
+  %struct_gep3 = getelementptr inbounds %"S<>", %"S<>"* %s, i32 0, i32 1
+  %load4 = load i64, i64* %struct_gep3
+  store i64 %load4, i64* %x
+  %struct_gep5 = getelementptr inbounds %"S<>", %"S<>"* %s, i32 0, i32 2
+  %load6 = load i64, i64* %struct_gep5
+  store i64 %load6, i64* %y
+  %load7 = load i64, i64* %x
+  %load8 = load i64, i64* %y
+  %isub = sub i64 %load7, %load8
+  store i64 %isub, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
-}
-
-define %"S<bool,int>" @"new<bool,int>"(i64 %0, i1 %1) {
-basic_blockbb0:
-  %ret = alloca %"S<bool,int>"
-  %u = alloca i64
-  store i64 %0, i64* %u
-  %t = alloca i1
-  store i1 %1, i1* %t
-  %load = load i1, i1* %t
-  %struct_gep = getelementptr inbounds %"S<bool,int>", %"S<bool,int>"* %ret, i32 0, i32 0
-  store i1 %load, i1* %struct_gep
-  %load1 = load i64, i64* %u
-  %struct_gep2 = getelementptr inbounds %"S<bool,int>", %"S<bool,int>"* %ret, i32 0, i32 1
-  store i64 %load1, i64* %struct_gep2
-  %load_ret = load %"S<bool,int>", %"S<bool,int>"* %ret
-  ret %"S<bool,int>" %load_ret
 }

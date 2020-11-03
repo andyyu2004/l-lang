@@ -19,6 +19,6 @@ fn main() -> int {
 	y: 7,
     };
 
-    let S { x, y, x: i } = s;
+    let S { x, y } = s;
     x - y
 }

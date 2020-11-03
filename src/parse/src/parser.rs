@@ -1,27 +1,27 @@
 use super::*;
 use ast::*;
-use codespan::{ByteIndex, ByteOffset};
+use codespan::ByteIndex;
 use error::*;
 use index::Idx;
 use lex::*;
 use session::Session;
-use span::{self, kw, Span, Symbol};
+use span::{self, kw, FileIdx, Span, SpanIdx, Symbol};
 use std::cell::Cell;
 use std::error::Error;
 
 pub struct Parser<'a> {
     pub sess: &'a Session,
+    file: FileIdx,
     tokens: Vec<Tok>,
     idx: usize,
     id_counter: Cell<usize>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new<I>(sess: &'a Session, tokens: I) -> Self
-    where
-        I: IntoIterator<Item = Tok>,
-    {
-        Self { tokens: tokens.into_iter().collect(), idx: 0, id_counter: Cell::new(0), sess }
+    pub fn new(sess: &'a Session, file: FileIdx) -> Self {
+        let tokens = Lexer::new().lex(file);
+        dbg!(&tokens);
+        Self { tokens: tokens.into_iter().collect(), file, idx: 0, id_counter: Cell::new(0), sess }
     }
 
     pub fn dump_token_stream(&self) {
@@ -34,6 +34,10 @@ impl<'a> Parser<'a> {
     /// avoid using this unless necessary
     pub fn backtrack(&mut self, u: usize) {
         self.idx -= u;
+    }
+
+    pub fn mk_span(&self, start: impl SpanIdx, end: impl SpanIdx) -> Span {
+        Span::new(self.file, start, end)
     }
 
     pub fn build_err(&self, span: impl Into<MultiSpan>, err: impl Error) -> DiagnosticBuilder<'a> {
@@ -60,7 +64,7 @@ impl<'a> Parser<'a> {
             self.curr_span_start()
         };
         let p = parser.parse(self)?;
-        Ok((Span::new(lo, self.prev_span_end()), p))
+        Ok((self.mk_span(lo, self.prev_span_end()), p))
     }
 
     /// returns true if the current token is an ident
@@ -87,11 +91,10 @@ impl<'a> Parser<'a> {
             _ => unreachable!(),
         };
         let idx = s.find('.').unwrap();
-        let byte_offset = ByteOffset(idx as i64);
         let x = Symbol::intern(&s[..idx]);
-        let xspan = Span::new(span.start(), span.start() + byte_offset);
+        let xspan = self.mk_span(span.start(), span.start().to_usize() + idx);
         let y = Symbol::intern(&s[idx + 1..]);
-        let yspan = Span::new(span.start() + byte_offset + 1.into(), span.end());
+        let yspan = self.mk_span(span.start().to_usize() + idx + 1, span.end());
         (Ident::new(xspan, x), Ident::new(yspan, y))
     }
 
@@ -105,7 +108,7 @@ impl<'a> Parser<'a> {
 
     pub fn empty_span(&self) -> Span {
         let idx = self.curr_span_start();
-        Span::new(idx, idx)
+        self.mk_span(idx, idx)
     }
 
     /// entry point to parsing

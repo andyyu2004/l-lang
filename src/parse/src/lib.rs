@@ -566,17 +566,17 @@ impl<'a> Parse<'a> for LiteralParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let slice = with_source_map(|map| map.main_file()[self.span].to_owned());
+        let string = self.span.to_string();
         let literal = match self.kind {
             LiteralKind::Float { base, .. } => {
                 if base != Base::Decimal {
                     panic!("only decimal float literals are supported")
                 }
-                Lit::Float(slice.parse().unwrap())
+                Lit::Float(string.parse().unwrap())
             }
             LiteralKind::Str { terminated: _ } => todo!(),
             LiteralKind::Int { base, .. } =>
-                Lit::Int(i64::from_str_radix(&slice, base as u32).unwrap()),
+                Lit::Int(i64::from_str_radix(&string, base as u32).unwrap()),
             _ => todo!(),
         };
         Ok(parser.mk_expr(self.span, ExprKind::Lit(literal)))

@@ -1,4 +1,5 @@
 #![feature(box_syntax)]
+#![feature(crate_visibility_modifier)]
 
 #[macro_use]
 extern crate colour;

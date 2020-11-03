@@ -9,6 +9,7 @@ astlowering = { path = "../astlowering" }
 span = { path = "../span" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
+index = { path = "../index" }
 ast = { path = "../ast" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }

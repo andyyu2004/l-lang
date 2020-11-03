@@ -18,12 +18,12 @@ impl TextEmitter {
 
 impl Emitter for TextEmitter {
     fn emit(&mut self, diagnostic: &Diagnostic) {
-        e_red!("error: ");
-        let Diagnostic { span, messages } = diagnostic;
-        for message in messages {
-            e_red_ln!("{}", message)
-        }
-        span.primary_spans.iter().for_each(|&s| self.emit_span(s));
-        eprintln!()
+        e_red!("error: {:?}", diagnostic);
+        // let Diagnostic { span, messages } = diagnostic;
+        // for message in messages {
+        //     e_red_ln!("{}", message)
+        // }
+        // span.primary_spans.iter().for_each(|&s| self.emit_span(s));
+        // eprintln!()
     }
 }

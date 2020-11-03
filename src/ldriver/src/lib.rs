@@ -14,6 +14,7 @@ use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
 use error::{LError, LResult};
+use index::Idx;
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
 use inkwell::OptimizationLevel;
@@ -27,7 +28,7 @@ use resolve::Resolutions;
 use resolve::Resolver;
 use resolve::ResolverArenas;
 use session::Session;
-use span::{SourceMap, SPAN_GLOBALS};
+use span::{FileIdx, SourceMap, SPAN_GLOBALS};
 use std::lazy::OnceCell;
 use std::rc::Rc;
 use typeck::TcxCollectExt;
@@ -106,26 +107,9 @@ impl<'tcx> Driver<'tcx> {
         }
     }
 
-    pub fn lex(&self) -> LResult<Vec<Tok>> {
-        let mut lexer = Lexer::new();
-        let tokens = lexer.lex();
-        Ok(tokens)
-    }
-
-    /// used for testing parsing
-    pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
-        let tokens = self.lex().unwrap();
-        let mut parser = Parser::new(&self.sess, tokens);
-        let expr = parser.parse_expr();
-        match &expr.kind {
-            ExprKind::Err => None,
-            _ => Some(expr),
-        }
-    }
-
     pub fn parse(&self) -> LResult<P<ast::Prog>> {
-        let tokens = self.lex()?;
-        let mut parser = Parser::new(&self.sess, tokens);
+        // assume one file for now
+        let mut parser = Parser::new(&self.sess, FileIdx::new(1));
         let ast = parser.parse();
         // error!("{:#?}", ast);
         check_errors!(self, ast.unwrap())
@@ -192,6 +176,22 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn has_errors(&self) -> bool {
         self.sess.has_errors()
+    }
+
+    pub fn lex(&self) -> LResult<Vec<Tok>> {
+        let mut lexer = Lexer::new();
+        let tokens = lexer.lex(FileIdx::new(1));
+        Ok(tokens)
+    }
+
+    /// used for testing parsing
+    pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
+        let mut parser = Parser::new(&self.sess, FileIdx::new(1));
+        let expr = parser.parse_expr();
+        match &expr.kind {
+            ExprKind::Err => None,
+            _ => Some(expr),
+        }
     }
 }
 

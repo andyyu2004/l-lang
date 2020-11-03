@@ -1,5 +1,6 @@
 use crate::{Emitter, LError, LResult, TextEmitter};
-use span::Span;
+use codespan_reporting::diagnostic::{Label, LabelStyle};
+use span::{FileIdx, Span};
 use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::fmt::{self, Debug, Formatter};
@@ -11,7 +12,7 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
-    pub(super) fn inc_err_count(&self) {
+    crate fn inc_err_count(&self) {
         self.err_count.set(1 + self.err_count.get());
     }
 
@@ -41,21 +42,31 @@ impl Diagnostics {
     }
 }
 
+type DiagnosticInner = codespan_reporting::diagnostic::Diagnostic<FileIdx>;
+
 /// a single diagnostic error message
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
+#[derive(Clone, Debug)]
 pub struct Diagnostic {
-    pub messages: Vec<String>,
-    pub span: MultiSpan,
+    inner: DiagnosticInner,
 }
 
 impl Diagnostic {
     pub fn from_err(span: impl Into<MultiSpan>, err: impl Error) -> Self {
-        let span = span.into();
-        Self { messages: vec![format!("{}", err)], span }
+        let mspan = span.into();
+        let mut inner = DiagnosticInner::error();
+        inner.message = err.to_string();
+        inner.labels = mspan
+            .primary_spans
+            .iter()
+            .map(|&span| Label::new(LabelStyle::Primary, span.file, *span))
+            .collect();
+        Self { inner }
     }
 
     pub fn get_span(&self) -> Span {
-        self.span.primary_spans[0]
+        Span::default()
+        // todo!()
+        // self.span.primary_spans[0]
     }
 }
 

@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 arena = { path = "../arena" }
 macros = { path = "../macros" }
+index = { path = "../index" }
 rustc-hash = "1.1.0"
 codespan = "0.9.5"
 codespan-reporting = "0.9.5"

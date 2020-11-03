@@ -1,4 +1,5 @@
 #![feature(debug_non_exhaustive)]
+#![feature(type_ascription)]
 #![feature(const_panic)]
 
 #[macro_use]
@@ -7,10 +8,11 @@ extern crate macros;
 mod source_map;
 mod symbol;
 
-pub use source_map::SourceMap;
+pub use source_map::{FileIdx, SourceMap};
 pub use symbol::{kw, sym, Symbol};
 
 use codespan::ByteIndex;
+use index::Idx;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Deref, DerefMut};
@@ -33,8 +35,17 @@ pub fn with_source_map<R>(f: impl FnOnce(&SourceMap) -> R) -> R {
 thread_local!(pub static SPAN_GLOBALS: SpanGlobals = Default::default());
 
 /// thin wrapper around codespan::Span for convenience
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Default)]
-pub struct Span(codespan::Span);
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub struct Span {
+    pub file: FileIdx,
+    span: codespan::Span,
+}
+
+impl Default for Span {
+    fn default() -> Self {
+        Self { file: FileIdx::new(0), span: Default::default() }
+    }
+}
 
 pub trait SpanIdx {
     fn into(self) -> ByteIndex;
@@ -53,8 +64,8 @@ impl SpanIdx for usize {
 }
 
 impl Span {
-    pub fn new(start: impl SpanIdx, end: impl SpanIdx) -> Self {
-        Self(codespan::Span::new(start.into(), end.into()))
+    pub fn new(file: FileIdx, start: impl SpanIdx, end: impl SpanIdx) -> Self {
+        Self { file, span: codespan::Span::new(start.into(), end.into()) }
     }
 
     pub fn intern(self) -> Symbol {
@@ -66,7 +77,8 @@ impl Span {
     }
 
     pub fn merge(self, other: Self) -> Self {
-        Self(self.0.merge(other.0))
+        assert_eq!(self.file, other.file);
+        Self { file: self.file, span: self.span.merge(other.span) }
     }
 }
 
@@ -80,12 +92,12 @@ impl Deref for Span {
     type Target = codespan::Span;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.span
     }
 }
 
 impl DerefMut for Span {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.span
     }
 }

@@ -243,6 +243,8 @@ dependencies = [
 name = "error"
 version = "0.1.0"
 dependencies = [
+ "codespan",
+ "codespan-reporting",
  "colour",
  "span",
 ]
@@ -436,6 +438,7 @@ dependencies = [
  "clap",
  "colour",
  "error",
+ "index",
  "inkwell",
  "ir",
  "lcore",
@@ -456,6 +459,7 @@ dependencies = [
 name = "lex"
 version = "0.1.0"
 dependencies = [
+ "index",
  "itertools",
  "lazy_static",
  "maplit",
@@ -917,6 +921,7 @@ dependencies = [
  "arena",
  "codespan",
  "codespan-reporting",
+ "index",
  "macros",
  "rustc-hash",
 ]

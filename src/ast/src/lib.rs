@@ -262,7 +262,7 @@ pub struct Path {
 // just to make it `std::mem::take`able
 impl Default for Path {
     fn default() -> Self {
-        Self { id: NodeId::new(0), span: Span::new(0, 0), segments: Default::default() }
+        Self { id: NodeId::new(0), span: Span::default(), segments: Default::default() }
     }
 }
 
