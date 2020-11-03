@@ -51,7 +51,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             } else {
                 if let Some(span) = seen.insert(field.ident, field.span) {
                     self.emit_ty_err(
-                        std::array::IntoIter::new([span, field.span]),
+                        vec![span, field.span],
                         TypeError::Msg(format!(
                             "field `{}` bound more than once in struct pattern",
                             field.ident,

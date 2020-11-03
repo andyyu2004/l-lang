@@ -14,11 +14,11 @@ struct S<T, U> {
     u: U,
 }
 
-impl<T, U> S<T, U> {
-    fn new(u: U, t: T) -> Self {
-	Self { t, u }
-    }
-}
+/* impl<T, U> S<T, U> { */
+/*     fn new(u: U, t: T) -> Self { */
+/*         Self { t, u } */
+/*     } */
+/* } */
 
 impl S<int, int> {
     fn new(u: int, t: int) -> Self {

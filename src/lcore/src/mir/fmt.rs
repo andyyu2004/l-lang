@@ -4,6 +4,7 @@ use crate::mir;
 use crate::ty;
 use crate::ty::Projection;
 use ast::BinOp;
+use span::Span;
 use std::fmt;
 use std::fmt::Write;
 

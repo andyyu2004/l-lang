@@ -64,12 +64,16 @@ pub struct MultiSpan {
     pub primary_spans: Vec<Span>,
 }
 
-impl<I> From<I> for MultiSpan
-where
-    I: IntoIterator<Item = Span>,
-{
-    fn from(iter: I) -> Self {
-        Self { primary_spans: iter.into_iter().collect() }
+// only impl for vectors to avoid overlapping impls
+impl From<Vec<Span>> for MultiSpan {
+    fn from(primary_spans: Vec<Span>) -> Self {
+        Self { primary_spans }
+    }
+}
+
+impl From<Span> for MultiSpan {
+    fn from(span: Span) -> Self {
+        Self { primary_spans: vec![span] }
     }
 }
 

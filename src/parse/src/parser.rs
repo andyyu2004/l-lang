@@ -1,5 +1,6 @@
 use super::*;
 use ast::*;
+use codespan::{ByteIndex, ByteOffset};
 use error::*;
 use index::Idx;
 use lex::*;
@@ -35,7 +36,7 @@ impl<'a> Parser<'a> {
         self.idx -= u;
     }
 
-    pub fn build_err(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
+    pub fn build_err(&self, span: impl Into<MultiSpan>, err: impl Error) -> DiagnosticBuilder<'a> {
         self.sess.build_error(span, err)
     }
 
@@ -53,8 +54,11 @@ impl<'a> Parser<'a> {
         parser: &mut impl Parse<'a, Output = R>,
         include_prev: bool,
     ) -> ParseResult<'a, (Span, R)> {
-        let lo =
-            if include_prev { self.tokens[self.idx - 1].span.lo } else { self.curr_span_start() };
+        let lo = if include_prev {
+            self.tokens[self.idx - 1].span.start()
+        } else {
+            self.curr_span_start()
+        };
         let p = parser.parse(self)?;
         Ok((Span::new(lo, self.prev_span_end()), p))
     }
@@ -83,24 +87,25 @@ impl<'a> Parser<'a> {
             _ => unreachable!(),
         };
         let idx = s.find('.').unwrap();
+        let byte_offset = ByteOffset(idx as i64);
         let x = Symbol::intern(&s[..idx]);
-        let xspan = Span::new(span.lo, span.lo + idx);
+        let xspan = Span::new(span.start(), span.start() + byte_offset);
         let y = Symbol::intern(&s[idx + 1..]);
-        let yspan = Span::new(span.lo + idx + 1, span.hi);
+        let yspan = Span::new(span.start() + byte_offset + 1.into(), span.end());
         (Ident::new(xspan, x), Ident::new(yspan, y))
     }
 
-    pub fn prev_span_end(&self) -> usize {
-        self.tokens[self.idx - 1].span.hi
+    pub fn prev_span_end(&self) -> ByteIndex {
+        self.tokens[self.idx - 1].span.end()
     }
 
-    pub fn curr_span_start(&self) -> usize {
-        self.tokens[self.idx].span.lo
+    pub fn curr_span_start(&self) -> ByteIndex {
+        self.tokens[self.idx].span.start()
     }
 
     pub fn empty_span(&self) -> Span {
         let idx = self.curr_span_start();
-        Span { lo: idx, hi: idx }
+        Span::new(idx, idx)
     }
 
     /// entry point to parsing

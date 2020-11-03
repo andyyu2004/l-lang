@@ -8,4 +8,5 @@ edition = "2018"
 arena = { path = "../arena" }
 macros = { path = "../macros" }
 rustc-hash = "1.1.0"
-
+codespan = "0.9.5"
+codespan-reporting = "0.9.5"

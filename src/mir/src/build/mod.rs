@@ -78,7 +78,7 @@ pub fn build_variant_ctor_inner<'tcx>(
     }
 
     // TODO get a proper span
-    let info = SpanInfo { span: Span::empty() };
+    let info = SpanInfo { span: Span::default() };
     let (adt, substs) = ret_ty.expect_adt();
 
     let mut vars = IndexVec::<VarId, Var<'tcx>>::default();
@@ -133,7 +133,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     /// entry point to building
     fn build_body(&mut self) -> BlockAnd<()> {
         let mut block = ENTRY_BLOCK;
-        let info = self.span_info(self.body.expr.span.hi());
+        let info = self.span_info(self.body.expr.span);
         self.with_scope(info, |this| {
             for param in &this.body.params {
                 let box tir::Pattern { id, span, ty, .. } = param.pat;

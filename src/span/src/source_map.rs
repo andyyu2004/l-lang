@@ -29,7 +29,7 @@ impl SourceMap {
     }
 
     pub fn span_to_slice(&self, span: Span) -> &str {
-        &self.files[0].src[span.lo..span.hi]
+        &self.files[0].src[span.start().to_usize()..span.end().to_usize()]
     }
 
     pub fn span_to_string(&self, span: Span) -> String {
@@ -40,8 +40,7 @@ impl SourceMap {
 impl<'a> Index<Span> for &'a SourceFile {
     type Output = str;
 
-    fn index(&self, index: Span) -> &Self::Output {
-        let Span { lo, hi } = index;
-        &self.src[lo..hi]
+    fn index(&self, span: Span) -> &Self::Output {
+        &self.src[span.start().to_usize()..span.end().to_usize()]
     }
 }

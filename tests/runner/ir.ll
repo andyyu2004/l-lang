@@ -1,8 +1,6 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"S<>" = type { i64 }
-
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
   %2 = atomicrmw sub i32* %1, i32 1 seq_cst
@@ -46,12 +44,13 @@ declare void @exit(i32)
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %tmp = alloca %"S<>"
-  %struct_gep = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 0
-  store i64 5, i64* %struct_gep
-  %struct_gep1 = getelementptr inbounds %"S<>", %"S<>"* %tmp, i32 0, i32 0
-  %load = load i64, i64* %struct_gep1
-  store i64 %load, i64* %ret
+  %tmp = alloca {}
+  %fcall = call {} @print(i64 55)
+  store {} %fcall, {}* %tmp
+  br label %basic_blockbb1
+
+basic_blockbb1:                                   ; preds = %basic_blockbb0
+  store i64 0, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
 }

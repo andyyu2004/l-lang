@@ -155,6 +155,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "codespan"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ebaf6bb6a863ad6aa3a18729e9710c53d75df03306714d9cc1f7357a00cd789"
+dependencies = [
+ "codespan-reporting",
+]
+
+[[package]]
+name = "codespan-reporting"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e0762455306b1ed42bc651ef6a2197aabda5e1d4a43c34d5eab5c1a3634e81d"
+dependencies = [
+ "termcolor",
+ "unicode-width",
+]
+
+[[package]]
 name = "colour"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -674,6 +693,7 @@ name = "parse"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "codespan",
  "error",
  "index",
  "ldriver",
@@ -774,6 +794,13 @@ dependencies = [
  "session",
  "span",
  "thiserror",
+]
+
+[[package]]
+name = "runner"
+version = "0.1.0"
+dependencies = [
+ "ldriver",
 ]
 
 [[package]]
@@ -888,6 +915,8 @@ name = "span"
 version = "0.1.0"
 dependencies = [
  "arena",
+ "codespan",
+ "codespan-reporting",
  "macros",
  "rustc-hash",
 ]

@@ -8,7 +8,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match qpath {
             QPath::Resolved(path) => path.res,
             QPath::TypeRelative(ty, segment) =>
-                self.resolve_type_relative_path(self.ir_ty_to_ty(ty), segment),
+                self.resolve_type_relative_path(qpath.span(), self.ir_ty_to_ty(ty), segment),
         }
     }
 
@@ -70,7 +70,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Ty<'tcx> {
-        let res = self.resolve_type_relative_path(self_ty, segment);
+        let res = self.resolve_type_relative_path(xpat.span(), self_ty, segment);
         self.record_type_relative_res(xpat.id(), res);
         let (def_id, def_kind) = res.expect_def();
         // these substitutions are used to partially initialize

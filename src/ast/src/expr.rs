@@ -13,7 +13,7 @@ pub struct Expr {
 /// this is only used to make expr `takeable`
 impl Default for Expr {
     fn default() -> Self {
-        Self { span: Span::empty(), id: NodeId::new(0), kind: ExprKind::Lit(Lit::Int(0)) }
+        Self { span: Span::default(), id: NodeId::new(0), kind: ExprKind::Lit(Lit::Int(0)) }
     }
 }
 

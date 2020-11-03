@@ -6,6 +6,7 @@ use lexing::TokenKind;
 use maplit::hashmap;
 use span::{self, with_interner, with_source_map, Span, Symbol};
 use std::collections::HashMap;
+use std::ops::Range;
 
 pub use lexing::{Base, LiteralKind};
 
@@ -64,7 +65,7 @@ impl Lexer {
             let token = {
                 let span = Span::new(span_index, span_index + t.len);
                 span_index += t.len;
-                let slice = &src[span.lo..span.hi];
+                let slice = &src[Range::from(*span)];
                 let kind = match t.kind {
                     TokenKind::Whitespace => continue,
                     TokenKind::Eq =>

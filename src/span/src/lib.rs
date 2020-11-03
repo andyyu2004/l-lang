@@ -10,8 +10,10 @@ mod symbol;
 pub use source_map::SourceMap;
 pub use symbol::{kw, sym, Symbol};
 
+use codespan::ByteIndex;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
+use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
 #[derive(Default, Debug)]
@@ -30,53 +32,60 @@ pub fn with_source_map<R>(f: impl FnOnce(&SourceMap) -> R) -> R {
 
 thread_local!(pub static SPAN_GLOBALS: SpanGlobals = Default::default());
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct Span {
-    /// lo is inclusive
-    pub lo: usize,
-    /// lo is exclusive
-    pub hi: usize,
+/// thin wrapper around codespan::Span for convenience
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Default)]
+pub struct Span(codespan::Span);
+
+pub trait SpanIdx {
+    fn into(self) -> ByteIndex;
 }
 
-impl IntoIterator for Span {
-    type IntoIter = std::iter::Once<Self>;
-    type Item = Self;
+impl SpanIdx for ByteIndex {
+    fn into(self) -> ByteIndex {
+        self
+    }
+}
 
-    fn into_iter(self) -> Self::IntoIter {
-        std::iter::once(self)
+impl SpanIdx for usize {
+    fn into(self) -> ByteIndex {
+        (self as u32).into()
+    }
+}
+
+impl Span {
+    pub fn new(start: impl SpanIdx, end: impl SpanIdx) -> Self {
+        Self(codespan::Span::new(start.into(), end.into()))
+    }
+
+    pub fn intern(self) -> Symbol {
+        with_source_map(|map| with_interner(|interner| interner.intern(map.span_to_slice(self))))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.start() == self.end()
+    }
+
+    pub fn merge(self, other: Self) -> Self {
+        Self(self.0.merge(other.0))
     }
 }
 
 impl Display for Span {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", with_source_map(|map| map.span_to_string(*self)))
+        write!(f, "{}", with_source_map(|smap| smap.span_to_string(*self)))
     }
 }
 
-impl Span {
-    pub const fn new(lo: usize, hi: usize) -> Self {
-        assert!(lo <= hi);
-        Self { lo, hi }
-    }
+impl Deref for Span {
+    type Target = codespan::Span;
 
-    pub const fn empty() -> Self {
-        Self::new(0, 0)
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
+}
 
-    pub const fn is_empty(self) -> bool {
-        self.lo == self.hi
-    }
-
-    pub fn hi(self) -> Self {
-        Self::new(self.hi, self.hi)
-    }
-
-    /// assumes `self.lo <= with.lo && with.hi >= self.hi`
-    pub fn merge(self, with: Span) -> Self {
-        Self { lo: self.lo, hi: with.hi }
-    }
-
-    pub fn intern(self) -> Symbol {
-        with_source_map(|map| with_interner(|interner| interner.intern(map.span_to_slice(self))))
+impl DerefMut for Span {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

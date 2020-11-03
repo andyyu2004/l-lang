@@ -173,7 +173,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
         if self.main_fn.is_none() {
-            self.tcx.sess.build_error(Span::empty(), LLVMError::MissingMain).emit();
+            self.tcx.sess.build_error(Span::default(), LLVMError::MissingMain).emit();
         }
         self.main_fn
     }

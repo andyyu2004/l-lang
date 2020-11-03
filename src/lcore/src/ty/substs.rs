@@ -89,8 +89,9 @@ impl<'tcx> TyCtx<'tcx> {
     /// used for finding all the substitutions for monomorphization
     /// we can assume that these two types are unifiable as this should
     /// only be called after successful typechecking
-    pub fn unify(self, scheme: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
+    pub fn unify_scheme(self, scheme: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
         assert!(!t.has_infer_vars());
+        debug!("unify {} with {}", scheme, t);
         let (generics, s) = scheme.expect_scheme();
         let substs = Substs::id_for_generics(self, generics);
         TypeMatcher::new(self, substs).unify(s, t)

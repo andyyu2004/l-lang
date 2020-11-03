@@ -139,7 +139,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
             // this `substs` is the substitution applied to the generic function with def_id
             // `def_id` to obtain its concrete type
             let scheme = self.tcx.collected_ty(def_id);
-            let substs = self.tcx.unify(scheme, mono_ty);
+            let substs = self.tcx.unify_scheme(scheme, mono_ty);
             let instance = Instance::resolve(self.tcx, def_id, substs);
             if let Some(prev) =
                 self.collector.operand_instance_map.borrow_mut().insert((def_id, mono_ty), instance)

@@ -70,7 +70,7 @@ impl<'a> Parse<'a> for ExternParser {
         let kind = ItemKind::Extern(foreign_items);
         Ok(parser.mk_item(
             span,
-            Visibility::new(Span::empty(), VisibilityKind::Public),
+            Visibility::new(Span::default(), VisibilityKind::Public),
             Ident::empty(),
             kind,
         ))

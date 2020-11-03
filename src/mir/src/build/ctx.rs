@@ -159,7 +159,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
                 index: FieldIdx::new(i),
                 pat: box tir::Pattern {
                     id: ir::Id::dummy(),
-                    span: Span::empty(),
+                    span: Span::default(),
                     ty: variant.fields[i].ty(self.tcx, substs),
                     kind: tir::PatternKind::Wildcard,
                 },

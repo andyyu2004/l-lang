@@ -106,11 +106,11 @@ impl Ident {
     }
 
     pub fn unspanned(symbol: Symbol) -> Self {
-        Self::new(Span::empty(), symbol)
+        Self::new(Span::default(), symbol)
     }
 
     pub fn empty() -> Self {
-        Self::new(Span::empty(), kw::Empty)
+        Self::new(Span::default(), kw::Empty)
     }
 
     /// joins two identifiers `a` and `b`

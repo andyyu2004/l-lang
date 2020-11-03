@@ -22,6 +22,6 @@ members = [
     "src/tir",
     "src/mir",
     "src/llvm",
+    "tests/runner",
 ]
-
 

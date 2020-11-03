@@ -13,6 +13,7 @@ session = { path = "../session" }
 error = { path = "../error" }
 thiserror = "1"
 salsa = "0.16.0"
+codespan = "0.9.5"
 
 [dev-dependencies]
 ldriver = { path = "../ldriver" }
