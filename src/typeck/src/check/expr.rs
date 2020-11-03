@@ -180,18 +180,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             let ty = self.check_expr(field.expr);
             match remaining_fields.remove(&field.ident) {
                 Some((idx, f)) => {
-                    seen_fields.insert(field.ident, idx);
+                    seen_fields.insert(field.ident, field.span);
                     self.record_field_index(field.id, idx);
                     self.equate(field.span, f.ty(self.tcx, substs), ty);
                 }
                 None => {
                     has_error = true;
-                    if let Some(&idx) = seen_fields.get(&field.ident) {
+                    if let Some(&span) = seen_fields.get(&field.ident) {
                         // write the index even on error to avoid missing
                         // entries in table later (may be unnecessary)
-                        self.record_field_index(field.id, idx);
+                        // self.record_field_index(field.id, idx);
                         self.emit_ty_err(
-                            field.span,
+                            vec![field.span, span],
                             TypeError::Msg(format!("field `{}` set more than once", field.ident)),
                         );
                     } else {

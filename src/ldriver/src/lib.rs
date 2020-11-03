@@ -30,6 +30,7 @@ use session::Session;
 use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::Path;
@@ -98,10 +99,12 @@ impl<'tcx> Driver<'tcx> {
     /// creates a temporary file and proceeds as usual
     pub fn from_src(src: &str) -> Self {
         let mut path = temp_dir();
-        // a crude attempt at making the file name sufficiently unique
+        let mut hasher = std::collections::hash_map::DefaultHasher::default();
+        src.hash(&mut hasher);
+        // an attempt at making the file name sufficiently unique
         // to avoid the tests overwriting each other's files
-        path.push(format!("tmp{}.l", src.len()));
-        dbg!(&path);
+        let hash = hasher.finish();
+        path.push(format!("tmp{}.l", hash));
         let mut file = File::create(&path).unwrap();
         file.write(src.as_bytes()).unwrap();
         Self::new(path)

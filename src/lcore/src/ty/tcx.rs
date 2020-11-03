@@ -251,7 +251,10 @@ impl<'tcx> TyCtx<'tcx> {
         let mut seen = FxHashMap::default();
         let fields = self.alloc_iter(variant_kind.fields().iter().map(|f| {
             if let Some(span) = seen.insert(f.ident, f.span) {
-                self.sess.emit_error(span, TypeError::FieldAlreadyDeclared(f.ident, ident));
+                self.sess.emit_error(
+                    vec![f.span, span],
+                    TypeError::FieldAlreadyDeclared(f.ident, ident),
+                );
             }
             // TODO check the number of generic params are correct
             FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
