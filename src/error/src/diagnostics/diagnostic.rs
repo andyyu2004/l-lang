@@ -1,5 +1,5 @@
 use crate::{Emitter, LError, LResult, TextEmitter};
-use codespan_reporting::diagnostic::{Label, LabelStyle};
+use codespan_reporting::diagnostic::Label;
 use span::{FileIdx, Span};
 use std::cell::{Cell, RefCell};
 use std::error::Error;
@@ -56,7 +56,7 @@ impl Diagnostic {
         let inner = DiagnosticInner::error().with_message(err.to_string()).with_labels(
             span.primary_spans
                 .iter()
-                .map(|&span| Label::new(LabelStyle::Primary, span.file, *span))
+                .map(|(span, msg)| Label::primary(span.file, **span).with_message(msg))
                 .collect(),
         );
         Self { inner }
@@ -70,19 +70,34 @@ impl Diagnostic {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
 pub struct MultiSpan {
-    pub primary_spans: Vec<Span>,
+    /// spans along with an associated message
+    pub primary_spans: Vec<(Span, String)>,
 }
 
 // only impl for vectors to avoid overlapping impls
 impl From<Vec<Span>> for MultiSpan {
-    default fn from(primary_spans: Vec<Span>) -> Self {
-        Self { primary_spans }
+    default fn from(spans: Vec<Span>) -> Self {
+        Self { primary_spans: spans.into_iter().map(|span| (span, String::new())).collect() }
+    }
+}
+
+impl<S> From<Vec<(Span, S)>> for MultiSpan
+where
+    S: Into<String>,
+{
+    default fn from(primary_spans: Vec<(Span, S)>) -> Self {
+        Self {
+            primary_spans: primary_spans
+                .into_iter()
+                .map(|(span, msg)| (span, msg.into()))
+                .collect(),
+        }
     }
 }
 
 impl From<Span> for MultiSpan {
     fn from(span: Span) -> Self {
-        Self { primary_spans: vec![span] }
+        Self::from(vec![span])
     }
 }
 

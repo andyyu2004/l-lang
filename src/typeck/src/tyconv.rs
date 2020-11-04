@@ -1,4 +1,4 @@
-//! conversion of ir::Ty to ty::Ty
+//! conversion of `ir::Ty` to `lcore::ty::Ty`
 
 use crate::TcxTypeofExt;
 use ir::{DefKind, QPath, Res};
@@ -63,7 +63,13 @@ pub trait TyConv<'tcx> {
                                     TypeError::GenericArgCount(expected_argc, args.args.len());
                                 tcx.sess
                                     .build_error(
-                                        vec![tcx.defs().generics_span(adt.def_id), path.span],
+                                        vec![
+                                            (
+                                                tcx.defs().generics_span(adt.def_id),
+                                                "generic parameter declaration",
+                                            ),
+                                            (path.span, "generic arguments"),
+                                        ],
                                         err,
                                     )
                                     .emit();
