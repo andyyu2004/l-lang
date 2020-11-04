@@ -248,6 +248,7 @@ dependencies = [
  "colour",
  "span",
  "termcolor",
+ "util",
 ]
 
 [[package]]
@@ -454,6 +455,7 @@ dependencies = [
  "span",
  "tir",
  "typeck",
+ "util",
 ]
 
 [[package]]

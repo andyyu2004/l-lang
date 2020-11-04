@@ -77,18 +77,11 @@ pub struct Driver<'tcx> {
     llvm_ctx: LLVMCtx,
 }
 
-#[macro_export]
-macro_rules! pluralize {
-    ($x:expr) => {
-        if $x != 1 { "s" } else { "" }
-    };
-}
-
 /// exits if any errors have been reported
 macro check_errors($self:expr, $ret:expr) {{
     if $self.sess.has_errors() {
         let errc = $self.sess.err_count();
-        e_red_ln!("{} error{} emitted", errc, pluralize!(errc));
+        e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
         Err(LError::ErrorReported)
     } else {
         Ok($ret)

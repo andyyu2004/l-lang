@@ -116,7 +116,7 @@ impl<'a> DiagnosticBuilder<'a> {
         self.emitter.borrow_mut().emit(self)
     }
 
-    pub(super) fn new(
+    crate fn new(
         diagnostics: &'a Diagnostics,
         span: impl Into<MultiSpan>,
         err: impl Error,

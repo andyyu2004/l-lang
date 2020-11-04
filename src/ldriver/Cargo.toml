@@ -20,6 +20,7 @@ session = { path = "../session" }
 error = { path = "../error" }
 typeck = { path = "../typeck" }
 resolve = { path = "../resolve" }
+util = { path = "../util" }
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 inkwell = { git = "https://github.com/andyyu2004/inkwell", branch = "llvm10-0" }
 colour = "0.5"

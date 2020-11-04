@@ -15,3 +15,10 @@ where
 {
     xs.into_iter().map(|x| x.to_string()).collect_vec().join(sep)
 }
+
+#[macro_export]
+macro_rules! pluralize {
+    ($x:expr) => {
+        if $x != 1 { "s" } else { "" }
+    };
+}
