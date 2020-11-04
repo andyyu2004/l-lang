@@ -1,5 +1,6 @@
 #![feature(box_syntax)]
 #![feature(crate_visibility_modifier)]
+#![feature(min_specialization)]
 
 mod diagnostics;
 

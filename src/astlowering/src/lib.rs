@@ -32,7 +32,7 @@ pub struct AstLoweringCtx<'a, 'ir> {
     sess: &'ir Session,
     resolver: &'a mut Resolver<'ir>,
     node_id_to_id: FxHashMap<NodeId, ir::Id>,
-    item_stack: Vec<(DefId, usize)>,
+    owner_stack: Vec<(DefId, usize)>,
     items: BTreeMap<DefId, ir::Item<'ir>>,
     impl_items: BTreeMap<ir::ImplItemId, ir::ImplItem<'ir>>,
     entry_id: Option<DefId>,
@@ -53,7 +53,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             sess,
             resolver,
             entry_id: None,
-            item_stack: Default::default(),
+            owner_stack: Default::default(),
             items: Default::default(),
             impl_items: Default::default(),
             node_id_to_id: Default::default(),
@@ -108,15 +108,24 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn with_owner<T>(&mut self, owner: NodeId, f: impl FnOnce(&mut Self) -> T) -> T {
         let def_id = self.resolver.def_id(owner);
-        self.item_stack.push((def_id, 0));
+        self.owner_stack.push((def_id, 0));
         let ret = f(self);
-        let (popped_def_id, _popped_counter) = self.item_stack.pop().unwrap();
+        let (popped_def_id, _popped_counter) = self.owner_stack.pop().unwrap();
         debug_assert_eq!(popped_def_id, def_id);
         ret
     }
 
+    /// get the parent of the current owner
+    // the id parameter is currently just for validation purposes
+    fn parent_def_id(&self, id: ir::Id) -> DefId {
+        let n = self.owner_stack.len();
+        let parent_def_id = self.owner_stack[n - 2].0;
+        assert_eq!(self.owner_stack[n - 1].0, id.def);
+        parent_def_id
+    }
+
     fn curr_owner(&self) -> DefId {
-        self.item_stack.last().unwrap().0
+        self.owner_stack.last().unwrap().0
     }
 
     fn mk_node_id(&self) -> NodeId {
@@ -132,7 +141,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {
         self.lower_node_id_generic(node_id, |this| {
-            let &mut (def, ref mut counter) = this.item_stack.last_mut().unwrap();
+            let &mut (def, ref mut counter) = this.owner_stack.last_mut().unwrap();
             let local_id = *counter;
             *counter += 1;
             ir::Id { def, local: LocalId::new(local_id) }

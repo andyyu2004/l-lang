@@ -1,9 +1,6 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-%"Node<>" = type { i64, %"NodeOption<>" }
-%"NodeOption<>" = type { i16, { %"Node<>"* } }
-
 define void @rc_release(i8* %0, i32* %1) {
 rc_release:
   %2 = atomicrmw sub i32* %1, i32 1 seq_cst
@@ -47,124 +44,14 @@ declare void @exit(i32)
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %tmp = alloca %"Node<>"
-  %tmp1 = alloca %"NodeOption<>"
-  %node = alloca %"Node<>"
-  %tmp2 = alloca %"Node<>"
-  %tmp3 = alloca %"NodeOption<>"
-  %tmp4 = alloca %"Node<>"*
-  %head = alloca %"Node<>"
-  %tmp5 = alloca i1
-  %tmp6 = alloca i16
-  %tmp7 = alloca i1
-  %n = alloca %"Node<>"*
-  %tmp8 = alloca i1
-  %tmp9 = alloca i16
-  %tmp10 = alloca i1
-  %discr_gep = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %tmp1, i32 0, i32 0
-  store i16 0, i16* %discr_gep
-  %enum_gep = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %tmp1, i32 0, i32 1
-  %enum_ptr_cast = bitcast { %"Node<>"* }* %enum_gep to {}*
-  %struct_gep = getelementptr inbounds %"Node<>", %"Node<>"* %tmp, i32 0, i32 0
-  store i64 9, i64* %struct_gep
-  %load = load %"NodeOption<>", %"NodeOption<>"* %tmp1
-  %struct_gep11 = getelementptr inbounds %"Node<>", %"Node<>"* %tmp, i32 0, i32 1
-  store %"NodeOption<>" %load, %"NodeOption<>"* %struct_gep11
-  %load12 = load %"Node<>", %"Node<>"* %tmp
-  store %"Node<>" %load12, %"Node<>"* %node
-  %load13 = load %"Node<>", %"Node<>"* %node
-  %malloccall = tail call i8* @malloc(i32 ptrtoint ({ %"Node<>", i32 }* getelementptr ({ %"Node<>", i32 }, { %"Node<>", i32 }* null, i32 1) to i32))
-  %box = bitcast i8* %malloccall to { %"Node<>", i32 }*
-  %rc_gep = getelementptr inbounds { %"Node<>", i32 }, { %"Node<>", i32 }* %box, i32 0, i32 1
-  store i32 0, i32* %rc_gep
-  %box_gep = getelementptr inbounds { %"Node<>", i32 }, { %"Node<>", i32 }* %box, i32 0, i32 0
-  store %"Node<>" %load13, %"Node<>"* %box_gep
-  store %"Node<>"* %box_gep, %"Node<>"** %tmp4
-  %load14 = load %"Node<>"*, %"Node<>"** %tmp4
-  %fcall = call %"NodeOption<>" @"NodeOption::Some<>"(%"Node<>"* %load14)
-  store %"NodeOption<>" %fcall, %"NodeOption<>"* %tmp3
-  br label %basic_blockbb1
-
-basic_blockbb1:                                   ; preds = %basic_blockbb0
-  %struct_gep15 = getelementptr inbounds %"Node<>", %"Node<>"* %tmp2, i32 0, i32 0
-  store i64 4, i64* %struct_gep15
-  %load16 = load %"NodeOption<>", %"NodeOption<>"* %tmp3
-  %struct_gep17 = getelementptr inbounds %"Node<>", %"Node<>"* %tmp2, i32 0, i32 1
-  store %"NodeOption<>" %load16, %"NodeOption<>"* %struct_gep17
-  %load18 = load %"Node<>", %"Node<>"* %tmp2
-  store %"Node<>" %load18, %"Node<>"* %head
-  br label %basic_blockbb2
-
-basic_blockbb2:                                   ; preds = %basic_blockbb1
-  store i1 true, i1* %tmp5
-  %struct_gep19 = getelementptr inbounds %"Node<>", %"Node<>"* %head, i32 0, i32 1
-  %discr_gep20 = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %struct_gep19, i32 0, i32 0
-  %load_discr = load i16, i16* %discr_gep20
-  store i16 %load_discr, i16* %tmp6
-  %load21 = load i16, i16* %tmp6
-  %icmp_eq = icmp eq i16 1, %load21
-  store i1 %icmp_eq, i1* %tmp7
-  %load22 = load i1, i1* %tmp7
-  %load23 = load i1, i1* %tmp5
-  %and = and i1 %load22, %load23
-  store i1 %and, i1* %tmp5
-  %struct_gep24 = getelementptr inbounds %"Node<>", %"Node<>"* %head, i32 0, i32 1
-  %struct_gep25 = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %struct_gep24, i32 0, i32 1
-  %struct_gep26 = getelementptr inbounds { %"Node<>"* }, { %"Node<>"* }* %struct_gep25, i32 0, i32 0
-  %load27 = load %"Node<>"*, %"Node<>"** %struct_gep26
-  store %"Node<>"* %load27, %"Node<>"** %n
-  %load28 = load i1, i1* %tmp5
-  br i1 %load28, label %basic_blockbb3, label %basic_blockbb4
-
-basic_blockbb3:                                   ; preds = %basic_blockbb2
-  %load_deref = load %"Node<>"*, %"Node<>"** %n
-  %struct_gep29 = getelementptr inbounds %"Node<>", %"Node<>"* %load_deref, i32 0, i32 0
-  %load30 = load i64, i64* %struct_gep29
-  store i64 %load30, i64* %ret
-  br label %basic_blockbb6
-
-basic_blockbb4:                                   ; preds = %basic_blockbb2
-  store i1 true, i1* %tmp8
-  %struct_gep31 = getelementptr inbounds %"Node<>", %"Node<>"* %head, i32 0, i32 1
-  %discr_gep32 = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %struct_gep31, i32 0, i32 0
-  %load_discr33 = load i16, i16* %discr_gep32
-  store i16 %load_discr33, i16* %tmp9
-  %load34 = load i16, i16* %tmp9
-  %icmp_eq35 = icmp eq i16 0, %load34
-  store i1 %icmp_eq35, i1* %tmp10
-  %load36 = load i1, i1* %tmp10
-  %load37 = load i1, i1* %tmp8
-  %and38 = and i1 %load36, %load37
-  store i1 %and38, i1* %tmp8
-  %load39 = load i1, i1* %tmp8
-  br i1 %load39, label %basic_blockbb5, label %basic_blockbb7
-
-basic_blockbb5:                                   ; preds = %basic_blockbb4
-  store i64 0, i64* %ret
-  br label %basic_blockbb6
-
-basic_blockbb6:                                   ; preds = %basic_blockbb5, %basic_blockbb3
+  %tmp = alloca { i64, i64 }
+  %struct_gep = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp, i32 0, i32 0
+  store i64 1, i64* %struct_gep
+  %struct_gep1 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp, i32 0, i32 1
+  store i64 8, i64* %struct_gep1
+  %struct_gep2 = getelementptr inbounds { i64, i64 }, { i64, i64 }* %tmp, i32 0, i32 1
+  %load = load i64, i64* %struct_gep2
+  store i64 %load, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret
-
-basic_blockbb7:                                   ; preds = %basic_blockbb4
-  call void @exit(i32 1)
-  unreachable
 }
-
-define %"NodeOption<>" @"NodeOption::Some<>"(%"Node<>"* %0) {
-basic_blockbb0:
-  %ret = alloca %"NodeOption<>"
-  %1 = alloca %"Node<>"*
-  store %"Node<>"* %0, %"Node<>"** %1
-  %discr_gep = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %ret, i32 0, i32 0
-  store i16 1, i16* %discr_gep
-  %enum_gep = getelementptr inbounds %"NodeOption<>", %"NodeOption<>"* %ret, i32 0, i32 1
-  %load = load %"Node<>"*, %"Node<>"** %1
-  %enum_content_gep = getelementptr inbounds { %"Node<>"* }, { %"Node<>"* }* %enum_gep, i32 0, i32 0
-  store %"Node<>"* %load, %"Node<>"** %enum_content_gep
-  %load_ret = load %"NodeOption<>", %"NodeOption<>"* %ret
-  ret %"NodeOption<>" %load_ret
-}
-
-declare noalias i8* @malloc(i32)

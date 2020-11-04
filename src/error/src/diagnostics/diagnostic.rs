@@ -75,7 +75,7 @@ pub struct MultiSpan {
 
 // only impl for vectors to avoid overlapping impls
 impl From<Vec<Span>> for MultiSpan {
-    fn from(primary_spans: Vec<Span>) -> Self {
+    default fn from(primary_spans: Vec<Span>) -> Self {
         Self { primary_spans }
     }
 }

@@ -111,7 +111,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             }
         };
 
-        self.def_node(id.def, ir::ImplItem { id, ident, span, vis, generics, kind })
+        let impl_def_id = self.parent_def_id(id);
+        self.def_node(id.def, ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind })
     }
 
     fn lower_variant(&mut self, idx: usize, variant: &Variant) -> ir::Variant<'ir> {

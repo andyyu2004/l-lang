@@ -1,4 +1,4 @@
-use crate::{self as ir, DefKind};
+use crate::{self as ir, DefId, DefKind};
 use ast::{Ident, Visibility};
 use span::Span;
 
@@ -63,6 +63,7 @@ pub enum ForeignItemKind<'ir> {
 #[derive(Debug, Copy, Clone)]
 pub struct ImplItem<'ir> {
     pub id: ir::Id,
+    pub impl_def_id: DefId,
     pub ident: Ident,
     pub span: Span,
     pub vis: Visibility,

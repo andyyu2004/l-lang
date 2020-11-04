@@ -1,4 +1,5 @@
 #![feature(debug_non_exhaustive)]
+#![feature(min_specialization)]
 #![feature(type_ascription)]
 #![feature(const_panic)]
 
@@ -12,7 +13,6 @@ pub use source_map::{FileIdx, SourceMap, ROOT_FILE_IDX};
 pub use symbol::{kw, sym, Symbol};
 
 use codespan::ByteIndex;
-use index::Idx;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Deref, DerefMut};
