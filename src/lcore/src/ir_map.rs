@@ -38,6 +38,22 @@ impl<'tcx> DefMap<'tcx> {
         }
     }
 
+    pub fn generics_span(&self, def_id: DefId) -> Span {
+        match self.get(def_id) {
+            DefNode::Item(item) => match item.kind {
+                ir::ItemKind::Fn(_, generics, _)
+                | ir::ItemKind::Impl { generics, .. }
+                | ir::ItemKind::Enum(generics, _)
+                | ir::ItemKind::Struct(generics, _) => generics.span,
+                ir::ItemKind::Extern(_) => unreachable!(),
+            },
+            DefNode::ImplItem(_) => todo!(),
+            DefNode::ForeignItem(item) => item.span,
+            DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => variant.span,
+            DefNode::TyParam(param) => param.span,
+        }
+    }
+
     pub fn ident_of(&self, def_id: DefId) -> Ident {
         match self.get(def_id) {
             DefNode::TyParam(param) => param.ident,

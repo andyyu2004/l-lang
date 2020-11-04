@@ -46,6 +46,7 @@ pub trait TyConv<'tcx> {
                 DefKind::Struct | DefKind::Enum => {
                     let ty = tcx.collected_ty(def_id);
                     let (forall, adt_ty) = ty.expect_scheme();
+                    let (adt, _) = adt_ty.expect_adt();
                     let expected_argc = forall.params.len();
                     // there should only be generic args in the very last position
                     // the previous segments should be module path, and the segments
@@ -60,7 +61,12 @@ pub trait TyConv<'tcx> {
                             if args.args.len() != expected_argc {
                                 let err =
                                     TypeError::GenericArgCount(expected_argc, args.args.len());
-                                tcx.sess.build_error(path.span, err).emit();
+                                tcx.sess
+                                    .build_error(
+                                        vec![tcx.defs().generics_span(adt.def_id), path.span],
+                                        err,
+                                    )
+                                    .emit();
                                 return tcx.mk_ty_err();
                             } else {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
