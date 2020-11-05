@@ -78,7 +78,7 @@ impl<'tcx> Type<'tcx> {
         self.visit_with(&mut TyVidVisitor { tyvid })
     }
 
-    pub fn expect_scheme(&self) -> (Generics<'tcx>, Ty<'tcx>) {
+    pub fn expect_scheme(&self) -> (&'tcx Generics<'tcx>, Ty<'tcx>) {
         match self.kind {
             TyKind::Scheme(forall, ty) => (forall, ty),
             _ => panic!("expected TyKind::Scheme, found {}", self),
@@ -159,7 +159,7 @@ pub enum TyKind<'tcx> {
     Ptr(Ty<'tcx>),
     Param(ParamTy),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
-    Scheme(Generics<'tcx>, Ty<'tcx>),
+    Scheme(&'tcx Generics<'tcx>, Ty<'tcx>),
     /// box pointer to a type
     /// created by box expressions
     /// x: T => box x: &T
@@ -167,7 +167,7 @@ pub enum TyKind<'tcx> {
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+#[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub struct Generics<'tcx> {
     pub params: &'tcx [TyParam<'tcx>],
 }

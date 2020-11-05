@@ -42,7 +42,7 @@ pub trait TyConv<'tcx> {
         match path.res {
             Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
             Res::Def(def_id, def_kind) => match def_kind {
-                DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident_of(def_id)),
+                DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident(def_id)),
                 DefKind::Struct | DefKind::Enum => {
                     let ty = tcx.collected_ty(def_id);
                     let (forall, adt_ty) = ty.expect_scheme();
@@ -65,7 +65,7 @@ pub trait TyConv<'tcx> {
                                     .build_error(
                                         vec![
                                             (
-                                                tcx.defs().generics_span(adt.def_id),
+                                                tcx.defs().generics(adt.def_id).span,
                                                 "generic parameter declaration",
                                             ),
                                             (path.span, "generic arguments"),
@@ -101,12 +101,12 @@ pub trait TyConv<'tcx> {
         }
     }
 
-    fn lower_generics(&self, generics: &ir::Generics<'tcx>) -> Generics<'tcx> {
+    fn lower_generics(&self, generics: &ir::Generics<'tcx>) -> &'tcx Generics<'tcx> {
         let params =
             generics.params.iter().map(|&ir::TyParam { id, index, ident, span, default }| {
                 TyParam { id, span, ident, index, default: default.map(|ty| self.ir_ty_to_ty(ty)) }
             });
-        Generics { params: self.tcx().alloc_iter(params) }
+        self.tcx().alloc(Generics { params: self.tcx().alloc_iter(params) })
     }
 
     fn fn_sig_to_ty(&self, sig: &ir::FnSig<'tcx>) -> Ty<'tcx> {

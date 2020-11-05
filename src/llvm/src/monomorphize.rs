@@ -49,7 +49,7 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
             None => {
                 let mir = self.tcx.mir_of_instance(instance);
                 if let Ok(mir) = mir {
-                    println!("{} {}", self.tcx.defs().ident_of(instance.def_id), mir);
+                    println!("{} {}", self.tcx.defs().ident(instance.def_id), mir);
                 }
                 mir
             }

@@ -1,6 +1,7 @@
 //! contains implementations for collection phases which populate the data structures of the global context
 //! this includes type collection, and impl collection
 
+mod generics;
 mod inherent;
 pub mod tys;
 
@@ -10,7 +11,7 @@ use lcore::ty::{self, Ty, TyCtx};
 pub trait TcxCollectExt<'tcx> {
     fn collect_item_types(self);
     fn collect_inherent_impls(self);
-    fn generalize(self, generics: ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx>;
+    fn generalize(self, generics: &'tcx ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx>;
 }
 
 impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
@@ -19,7 +20,7 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
         tys::collect(self);
     }
 
-    fn generalize(self, generics: ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
+    fn generalize(self, generics: &'tcx ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty_scheme(generics, ty)
     }
 

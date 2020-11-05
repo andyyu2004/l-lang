@@ -10,7 +10,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         if self.intrinsics.borrow().contains_key(&instance) {
             return;
         }
-        let ident = self.tcx.defs().ident_of(instance.def_id);
+        let ident = self.tcx.defs().ident(instance.def_id);
         let llfn = match ident.symbol {
             sym::rc => self.codegen_rc_intrinsic(instance),
             sym::addr => self.codegen_addr_intrinsic(instance),
@@ -21,7 +21,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn codegen_addr_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {
-        let ident = self.tcx.defs().ident_of(instance.def_id);
+        let ident = self.tcx.defs().ident(instance.def_id);
         let name = format!("{}<{}>", ident, instance.substs);
         let t = instance.substs[0];
         let llty = self.llvm_ty(t);
@@ -40,7 +40,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     fn codegen_rc_intrinsic(&self, instance: Instance<'tcx>) -> FunctionValue<'tcx> {
-        let ident = self.tcx.defs().ident_of(instance.def_id);
+        let ident = self.tcx.defs().ident(instance.def_id);
         let name = format!("{}<{}>", ident, instance.substs);
         // `t` is the generic parameter of the `rc` intrinsic
         let t = instance.substs[0];

@@ -126,7 +126,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             InstanceKind::Item => {
                 let Instance { def_id, substs, .. } = instance;
                 let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
-                let ident = self.tcx.defs().ident_of(def_id);
+                let ident = self.tcx.defs().ident(def_id);
                 // we need a special case with main, as the name actually matters
                 // for lli etc
                 let name = if ident.symbol == sym::main {

@@ -11,6 +11,7 @@ macro_rules! arena_types {
             [] adt_def: AdtTy<$tcx>,
             [] consts: Const<$tcx>,
             [] fields: FieldTy<$tcx>,
+            [] generics: Generics<$tcx>,
             [] mir: Mir<$tcx>,
             [] typeck_tables: TypeckTables<$tcx>,
             [] typarams: TyParam<'tcx>,

@@ -99,7 +99,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Array(ty, n))
     }
 
-    pub fn mk_ty_scheme(self, forall: Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
+    pub fn mk_ty_scheme(self, forall: &'tcx Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Scheme(forall, ty))
     }
 
@@ -154,12 +154,12 @@ impl<'tcx> TyCtx<'tcx> {
 
     pub fn concat_generics(
         self,
-        g: ty::Generics<'tcx>,
-        h: ty::Generics<'tcx>,
-    ) -> ty::Generics<'tcx> {
+        g: &ty::Generics<'tcx>,
+        h: &ty::Generics<'tcx>,
+    ) -> &'tcx ty::Generics<'tcx> {
         let mut params = g.params.to_vec();
         params.extend(h.params);
-        ty::Generics { params: self.alloc_iter(params) }
+        self.alloc(ty::Generics { params: self.alloc_iter(params) })
     }
 
     pub fn mk_ty_err(self) -> Ty<'tcx> {
@@ -281,7 +281,7 @@ pub struct GlobalCtx<'tcx> {
     collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
     /// maps a types DefId to the DefId's of its inherent impl blocks
     inherent_impls: RefCell<FxHashMap<DefId, Vec<DefId>>>,
-    generics: RefCell<FxHashMap<DefId, Generics<'tcx>>>,
+    generics: RefCell<FxHashMap<DefId, &'tcx Generics<'tcx>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -332,11 +332,11 @@ impl<'tcx> TyCtx<'tcx> {
         self.collected_tys.borrow().get(&def_id).copied()
     }
 
-    pub fn generics_of(self, def_id: DefId) -> Generics<'tcx> {
-        self.generics.borrow().get(&def_id).copied().unwrap()
+    pub fn generics_of(self, def_id: DefId) -> &'tcx Generics<'tcx> {
+        self.generics.borrow().get(&def_id).unwrap()
     }
 
-    pub fn cache_generics(self, def_id: DefId, generics: Generics<'tcx>) {
+    pub fn cache_generics(self, def_id: DefId, generics: &'tcx Generics<'tcx>) {
         assert!(self.generics.borrow_mut().insert(def_id, generics).is_none());
     }
 
