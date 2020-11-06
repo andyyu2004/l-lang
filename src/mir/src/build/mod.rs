@@ -48,8 +48,7 @@ pub fn build_enum_ctors<'tcx>(
             Some(body) => {
                 // eprintln!("{}", body);
                 let value = (item.ident.concat_as_path(variant.ident), body);
-                let ctor_id = variant.ctor.unwrap();
-                map.insert(ctor_id, value);
+                map.insert(variant.ctor, value);
             }
         }
     }

@@ -6,7 +6,6 @@ use mir::{TyCtxMirExt, Visitor};
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
-use typeck::TyConv;
 
 pub trait Monomorphize<'tcx> {
     fn monomorphize<T>(&self, t: T) -> T

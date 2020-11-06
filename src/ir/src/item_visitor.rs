@@ -15,6 +15,21 @@ pub trait ItemVisitor<'ir> {
     }
 }
 
+// this trait allows for a more uniform traversal
+// with only one method override needed
+pub trait ItemDefVisitor<'ir>: ItemVisitor<'ir> {
+    fn visit_item_def_id(&mut self, def_id: DefId);
+
+    fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
+        self.visit_item_def_id(item.id.def);
+    }
+
+    fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
+        self.visit_item_def_id(impl_item.id.def);
+    }
+}
+
+// TODO this is pretty bad trait design, redo this when better idea comes to mind
 impl<'ir, V> ItemVisitor<'ir> for V
 where
     V: FnVisitor<'ir>,

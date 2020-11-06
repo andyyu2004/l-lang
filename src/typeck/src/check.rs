@@ -1,4 +1,5 @@
 mod expr;
+mod item;
 mod pat;
 mod path;
 mod resolve;
@@ -8,11 +9,20 @@ use crate::TyConv;
 use ast::Mutability;
 use infer::{InferCtx, InferCtxBuilder, TyCtxtInferExt};
 use ir::{self, DefId};
+use lcore::queries::Queries;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
 use span::Span;
 use std::cell::RefCell;
 use std::ops::Deref;
+
+pub fn provide(queries: &mut Queries) {
+    item::provide(queries);
+}
+
+pub fn typeck<'tcx>(tcx: TyCtx<'tcx>) -> &'tcx TypeckTables<'tcx> {
+    todo!()
+}
 
 pub struct FnCtx<'a, 'tcx> {
     inherited: &'a InheritedCtx<'a, 'tcx>,
@@ -80,7 +90,7 @@ impl<'a, 'tcx> Deref for InheritedCtx<'a, 'tcx> {
 /// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
 /// well as the outermost fn item
 pub struct InheritedCtx<'a, 'tcx> {
-    pub(super) infcx: &'a InferCtx<'a, 'tcx>,
+    crate infcx: &'a InferCtx<'a, 'tcx>,
     locals: RefCell<FxHashMap<ir::Id, LocalTy<'tcx>>>,
 }
 
@@ -116,23 +126,11 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     }
 
     /// top level entry point for typechecking a function item
-    pub fn check_fn_item(
-        &'a self,
-        def_id: DefId,
-        sig: &ir::FnSig<'tcx>,
-        _generics: &ir::Generics<'tcx>,
-        body: &ir::Body<'tcx>,
-    ) -> FnCtx<'a, 'tcx> {
+    pub fn check_fn_item(&'a self, def_id: DefId, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
         let fn_ty = self.tcx.type_of(def_id);
         // don't instantiate anything and typeck the body using the param tys
         // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
-        debug_assert_eq!(ty, self.fn_sig_to_ty(sig));
-        // TODO do this somewhere else
-        // check main function has the expected type fn() -> int
-        // if item.ident.symbol == symbol::MAIN && ty != self.types.main {
-        // self.emit_ty_err(item.span, TypeError::IncorrectMainType(ty));
-        // }
         self.check_fn(ty, body)
     }
 

@@ -26,5 +26,6 @@ pub use type_of::Typeof;
 
 pub fn provide(queries: &mut Queries) {
     collect::provide(queries);
+    check::provide(queries);
     type_of::provide(queries);
 }

@@ -27,7 +27,8 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     let def_node = tcx.defs().get(def_id);
     match def_node {
         ir::DefNode::Item(item) => match item.kind {
-            ir::ItemKind::Fn(sig, ..) => tcx.fn_sig_to_ty(sig),
+            ir::ItemKind::Fn(sig, ..) =>
+                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => type_of_adt(tcx, def_id),
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
@@ -35,10 +36,12 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
         },
         ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => type_of_variant(tcx, variant),
         ir::DefNode::ImplItem(item) => match item.kind {
-            ir::ImplItemKind::Fn(sig, ..) => tcx.fn_sig_to_ty(sig),
+            ir::ImplItemKind::Fn(sig, ..) =>
+                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
         },
         ir::DefNode::ForeignItem(item) => match item.kind {
-            ir::ForeignItemKind::Fn(sig, ..) => tcx.fn_sig_to_ty(sig),
+            ir::ForeignItemKind::Fn(sig, ..) =>
+                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
         },
         ir::DefNode::TyParam(_) => panic!(),
     }

@@ -2,6 +2,7 @@
 #![feature(once_cell)]
 #![feature(decl_macro)]
 
+mod passes;
 mod queries;
 
 #[macro_use]

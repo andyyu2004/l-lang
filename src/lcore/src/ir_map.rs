@@ -38,6 +38,22 @@ impl<'tcx> DefMap<'tcx> {
         }
     }
 
+    pub fn body(&self, def_id: DefId) -> &'tcx ir::Body<'tcx> {
+        match self.get(def_id) {
+            DefNode::Item(item) => match item.kind {
+                ir::ItemKind::Fn(.., body) => body,
+                _ => panic!(),
+            },
+            DefNode::ImplItem(impl_item) => match impl_item.kind {
+                ir::ImplItemKind::Fn(_, body) => body,
+            },
+            DefNode::ForeignItem(..)
+            | DefNode::Ctor(..)
+            | ir::DefNode::Variant(..)
+            | DefNode::TyParam(..) => panic!(),
+        }
+    }
+
     pub fn generics(&self, def_id: DefId) -> &'tcx ir::Generics<'tcx> {
         match self.get(def_id) {
             DefNode::Item(item) => match item.kind {

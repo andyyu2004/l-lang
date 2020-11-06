@@ -167,7 +167,7 @@ pub enum TyKind<'tcx> {
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Debug)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
 pub struct Generics<'tcx> {
     pub params: &'tcx [TyParam<'tcx>],
 }
@@ -227,20 +227,20 @@ impl<'tcx> AdtTy<'tcx> {
     }
 
     pub fn variant_idx_with_ctor(&self, ctor_id: DefId) -> VariantIdx {
-        self.variants.iter_enumerated().find(|(_, v)| v.ctor == Some(ctor_id)).unwrap().0
+        self.variants.iter_enumerated().find(|(_, v)| v.ctor == ctor_id).unwrap().0
     }
 
     // find the variant who has the constructor that matches the `ctor_id`
     pub fn variant_with_ctor(&self, ctor_id: DefId) -> &VariantTy<'tcx> {
-        self.variants.iter().find(|v| v.ctor == Some(ctor_id)).unwrap()
+        let idx = self.variant_idx_with_ctor(ctor_id);
+        &self.variants[idx]
     }
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct VariantTy<'tcx> {
     pub ident: Ident,
-    /// `None` for struct variants
-    pub ctor: Option<DefId>,
+    pub ctor: DefId,
     pub ctor_kind: CtorKind,
     pub fields: &'tcx [FieldTy<'tcx>],
 }

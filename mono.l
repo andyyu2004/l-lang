@@ -1,17 +1,20 @@
 
-fn f(s: S) {}
+/* fn f(s: S) {} */
+
+struct S<T> {
+    t: T
+}
+
+struct K<T, U> {
+    s: S<T, U>
+}
 
 enum Option<T> {
     Some(T),
     None,
 }
 
-struct S {
-    b: bool,
-    x: int,
-    y: int,
-}
 
 fn main() -> int {
-
+    0
 }

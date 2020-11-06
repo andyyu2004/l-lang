@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 pub struct QueryCtx<'tcx> {
     storage: QueryStorage<'tcx>,
-    providers: Queries,
+    queries: Queries,
 }
 
 impl<'tcx> TyCtx<'tcx> {
@@ -15,16 +15,25 @@ impl<'tcx> TyCtx<'tcx> {
         if let Some(ty) = self.storage.types_cache.borrow().get(&def_id) {
             return ty;
         }
-        let ty = (self.providers.type_of)(self, def_id);
+        let ty = (self.queries.type_of)(self, def_id);
         self.storage.types_cache.borrow_mut().insert(def_id, ty);
+        // we must add a validation check for certain item types
+        // as some constraints cannot be checked during `type_of`
+        // this includes recursive adts
+        // so we must call this after adding the type to the cache
+        self.validate_item_ty(def_id);
         ty
+    }
+
+    pub fn validate_item_ty(self, def_id: DefId) {
+        (self.queries.validate_item_ty)(self, def_id)
     }
 
     pub fn adt_ty(self, def_id: DefId) -> &'tcx AdtTy<'tcx> {
         if let Some(ty) = self.storage.adts_cache.borrow().get(&def_id) {
             return ty;
         }
-        let adt = (self.providers.adt_ty)(self, def_id);
+        let adt = (self.queries.adt_ty)(self, def_id);
         self.storage.adts_cache.borrow_mut().insert(def_id, adt);
         adt
     }
@@ -34,14 +43,14 @@ impl<'tcx> TyCtx<'tcx> {
             .generics_cache
             .borrow_mut()
             .entry(def_id)
-            .or_insert_with(|| (self.providers.generics_of)(self, def_id))
+            .or_insert_with(|| (self.queries.generics_of)(self, def_id))
     }
 
     pub fn inherent_impls(self) -> FxHashMap<DefId, Vec<DefId>> {
         self.storage
             .all_inherent_impls
             .borrow_mut()
-            .get_or_insert_with(|| (self.providers.inherent_impls)(self))
+            .get_or_insert_with(|| (self.queries.inherent_impls)(self))
             .clone()
     }
 
@@ -52,7 +61,7 @@ impl<'tcx> TyCtx<'tcx> {
 
 impl<'tcx> QueryCtx<'tcx> {
     pub fn new(providers: Queries) -> Self {
-        Self { providers, storage: Default::default() }
+        Self { queries: providers, storage: Default::default() }
     }
 }
 
@@ -64,19 +73,13 @@ pub struct QueryStorage<'tcx> {
     all_inherent_impls: RefCell<Option<FxHashMap<DefId, Vec<DefId>>>>,
 }
 
-/// query providers
+/// functions pointers to the functions that compute the query
 pub struct Queries {
     pub type_of: for<'tcx> fn(TyCtx<'tcx>, DefId) -> Ty<'tcx>,
     pub adt_ty: for<'tcx> fn(TyCtx<'tcx>, DefId) -> &'tcx AdtTy<'tcx>,
+    pub validate_item_ty: for<'tcx> fn(TyCtx<'tcx>, DefId),
     pub generics_of: for<'tcx> fn(TyCtx<'tcx>, DefId) -> &'tcx Generics<'tcx>,
     pub inherent_impls: for<'tcx> fn(TyCtx<'tcx>) -> FxHashMap<DefId, Vec<DefId>>,
-}
-
-impl Queries {
-    pub fn assert_is_fully_populated(&self) {
-        assert_ne!(self.type_of as *const (), std::ptr::null());
-        assert_ne!(self.generics_of as *const (), std::ptr::null());
-    }
 }
 
 fn mk_nullary_null_fn<R>() -> for<'tcx> fn(TyCtx<'tcx>) -> R {
@@ -94,6 +97,7 @@ impl Default for Queries {
             type_of: mk_unary_null_fn(),
             adt_ty: mk_unary_null_fn(),
             generics_of: mk_unary_null_fn(),
+            validate_item_ty: mk_unary_null_fn(),
             inherent_impls: mk_nullary_null_fn(),
         }
     }
