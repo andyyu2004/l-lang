@@ -93,11 +93,11 @@ impl<'tcx> InherentCandidates<'tcx> for Ty<'tcx> {
 
 impl<'tcx> InherentCandidates<'tcx> for DefId {
     fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
-        let inherent_impls = rcx.inherent_impls_of_def(*self);
+        let inherent_impls = rcx.inherent_impls_of(*self);
 
         for impl_def_id in inherent_impls {
             let impl_block = rcx.ir.items[&impl_def_id];
-            // let impl_self_ty = rcx.impl_self_ty(impl_def_id);
+            // let _impl_self_ty = rcx.impl_self_ty(impl_def_id);
 
             // we only consider the impl if is "sufficiently general"
             // we consider the impl sufficiently general if

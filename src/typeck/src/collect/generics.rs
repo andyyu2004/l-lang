@@ -1,6 +1,11 @@
 use crate::TyConv;
 use ir::{DefId, DefNode};
+use lcore::queries::Queries;
 use lcore::ty::{self, TyCtx, TyParam};
+
+crate fn provide(queries: &mut Queries) {
+    *queries = Queries { generics_of, ..*queries }
+}
 
 pub fn generics_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx ty::Generics<'tcx> {
     let generics = tcx.defs().generics(def_id);

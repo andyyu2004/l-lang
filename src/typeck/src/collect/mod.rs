@@ -6,17 +6,16 @@ mod inherent;
 pub mod tys;
 
 pub fn provide(queries: &mut Queries) {
-    *queries = Queries { generics_of, ..*queries }
+    inherent::provide(queries);
+    generics::provide(queries);
 }
 
-use generics::generics_of;
 use lcore::queries::Queries;
 use lcore::ty::{self, Ty, TyCtx};
 
 /// stateful queries that populate the inner data structures of the typing context
 pub trait TcxCollectExt<'tcx> {
     fn collect_item_types(self);
-    fn collect_inherent_impls(self);
     fn generalize(self, generics: &'tcx ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx>;
 }
 
@@ -28,9 +27,5 @@ impl<'tcx> TcxCollectExt<'tcx> for TyCtx<'tcx> {
 
     fn generalize(self, generics: &'tcx ty::Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty_scheme(generics, ty)
-    }
-
-    fn collect_inherent_impls(self) {
-        inherent::collect(self);
     }
 }

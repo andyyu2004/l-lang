@@ -2,10 +2,15 @@
 
 use crate::TyConv;
 use ir::{DefId, Visitor};
+use lcore::queries::Queries;
 use lcore::{ty, TyCtx};
 use rustc_hash::FxHashMap;
 
-crate fn collect<'tcx>(tcx: TyCtx<'tcx>) {
+crate fn provide(queries: &mut Queries) {
+    *queries = Queries { inherent_impls, ..*queries }
+}
+
+fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> FxHashMap<DefId, Vec<DefId>> {
     InherentCollector::new(tcx).collect()
 }
 
@@ -54,9 +59,9 @@ impl<'tcx> InherentCollector<'tcx> {
         Self { tcx, inherent_impls: Default::default() }
     }
 
-    fn collect(mut self) {
+    fn collect(mut self) -> FxHashMap<DefId, Vec<DefId>> {
         self.visit_ir(self.tcx.ir);
-        self.tcx.set_inherent_impls(self.inherent_impls);
+        self.inherent_impls
     }
 
     fn visit_def(&mut self, type_def_id: DefId, impl_def_id: DefId) {

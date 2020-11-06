@@ -71,7 +71,7 @@ pub fn main() -> ! {
 
 pub struct Driver<'tcx> {
     sess: Session,
-    core_arena: lcore::Arena<'tcx>,
+    core_arenas: lcore::Arena<'tcx>,
     ir_arena: astlowering::Arena<'tcx>,
     resolver_arenas: ResolverArenas<'tcx>,
     global_ctx: OnceCell<GlobalCtx<'tcx>>,
@@ -96,7 +96,7 @@ impl<'tcx> Driver<'tcx> {
         let mut hasher = std::collections::hash_map::DefaultHasher::default();
         src.hash(&mut hasher);
         // an attempt at making the file name sufficiently unique
-        // to avoid the tests overwriting each other's files
+        // to avoid the parallel tests overwriting each other's files and becoming a mess
         let hash = hasher.finish();
         path.push(format!("tmp{}.l", hash));
         let mut file = File::create(&path).unwrap();
@@ -109,7 +109,7 @@ impl<'tcx> Driver<'tcx> {
             .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(path))));
         Self {
             resolver_arenas: Default::default(),
-            core_arena: Default::default(),
+            core_arenas: Default::default(),
             ir_arena: Default::default(),
             global_ctx: Default::default(),
             sess: Default::default(),
@@ -139,8 +139,13 @@ impl<'tcx> Driver<'tcx> {
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, resolutions) = self.gen_ir()?;
         let gcx = self.global_ctx.get_or_init(|| {
-            let gcx =
-                GlobalCtx::new(ir, &self.core_arena, resolutions, &self.sess, queries::queries());
+            let gcx = GlobalCtx::new(
+                ir,
+                &self.core_arenas,
+                resolutions,
+                &self.sess,
+                queries::query_ctx(),
+            );
             self.init_gcx(&gcx);
             gcx
         });
@@ -151,10 +156,7 @@ impl<'tcx> Driver<'tcx> {
     /// run all the necessary passes to initialize the context
     // we put this code here as it reference crates that depend on lcore
     fn init_gcx(&self, gcx: &GlobalCtx<'tcx>) {
-        gcx.enter_tcx(|tcx| {
-            tcx.collect_item_types();
-            tcx.collect_inherent_impls();
-        })
+        gcx.enter_tcx(|tcx| tcx.collect_item_types())
     }
 
     pub fn dump_mir(&'tcx self) -> LResult<()> {
