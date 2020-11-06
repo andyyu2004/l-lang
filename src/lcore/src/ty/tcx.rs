@@ -242,26 +242,6 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.intern_const(c)
     }
 
-    pub fn variant_ty(
-        self,
-        ident: Ident,
-        ctor: Option<DefId>,
-        variant_kind: &ir::VariantKind<'tcx>,
-    ) -> VariantTy<'tcx> {
-        let mut seen = FxHashMap::default();
-        let fields = self.alloc_iter(variant_kind.fields().iter().map(|f| {
-            if let Some(span) = seen.insert(f.ident, f.span) {
-                self.sess.emit_error(
-                    vec![f.span, span],
-                    TypeError::FieldAlreadyDeclared(f.ident, ident),
-                );
-            }
-            // TODO check the number of generic params are correct
-            FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
-        }));
-        VariantTy { ctor, ident, fields, ctor_kind: CtorKind::from(variant_kind) }
-    }
-
     pub fn intern_substs(self, slice: &[Ty<'tcx>]) -> SubstsRef<'tcx> {
         if slice.is_empty() { Substs::empty() } else { self.interners.intern_substs(slice) }
     }
@@ -275,12 +255,6 @@ pub struct GlobalCtx<'tcx> {
     pub resolutions: Resolutions<'tcx>,
     queries: QueryCtx<'tcx>,
     interners: CtxInterners<'tcx>,
-    // caches below
-    // these should be populated during collection
-    /// maps an item's DefId to its type
-    collected_tys: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
-    /// maps a types DefId to the DefId's of its inherent impl blocks
-    inherent_impls: RefCell<FxHashMap<DefId, Vec<DefId>>>,
 }
 
 impl<'tcx> GlobalCtx<'tcx> {
@@ -293,50 +267,11 @@ impl<'tcx> GlobalCtx<'tcx> {
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
-        Self {
-            types,
-            ir,
-            arena,
-            interners,
-            resolutions,
-            sess,
-            queries,
-            collected_tys: Default::default(),
-            inherent_impls: Default::default(),
-        }
+        Self { types, ir, arena, interners, resolutions, sess, queries }
     }
 
     pub fn enter_tcx<R>(&self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
         tls::enter_tcx(self, f)
-    }
-}
-
-/// collection methods
-impl<'tcx> TyCtx<'tcx> {
-    /// write collected ty to tcx map
-    pub fn collect_ty(self, def: DefId, ty: Ty<'tcx>) -> Ty<'tcx> {
-        info!("collect item {}: {}", def, ty);
-        assert!(self.collected_tys.borrow_mut().insert(def, ty).is_none());
-        ty
-    }
-
-    /// finds the type of an item that was obtained during the collection phase
-    pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
-        self.collected_ty_opt(def_id).unwrap_or_else(|| {
-            panic!("no collected type found for `{:?}`", self.defs().get(def_id))
-        })
-    }
-
-    pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
-        self.collected_tys.borrow().get(&def_id).copied()
-    }
-}
-
-/// debug
-impl<'tcx> TyCtx<'tcx> {
-    pub fn dump_collected_tys(self) {
-        println!("type collection results");
-        self.collected_tys.borrow().iter().for_each(|(k, v)| println!("{:?}: {}", k, v));
     }
 }
 

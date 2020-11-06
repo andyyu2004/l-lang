@@ -138,7 +138,7 @@ impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
             debug_assert!(!mono_ty.has_ty_params());
             // this `substs` is the substitution applied to the generic function with def_id
             // `def_id` to obtain its concrete type
-            let scheme = self.tcx.collected_ty(def_id);
+            let scheme = self.tcx.type_of(def_id);
             let substs = self.tcx.unify_scheme(scheme, mono_ty);
             let instance = Instance::resolve(self.tcx, def_id, substs);
             if let Some(prev) =

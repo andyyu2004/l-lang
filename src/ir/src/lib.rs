@@ -147,7 +147,7 @@ impl Display for Id {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Variant<'ir> {
     pub id: ir::Id,
     pub ident: Ident,

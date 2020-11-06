@@ -97,7 +97,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         let &Self { span, id, ident, vis, ref kind } = self;
         match kind {
             ir::ItemKind::Fn(_sig, generics, body) => {
-                let ty = ctx.tcx.collected_ty(self.id.def);
+                let ty = ctx.type_of(self.id.def);
                 let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), box body.to_tir(ctx));
                 tir::Item { kind, span, id, ident, vis }
             }

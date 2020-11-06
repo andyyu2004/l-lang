@@ -125,7 +125,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         match instance.kind {
             InstanceKind::Item => {
                 let Instance { def_id, substs, .. } = instance;
-                let (_, ty) = self.tcx.collected_ty(def_id).expect_scheme();
+                let (_, ty) = self.tcx.type_of(def_id).expect_scheme();
                 let ident = self.tcx.defs().ident(def_id);
                 // we need a special case with main, as the name actually matters
                 // for lli etc

@@ -35,7 +35,6 @@ use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::Path;
 use std::rc::Rc;
-use typeck::TcxCollectExt;
 
 pub fn main() -> ! {
     let _ = std::fs::remove_file("log.txt");
@@ -139,24 +138,10 @@ impl<'tcx> Driver<'tcx> {
     fn with_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> LResult<R> {
         let (ir, resolutions) = self.gen_ir()?;
         let gcx = self.global_ctx.get_or_init(|| {
-            let gcx = GlobalCtx::new(
-                ir,
-                &self.core_arenas,
-                resolutions,
-                &self.sess,
-                queries::query_ctx(),
-            );
-            self.init_gcx(&gcx);
-            gcx
+            GlobalCtx::new(ir, &self.core_arenas, resolutions, &self.sess, queries::query_ctx())
         });
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
-    }
-
-    /// run all the necessary passes to initialize the context
-    // we put this code here as it reference crates that depend on lcore
-    fn init_gcx(&self, gcx: &GlobalCtx<'tcx>) {
-        gcx.enter_tcx(|tcx| tcx.collect_item_types())
     }
 
     pub fn dump_mir(&'tcx self) -> LResult<()> {

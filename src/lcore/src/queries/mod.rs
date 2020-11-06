@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::ty::{Generics, Ty, TyCtx};
+use crate::ty::{AdtTy, Generics, Ty, TyCtx};
 use ir::DefId;
 use rustc_hash::FxHashMap;
 
@@ -11,11 +11,22 @@ pub struct QueryCtx<'tcx> {
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn type_of(self, def_id: DefId) -> Ty<'tcx> {
-        self.storage
-            .types_cache
-            .borrow_mut()
-            .entry(def_id)
-            .or_insert_with(|| (self.providers.type_of)(self, def_id))
+        // written in this way to allow for recursive queries without `BorrowMut` errors
+        if let Some(ty) = self.storage.types_cache.borrow().get(&def_id) {
+            return ty;
+        }
+        let ty = (self.providers.type_of)(self, def_id);
+        self.storage.types_cache.borrow_mut().insert(def_id, ty);
+        ty
+    }
+
+    pub fn adt_ty(self, def_id: DefId) -> &'tcx AdtTy<'tcx> {
+        if let Some(ty) = self.storage.adts_cache.borrow().get(&def_id) {
+            return ty;
+        }
+        let adt = (self.providers.adt_ty)(self, def_id);
+        self.storage.adts_cache.borrow_mut().insert(def_id, adt);
+        adt
     }
 
     pub fn generics_of(self, def_id: DefId) -> &'tcx Generics<'tcx> {
@@ -48,6 +59,7 @@ impl<'tcx> QueryCtx<'tcx> {
 #[derive(Default)]
 pub struct QueryStorage<'tcx> {
     types_cache: RefCell<FxHashMap<DefId, Ty<'tcx>>>,
+    adts_cache: RefCell<FxHashMap<DefId, &'tcx AdtTy<'tcx>>>,
     generics_cache: RefCell<FxHashMap<DefId, &'tcx Generics<'tcx>>>,
     all_inherent_impls: RefCell<Option<FxHashMap<DefId, Vec<DefId>>>>,
 }
@@ -55,6 +67,7 @@ pub struct QueryStorage<'tcx> {
 /// query providers
 pub struct Queries {
     pub type_of: for<'tcx> fn(TyCtx<'tcx>, DefId) -> Ty<'tcx>,
+    pub adt_ty: for<'tcx> fn(TyCtx<'tcx>, DefId) -> &'tcx AdtTy<'tcx>,
     pub generics_of: for<'tcx> fn(TyCtx<'tcx>, DefId) -> &'tcx Generics<'tcx>,
     pub inherent_impls: for<'tcx> fn(TyCtx<'tcx>) -> FxHashMap<DefId, Vec<DefId>>,
 }
@@ -79,6 +92,7 @@ impl Default for Queries {
     fn default() -> Self {
         Self {
             type_of: mk_unary_null_fn(),
+            adt_ty: mk_unary_null_fn(),
             generics_of: mk_unary_null_fn(),
             inherent_impls: mk_nullary_null_fn(),
         }

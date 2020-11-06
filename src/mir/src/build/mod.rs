@@ -37,7 +37,7 @@ pub fn build_enum_ctors<'tcx>(
     item: &ir::Item,
 ) -> FxHashMap<DefId, (Ident, &'tcx Mir<'tcx>)> {
     // TODO deal with generics
-    let scheme = tcx.collected_ty(item.id.def);
+    let scheme = tcx.type_of(item.id.def);
     let (_forall, ty) = scheme.expect_scheme();
     let (adt_ty, _) = ty.expect_adt();
     let mut map = FxHashMap::default();
@@ -57,7 +57,7 @@ pub fn build_enum_ctors<'tcx>(
 }
 
 pub fn build_variant_ctor<'tcx>(tcx: TyCtx<'tcx>, variant: ir::Variant<'tcx>) -> &'tcx Mir<'tcx> {
-    let scheme = tcx.collected_ty(variant.adt_def_id);
+    let scheme = tcx.type_of(variant.adt_def_id);
     let (_forall, ty) = scheme.expect_scheme();
     let (adt_ty, _) = ty.expect_adt();
     let idx = variant.idx;

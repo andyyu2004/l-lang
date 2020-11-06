@@ -19,7 +19,7 @@ pub struct Instance<'tcx> {
 
 impl<'tcx> Instance<'tcx> {
     pub fn ty(self, tcx: TyCtx<'tcx>) -> Ty<'tcx> {
-        let ty = tcx.collected_ty(self.def_id);
+        let ty = tcx.type_of(self.def_id);
         ty.subst(tcx, self.substs)
     }
 

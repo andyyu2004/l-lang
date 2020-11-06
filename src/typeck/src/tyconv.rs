@@ -43,7 +43,7 @@ pub trait TyConv<'tcx> {
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident(def_id)),
                 DefKind::Struct | DefKind::Enum => {
-                    let ty = tcx.collected_ty(def_id);
+                    let ty = tcx.type_of(def_id);
                     let (forall, adt_ty) = ty.expect_scheme();
                     let (adt, _) = adt_ty.expect_adt();
                     let expected_argc = forall.params.len();

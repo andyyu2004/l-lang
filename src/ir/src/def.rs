@@ -205,6 +205,7 @@ impl<'ir> Into<DefNode<'ir>> for ir::ForeignItem<'ir> {
 
 impl<'ir> Into<DefNode<'ir>> for ir::Variant<'ir> {
     fn into(self) -> DefNode<'ir> {
+        // the variant can either become a constructor or a variant node depending on its kind
         if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
     }
 }

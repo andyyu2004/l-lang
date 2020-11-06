@@ -130,8 +130,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::AssocFn
             | DefKind::Enum
             | DefKind::Struct
-            | DefKind::Ctor(..) =>
-                self.instantiate(span, self.collected_ty(def_id), partial_substs),
+            | DefKind::Ctor(..) => self.instantiate(span, self.type_of(def_id), partial_substs),
             DefKind::Extern | DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
         }
     }

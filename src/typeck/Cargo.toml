@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 span = { path = "../span" }
 ir = { path = "../ir" }
+index = { path = "../index" }
 lcore = { path = "../lcore" }
 ast = { path = "../ast" }
 error = { path = "../error" }
