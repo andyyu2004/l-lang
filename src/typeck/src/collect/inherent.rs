@@ -3,14 +3,21 @@
 use crate::TyConv;
 use ir::{DefId, Visitor};
 use lcore::queries::Queries;
-use lcore::{ty, TyCtx};
+use lcore::ty::{self, InherentImpls, TyCtx};
 use rustc_hash::FxHashMap;
 
 crate fn provide(queries: &mut Queries) {
-    *queries = Queries { inherent_impls, ..*queries }
+    // adding a unit parameter to make the parameterless function fit with the query structure
+    // where they all have exactly one parameter
+    *queries =
+        Queries { inherent_impls: |tcx, ()| inherent_impls(tcx), inherent_impls_of, ..*queries }
 }
 
-fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> FxHashMap<DefId, Vec<DefId>> {
+fn inherent_impls_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Vec<DefId> {
+    tcx.inherent_impls(()).inherent_impls.get(&def_id).cloned().unwrap_or_else(Vec::new)
+}
+
+fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> InherentImpls {
     InherentCollector::new(tcx).collect()
 }
 
@@ -26,7 +33,7 @@ struct InherentCollector<'tcx> {
 impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
     fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
         let self_ty = match item.kind {
-            // only visit inherent impls (i.e. there is no trait_path )
+            // only visit inherent impls (i.e. there is no trait_path)
             ir::ItemKind::Impl { self_ty, trait_path: None, .. } => self_ty,
             _ => return,
         };
@@ -59,9 +66,9 @@ impl<'tcx> InherentCollector<'tcx> {
         Self { tcx, inherent_impls: Default::default() }
     }
 
-    fn collect(mut self) -> FxHashMap<DefId, Vec<DefId>> {
+    fn collect(mut self) -> InherentImpls {
         self.visit_ir(self.tcx.ir);
-        self.inherent_impls
+        InherentImpls { inherent_impls: self.inherent_impls }
     }
 
     fn visit_def(&mut self, type_def_id: DefId, impl_def_id: DefId) {

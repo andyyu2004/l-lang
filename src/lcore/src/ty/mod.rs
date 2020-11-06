@@ -12,6 +12,7 @@ pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
 pub use instance::{Instance, InstanceId, InstanceKind};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
+use rustc_hash::FxHashMap;
 pub use substs::*;
 pub use tables::TypeckTables;
 pub use tcx::{tls, GlobalCtx, TyCtx};
@@ -167,7 +168,7 @@ pub enum TyKind<'tcx> {
     Opaque(DefId, SubstsRef<'tcx>),
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+#[derive(Eq, Hash, PartialEq, Debug)]
 pub struct Generics<'tcx> {
     pub params: &'tcx [TyParam<'tcx>],
 }
@@ -199,7 +200,7 @@ pub enum AdtKind {
     Enum,
 }
 
-#[derive(Debug, Eq, Hash, Clone)]
+#[derive(Debug, Eq, Hash)]
 pub struct AdtTy<'tcx> {
     pub def_id: DefId,
     pub kind: AdtKind,
@@ -473,4 +474,9 @@ impl<'tcx> Display for Const<'tcx> {
             ConstKind::Unit => write!(f, "()"),
         }
     }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct InherentImpls {
+    pub inherent_impls: FxHashMap<DefId, Vec<DefId>>,
 }
