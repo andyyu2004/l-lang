@@ -1,11 +1,15 @@
 use crate::CodegenCtx;
-use ir::{DefId, FnVisitor, ItemVisitor};
+use ir::{DefId, FnVisitor};
 use lcore::mir::Operand;
 use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
 use mir::Visitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
+
+// pub fn provide(queries: &mut Queries) {
+//     *queries = Queries { monomorphization_instances }
+// }
 
 pub trait Monomorphize<'tcx> {
     fn monomorphize<T>(&self, t: T) -> T
@@ -42,30 +46,13 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
         self.mono_instances.into_inner()
     }
 
-    fn collect_item_instance(&self, instance: Instance<'tcx>) {
-        let mir = match self.cached_mir.borrow().get(&instance.def_id) {
-            Some(&mir) => Ok(mir),
-            None => {
-                let mir = self.tcx.instance_mir(instance);
-                if let Ok(mir) = mir {
-                    println!("{} {}", self.tcx.defs().ident(instance.def_id), mir);
-                }
-                mir
-            }
-        };
-
-        if let Ok(mir) = mir {
-            if let Some(old) = self.cached_mir.borrow_mut().insert(instance.def_id, mir) {
-                debug_assert_eq!(old, mir);
-            }
-            InstanceCollector { collector: self, instance }.visit_mir(mir)
-        }
-    }
-
     fn collect_instance(&self, instance: Instance<'tcx>) {
         self.mono_instances.borrow_mut().insert(instance);
         match instance.kind {
-            InstanceKind::Item => self.collect_item_instance(instance),
+            InstanceKind::Item =>
+                if let Ok(mir) = self.tcx.mir_of(instance.def_id) {
+                    InstanceCollector { collector: self, instance }.visit_mir(mir)
+                },
             // no need to recurse on intrinsics as they do not have associated mir
             InstanceKind::Intrinsic => {}
         }

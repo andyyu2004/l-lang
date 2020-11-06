@@ -49,7 +49,6 @@ impl<'tcx> Instance<'tcx> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum InstanceKind {
-    // maybe include the mir body in here?
     Item,
     Intrinsic,
 }

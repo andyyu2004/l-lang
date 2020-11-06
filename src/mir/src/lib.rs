@@ -21,7 +21,6 @@ use lcore::ty::{Instance, InstanceKind, TyCtx};
 use std::collections::BTreeMap;
 use std::io::Write;
 use typecheck::typecheck;
-use typeck::InheritedCtx;
 
 pub fn provide(queries: &mut Queries) {
     *queries = Queries { mir_of, instance_mir, ..*queries }

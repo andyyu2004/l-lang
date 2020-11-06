@@ -6,7 +6,6 @@ use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
 use ir::DefId;
-use lcore::mir::Mir;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
 use span::{sym, Span};
@@ -23,7 +22,6 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
-    pub cached_mir: RefCell<FxHashMap<DefId, &'tcx Mir<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     // we map Operand::Item to an instance via its DefId and monomorphized type
     pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
@@ -103,7 +101,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             native_functions,
             builder: llctx.create_builder(),
             intrinsics: Default::default(),
-            cached_mir: Default::default(),
             instances: Default::default(),
             operand_instance_map: Default::default(),
             lltypes: Default::default(),
