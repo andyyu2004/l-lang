@@ -4,10 +4,10 @@ use lcore::queries::Queries;
 use lcore::TyCtx;
 
 pub fn provide(queries: &mut Queries) {
-    *queries = Queries { validate_item_ty, ..*queries }
+    *queries = Queries { validate_item_type, ..*queries }
 }
 
-fn validate_item_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
+fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
     match tcx.defs().get(def_id) {
         ir::DefNode::Item(item) => match item.kind {
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => validate_adt(tcx, def_id),

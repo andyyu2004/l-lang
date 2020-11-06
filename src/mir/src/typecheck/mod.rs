@@ -1,13 +1,13 @@
 //! this module performs sanity type checks on mir
 //! there are not intended to be any errors so it panics on error
 
-use crate::{MirCtx, Visitor};
+use crate::Visitor;
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx};
 use typeck::Typeof;
 
-pub fn typecheck<'a, 'tcx>(ctx: &'a MirCtx<'a, 'tcx>, mir: &'tcx Mir<'tcx>) {
-    Typechecker::new(ctx, mir).typecheck()
+pub fn typecheck<'tcx>(tcx: TyCtx<'tcx>, mir: &'tcx Mir<'tcx>) {
+    Typechecker::new(tcx, mir).typecheck()
 }
 
 struct Typechecker<'a, 'tcx> {
@@ -16,8 +16,8 @@ struct Typechecker<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Typechecker<'a, 'tcx> {
-    pub fn new(ctx: &'a MirCtx<'a, 'tcx>, mir: &'tcx Mir<'tcx>) -> Self {
-        Self { tcx: ctx.tcx, mir }
+    pub fn new(tcx: TyCtx<'tcx>, mir: &'tcx Mir<'tcx>) -> Self {
+        Self { tcx, mir }
     }
 
     fn typecheck(&mut self) {

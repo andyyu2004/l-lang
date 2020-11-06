@@ -14,7 +14,7 @@ pub use traverse::Visitor;
 
 use ast::Ident;
 use error::{LError, LResult};
-use ir::{DefId, FnVisitor, ItemVisitor};
+use ir::{DefId, FnVisitor};
 use lcore::mir::Mir;
 use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
@@ -56,21 +56,14 @@ fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
     }
 }
 
-fn with_mir_ctx<'tcx, R>(
+fn with_lowering_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
     def_id: DefId,
-    body: &'tcx ir::Body<'tcx>,
-    f: impl for<'a> FnOnce(MirCtx<'a, 'tcx>) -> R,
+    f: impl FnOnce(LoweringCtx<'tcx>) -> R,
 ) -> LResult<R> {
-    InheritedCtx::build(tcx, def_id).enter(|inherited| {
-        let fcx = inherited.check_fn_item(def_id, body);
-        // don't bother continuing if typeck failed
-        // note that the failure to typeck could also come from earlier resolution errors
-        halt_on_error!(tcx);
-        let tables = fcx.resolve_inference_variables(body);
-        let lctx = MirCtx::new(&inherited, tables);
-        Ok(f(lctx))
-    })
+    let tables = tcx.typeck(def_id)?;
+    let lctx = LoweringCtx::new(tcx, tables);
+    Ok(f(lctx))
 }
 
 pub fn build_mir<'tcx>(
@@ -78,7 +71,7 @@ pub fn build_mir<'tcx>(
     def_id: DefId,
     body: &'tcx ir::Body<'tcx>,
 ) -> LResult<&'tcx Mir<'tcx>> {
-    with_mir_ctx(tcx, def_id, body, |mut lctx| lctx.build_mir(body))
+    with_lowering_ctx(tcx, def_id, |mut lctx| lctx.build_mir(body))
 }
 
 pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
@@ -87,9 +80,9 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
 
     for item in prog.items.values() {
         match item.kind {
-            ir::ItemKind::Fn(_, _, body) => {
+            ir::ItemKind::Fn(..) => {
                 if let Ok(tir) =
-                    with_mir_ctx(tcx, item.id.def, body, |mut lctx| lctx.lower_item_tir(item))
+                    with_lowering_ctx(tcx, item.id.def, |mut lctx| lctx.lower_item_tir(item))
                 {
                     items.insert(item.id, tir);
                 }
@@ -124,7 +117,7 @@ impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
         _generics: &'tcx ir::Generics<'tcx>,
         body: &'tcx ir::Body<'tcx>,
     ) {
-        let _ = with_mir_ctx(self.tcx, def_id, body, |mut lctx| {
+        let _ = with_lowering_ctx(self.tcx, def_id, |mut lctx| {
             let mir = lctx.build_mir(body);
             write!(self.writer, "\n{}", mir).unwrap();
         });

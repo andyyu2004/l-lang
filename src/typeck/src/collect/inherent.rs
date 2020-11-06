@@ -13,12 +13,12 @@ crate fn provide(queries: &mut Queries) {
         Queries { inherent_impls: |tcx, ()| inherent_impls(tcx), inherent_impls_of, ..*queries }
 }
 
-fn inherent_impls_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Vec<DefId> {
-    tcx.inherent_impls(()).inherent_impls.get(&def_id).cloned().unwrap_or_else(Vec::new)
+fn inherent_impls_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx [DefId] {
+    tcx.inherent_impls(()).inherent_impls.get(&def_id).map_or(&[], |xs| &xs)
 }
 
-fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> InherentImpls {
-    InherentCollector::new(tcx).collect()
+fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> &'tcx InherentImpls {
+    tcx.alloc(InherentCollector::new(tcx).collect())
 }
 
 /// collects inherent impls

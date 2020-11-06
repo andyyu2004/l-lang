@@ -3,13 +3,11 @@ use crate::ty::*;
 use crate::*;
 use ast::Ident;
 use index::IndexVec;
-use ir::CtorKind;
 use ir::{DefId, FieldIdx, ParamIdx, VariantIdx};
 use itertools::Itertools;
 use resolve::Resolutions;
-use rustc_hash::FxHashMap;
 use session::Session;
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::ops::Deref;
 
 /// typing context

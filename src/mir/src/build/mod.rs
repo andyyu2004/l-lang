@@ -8,7 +8,7 @@ mod stmt;
 use crate::set;
 use ast::{Ident, Mutability};
 use cfg::Cfg;
-pub use ctx::MirCtx;
+pub use ctx::LoweringCtx;
 use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};
 use itertools::Itertools;
@@ -20,12 +20,12 @@ use span::Span;
 use typeck::Typeof;
 
 /// lowers `tir::Body` into `mir::Body`
-pub fn build_fn<'a, 'tcx>(ctx: &'a MirCtx<'a, 'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
+pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
     let mut builder = Builder::new(ctx, &body);
     let _ = builder.build_body();
     let mir = ctx.alloc(builder.complete());
     // crate::analyse(&mir, &ctx);
-    crate::typecheck(&ctx, &mir);
+    crate::typecheck(ctx.tcx, &mir);
     // eprintln!("{}", mir);
     mir
 }
@@ -106,7 +106,7 @@ pub fn build_variant_ctor_inner<'tcx>(
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
-    fn new(ctx: &'a MirCtx<'a, 'tcx>, body: &'a tir::Body<'tcx>) -> Self {
+    fn new(ctx: &'a LoweringCtx<'tcx>, body: &'a tir::Body<'tcx>) -> Self {
         let tcx = ctx.tcx;
         let body_ty = body.expr.ty;
         let span = body.expr.span;
@@ -152,7 +152,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
 struct Builder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
-    ctx: &'a MirCtx<'a, 'tcx>,
+    ctx: &'a LoweringCtx<'tcx>,
     body: &'a tir::Body<'tcx>,
     scopes: Scopes<'tcx>,
     cfg: Cfg<'tcx>,

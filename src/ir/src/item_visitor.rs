@@ -17,7 +17,7 @@ pub trait ItemVisitor<'ir> {
 
 // this trait allows for a more uniform traversal
 // with only one method override needed
-pub trait ItemDefVisitor<'ir>: ItemVisitor<'ir> {
+pub trait ItemDefVisitor<'ir> {
     fn visit_item_def_id(&mut self, def_id: DefId);
 
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
@@ -30,21 +30,26 @@ pub trait ItemDefVisitor<'ir>: ItemVisitor<'ir> {
 }
 
 // TODO this is pretty bad trait design, redo this when better idea comes to mind
-impl<'ir, V> ItemVisitor<'ir> for V
-where
-    V: FnVisitor<'ir>,
-{
-    fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
-        FnVisitor::visit_item(self, item)
-    }
+// impl<'ir, V> ItemVisitor<'ir> for V
+// where
+//     V: FnVisitor<'ir>,
+// {
+//     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
+//         FnVisitor::visit_item(self, item)
+//     }
 
-    fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
-        FnVisitor::visit_impl_item(self, impl_item)
-    }
-}
+//     fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
+//         FnVisitor::visit_impl_item(self, impl_item)
+//     }
+// }
 
 /// visits all things that requires mir generation (i.e. functions and constructors)
-pub trait FnVisitor<'ir>: ItemVisitor<'ir> {
+pub trait FnVisitor<'ir> {
+    fn visit_ir(&mut self, ir: &'ir ir::Ir<'ir>) {
+        ir.items.values().for_each(|item| self.visit_item(item));
+        ir.impl_items.values().for_each(|item| self.visit_impl_item(item));
+    }
+
     fn visit_fn(
         &mut self,
         def_id: ir::DefId,

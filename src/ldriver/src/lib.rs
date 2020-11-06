@@ -141,6 +141,7 @@ impl<'tcx> Driver<'tcx> {
         let gcx = self.global_ctx.get_or_init(|| {
             GlobalCtx::new(ir, &self.core_arenas, resolutions, &self.sess, queries::query_ctx())
         });
+        gcx.enter_tcx(|tcx| tcx.analyze(()));
         let ret = gcx.enter_tcx(|tcx| f(tcx));
         check_errors!(self, ret)
     }

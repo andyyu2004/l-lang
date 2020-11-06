@@ -16,13 +16,18 @@
 //! One solution to this is to run some passes that will force everything to be checked, even if
 //! never used.
 
-use ir::{ItemDefVisitor, ItemVisitor};
+use ir::ItemVisitor;
+use lcore::queries::Queries;
 use lcore::TyCtx;
 
-/// runs all phases of analyses
+pub fn provide(queries: &mut Queries) {
+    *queries = Queries { analyze: |tcx, ()| analyze(tcx), ..*queries }
+}
+
+/// runs all phases of analyses using the api queries provide
 /// if no errors are caught during this, then the code should be correct
 /// and safe to codegen
-fn analysis<'tcx>(tcx: TyCtx<'tcx>) {
+fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
     ItemTypeValidationPass::run_pass(tcx);
 }
 
@@ -42,7 +47,7 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
 
 impl<'tcx> ItemVisitor<'tcx> for ItemTypeValidationPass<'tcx> {
     fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
-        // self.tcx.check_item_type(item);
+        self.tcx.validate_item_type(item.id.def);
     }
 
     fn visit_impl_item(&mut self, _impl_item: &'tcx ir::ImplItem<'tcx>) {

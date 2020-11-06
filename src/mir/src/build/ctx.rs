@@ -3,7 +3,6 @@
 use crate::build;
 use ast::{Lit, UnaryOp};
 use index::Idx;
-use infer::InferCtx;
 use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::Mir;
@@ -14,23 +13,22 @@ use std::ops::Deref;
 use typeck::Typeof;
 
 /// ir -> tir -> mir
-pub struct MirCtx<'a, 'tcx> {
-    tcx: TyCtx<'tcx>,
-    infcx: &'a InferCtx<'a, 'tcx>,
-    tables: &'a TypeckTables<'tcx>,
+pub struct LoweringCtx<'tcx> {
+    pub tcx: TyCtx<'tcx>,
+    tables: &'tcx TypeckTables<'tcx>,
 }
 
-impl<'a, 'tcx> Deref for MirCtx<'a, 'tcx> {
-    type Target = &'a InferCtx<'a, 'tcx>;
+impl<'tcx> Deref for LoweringCtx<'tcx> {
+    type Target = TyCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.infcx
+        &self.tcx
     }
 }
 
-impl<'a, 'tcx> MirCtx<'a, 'tcx> {
-    pub fn new(infcx: &'a InferCtx<'a, 'tcx>, tables: &'a TypeckTables<'tcx>) -> Self {
-        Self { infcx, tcx: infcx.tcx, tables }
+impl<'tcx> LoweringCtx<'tcx> {
+    pub fn new(tcx: TyCtx<'tcx>, tables: &'tcx TypeckTables<'tcx>) -> Self {
+        Self { tcx, tables }
     }
 
     /// ir -> tir
@@ -75,13 +73,14 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
 /// trait for conversion to tir
 pub trait Tir<'tcx> {
     type Output;
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output;
+
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output;
 }
 
 impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
     type Output = tir::Field<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         tir::Field {
             index: ctx.tables.field_index(self.id),
             expr: box self.expr.to_tir(ctx),
@@ -93,7 +92,7 @@ impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
     type Output = tir::Item<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &Self { span, id, ident, vis, ref kind } = self;
         match kind {
             ir::ItemKind::Fn(_sig, generics, body) => {
@@ -111,7 +110,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
     type Output = tir::Param<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &Self { id, span, ref pat } = self;
         tir::Param { id, span, pat: box pat.to_tir(ctx) }
     }
@@ -120,7 +119,7 @@ impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     type Output = tir::Pattern<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &Self { id, span, kind } = self;
         let kind = match kind {
             ir::PatternKind::Box(pat) => tir::PatternKind::Box(box pat.to_tir(ctx)),
@@ -140,7 +139,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     }
 }
 
-impl<'tcx> MirCtx<'_, 'tcx> {
+impl<'tcx> LoweringCtx<'tcx> {
     fn lower_struct_pat(
         &mut self,
         pat: &ir::Pattern<'tcx>,
@@ -215,7 +214,7 @@ impl<'tcx> MirCtx<'_, 'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
     type Output = tir::Body<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let params = self.params.to_tir(ctx);
         tir::Body { params, expr: box self.expr.to_tir(ctx) }
     }
@@ -224,7 +223,7 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
     type Output = tir::Generics<'tcx>;
 
-    fn to_tir(&self, _ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, _ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         tir::Generics { data: 0, pd: PhantomData }
     }
 }
@@ -232,7 +231,7 @@ impl<'tcx> Tir<'tcx> for ir::Generics<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
     type Output = tir::Let<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         tir::Let {
             id: self.id,
             pat: box self.pat.to_tir(ctx),
@@ -244,7 +243,7 @@ impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
     type Output = tir::Stmt<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &Self { id, span, ref kind } = self;
         let kind = match kind {
             ir::StmtKind::Let(l) => tir::StmtKind::Let(l.to_tir(ctx)),
@@ -260,7 +259,7 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
     type Output = tir::Block<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let stmts = self.stmts.iter().map(|stmt| stmt.to_tir(ctx)).collect();
         let expr = self.expr.map(|expr| box expr.to_tir(ctx));
         tir::Block { id: self.id, stmts, expr }
@@ -273,7 +272,7 @@ where
 {
     type Output = Vec<T::Output>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         self.iter().map(|x| x.to_tir(ctx)).collect()
     }
 }
@@ -284,12 +283,12 @@ where
 {
     type Output = Option<T::Output>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         self.as_ref().map(|t| t.to_tir(ctx))
     }
 }
 
-impl<'tcx> MirCtx<'_, 'tcx> {
+impl<'tcx> LoweringCtx<'tcx> {
     fn lower_qpath(&self, expr: &ir::Expr<'tcx>, qpath: &ir::QPath<'tcx>) -> tir::ExprKind<'tcx> {
         let res = self.resolve_qpath(expr, qpath);
         self.lower_res(expr, res)
@@ -353,12 +352,12 @@ impl<'tcx> MirCtx<'_, 'tcx> {
 impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
     type Output = tir::Expr<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         ctx.lower_expr_adjusted(self)
     }
 }
 
-impl<'a, 'tcx> MirCtx<'a, 'tcx> {
+impl<'tcx> LoweringCtx<'tcx> {
     fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_ty(expr.id);
@@ -436,7 +435,7 @@ impl<'a, 'tcx> MirCtx<'a, 'tcx> {
 impl<'tcx> Tir<'tcx> for Lit {
     type Output = &'tcx Const<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         match *self {
             Lit::Float(f) => ctx.mk_const_float(f),
             Lit::Bool(b) => ctx.mk_const_bool(b),
@@ -448,7 +447,7 @@ impl<'tcx> Tir<'tcx> for Lit {
 impl<'tcx> Tir<'tcx> for ir::Arm<'tcx> {
     type Output = tir::Arm<'tcx>;
 
-    fn to_tir(&self, ctx: &mut MirCtx<'_, 'tcx>) -> Self::Output {
+    fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &ir::Arm { id, span, ref pat, ref body, ref guard } = self;
         tir::Arm {
             id,
