@@ -2,7 +2,7 @@ use crate::CodegenCtx;
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
 use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
-use mir::{TyCtxMirExt, Visitor};
+use mir::Visitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -46,7 +46,7 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
         let mir = match self.cached_mir.borrow().get(&instance.def_id) {
             Some(&mir) => Ok(mir),
             None => {
-                let mir = self.tcx.mir_of_instance(instance);
+                let mir = self.tcx.instance_mir(instance);
                 if let Ok(mir) = mir {
                     println!("{} {}", self.tcx.defs().ident(instance.def_id), mir);
                 }

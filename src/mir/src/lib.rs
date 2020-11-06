@@ -16,11 +16,16 @@ use ast::Ident;
 use error::{LError, LResult};
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
+use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
 use std::collections::BTreeMap;
 use std::io::Write;
 use typecheck::typecheck;
 use typeck::InheritedCtx;
+
+pub fn provide(queries: &mut Queries) {
+    *queries = Queries { mir_of, instance_mir, ..*queries }
+}
 
 macro halt_on_error($tcx:expr) {{
     if $tcx.sess.has_errors() {
@@ -28,37 +33,30 @@ macro halt_on_error($tcx:expr) {{
     }
 }}
 
-pub trait TyCtxMirExt<'tcx> {
-    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>>;
-    fn mir_of_instance(self, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>>;
-}
-
-impl<'tcx> TyCtxMirExt<'tcx> for TyCtx<'tcx> {
-    fn mir_of_def(self, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
-        let node = self.defs().get(def_id);
-        match node {
-            ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(self, variant)),
-            ir::DefNode::Item(item) => match item.kind {
-                ir::ItemKind::Fn(_, _, body) => build_mir(self, def_id, body),
-                _ => panic!(),
-            },
-            ir::DefNode::ImplItem(item) => match item.kind {
-                ir::ImplItemKind::Fn(_, body) => build_mir(self, def_id, body),
-            },
-            ir::DefNode::ForeignItem(_) => todo!(),
-            ir::DefNode::Variant(_) | ir::DefNode::TyParam(_) => panic!(),
-        }
-    }
-
-    fn mir_of_instance(self, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>> {
-        match instance.kind {
-            InstanceKind::Item => self.mir_of_def(instance.def_id),
-            InstanceKind::Intrinsic => unreachable!("intrinsics don't have mir"),
-        }
+fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>> {
+    match instance.kind {
+        InstanceKind::Item => tcx.mir_of(instance.def_id),
+        InstanceKind::Intrinsic => unreachable!("intrinsics don't have mir"),
     }
 }
 
-pub fn with_mir_ctx<'tcx, R>(
+fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
+    let node = tcx.defs().get(def_id);
+    match node {
+        ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(tcx, variant)),
+        ir::DefNode::Item(item) => match item.kind {
+            ir::ItemKind::Fn(_, _, body) => build_mir(tcx, def_id, body),
+            _ => panic!(),
+        },
+        ir::DefNode::ImplItem(item) => match item.kind {
+            ir::ImplItemKind::Fn(_, body) => build_mir(tcx, def_id, body),
+        },
+        ir::DefNode::ForeignItem(_) => todo!(),
+        ir::DefNode::Variant(_) | ir::DefNode::TyParam(_) => panic!(),
+    }
+}
+
+fn with_mir_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
     def_id: DefId,
     body: &'tcx ir::Body<'tcx>,

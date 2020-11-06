@@ -4,6 +4,7 @@ crate fn query_ctx<'tcx>() -> QueryCtx<'tcx> {
     let mut queries = Queries::default();
 
     typeck::provide(&mut queries);
+    mir::provide(&mut queries);
 
     QueryCtx::new(queries)
 }

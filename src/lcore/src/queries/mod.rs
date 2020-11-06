@@ -1,8 +1,9 @@
-use std::cell::RefCell;
-
-use crate::ty::{AdtTy, Generics, InherentImpls, Ty, TyCtx};
+use crate::mir::Mir;
+use crate::ty::{AdtTy, Generics, InherentImpls, Instance, Ty, TyCtx};
+use error::LResult;
 use ir::DefId;
 use rustc_hash::FxHashMap;
+use std::cell::RefCell;
 
 macro_rules! define_queries {
     (tcx: $tcx:tt, inputs: { $(([$name:ident] [$K:ty] [$R:ty]))* }) => {
@@ -41,6 +42,13 @@ macro_rules! define_query_context {
             queries: Queries,
         }
 
+        impl<'tcx> QueryCtx<'tcx> {
+            pub fn new(queries: Queries) -> Self {
+                Self { queries, cache: Default::default()
+            }
+        }
+}
+
         impl<'tcx> TyCtx<'tcx> {
             $(pub fn $name(self, key: $K) -> $R {
                 // we must have a early return otherwise we will run into
@@ -58,20 +66,19 @@ macro_rules! define_query_context {
     };
 }
 
-impl<'tcx> QueryCtx<'tcx> {
-    pub fn new(queries: Queries) -> Self {
-        Self { queries, cache: Default::default() }
-    }
-}
-
 define_query_context! {
     tcx: 'tcx,
     inputs: {
+        // typecheck
         ([type_of] [DefId] [Ty<'tcx>])
         ([adt_ty] [DefId] [&'tcx AdtTy<'tcx>])
         ([generics_of] [DefId] [&'tcx Generics<'tcx>])
         ([validate_item_ty] [DefId] [()])
         ([inherent_impls] [()] [InherentImpls])
         ([inherent_impls_of] [DefId] [Vec<DefId>])
+
+        // mir
+        ([mir_of] [DefId] [LResult<&'tcx Mir<'tcx>>])
+        ([instance_mir] [Instance<'tcx>] [LResult<&'tcx Mir<'tcx>>])
     }
 }
