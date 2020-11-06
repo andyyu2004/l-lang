@@ -1,6 +1,6 @@
 //! resolves methods and associated functions relative to a type
 
-use crate::{FnCtx, TcxTypeofExt};
+use crate::FnCtx;
 use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
 use lcore::ty::{self, Subst, Ty};

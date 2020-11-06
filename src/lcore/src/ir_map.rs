@@ -47,10 +47,10 @@ impl<'tcx> DefMap<'tcx> {
                 | ir::ItemKind::Struct(generics, _) => generics,
                 ir::ItemKind::Extern(_) => unreachable!(),
             },
-            DefNode::ImplItem(..)
-            | DefNode::ForeignItem(..)
+            DefNode::ImplItem(impl_item) => impl_item.generics,
+            DefNode::ForeignItem(..)
             | DefNode::Ctor(..)
-            | ir::DefNode::Variant(..)
+            | DefNode::Variant(..)
             | DefNode::TyParam(..) => panic!("def node has no generics"),
         }
     }

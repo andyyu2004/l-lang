@@ -1,4 +1,4 @@
-use crate::queries::Queries;
+use crate::queries::QueryCtx;
 use crate::ty::*;
 use crate::*;
 use ast::Ident;
@@ -273,7 +273,7 @@ pub struct GlobalCtx<'tcx> {
     pub ir: &'tcx ir::Ir<'tcx>,
     pub types: CommonTypes<'tcx>,
     pub resolutions: Resolutions<'tcx>,
-    queries: Queries<'tcx>,
+    queries: QueryCtx<'tcx>,
     interners: CtxInterners<'tcx>,
     // caches below
     // these should be populated during collection
@@ -290,7 +290,7 @@ impl<'tcx> GlobalCtx<'tcx> {
         arena: &'tcx Arena<'tcx>,
         resolutions: Resolutions<'tcx>,
         sess: &'tcx Session,
-        queries: Queries<'tcx>,
+        queries: QueryCtx<'tcx>,
     ) -> Self {
         let interners = CtxInterners::new(arena);
         let types = CommonTypes::new(&interners);
@@ -324,17 +324,18 @@ impl<'tcx> TyCtx<'tcx> {
 
     /// finds the type of an item that was obtained during the collection phase
     pub fn collected_ty(self, def_id: DefId) -> Ty<'tcx> {
-        self.collected_ty_opt(def_id)
-            .unwrap_or_else(|| panic!("no collected type found for `{}`", def_id))
+        self.collected_ty_opt(def_id).unwrap_or_else(|| {
+            panic!("no collected type found for `{:?}`", self.defs().get(def_id))
+        })
     }
 
     pub fn collected_ty_opt(self, def_id: DefId) -> Option<Ty<'tcx>> {
         self.collected_tys.borrow().get(&def_id).copied()
     }
 
-    pub fn generics_of(self, def_id: DefId) -> &'tcx Generics<'tcx> {
-        self.generics.borrow().get(&def_id).unwrap()
-    }
+    // pub fn generics_of(self, def_id: DefId) -> &'tcx Generics<'tcx> {
+    //     self.generics.borrow().get(&def_id).unwrap()
+    // }
 
     pub fn cache_generics(self, def_id: DefId, generics: &'tcx Generics<'tcx>) {
         assert!(self.generics.borrow_mut().insert(def_id, generics).is_none());
@@ -397,7 +398,7 @@ impl<'tcx> Deref for TyCtx<'tcx> {
 }
 
 impl<'tcx> Deref for GlobalCtx<'tcx> {
-    type Target = Queries<'tcx>;
+    type Target = QueryCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
         &self.queries

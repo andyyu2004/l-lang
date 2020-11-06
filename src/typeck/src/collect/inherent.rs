@@ -1,6 +1,6 @@
 //! collect inherent impls
 
-use crate::{TcxTypeofExt, TyConv};
+use crate::TyConv;
 use ir::{DefId, Visitor};
 use lcore::{ty, TyCtx};
 use rustc_hash::FxHashMap;

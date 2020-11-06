@@ -1,19 +1,13 @@
-use ir::DefId;
-use lcore::queries::{Queries, QueryProviders};
-use lcore::ty::{self, Ty, TyCtx};
+use lcore::queries::{Queries, QueryCtx};
 
-fn type_of<'tcx>(_tcx: TyCtx<'tcx>, _def_id: DefId) -> Ty<'tcx> {
-    todo!()
+fn construct_queries() -> Queries {
+    let mut queries = Queries::default();
+    typeck::provide(&mut queries);
+
+    queries.assert_is_fully_populated();
+    queries
 }
 
-fn generics_of<'tcx>(_tcx: TyCtx<'tcx>, _def_id: DefId) -> ty::Generics<'tcx> {
-    todo!()
-}
-
-fn construct_query_providers() -> QueryProviders {
-    QueryProviders { type_of, generics_of }
-}
-
-crate fn queries<'tcx>() -> Queries<'tcx> {
-    Queries::new(construct_query_providers())
+crate fn queries<'tcx>() -> QueryCtx<'tcx> {
+    QueryCtx::new(construct_queries())
 }

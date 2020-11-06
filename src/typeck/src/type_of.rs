@@ -1,6 +1,11 @@
 use crate::TyConv;
 use ir::DefId;
+use lcore::queries::Queries;
 use lcore::ty::*;
+
+pub fn provide(queries: &mut Queries) {
+    *queries = Queries { type_of, ..*queries }
+}
 
 pub trait Typeof<'tcx> {
     fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx>;
@@ -15,16 +20,6 @@ impl<'tcx> Typeof<'tcx> for FieldTy<'tcx> {
         // TODO cache this result somewhere?
         let ty = tcx.ir_ty_to_ty(&self.ir_ty);
         ty.subst(tcx, substs)
-    }
-}
-
-pub trait TcxTypeofExt<'tcx> {
-    fn type_of(self, def_id: DefId) -> Ty<'tcx>;
-}
-
-impl<'tcx> TcxTypeofExt<'tcx> for TyCtx<'tcx> {
-    fn type_of(self, def_id: DefId) -> Ty<'tcx> {
-        type_of(self, def_id)
     }
 }
 

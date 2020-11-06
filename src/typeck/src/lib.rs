@@ -21,5 +21,11 @@ mod writeback;
 use autoderef::Autoderef;
 pub use check::{FnCtx, InheritedCtx};
 pub use collect::TcxCollectExt;
+use lcore::queries::Queries;
 pub use tyconv::TyConv;
-pub use type_of::{TcxTypeofExt, Typeof};
+pub use type_of::Typeof;
+
+pub fn provide(queries: &mut Queries) {
+    collect::provide(queries);
+    type_of::provide(queries);
+}

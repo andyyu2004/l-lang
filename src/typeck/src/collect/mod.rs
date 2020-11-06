@@ -5,6 +5,12 @@ mod generics;
 mod inherent;
 pub mod tys;
 
+pub fn provide(queries: &mut Queries) {
+    *queries = Queries { generics_of, ..*queries }
+}
+
+use generics::generics_of;
+use lcore::queries::Queries;
 use lcore::ty::{self, Ty, TyCtx};
 
 /// stateful queries that populate the inner data structures of the typing context

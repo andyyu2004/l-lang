@@ -1,6 +1,5 @@
 //! conversion of `ir::Ty` to `lcore::ty::Ty`
 
-use crate::TcxTypeofExt;
 use ir::{DefKind, QPath, Res};
 use lcore::ty::{Generics, Subst, Ty, TyCtx, TyParam, TypeError};
 use span::Span;

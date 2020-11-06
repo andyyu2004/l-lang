@@ -11,7 +11,7 @@ use lcore::ty::*;
 use span::Span;
 use std::marker::PhantomData;
 use std::ops::Deref;
-use typeck::{TcxTypeofExt, Typeof};
+use typeck::Typeof;
 
 /// ir -> tir -> mir
 pub struct MirCtx<'a, 'tcx> {

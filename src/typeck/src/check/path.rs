@@ -1,4 +1,4 @@
-use crate::{FnCtx, TcxTypeofExt, TyConv};
+use crate::{FnCtx, TyConv};
 use ir::{CtorKind, DefId, DefKind, QPath, Res};
 use lcore::ty::*;
 use span::Span;
