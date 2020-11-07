@@ -12,8 +12,8 @@
 extern crate log;
 
 mod arena;
+mod defmap;
 mod interners;
-mod ir_map;
 pub mod mir;
 pub mod queries;
 pub mod ty;

@@ -55,7 +55,8 @@ impl<'tcx> DefMap<'tcx> {
     }
 
     pub fn generics(&self, def_id: DefId) -> &'tcx ir::Generics<'tcx> {
-        match self.get(def_id) {
+        let node = self.get(def_id);
+        match node {
             DefNode::Item(item) => match item.kind {
                 ir::ItemKind::Fn(_, generics, _)
                 | ir::ItemKind::Impl { generics, .. }
@@ -63,11 +64,12 @@ impl<'tcx> DefMap<'tcx> {
                 | ir::ItemKind::Struct(generics, _) => generics,
                 ir::ItemKind::Extern(_) => unreachable!(),
             },
+            DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
+                ir::ForeignItemKind::Fn(_, generics) => generics,
+            },
             DefNode::ImplItem(impl_item) => impl_item.generics,
-            DefNode::ForeignItem(..)
-            | DefNode::Ctor(..)
-            | DefNode::Variant(..)
-            | DefNode::TyParam(..) => panic!("def node has no generics"),
+            DefNode::Ctor(..) | DefNode::Variant(..) | DefNode::TyParam(..) =>
+                panic!("def node has no generics: {}", node.descr()),
         }
     }
 

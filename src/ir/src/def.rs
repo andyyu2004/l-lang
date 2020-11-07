@@ -179,6 +179,19 @@ pub enum DefNode<'ir> {
     TyParam(&'ir ir::TyParam<'ir>),
 }
 
+impl<'ir> DefNode<'ir> {
+    pub fn descr(&self) -> &'static str {
+        match self {
+            DefNode::Item(..) => "item",
+            DefNode::ImplItem(..) => "impl item",
+            DefNode::ForeignItem(..) => "foreign item",
+            DefNode::Ctor(..) => "constructor",
+            DefNode::Variant(..) => "variant",
+            DefNode::TyParam(..) => "type parameter",
+        }
+    }
+}
+
 impl<'ir> Into<DefNode<'ir>> for ir::Item<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::Item(self)

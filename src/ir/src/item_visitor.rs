@@ -29,20 +29,7 @@ pub trait ItemDefVisitor<'ir> {
     }
 }
 
-// TODO this is pretty bad trait design, redo this when better idea comes to mind
-// impl<'ir, V> ItemVisitor<'ir> for V
-// where
-//     V: FnVisitor<'ir>,
-// {
-//     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
-//         FnVisitor::visit_item(self, item)
-//     }
-
-//     fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
-//         FnVisitor::visit_impl_item(self, impl_item)
-//     }
-// }
-
+// TODO this design sucks
 /// visits all things that requires mir generation (i.e. functions and constructors)
 pub trait FnVisitor<'ir> {
     fn visit_ir(&mut self, ir: &'ir ir::Ir<'ir>) {

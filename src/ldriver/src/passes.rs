@@ -16,7 +16,6 @@
 //! One solution to this is to run some passes that will force everything to be checked, even if
 //! never used.
 
-use ir::ItemVisitor;
 use lcore::queries::Queries;
 use lcore::TyCtx;
 
@@ -28,28 +27,57 @@ pub fn provide(queries: &mut Queries) {
 /// if no errors are caught during this, then the code should be correct
 /// and safe to codegen
 fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
-    ItemTypeValidationPass::run_pass(tcx);
+    // TODO
+    // collect -> validate -> check
+    PassRunner { tcx }.run_passes(&[&ItemTypeValidationPass]);
 }
 
-trait AnalysisPass<'tcx> {
-    fn run_pass(tcx: TyCtx<'tcx>);
-}
-
-struct ItemTypeValidationPass<'tcx> {
+struct PassRunner<'tcx> {
     tcx: TyCtx<'tcx>,
 }
 
-impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
-    fn run_pass(tcx: TyCtx<'tcx>) {
-        Self { tcx }.visit_ir(tcx.ir);
+impl<'tcx> PassManager<'tcx> for PassRunner<'tcx> {
+    fn run_passes(&mut self, passes: &[&dyn AnalysisPass<'tcx>]) {
+        let tcx = self.tcx;
+        for pass in passes {
+            tcx.sess.prof.time(pass.name(), || pass.run_pass(tcx))
+        }
     }
 }
 
-impl<'tcx> ItemVisitor<'tcx> for ItemTypeValidationPass<'tcx> {
-    fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
-        self.tcx.validate_item_type(item.id.def);
+trait PassManager<'tcx> {
+    fn run_passes(&mut self, passes: &[&dyn AnalysisPass<'tcx>]);
+}
+
+trait AnalysisPass<'tcx> {
+    fn name(&self) -> &'static str;
+    fn run_pass(&self, tcx: TyCtx<'tcx>);
+}
+
+struct ItemTypeCollectionPass;
+
+impl<'tcx> AnalysisPass<'tcx> for ItemTypeCollectionPass {
+    fn name(&self) -> &'static str {
+        "item type collection pass"
     }
 
-    fn visit_impl_item(&mut self, _impl_item: &'tcx ir::ImplItem<'tcx>) {
+    fn run_pass(&self, tcx: TyCtx<'tcx>) {
+        for item in tcx.ir.items.values() {
+            tcx.validate_item_type(item.id.def);
+        }
+    }
+}
+
+struct ItemTypeValidationPass;
+
+impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass {
+    fn name(&self) -> &'static str {
+        "item type validation pass"
+    }
+
+    fn run_pass(&self, tcx: TyCtx<'tcx>) {
+        for item in tcx.ir.items.values() {
+            tcx.validate_item_type(item.id.def);
+        }
     }
 }
