@@ -2,7 +2,6 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-
 fn main() -> io::Result<()> {
     let ctx = TestCtx {};
     ctx.run_recursive(&Path::new(""))?;

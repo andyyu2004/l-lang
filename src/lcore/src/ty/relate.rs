@@ -44,7 +44,7 @@ pub trait TypeRelation<'tcx>: Sized {
         s: SubstsRef<'tcx>,
         t: SubstsRef<'tcx>,
     ) -> TypeResult<'tcx, Ty<'tcx>> {
-        Ok(self.tcx().mk_ty(TyKind::Tuple(self.relate(s, t)?)))
+        Ok(self.tcx().mk_tup(self.relate(s, t)?))
     }
 }
 

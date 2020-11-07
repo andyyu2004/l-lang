@@ -19,7 +19,7 @@ use parse_error::{ParseError, ParseResult};
 pub use parser::Parser;
 use pattern_parser::*;
 use prog_parser::ProgParser;
-use span::{Span};
+use span::Span;
 use stmt_parser::StmtParser;
 use ty_parser::*;
 

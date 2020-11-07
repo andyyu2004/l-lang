@@ -258,7 +258,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ret_ty = self.new_infer_var(expr.span);
         let f_ty = self.check_expr(f);
         let arg_tys = self.check_expr_list(args);
-        let ty = self.tcx.mk_ty(TyKind::Fn(arg_tys, ret_ty));
+        let ty = self.tcx.mk_fn_ty(arg_tys, ret_ty);
         self.equate(expr.span, f_ty, ty);
         ret_ty
     }
@@ -278,32 +278,27 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         clsr_ty
     }
 
-    /// inputs are the types from the type signature (or inference variables)
-    /// adds the parameters to locals and typechecks the expr of the body
+    /// inputs are the types from the type signature (or inference variables) adds the parameters
+    /// to locals and typechecks the expr of the body
     pub fn check_body(&mut self, body: &ir::Body<'tcx>) {
         for (param, ty) in body.params.iter().zip(self.param_tys) {
             self.check_pat(param.pat, ty);
         }
         let body_ty = self.check_expr(body.expr);
         self.equate(body.expr.span, self.ret_ty, body_ty);
-        // explicitly overwrite the type of body with the return type of the function
-        // in the case where it is inferred to be `!`
-        // this is a special case due to return statements in the top level block expr
-        // without this overwrite, if the final statement is diverging (i.e. return)
-        // then the body function will be recorded to have type ! which is not correct
+        // explicitly overwrite the type of body with the return type of the function in the case
+        // where it is inferred to be `!` this is a special case due to return statements in the
+        // top level block expr without this overwrite, if the final statement is diverging (i.e.
+        // return) then the body function will be recorded to have type `!` which is not correct
         self.record_ty(body.id(), self.ret_ty);
     }
 
     fn check_expr_list(&mut self, xs: &[ir::Expr<'tcx>]) -> SubstsRef<'tcx> {
-        let tcx = self.tcx;
-        let tys = xs.iter().map(|expr| self.check_expr(expr));
-        tcx.mk_substs(tys)
+        self.tcx.mk_substs(xs.iter().map(|expr| self.check_expr(expr)))
     }
 
     fn check_expr_tuple(&mut self, xs: &[ir::Expr<'tcx>]) -> Ty<'tcx> {
-        let tcx = self.tcx;
-        let tys = xs.iter().map(|expr| self.check_expr(expr));
-        tcx.mk_tup_iter(tys)
+        self.tcx.mk_tup_iter(xs.iter().map(|expr| self.check_expr(expr)))
     }
 
     fn check_block(&mut self, block: &ir::Block<'tcx>) -> Ty<'tcx> {
@@ -350,9 +345,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_lit(&self, lit: &ast::Lit) -> Ty<'tcx> {
         match lit {
-            Lit::Bool(_) => self.tcx.types.bool,
-            Lit::Float(_) => self.tcx.types.float,
-            Lit::Int(_) => self.tcx.types.int,
+            Lit::Bool(..) => self.tcx.types.bool,
+            Lit::Float(..) => self.tcx.types.float,
+            Lit::Int(..) => self.tcx.types.int,
         }
     }
 }

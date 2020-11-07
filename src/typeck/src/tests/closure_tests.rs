@@ -1,6 +1,5 @@
 use super::*;
 
-
 #[test]
 fn occurs_check() {
     // f : ?0
