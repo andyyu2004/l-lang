@@ -72,10 +72,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn lower_tys(&self, ir_tys: &[ir::Ty<'tcx>]) -> &'tcx [Ty<'tcx>] {
         self.tcx.mk_substs(ir_tys.iter().map(|ty| self.ir_ty_to_ty(ty)))
     }
-
-    pub fn lower_ty(&self, ir_ty: &ir::Ty<'tcx>) -> Ty<'tcx> {
-        self.ir_ty_to_ty(ir_ty)
-    }
 }
 
 impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {

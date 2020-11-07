@@ -8,7 +8,7 @@ impl Profiler {
         let instant = Instant::now();
         let ret = f();
         let elapsed = instant.elapsed();
-        info!("[profiler] {}: {}.{}", descr, elapsed.as_secs(), elapsed.subsec_millis());
+        info!("[profiler] {}: {}:{}", descr, elapsed.as_secs(), elapsed.subsec_micros());
         ret
     }
 }

@@ -73,6 +73,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         if expected.contains_err() || ty.contains_err() {
             return;
         }
+
         if let Err(err) = self.at(span).equate(expected, ty) {
             self.emit_ty_err(span, err);
         }
