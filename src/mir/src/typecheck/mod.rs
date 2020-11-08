@@ -1,7 +1,7 @@
 //! this module performs sanity type checks on mir
 //! there are not intended to be any errors so it panics on error
 
-use crate::Visitor;
+use crate::MirVisitor;
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx};
 use typeck::Typeof;
@@ -68,7 +68,7 @@ impl<'a, 'tcx> Typechecker<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Visitor<'tcx> for Typechecker<'a, 'tcx> {
+impl<'a, 'tcx> MirVisitor<'tcx> for Typechecker<'a, 'tcx> {
     fn visit_assignment(&mut self, lvalue: &Lvalue<'tcx>, rvalue: &Rvalue<'tcx>) {
         let lvalue_ty = self.lvalue_ty(lvalue);
         let rvalue_ty = self.rvalue_ty(rvalue);

@@ -3,7 +3,7 @@ use lcore::mir::*;
 /// trait for mir visitor
 /// `walk_*` provides default implementations
 /// override `visit_*`
-pub trait Visitor<'tcx> {
+pub trait MirVisitor<'tcx> {
     fn visit_mir(&mut self, mir: &Mir<'tcx>) {
         self.walk_mir(mir)
     }

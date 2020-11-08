@@ -1,3 +1,3 @@
 mod visit;
 
-pub use visit::Visitor;
+pub use visit::MirVisitor;

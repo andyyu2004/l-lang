@@ -10,11 +10,10 @@ mod typecheck;
 extern crate log;
 
 pub use build::*;
-pub use traverse::Visitor;
+pub use traverse::MirVisitor;
 
-use ast::Ident;
 use error::{LError, LResult};
-use ir::{DefId, FnVisitor};
+use ir::{DefId, FnVisitor, Visitor};
 use lcore::mir::Mir;
 use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
@@ -99,7 +98,8 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
 }
 
 pub fn dump_mir<'tcx>(tcx: TyCtx<'tcx>, writer: &mut dyn Write) {
-    MirDump { writer, tcx }.visit_ir(tcx.ir);
+    let mut mir_dump = MirDump { tcx, writer };
+    mir_dump.visit_ir(tcx.ir);
 }
 
 struct MirDump<'a, 'tcx> {

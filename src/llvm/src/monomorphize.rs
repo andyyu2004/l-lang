@@ -1,8 +1,8 @@
 use crate::CodegenCtx;
-use ir::{DefId, FnVisitor};
+use ir::{DefId, FnVisitor, Visitor};
 use lcore::mir::Operand;
 use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
-use mir::Visitor;
+use mir::MirVisitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -105,7 +105,7 @@ impl<'a, 'tcx> Monomorphize<'tcx> for InstanceCollector<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Visitor<'tcx> for InstanceCollector<'a, 'tcx> {
+impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
     fn visit_operand(&mut self, operand: &Operand<'tcx>) {
         // `Operand::Item` is currently the only way to reference a generic item
         if let &Operand::Item(def_id, fn_ty) = operand {
