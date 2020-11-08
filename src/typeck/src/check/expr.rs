@@ -1,5 +1,5 @@
 use super::FnCtx;
-use crate::{Autoderef, TyConv, Typeof};
+use crate::{Autoderef, TyConv};
 use ast::{BinOp, Ident, Lit, Mutability, UnaryOp};
 use itertools::Itertools;
 use lcore::ty::*;

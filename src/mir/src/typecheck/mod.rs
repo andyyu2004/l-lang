@@ -4,7 +4,6 @@
 use crate::MirVisitor;
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx};
-use typeck::Typeof;
 
 pub fn typecheck<'tcx>(tcx: TyCtx<'tcx>, mir: &'tcx Mir<'tcx>) {
     Typechecker::new(tcx, mir).typecheck()

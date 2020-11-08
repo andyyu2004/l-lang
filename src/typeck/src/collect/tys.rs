@@ -45,7 +45,7 @@ fn variant_ty<'tcx>(tcx: TyCtx<'tcx>, variant: &ir::Variant<'tcx>) -> VariantTy<
             tcx.sess
                 .emit_error(vec![f.span, span], TypeError::FieldAlreadyDeclared(f.ident, ident));
         }
-        FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis, ir_ty: f.ty }
+        FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis }
     }));
 
     // the constructor id is defined to be the def_id of the variant itself

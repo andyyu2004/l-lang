@@ -1,3 +1,4 @@
+use super::cfg::Cfg;
 use ast::Mutability;
 use index::IndexVec;
 use ir::VariantIdx;
@@ -5,9 +6,6 @@ use itertools::Itertools;
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx, VariantTy};
 use span::Span;
-use typeck::Typeof;
-
-use super::cfg::Cfg;
 
 pub fn build_variant_ctor<'tcx>(
     tcx: TyCtx<'tcx>,

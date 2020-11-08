@@ -2,7 +2,6 @@ use crate::CodegenCtx;
 use inkwell::types::BasicType;
 use lcore::ty::{SubstsRef, Ty, VariantTy};
 use llvm_sys::target::*;
-use typeck::Typeof;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn sizeof(&self, llty: impl BasicType<'tcx>) -> u64 {

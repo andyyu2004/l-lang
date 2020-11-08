@@ -66,8 +66,8 @@ pub struct Field {
 }
 
 /// struct S {
-///     x: int, <- field decl
-///     y: bool,   <- field decl
+///     x: int,  <- field decl
+///     y: bool, <- field decl
 /// }
 #[derive(Debug, PartialEq, Clone)]
 pub struct FieldDecl {

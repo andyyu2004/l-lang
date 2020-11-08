@@ -1,4 +1,3 @@
-use crate::TyConv;
 use ir::DefId;
 use lcore::queries::Queries;
 use lcore::TyCtx;
@@ -18,6 +17,7 @@ fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
         ir::DefNode::ImplItem(_) => {}
         ir::DefNode::ForeignItem(_) => {}
         ir::DefNode::Ctor(_) => {}
+        ir::DefNode::Field(_) => {}
         ir::DefNode::Variant(_) => {}
         ir::DefNode::TyParam(_) => {}
     }
@@ -31,10 +31,11 @@ fn validate_adt<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
 
     // we validate the fields of an adt by converting all the fields from
     // `ir::Ty` to `ty::Ty` using `ir_ty_to_ty`
+    // (this is implicitly what `type_of` will do to the field)
     // the conversion step performs the necessary checks for correctness
     for variant in &adt.variants {
         for field in variant.fields {
-            tcx.ir_ty_to_ty(field.ir_ty);
+            tcx.type_of(field.def_id);
         }
     }
 }

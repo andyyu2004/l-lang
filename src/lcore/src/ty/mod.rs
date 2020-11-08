@@ -243,31 +243,27 @@ pub struct VariantTy<'tcx> {
     pub ident: Ident,
     pub ctor: DefId,
     pub ctor_kind: CtorKind,
-    pub fields: &'tcx [FieldTy<'tcx>],
+    pub fields: &'tcx [FieldTy],
 }
 
-#[derive(Debug)]
-pub struct FieldTy<'tcx> {
+/// the type representation of a field
+/// the `ty::Ty` can be found using `type_of` with this def_id
+#[derive(Debug, PartialEq, Hash, Eq)]
+pub struct FieldTy {
     pub def_id: DefId,
     pub ident: Ident,
     pub vis: Visibility,
-    pub ir_ty: &'tcx ir::Ty<'tcx>,
 }
 
-impl<'tcx> Eq for FieldTy<'tcx> {
-}
-
-impl<'tcx> Hash for FieldTy<'tcx> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.def_id.hash(state);
-        self.ident.hash(state);
-        self.vis.hash(state);
-    }
-}
-
-impl<'tcx> PartialEq for FieldTy<'tcx> {
-    fn eq(&self, other: &Self) -> bool {
-        self.def_id == other.def_id && self.ident == other.ident && self.vis == other.vis
+impl FieldTy {
+    /// type of the field
+    // we require this indirection instead of storing `ty: Ty` directly as a field
+    // because fields may refer to the the struct/enum that it is declared in
+    // therefore, the lowering must be done post type collection
+    pub fn ty<'tcx>(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        // TODO cache this result somewhere?
+        let ty = tcx.type_of(self.def_id);
+        ty.subst(tcx, substs)
     }
 }
 

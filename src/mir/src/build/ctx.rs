@@ -10,7 +10,6 @@ use lcore::ty::*;
 use span::Span;
 use std::marker::PhantomData;
 use std::ops::Deref;
-use typeck::Typeof;
 
 /// ir -> tir -> mir
 pub struct LoweringCtx<'tcx> {

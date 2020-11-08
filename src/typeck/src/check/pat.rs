@@ -1,5 +1,4 @@
 use super::FnCtx;
-use crate::Typeof;
 use ast::Ident;
 use bimap::BiMap;
 use ir::{self, CtorKind, DefKind, Res};

@@ -177,6 +177,7 @@ pub enum DefNode<'ir> {
     Ctor(&'ir ir::Variant<'ir>),
     Variant(&'ir ir::Variant<'ir>),
     TyParam(&'ir ir::TyParam<'ir>),
+    Field(&'ir ir::FieldDecl<'ir>),
 }
 
 impl<'ir> DefNode<'ir> {
@@ -188,6 +189,7 @@ impl<'ir> DefNode<'ir> {
             DefNode::Ctor(..) => "constructor",
             DefNode::Variant(..) => "variant",
             DefNode::TyParam(..) => "type parameter",
+            DefNode::Field(..) => "field declaration",
         }
     }
 }
@@ -195,6 +197,12 @@ impl<'ir> DefNode<'ir> {
 impl<'ir> Into<DefNode<'ir>> for ir::Item<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::Item(self)
+    }
+}
+
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::FieldDecl<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        DefNode::Field(self)
     }
 }
 

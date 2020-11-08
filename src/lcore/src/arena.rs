@@ -10,7 +10,7 @@ macro_rules! arena_types {
         $macro!($args, [
             [] adt_def: AdtTy<$tcx>,
             [] consts: Const<$tcx>,
-            [] fields: FieldTy<$tcx>,
+            [] fields: FieldTy,
             [] generics: Generics<$tcx>,
             [] inherent_impls: InherentImpls,
             [] mir: Mir<$tcx>,

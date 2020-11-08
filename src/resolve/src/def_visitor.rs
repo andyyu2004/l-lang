@@ -4,6 +4,14 @@ use ir::{CtorKind, DefKind, HasDefKind, ModuleId, ROOT_MODULE};
 
 /// collects all `DefId`s
 /// this forward declares all "hoisted" things such as items & constructors
+/// the following things are assigned def_ids
+///
+/// items
+/// impl/assoc items
+/// foreign items
+/// type parameters (in generics)
+/// variants
+/// fields declarations
 pub struct DefVisitor<'a, 'r> {
     resolver: &'a mut Resolver<'r>,
     curr_mod: ModuleId,
@@ -52,6 +60,10 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
         // in a type relative path
         self.resolver.define(item.id);
         ast::walk_assoc_item(self, item);
+    }
+
+    fn visit_field_decl(&mut self, field: &'ast FieldDecl) {
+        self.resolver.define(field.id);
     }
 
     /// define the variant constructor

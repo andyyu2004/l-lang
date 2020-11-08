@@ -7,22 +7,6 @@ pub fn provide(queries: &mut Queries) {
     *queries = Queries { type_of, ..*queries }
 }
 
-pub trait Typeof<'tcx> {
-    fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx>;
-}
-
-impl<'tcx> Typeof<'tcx> for FieldTy<'tcx> {
-    /// return type of the field
-    // we require this indirection instead of storing `ty: Ty` directly as a field
-    // because fields may refer to the the struct/enum that it is declared in
-    // therefore, the lowering must be done post type collection
-    fn ty(&self, tcx: TyCtx<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
-        // TODO cache this result somewhere?
-        let ty = tcx.ir_ty_to_ty(&self.ir_ty);
-        ty.subst(tcx, substs)
-    }
-}
-
 fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     let def_node = tcx.defs().get(def_id);
     match def_node {
@@ -44,6 +28,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
             ir::ForeignItemKind::Fn(sig, ..) =>
                 tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
         },
+        ir::DefNode::Field(f) => tcx.ir_ty_to_ty(f.ty),
         ir::DefNode::TyParam(_) => panic!(),
     }
 }
@@ -65,7 +50,7 @@ fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> 
         // Some: T -> Option<T>
         ir::VariantKind::Tuple(..) => {
             let variant = &adt.variants[variant.idx];
-            let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.ir_ty_to_ty(f.ir_ty)));
+            let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.type_of(f.def_id)));
             tcx.mk_fn_ty(tys, adt_ty)
         }
     };

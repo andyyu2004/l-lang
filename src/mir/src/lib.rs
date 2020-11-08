@@ -13,7 +13,7 @@ pub use build::*;
 pub use traverse::MirVisitor;
 
 use error::{LError, LResult};
-use ir::{DefId, FnVisitor, ItemVisitor};
+use ir::{DefId, DefNode, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
 use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, TyCtx};
@@ -41,16 +41,18 @@ fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> LResult<&'t
 fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
     let node = tcx.defs().get(def_id);
     match node {
-        ir::DefNode::Ctor(variant) => Ok(build_variant_ctor(tcx, variant)),
-        ir::DefNode::Item(item) => match item.kind {
+        DefNode::Ctor(variant) => Ok(build_variant_ctor(tcx, variant)),
+        DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(_, _, body) => build_mir(tcx, def_id, body),
             _ => panic!(),
         },
-        ir::DefNode::ImplItem(item) => match item.kind {
+        DefNode::ImplItem(item) => match item.kind {
             ir::ImplItemKind::Fn(_, body) => build_mir(tcx, def_id, body),
         },
-        ir::DefNode::ForeignItem(_) => todo!(),
-        ir::DefNode::Variant(_) | ir::DefNode::TyParam(_) => panic!(),
+        DefNode::Field(..)
+        | DefNode::ForeignItem(..)
+        | DefNode::Variant(..)
+        | DefNode::TyParam(..) => panic!(),
     }
 }
 

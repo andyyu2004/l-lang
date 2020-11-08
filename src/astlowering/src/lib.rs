@@ -97,7 +97,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_ty_param(&mut self, param: &TyParam) -> ir::TyParam<'ir> {
         // `TyParam`s have their own `DefId`
-        self.with_owner(param.id, |lctx| {
+        self.with_def_id(param.id, |lctx| {
             let &TyParam { span, id, ident, ref default } = param;
             ir::TyParam {
                 span,
@@ -109,7 +109,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    fn with_owner<T>(&mut self, owner: NodeId, f: impl FnOnce(&mut Self) -> T) -> T {
+    fn with_def_id<T>(&mut self, owner: NodeId, f: impl FnOnce(&mut Self) -> T) -> T {
         let def_id = self.resolver.def_id(owner);
         self.owner_stack.push((def_id, 0));
         let ret = f(self);

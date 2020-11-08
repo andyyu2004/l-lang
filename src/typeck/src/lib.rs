@@ -22,7 +22,6 @@ use autoderef::Autoderef;
 pub use check::{FnCtx, InheritedCtx};
 use lcore::queries::Queries;
 pub use tyconv::TyConv;
-pub use type_of::Typeof;
 
 pub fn provide(queries: &mut Queries) {
     collect::provide(queries);

@@ -1,7 +1,6 @@
 use super::*;
 use ast::BinOp;
 use std::ops::{Deref, DerefMut};
-use typeck::Typeof;
 
 struct PatternBuilder<'a, 'b, 'tcx> {
     builder: &'b mut Builder<'a, 'tcx>,

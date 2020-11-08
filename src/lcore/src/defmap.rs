@@ -33,8 +33,9 @@ impl<'tcx> DefMap<'tcx> {
             DefNode::Item(item) => item.span,
             DefNode::ImplItem(_) => todo!(),
             DefNode::ForeignItem(item) => item.span,
-            DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => variant.span,
+            DefNode::Ctor(variant) | DefNode::Variant(variant) => variant.span,
             DefNode::TyParam(param) => param.span,
+            DefNode::Field(field) => field.span,
         }
     }
 
@@ -49,7 +50,8 @@ impl<'tcx> DefMap<'tcx> {
             },
             DefNode::ForeignItem(..)
             | DefNode::Ctor(..)
-            | ir::DefNode::Variant(..)
+            | DefNode::Variant(..)
+            | DefNode::Field(..)
             | DefNode::TyParam(..) => panic!(),
         }
     }
@@ -68,8 +70,10 @@ impl<'tcx> DefMap<'tcx> {
                 ir::ForeignItemKind::Fn(_, generics) => generics,
             },
             DefNode::ImplItem(impl_item) => impl_item.generics,
-            DefNode::Ctor(..) | DefNode::Variant(..) | DefNode::TyParam(..) =>
-                panic!("def node has no generics: {}", node.descr()),
+            DefNode::Field(..)
+            | DefNode::Ctor(..)
+            | DefNode::Variant(..)
+            | DefNode::TyParam(..) => panic!("def node has no generics: {}", node.descr()),
         }
     }
 
@@ -79,10 +83,11 @@ impl<'tcx> DefMap<'tcx> {
             DefNode::Item(item) => item.ident,
             DefNode::ImplItem(impl_item) => impl_item.ident,
             DefNode::ForeignItem(foreign_item) => foreign_item.ident,
-            DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => {
+            DefNode::Ctor(variant) | DefNode::Variant(variant) => {
                 let adt_ident = self.ident(variant.adt_def_id);
                 adt_ident.concat_as_path(variant.ident)
             }
+            DefNode::Field(field) => field.ident,
         }
     }
 }

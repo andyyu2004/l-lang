@@ -29,7 +29,8 @@ impl<'tcx> Instance<'tcx> {
             ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
                 Instance::item(def_id, substs),
             ir::DefNode::ForeignItem(..) => Instance::intrinsic(def_id, substs),
-            ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) => unreachable!(),
+            ir::DefNode::Field(..) | ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) =>
+                unreachable!(),
         }
     }
 

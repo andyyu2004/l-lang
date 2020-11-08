@@ -7,7 +7,7 @@ use span::Symbol;
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     pub fn lower_item(&mut self, item: &Item) {
-        self.with_owner(item.id, |lctx| {
+        self.with_def_id(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
             let id = lctx.lower_node_id(id);
             let kind = match &kind {
@@ -65,7 +65,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_foreign_item(&mut self, item: &ForeignItem) -> ir::ForeignItem<'ir> {
         let &ForeignItem { span, id, vis, ident, ref kind } = item;
-        self.with_owner(id, |lctx| {
+        self.with_def_id(id, |lctx| {
             let id = lctx.lower_node_id(id);
             let kind = match kind {
                 ForeignItemKind::Fn(sig, generics) =>
@@ -92,7 +92,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn lower_impl_item_ref(&mut self, impl_item: &AssocItem) -> ir::ImplItemRef {
-        self.with_owner(impl_item.id, |lctx| {
+        self.with_def_id(impl_item.id, |lctx| {
             let item = lctx.lower_impl_item(impl_item);
             let id = ir::ImplItemId(item.id.def);
             lctx.impl_items.insert(id, item);
@@ -128,7 +128,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     fn lower_variant(&mut self, idx: usize, variant: &Variant) -> ir::Variant<'ir> {
         let adt_def = self.curr_owner();
-        self.with_owner(variant.id, |lctx| {
+        self.with_def_id(variant.id, |lctx| {
             let id = lctx.lower_node_id(variant.id);
             let kind = lctx.lower_variant_kind(&variant.kind);
             ir::Variant {
@@ -142,27 +142,31 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
+    fn lower_field_decls(&mut self, fields: &[FieldDecl]) -> &'ir [ir::FieldDecl<'ir>] {
+        let fields =
+            self.arena.alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f)));
+        fields.iter().for_each(|field| self.def_node(field.id.def, field));
+        fields
+    }
+
     fn lower_field_decl(&mut self, (i, field): (usize, &FieldDecl)) -> ir::FieldDecl<'ir> {
-        let &FieldDecl { span, ident, vis, id, ref ty } = field;
-        let ident = ident.unwrap_or_else(|| Ident { span: field.span, symbol: Symbol::intern(i) });
-        ir::FieldDecl { span, ident, vis, id: self.lower_node_id(id), ty: self.lower_ty(ty) }
+        self.with_def_id(field.id, |lctx| {
+            let &FieldDecl { span, ident, vis, id, ref ty } = field;
+            // if it is a tuple struct/variant, the field will just be named after its index
+            let ident = ident.unwrap_or_else(|| Ident::new(field.span, Symbol::intern(i)));
+            ir::FieldDecl { span, ident, vis, id: lctx.lower_node_id(id), ty: lctx.lower_ty(ty) }
+        })
     }
 
     fn lower_variant_kind(&mut self, variant_kind: &VariantKind) -> ir::VariantKind<'ir> {
         match variant_kind {
-            VariantKind::Tuple(fields) => ir::VariantKind::Tuple(
-                self.arena
-                    .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
-            ),
-            VariantKind::Struct(fields) => ir::VariantKind::Struct(
-                self.arena
-                    .alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f))),
-            ),
+            VariantKind::Tuple(fields) => ir::VariantKind::Tuple(self.lower_field_decls(fields)),
+            VariantKind::Struct(fields) => ir::VariantKind::Struct(self.lower_field_decls(fields)),
             VariantKind::Unit => ir::VariantKind::Unit,
         }
     }
 
-    pub(super) fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
+    crate fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
         let inputs =
             self.arena.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));
         let output = sig.ret_ty.as_ref().map(|ty| self.lower_ty(ty));
