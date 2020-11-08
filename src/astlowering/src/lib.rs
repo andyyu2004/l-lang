@@ -35,6 +35,7 @@ pub struct AstLoweringCtx<'a, 'ir> {
     owner_stack: Vec<(DefId, usize)>,
     items: BTreeMap<DefId, ir::Item<'ir>>,
     impl_items: BTreeMap<ir::ImplItemId, ir::ImplItem<'ir>>,
+    trait_items: BTreeMap<ir::TraitItemId, ir::TraitItem<'ir>>,
     entry_id: Option<DefId>,
     /// this counter counts backwards as to be sure not to not
     /// overlap with the ids that the parser assigned
@@ -56,6 +57,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             owner_stack: Default::default(),
             items: Default::default(),
             impl_items: Default::default(),
+            trait_items: Default::default(),
             node_id_to_id: Default::default(),
             new_node_id_counter: Cell::new(0xffff_ff00),
         }
@@ -82,6 +84,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             entry_id: self.entry_id,
             items: self.items,
             impl_items: self.impl_items,
+            trait_items: self.trait_items,
         })
     }
 

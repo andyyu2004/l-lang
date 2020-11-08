@@ -60,6 +60,11 @@ pub enum ForeignItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>),
 }
 
+#[derive(Debug)]
+pub struct TraitItem<'ir> {
+    pub generics: &'ir ir::Generics<'ir>,
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct ImplItem<'ir> {
     pub id: ir::Id,

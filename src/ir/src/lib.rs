@@ -12,20 +12,18 @@ mod visit;
 
 use crate as ir;
 
-use ast::Ident;
-use ast::Visibility;
+use ast::{Ident, Visibility};
 pub use def::*;
-use span::Span;
-pub use ty::*;
-
 pub use def::*;
 pub use expr::{Expr, ExprKind};
 pub use item::*;
 pub use item_visitor::*;
 pub use pat::{FieldPat, Pattern, PatternKind};
+use span::Span;
 use std::collections::BTreeMap;
 use std::fmt::{self, Debug, Display, Formatter};
 pub use stmt::{Stmt, StmtKind};
+pub use ty::*;
 pub use ty::*;
 pub use visit::*;
 
@@ -62,6 +60,7 @@ pub struct Ir<'ir> {
     pub entry_id: Option<DefId>,
     pub items: BTreeMap<DefId, ir::Item<'ir>>,
     pub impl_items: BTreeMap<ImplItemId, ir::ImplItem<'ir>>,
+    pub trait_items: BTreeMap<TraitItemId, ir::TraitItem<'ir>>,
 }
 
 index::newtype_index!(
@@ -106,6 +105,9 @@ impl DefId {
         Self::MAX
     }
 }
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
+pub struct TraitItemId(pub DefId);
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 pub struct ImplItemId(pub DefId);

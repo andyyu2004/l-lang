@@ -108,14 +108,8 @@ struct MirDump<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
-    fn visit_fn(
-        &mut self,
-        def_id: DefId,
-        _ident: Ident,
-        _sig: &'tcx ir::FnSig<'tcx>,
-        _generics: &'tcx ir::Generics<'tcx>,
-        body: &'tcx ir::Body<'tcx>,
-    ) {
+    fn visit_fn(&mut self, def_id: DefId) {
+        let body = self.tcx.defs().body(def_id);
         let _ = with_lowering_ctx(self.tcx, def_id, |mut lctx| {
             let mir = lctx.build_mir(body);
             write!(self.writer, "\n{}", mir).unwrap();

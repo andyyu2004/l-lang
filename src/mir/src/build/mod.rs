@@ -1,23 +1,23 @@
 mod cfg;
+mod ctor;
 mod ctx;
 mod expr;
 mod pat;
 mod scope;
 mod stmt;
 
-use crate::set;
-use ast::{Ident, Mutability};
-use cfg::Cfg;
+pub use ctor::build_variant_ctor;
 pub use ctx::LoweringCtx;
+
+use crate::set;
+use ast::Mutability;
+use cfg::Cfg;
 use index::{Idx, IndexVec};
-use ir::{DefId, VariantIdx};
-use itertools::Itertools;
 use lcore::mir::*;
-use lcore::ty::{Ty, TyCtx, VariantTy};
+use lcore::ty::{Ty, TyCtx};
 use rustc_hash::FxHashMap;
 use scope::{ReleaseInfo, Scopes};
 use span::Span;
-use typeck::Typeof;
 
 /// lowers `tir::Body` into `mir::Body`
 pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
@@ -30,95 +30,20 @@ pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> 
     mir
 }
 
-// a bit of a hacky way to generate the mir for variant constructors
-/// `ty` should be the type of the enum adt
-pub fn build_enum_ctors<'tcx>(
-    tcx: TyCtx<'tcx>,
-    item: &ir::Item,
-) -> FxHashMap<DefId, (Ident, &'tcx Mir<'tcx>)> {
-    // TODO deal with generics
-    let scheme = tcx.type_of(item.id.def);
-    let (_forall, ty) = scheme.expect_scheme();
-    let (adt_ty, _) = ty.expect_adt();
-    let mut map = FxHashMap::default();
-    for (idx, variant) in adt_ty.variants.iter_enumerated() {
-        let body = build_variant_ctor_inner(tcx, ty, idx, variant);
-        match body {
-            None => continue,
-            Some(body) => {
-                // eprintln!("{}", body);
-                let value = (item.ident.concat_as_path(variant.ident), body);
-                map.insert(variant.ctor, value);
-            }
-        }
-    }
-    map
-}
-
-pub fn build_variant_ctor<'tcx>(tcx: TyCtx<'tcx>, variant: ir::Variant<'tcx>) -> &'tcx Mir<'tcx> {
-    let scheme = tcx.type_of(variant.adt_def_id);
-    let (_forall, ty) = scheme.expect_scheme();
-    let (adt_ty, _) = ty.expect_adt();
-    let idx = variant.idx;
-    let variant_ty = &adt_ty.variants[idx];
-    build_variant_ctor_inner(tcx, ty, idx, variant_ty).unwrap()
-}
-
-/// constructs the mir for a single variant constructor (if it is a function)
-pub fn build_variant_ctor_inner<'tcx>(
-    tcx: TyCtx<'tcx>,
-    ret_ty: Ty<'tcx>,
-    variant_idx: VariantIdx,
-    variant: &VariantTy<'tcx>,
-) -> Option<&'tcx Mir<'tcx>> {
-    // don't construct any mir for a constructor that is not a function
-    if !variant.ctor_kind.is_function() {
-        return None;
-    }
-
-    // TODO get a proper span
-    let info = SpanInfo { span: Span::default() };
-    let (adt, substs) = ret_ty.expect_adt();
-
-    let mut vars = IndexVec::<VarId, Var<'tcx>>::default();
-    let mut alloc_var = |info: SpanInfo, kind: VarKind, ty: Ty<'tcx>| {
-        let var = Var { mtbl: Mutability::Imm, info, kind, ty };
-        vars.push(var)
-    };
-
-    let mut cfg = Cfg::default();
-    let lvalue = alloc_var(info, VarKind::Ret, ret_ty).into();
-
-    // the `fields` of the variant are essentially the parameters of the constructor function
-    let fields = variant
-        .fields
-        .iter()
-        .map(|param| alloc_var(info, VarKind::Arg, param.ty(tcx, substs)))
-        .map(Lvalue::new)
-        .map(Operand::Lvalue)
-        .collect_vec();
-
-    let rvalue = Rvalue::Adt { adt, variant_idx, substs, fields };
-    cfg.push_assignment(info, ENTRY_BLOCK, lvalue, rvalue);
-    cfg.terminate(info, ENTRY_BLOCK, TerminatorKind::Return);
-    let body = Mir { basic_blocks: cfg.basic_blocks, vars, argc: variant.fields.len() };
-    Some(tcx.alloc(body))
-}
-
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn new(ctx: &'a LoweringCtx<'tcx>, body: &'a tir::Body<'tcx>) -> Self {
         let tcx = ctx.tcx;
         let body_ty = body.expr.ty;
         let span = body.expr.span;
         let mut builder = Self {
+            tcx,
+            ctx,
+            body,
             argc: body.params.len(),
             scopes: Default::default(),
             cfg: Default::default(),
             vars: Default::default(),
             var_ir_map: Default::default(),
-            tcx,
-            ctx,
-            body,
         };
         let info = builder.span_info(span);
         builder.alloc_var(info, VarKind::Ret, body_ty);
@@ -235,13 +160,6 @@ macro_rules! set {
         let BlockAnd(b, ()) = $c;
         b
     }};
-}
-
-impl<T> BlockAnd<T> {
-    fn unpack(self) -> (BlockId, T) {
-        let Self(block, t) = self;
-        (block, t)
-    }
 }
 
 trait BlockAndExt {

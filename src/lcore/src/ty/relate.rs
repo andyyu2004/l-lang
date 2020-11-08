@@ -19,22 +19,22 @@ pub trait TypeRelation<'tcx>: Sized {
         let tcx = self.tcx();
         match (a.kind, b.kind) {
             // ignore mutability for now
-            (Param(t), Param(u)) if t.idx == u.idx => Ok(a),
-            (Tuple(xs), Tuple(ys)) => self.relate_tuples(xs, ys),
-            (Array(t, m), Array(u, n)) if m == n => self.relate(t, u),
-            (Adt(adtx, substsx), Adt(adty, substsy)) if adtx == adty => {
+            (ty::Param(t), ty::Param(u)) if t.idx == u.idx => Ok(a),
+            (ty::Tuple(xs), ty::Tuple(ys)) => self.relate_tuples(xs, ys),
+            (ty::Array(t, m), ty::Array(u, n)) if m == n => self.relate(t, u),
+            (ty::Adt(adtx, substsx), ty::Adt(adty, substsy)) if adtx == adty => {
                 let substs = self.relate(substsx, substsy)?;
                 Ok(tcx.mk_adt_ty(adtx, substs))
             }
             (_, ty::Never) => Ok(a),
             (ty::Never, _) => Ok(b),
-            (Box(t), Box(u)) => self.relate(t, u),
-            (Fn(a, b), Fn(t, u)) => {
+            (ty::Box(t), ty::Box(u)) => self.relate(t, u),
+            (ty::Fn(a, b), ty::Fn(t, u)) => {
                 let s = self.relate(a, t)?;
                 let r = self.relate(b, u)?;
                 Ok(tcx.mk_fn_ty(s, r))
             }
-            (Infer(_), _) | (_, Infer(_)) => panic!(),
+            (ty::Infer(_), _) | (_, ty::Infer(_)) => panic!(),
             _ => Err(TypeError::Mismatch(a, b)),
         }
     }

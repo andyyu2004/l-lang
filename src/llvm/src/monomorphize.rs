@@ -77,14 +77,9 @@ impl<'tcx> RootCollector<'tcx> {
 }
 
 impl<'tcx> FnVisitor<'tcx> for RootCollector<'tcx> {
-    fn visit_fn(
-        &mut self,
-        def_id: ir::DefId,
-        _ident: ast::Ident,
-        _sig: &'tcx ir::FnSig<'tcx>,
-        _generics: &'tcx ir::Generics<'tcx>,
-        _body: &'tcx ir::Body<'tcx>,
-    ) {
+    fn visit_fn(&mut self, def_id: ir::DefId) {
+        // note we don't have to visit enum constructors as a root
+        // as they does not call anything else
         let generics = self.tcx.generics_of(def_id);
         if !generics.params.is_empty() {
             return;
