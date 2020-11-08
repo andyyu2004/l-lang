@@ -13,7 +13,7 @@ pub use build::*;
 pub use traverse::MirVisitor;
 
 use error::{LError, LResult};
-use ir::{DefId, FnVisitor, Visitor};
+use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
 use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, TyCtx};

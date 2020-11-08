@@ -1,5 +1,5 @@
 use crate::CodegenCtx;
-use ir::{DefId, FnVisitor, Visitor};
+use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
 use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
 use mir::MirVisitor;

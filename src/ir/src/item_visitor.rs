@@ -5,10 +5,12 @@ pub trait ItemVisitor<'ir> {
     fn visit_item(&mut self, _item: &'ir ir::Item<'ir>);
     fn visit_impl_item(&mut self, _impl_item: &'ir ir::ImplItem<'ir>);
     fn visit_trait_item(&mut self, _trait_item: &'ir ir::TraitItem<'ir>);
-}
 
-impl<'ir, V> ir::Visitor<'ir> for V where V: ItemVisitor<'ir>
-{
+    fn visit_ir(&mut self, ir: &'ir ir::Ir<'ir>) {
+        ir.items.values().for_each(|item| self.visit_item(item));
+        ir.impl_items.values().for_each(|impl_item| self.visit_impl_item(impl_item));
+        ir.trait_items.values().for_each(|trait_item| self.visit_trait_item(trait_item));
+    }
 }
 
 /// visits the def_id of all (non-foreign) function items
