@@ -9,6 +9,7 @@ crate fn provide(queries: &mut Queries) {
 
 pub fn generics_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx ty::Generics<'tcx> {
     let generics = tcx.defs().generics(def_id);
+
     // impl item is the only kind of defnode that may possibly have outer generics
     let impl_generic_params = match tcx.defs().get(def_id) {
         DefNode::ImplItem(item) => generics_of(tcx, item.impl_def_id).params,

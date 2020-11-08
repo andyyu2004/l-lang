@@ -46,7 +46,7 @@ pub enum ItemKind<'ir> {
     },
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct ForeignItem<'ir> {
     pub id: ir::Id,
     pub ident: Ident,

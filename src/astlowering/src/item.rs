@@ -26,9 +26,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 }
                 ItemKind::Enum(generics, variants) => {
                     let generics = lctx.lower_generics(generics);
-                    let variants = lctx.arena.alloc_from_iter(
-                        variants.iter().enumerate().map(|(i, v)| lctx.lower_variant(i, v)),
-                    );
+                    let variants = lctx.lower_variants(variants);
                     ir::ItemKind::Enum(generics, variants)
                 }
                 ItemKind::Struct(generics, variant_kind) => {
@@ -48,18 +46,21 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     /// inserts DefId -> DefNode mapping into the `DefMap`
     /// returns the same T for convenience
-    crate fn def_node<T>(&mut self, def_id: DefId, node: T) -> T
+    crate fn def_node<T>(&mut self, def_id: DefId, node: T)
     where
-        T: Into<DefNode<'ir>> + Copy,
+        T: Into<DefNode<'ir>>,
     {
         self.resolver.def_node(def_id, node.into());
-        node
     }
 
     fn lower_foreign_mod(&mut self, items: &[P<ForeignItem>]) -> ir::ItemKind<'ir> {
-        let foreign_items =
-            self.arena.alloc_from_iter(items.iter().map(|item| self.lower_foreign_item(item)));
+        let foreign_items = self.lower_foreign_items(items);
+        foreign_items.iter().for_each(|item| self.def_node(item.id.def, item));
         ir::ItemKind::Extern(foreign_items)
+    }
+
+    fn lower_foreign_items(&mut self, items: &[P<ForeignItem>]) -> &'ir [ir::ForeignItem<'ir>] {
+        self.arena.alloc_from_iter(items.iter().map(|item| self.lower_foreign_item(item)))
     }
 
     fn lower_foreign_item(&mut self, item: &ForeignItem) -> ir::ForeignItem<'ir> {
@@ -70,7 +71,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ForeignItemKind::Fn(sig, generics) =>
                     ir::ForeignItemKind::Fn(lctx.lower_fn_sig(sig), lctx.lower_generics(generics)),
             };
-            lctx.def_node(id.def, ir::ForeignItem { id, ident, span, vis, kind })
+            ir::ForeignItem { id, ident, span, vis, kind }
         })
     }
 
@@ -112,7 +113,17 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         };
 
         let impl_def_id = self.parent_def_id(id);
-        self.def_node(id.def, ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind })
+        let impl_item = ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind };
+        self.def_node(id.def, impl_item);
+        impl_item
+    }
+
+    fn lower_variants(&mut self, variants: &[Variant]) -> &'ir [ir::Variant<'ir>] {
+        let variants = self
+            .arena
+            .alloc_from_iter(variants.iter().enumerate().map(|(i, v)| self.lower_variant(i, v)));
+        variants.iter().for_each(|variant| self.def_node(variant.id.def, variant));
+        variants
     }
 
     fn lower_variant(&mut self, idx: usize, variant: &Variant) -> ir::Variant<'ir> {
@@ -120,15 +131,14 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.with_owner(variant.id, |lctx| {
             let id = lctx.lower_node_id(variant.id);
             let kind = lctx.lower_variant_kind(&variant.kind);
-            let variant = ir::Variant {
+            ir::Variant {
                 adt_def_id: adt_def,
                 id,
                 kind,
                 idx: VariantIdx::new(idx),
                 ident: variant.ident,
                 span: variant.span,
-            };
-            lctx.def_node(id.def, variant)
+            }
         })
     }
 

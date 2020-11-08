@@ -29,12 +29,13 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
         ir::DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(sig, ..) =>
                 tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
-            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => type_of_adt(tcx, def_id),
+            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => self::type_of_adt(tcx, def_id),
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
             _ => unreachable!("unexpected item kind in type_of"),
         },
-        ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) => type_of_variant(tcx, variant),
+        ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) =>
+            self::type_of_variant(tcx, variant),
         ir::DefNode::ImplItem(item) => match item.kind {
             ir::ImplItemKind::Fn(sig, ..) =>
                 tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
@@ -47,7 +48,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     }
 }
 
-fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: ir::Variant<'tcx>) -> Ty<'tcx> {
+fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> Ty<'tcx> {
     let ty = tcx.type_of(variant.adt_def_id);
     let (forall, adt_ty) = ty.expect_scheme();
     let (adt, _substs) = adt_ty.expect_adt();

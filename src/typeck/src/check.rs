@@ -1,8 +1,8 @@
 mod expr;
 mod item;
+mod methods;
 mod pat;
 mod path;
-mod resolve;
 mod stmt;
 
 use crate::TyConv;

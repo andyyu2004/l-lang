@@ -1,8 +1,9 @@
 
 /* fn f(s: S) {} */
 
-struct S<T> {
-    t: T
+struct S<T, U> {
+    t: T,
+    u: U,
 }
 
 struct K<T, U> {

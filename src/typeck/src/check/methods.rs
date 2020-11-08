@@ -7,6 +7,16 @@ use lcore::ty::{self, Subst, Ty};
 use span::Span;
 use std::ops::Deref;
 
+// some ideas for dealing with overlapping trait impls
+enum Specificity {
+    // impl<V> Trait for V {}
+    Generic,
+    // impl<V> Trait for V where V : Bounds {}
+    BoundedGeneric,
+    // impl Trait for T {}
+    Type,
+}
+
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     crate fn resolve_type_relative_path(
         &mut self,

@@ -18,15 +18,15 @@ fn adt_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx AdtTy<'tcx> {
 
     let (kind, variants) = match item.kind {
         ir::ItemKind::Enum(_, variants) => {
-            let variants = variants.iter().map(|variant| variant_ty(tcx, variant)).collect();
+            let variants = variants.iter().map(|variant| self::variant_ty(tcx, variant)).collect();
             (AdtKind::Enum, variants)
         }
         ir::ItemKind::Struct(_, kind) => {
-            // little bit hacky, turning the variant kind into a variant
+            // little bit hacky, turning the variant kind into a variant...
             let ir::Item { id, span, ident, .. } = item;
             let variant =
                 ir::Variant { id, ident, span, adt_def_id: id.def, kind, idx: VariantIdx::new(0) };
-            let variant = std::iter::once(&variant).map(|v| variant_ty(tcx, v)).collect();
+            let variant = std::iter::once(&variant).map(|v| self::variant_ty(tcx, v)).collect();
 
             (AdtKind::Struct, variant)
         }

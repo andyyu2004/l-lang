@@ -9,7 +9,10 @@ use typeck::Typeof;
 
 use super::cfg::Cfg;
 
-pub fn build_variant_ctor<'tcx>(tcx: TyCtx<'tcx>, variant: ir::Variant<'tcx>) -> &'tcx Mir<'tcx> {
+pub fn build_variant_ctor<'tcx>(
+    tcx: TyCtx<'tcx>,
+    variant: &'tcx ir::Variant<'tcx>,
+) -> &'tcx Mir<'tcx> {
     let scheme = tcx.type_of(variant.adt_def_id);
     let (_forall, ty) = scheme.expect_scheme();
     let (adt_ty, _) = ty.expect_adt();

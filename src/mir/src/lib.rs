@@ -54,6 +54,14 @@ fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
     }
 }
 
+fn build_mir<'tcx>(
+    tcx: TyCtx<'tcx>,
+    def_id: DefId,
+    body: &'tcx ir::Body<'tcx>,
+) -> LResult<&'tcx Mir<'tcx>> {
+    with_lowering_ctx(tcx, def_id, |mut lctx| lctx.build_mir(body))
+}
+
 fn with_lowering_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
     def_id: DefId,
@@ -64,14 +72,7 @@ fn with_lowering_ctx<'tcx, R>(
     Ok(f(lctx))
 }
 
-pub fn build_mir<'tcx>(
-    tcx: TyCtx<'tcx>,
-    def_id: DefId,
-    body: &'tcx ir::Body<'tcx>,
-) -> LResult<&'tcx Mir<'tcx>> {
-    with_lowering_ctx(tcx, def_id, |mut lctx| lctx.build_mir(body))
-}
-
+// used only in tests
 pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
     let prog = tcx.ir;
     let mut items = BTreeMap::new();

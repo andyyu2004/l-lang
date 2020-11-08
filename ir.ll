@@ -44,13 +44,6 @@ declare void @exit(i32)
 define i64 @main() {
 basic_blockbb0:
   %ret = alloca i64
-  %tmp = alloca i64*
-  %tmp1 = alloca i64
-  %ptr = alloca i64*
-  store i64 99, i64* %tmp1
-  store i64* %tmp1, i64** %tmp
-  %load = load i64*, i64** %tmp
-  store i64* %load, i64** %ptr
   store i64 0, i64* %ret
   %load_ret = load i64, i64* %ret
   ret i64 %load_ret

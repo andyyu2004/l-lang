@@ -172,10 +172,10 @@ impl<Id> Res<Id> {
 pub enum DefNode<'ir> {
     Item(ir::Item<'ir>),
     ImplItem(ir::ImplItem<'ir>),
-    ForeignItem(ir::ForeignItem<'ir>),
+    ForeignItem(&'ir ir::ForeignItem<'ir>),
     /// the node is considered a ctor iff it is a tuple variant
-    Ctor(ir::Variant<'ir>),
-    Variant(ir::Variant<'ir>),
+    Ctor(&'ir ir::Variant<'ir>),
+    Variant(&'ir ir::Variant<'ir>),
     TyParam(&'ir ir::TyParam<'ir>),
 }
 
@@ -210,13 +210,13 @@ impl<'ir> Into<DefNode<'ir>> for ir::ImplItem<'ir> {
     }
 }
 
-impl<'ir> Into<DefNode<'ir>> for ir::ForeignItem<'ir> {
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::ForeignItem<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::ForeignItem(self)
     }
 }
 
-impl<'ir> Into<DefNode<'ir>> for ir::Variant<'ir> {
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::Variant<'ir> {
     fn into(self) -> DefNode<'ir> {
         // the variant can either become a constructor or a variant node depending on its kind
         if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
