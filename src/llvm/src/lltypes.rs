@@ -32,8 +32,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Int => self.types.int.into(),
             TyKind::Discr => self.types.discr.into(),
             TyKind::Float => self.types.float.into(),
-            TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Char => todo!(),
+            TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Array(_ty, _n) => todo!(),
             TyKind::Fn(params, ret) =>
                 self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
