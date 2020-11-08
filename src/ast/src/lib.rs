@@ -29,7 +29,7 @@ pub use error::*;
 pub use expr::*;
 pub use item::*;
 pub use pattern::*;
-pub use prog::Prog;
+pub use prog::Ast;
 pub use stmt::*;
 pub use ty::*;
 pub use visit::*;

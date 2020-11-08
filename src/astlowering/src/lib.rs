@@ -78,7 +78,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.arena.alloc_from_iter(iter)
     }
 
-    pub fn lower_prog(mut self, prog: &Prog) -> &'ir ir::Ir<'ir> {
+    pub fn lower_prog(mut self, prog: &Ast) -> &'ir ir::Ir<'ir> {
         prog.items.iter().for_each(|item| self.lower_item(item));
         self.arena.alloc(ir::Ir {
             entry_id: self.entry_id,

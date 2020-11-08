@@ -1,17 +1,17 @@
 use super::*;
-use ast::{Prog, P};
+use ast::{Ast, P};
 
 pub struct ProgParser;
 
 impl<'a> Parse<'a> for ProgParser {
-    type Output = P<Prog>;
+    type Output = P<Ast>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut items = vec![];
         while !parser.reached_eof() {
             items.push(ItemParser.parse(parser)?);
         }
-        Ok(box Prog { items })
+        Ok(box Ast { items })
     }
 }
 

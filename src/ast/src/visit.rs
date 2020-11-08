@@ -3,16 +3,16 @@ use super::*;
 /// traverse the ast; each function can be overridden.
 /// by default, just recursively visits each substructure
 pub trait Visitor<'ast>: Sized {
+    fn visit_ast(&mut self, ast: &'ast Ast) {
+        ast.items.iter().for_each(|item| self.visit_item(item));
+    }
+
     fn visit_item(&mut self, item: &'ast Item) {
         walk_item(self, item)
     }
 
     fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {
         walk_foreign_item(self, item);
-    }
-
-    fn visit_prog(&mut self, prog: &'ast Prog) {
-        prog.items.iter().for_each(|item| self.visit_item(item));
     }
 
     fn visit_variant(&mut self, variant: &'ast Variant) {

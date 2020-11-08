@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
     }
 
     /// entry point to parsing
-    pub fn parse(&mut self) -> Option<P<Prog>> {
+    pub fn parse(&mut self) -> Option<P<Ast>> {
         ProgParser.parse(self).map_err(|err| err.emit()).ok()
     }
 

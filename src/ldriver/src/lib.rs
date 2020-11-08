@@ -117,7 +117,7 @@ impl<'tcx> Driver<'tcx> {
         }
     }
 
-    pub fn parse(&self) -> LResult<P<ast::Prog>> {
+    pub fn parse(&self) -> LResult<P<ast::Ast>> {
         // assume one file for now
         let mut parser = Parser::new(&self.sess, ROOT_FILE_IDX);
         let ast = parser.parse();

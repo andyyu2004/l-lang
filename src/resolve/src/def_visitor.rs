@@ -10,7 +10,7 @@ use ir::{CtorKind, DefKind, HasDefKind, ModuleId, ROOT_MODULE};
 /// impl/assoc items
 /// foreign items
 /// type parameters (in generics)
-/// variants
+/// variants and constructors
 /// fields declarations
 pub struct DefVisitor<'a, 'r> {
     resolver: &'a mut Resolver<'r>,
@@ -84,8 +84,8 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
 }
 
 impl<'a> Resolver<'a> {
-    pub fn resolve_items(&mut self, prog: &Prog) {
+    pub fn collect_defs(&mut self, prog: &Ast) {
         let mut visitor = DefVisitor::new(self);
-        visitor.visit_prog(prog);
+        visitor.visit_ast(prog);
     }
 }

@@ -220,9 +220,9 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
 }
 
 impl<'a> Resolver<'a> {
-    pub fn late_resolve(&mut self, prog: &Prog) {
+    pub fn late_resolve(&mut self, prog: &Ast) {
         let mut visitor = LateResolver::new(self);
-        visitor.visit_prog(prog);
+        visitor.visit_ast(prog);
     }
 }
 

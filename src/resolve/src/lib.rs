@@ -23,7 +23,7 @@ use resolution_error::{ResResult, ResolutionError};
 use scope::{Scope, Scopes};
 
 use arena::TypedArena;
-use ast::{Ident, NodeId, Prog};
+use ast::{Ast, Ident, NodeId};
 use error::{DiagnosticBuilder, MultiSpan};
 use index::IndexVec;
 use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PartialRes, PrimTy, Res, ROOT_MODULE};
@@ -71,8 +71,8 @@ impl<'a> Resolver<'a> {
     }
 
     /// top level function to run the resolver on the given prog
-    pub fn resolve(&mut self, prog: &Prog) {
-        self.resolve_items(prog);
+    pub fn resolve(&mut self, prog: &Ast) {
+        self.collect_defs(prog);
         self.late_resolve(prog);
     }
 
