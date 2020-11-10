@@ -1,4 +1,4 @@
-use crate::ty::Ty;
+use crate::ty::{Ty, TypeFoldable, TypeFolder, TypeVisitor};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Adjustment<'tcx> {
@@ -31,4 +31,20 @@ pub enum AdjustmentKind {
 
 pub trait Adjuster<'tcx> {
     fn get_adjustments(&self) -> Vec<Adjustment<'tcx>>;
+}
+
+impl<'tcx> TypeFoldable<'tcx> for Adjustment<'tcx> {
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        Self { ty: self.ty.fold_with(folder), kind: self.kind }
+    }
+
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        self.ty.visit_with(visitor)
+    }
 }

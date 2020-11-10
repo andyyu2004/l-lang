@@ -25,8 +25,6 @@ pub enum TypeError<'tcx> {
     Msg(String),
     #[error("cannot dereference type `{0}`")]
     InvalidDereference(Ty<'tcx>),
-    #[error("`main` has type `{0}` but should be of type `fn() -> int`")]
-    IncorrectMainType(Ty<'tcx>),
     #[error("field `{0}` already declared in `{1}`")]
     FieldAlreadyDeclared(Ident, Ident),
     #[error("expected unit variant, found {0}")]

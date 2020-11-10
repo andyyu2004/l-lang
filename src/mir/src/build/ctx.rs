@@ -362,10 +362,6 @@ impl<'tcx> LoweringCtx<'tcx> {
                         fields: vec![],
                         variant_idx: VariantIdx::new(0),
                     },
-                    TyKind::FnDef(def_id, _) => {
-                        assert_eq!(def_id, impl_def);
-                        self.lower_fn(def_id, expr)
-                    }
                     _ => unreachable!(),
                 }
             }

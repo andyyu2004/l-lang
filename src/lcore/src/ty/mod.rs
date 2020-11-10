@@ -91,19 +91,10 @@ impl<'tcx> Type<'tcx> {
         }
     }
 
-    /// reifies a FnDef to a FnPtr
-    pub fn reify_fn_def(&self, tcx: TyCtx<'tcx>) -> Ty<'tcx> {
+    pub fn expect_fn_ptr(&self, tcx: TyCtx<'tcx>) -> FnSig<'tcx> {
         match self.kind {
-            TyKind::FnDef(def_id, substs) => tcx.mk_fn_ptr(tcx.fn_sig(def_id).subst(tcx, substs)),
-            _ => panic!(),
-        }
-    }
-
-    pub fn expect_fn(&self, tcx: TyCtx<'tcx>) -> FnSig<'tcx> {
-        match self.kind {
-            TyKind::FnPtr(fn_ty) => fn_ty,
-            TyKind::FnDef(def_id, substs) => tcx.fn_sig(def_id).subst(tcx, substs),
-            _ => panic!("expected TyKind::Fn, found {}", self),
+            TyKind::FnPtr(fn_sig) => fn_sig,
+            _ => panic!("expected TyKind::FnPtr, found {}", self),
         }
     }
 
@@ -173,9 +164,6 @@ pub enum TyKind<'tcx> {
     Ptr(Ty<'tcx>),
     Param(ParamTy),
     Opaque(DefId, SubstsRef<'tcx>),
-    // Adt and FnDef has a lot of similarities in the way they are treated
-    // both can be generic hence the SubstsRef field
-    FnDef(DefId, SubstsRef<'tcx>),
     Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
 }
 
@@ -356,7 +344,7 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(..) => TyFlags::HAS_INFER,
             TyKind::Param(..) => TyFlags::HAS_PARAM,
-            TyKind::FnDef(_, substs) | TyKind::Adt(_, substs) => substs.ty_flags(),
+            TyKind::Adt(_, substs) => substs.ty_flags(),
             TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Box(ty) => ty.ty_flags(),
             TyKind::Discr
             | TyKind::Float
@@ -394,8 +382,6 @@ impl<'tcx> Display for TyKind<'tcx> {
             TyKind::Never => write!(f, "!"),
             TyKind::Discr => write!(f, "discr"),
             TyKind::Error => write!(f, "err"),
-            TyKind::FnDef(def_id, substs) =>
-                write!(f, "%{}", tls::with_tcx(|tcx| tcx.fn_sig(*def_id).subst(tcx, substs))),
         }
     }
 }

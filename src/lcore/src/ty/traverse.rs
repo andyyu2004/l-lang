@@ -49,9 +49,8 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         F: TypeFolder<'tcx>,
     {
         let kind = match self.kind {
-            TyKind::FnPtr(fn_ty) => TyKind::FnPtr(fn_ty.fold_with(folder)),
-            TyKind::FnDef(def_id, substs) => TyKind::FnDef(def_id, substs.fold_with(folder)),
             TyKind::Box(ty) => TyKind::Box(ty.fold_with(folder)),
+            TyKind::FnPtr(fn_ty) => TyKind::FnPtr(fn_ty.fold_with(folder)),
             TyKind::Ptr(ty) => TyKind::Ptr(ty.fold_with(folder)),
             TyKind::Array(ty, n) => TyKind::Array(ty.fold_with(folder), n),
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
@@ -89,7 +88,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
             TyKind::Ptr(ty) | TyKind::Box(ty) | TyKind::Array(ty, _) => ty.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Opaque(_, substs) => substs.visit_with(visitor),
-            TyKind::FnDef(_, substs) | TyKind::Adt(_, substs) => substs.visit_with(visitor),
+            TyKind::Adt(_, substs) => substs.visit_with(visitor),
             TyKind::Param(..)
             | TyKind::Infer(..)
             | TyKind::Discr
@@ -127,6 +126,25 @@ impl<'tcx> TypeFoldable<'tcx> for &'tcx List<Ty<'tcx>> {
     }
 
     fn inner_visit_with<V: TypeVisitor<'tcx>>(&self, visitor: &mut V) -> bool {
+        self.iter().any(|t| t.visit_with(visitor))
+    }
+}
+
+impl<'tcx, T> TypeFoldable<'tcx> for Vec<T>
+where
+    T: TypeFoldable<'tcx>,
+{
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        self.iter().map(|t| t.fold_with(folder)).collect()
+    }
+
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
         self.iter().any(|t| t.visit_with(visitor))
     }
 }

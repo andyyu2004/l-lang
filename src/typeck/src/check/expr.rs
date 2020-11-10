@@ -237,13 +237,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // otherwise, consider the last arm's body to be the expected type
         let n = arms.len() - 1;
         let expected_ty = self.check_expr(arms[n].body);
+
         arms[..n].iter().for_each(|arm| {
             let arm_ty = self.check_expr(arm.body);
             arm.guard.iter().for_each(|guard| {
                 let guard_ty = self.check_expr(guard);
                 self.equate(guard.span, self.tcx.types.bool, guard_ty);
             });
-            self.equate(arm.span, expected_ty, arm_ty);
+            self.equate(arm.body.span, expected_ty, arm_ty);
         });
 
         expected_ty
@@ -259,7 +260,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let f_ty = self.check_expr(f);
         let params = self.check_expr_list(args);
         let ty = self.tcx.mk_fn_ptr(FnSig { params, ret });
-        self.coerce(expr, f_ty, ty);
+        self.equate(expr.span, f_ty, ty);
         ret
     }
 
@@ -286,7 +287,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             self.check_pat(param.pat, ty);
         }
         let body_ty = self.check_expr(body.expr);
-        self.equate(body.expr.span, self.sig.ret, body_ty);
+        self.equate(body.expr.span, body_ty, self.sig.ret);
         // explicitly overwrite the type of body with the return type of the function in the case
         // where it is inferred to be `!` this is a special case due to return statements in the
         // top level block expr without this overwrite, if the final statement is diverging (i.e.
@@ -299,7 +300,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     fn check_expr_tuple(&mut self, xs: &[ir::Expr<'tcx>]) -> Ty<'tcx> {
-        self.tcx.mk_tup_iter(xs.iter().map(|expr| self.check_expr(expr)))
+        self.tcx.mk_tup(self.check_expr_list(xs))
     }
 
     fn check_block(&mut self, block: &ir::Block<'tcx>) -> Ty<'tcx> {

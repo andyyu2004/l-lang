@@ -29,8 +29,6 @@ pub trait TypeRelation<'tcx>: Sized {
             (_, ty::Never) => Ok(a),
             (ty::Never, _) => Ok(b),
             (ty::FnPtr(f), ty::FnPtr(g)) => Ok(tcx.mk_fn_ptr(self.relate(f, g)?)),
-            (ty::FnDef(defx, substsx), ty::FnDef(defy, substsy)) if defx == defy =>
-                Ok(tcx.mk_fn_def(defx, self.relate(substsx, substsy)?)),
             (ty::Infer(_), _) | (_, ty::Infer(_)) => panic!(),
             _ => TypeResult::Err(TypeError::Mismatch(a, b)),
         }

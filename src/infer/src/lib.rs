@@ -159,20 +159,20 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
-    /// instantiates a type scheme with a given partial substitution
-    /// the rest of the `forall` will be given fresh inference variables
-    pub fn instantiate(
+    pub fn instatiate(
         &self,
+        xpat: &impl ir::ExprOrPat<'tcx>,
         span: Span,
-        ty: Ty<'tcx>,
-        _partial_substs: SubstsRef<'tcx>,
+        def_id: DefId,
     ) -> Ty<'tcx> {
-        let (_def_id, substs) = match ty.kind {
-            TyKind::Adt(adt, substs) => (adt.def_id, substs),
-            TyKind::FnDef(def_id, substs) => (def_id, substs),
+        let ty = self.type_of(def_id);
+        match ty.kind {
+            TyKind::Adt(..) | TyKind::FnPtr(..) => {}
             _ => unreachable!("not instantiable"),
         };
-        let substs = self.mk_substs(substs.iter().map(|_| self.new_infer_var(span)));
+        let generics = self.generics_of(def_id);
+        let substs = self.mk_substs(generics.params.iter().map(|_| self.new_infer_var(span)));
+        self.record_substs(xpat.id(), substs);
         ty.subst(self.tcx, substs)
     }
 

@@ -6,7 +6,7 @@ use lcore::ty::*;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
-        let sig = ty.expect_fn(self.tcx);
+        let sig = ty.expect_fn_ptr(self.tcx);
         self.llvm_fn_ty(sig)
     }
 
@@ -37,7 +37,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Array(_ty, _n) => todo!(),
             TyKind::FnPtr(sig) => self.llvm_fn_ty(sig).ptr_type(AddressSpace::Generic).into(),
-            TyKind::FnDef(..) => self.llvm_ty(ty.reify_fn_def(self.tcx)),
             TyKind::Tuple(tys) => {
                 // tuples are represented as anonymous structs
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();

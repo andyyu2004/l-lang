@@ -11,7 +11,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     let def_node = tcx.defs().get(def_id);
     match def_node {
         ir::DefNode::Item(item) => match item.kind {
-            ir::ItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
+            ir::ItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => self::type_of_adt(tcx, def_id),
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
@@ -20,17 +20,17 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
         ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) =>
             self::type_of_variant(tcx, variant),
         ir::DefNode::ImplItem(item) => match item.kind {
-            ir::ImplItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
+            ir::ImplItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),
         },
         ir::DefNode::ForeignItem(item) => match item.kind {
-            ir::ForeignItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
+            ir::ForeignItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),
         },
         ir::DefNode::Field(f) => tcx.ir_ty_to_ty(f.ty),
         ir::DefNode::TyParam(_) => panic!(),
     }
 }
 
-/// return the type of a function (as a FnSig)
+/// return the type of a function (as a `ty::FnSig`)
 fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
     match tcx.defs().get(def_id) {
         DefNode::Item(item) => match item.kind {
@@ -59,8 +59,6 @@ fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
 
 fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> Ty<'tcx> {
     let adt_ty = tcx.type_of(variant.adt_def_id);
-    // we can ignore these substitutions as they are just the identity substs
-    let (adt, _substs) = adt_ty.expect_adt();
     match variant.kind {
         // these two variant kinds are already of the enum type
         ir::VariantKind::Struct(..) | ir::VariantKind::Unit => adt_ty,
@@ -72,11 +70,7 @@ fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> 
         //
         // None: Option<T>
         // Some: T -> Option<T>
-        ir::VariantKind::Tuple(..) => {
-            let variant = &adt.variants[variant.idx];
-            let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.type_of(f.def_id)));
-            tcx.mk_fn_def(variant.def_id, Substs::id_for_def(tcx, variant.def_id))
-        }
+        ir::VariantKind::Tuple(..) => tcx.mk_fn_ptr(tcx.fn_sig(variant.id.def)),
     }
 }
 

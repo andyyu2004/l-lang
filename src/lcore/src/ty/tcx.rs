@@ -101,8 +101,8 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.intern_ty(ty)
     }
 
-    pub fn mk_fn_def(self, def_id: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::FnDef(def_id, substs))
+    pub fn mk_fn_sig(self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FnSig<'tcx> {
+        FnSig { params, ret }
     }
 
     pub fn mk_fn_ptr(self, fn_sig: FnSig<'tcx>) -> Ty<'tcx> {

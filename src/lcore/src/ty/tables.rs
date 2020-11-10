@@ -1,4 +1,4 @@
-use crate::ty::{Adjustment, SubstsRef, Ty, UpvarId};
+use crate::ty::{Adjustment, SubstsRef, Ty, TypeFoldable, TypeFolder, TypeVisitor, UpvarId};
 use ir::{self, DefId, FieldIdx, LocalId, Res};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry;
@@ -164,5 +164,30 @@ impl<'a, T> TableDefIdValidatorMut<'a, T> {
 
     pub fn clear(&mut self) {
         self.table.clear()
+    }
+}
+
+// this impl is used in writeback to substitute all inference variables with their final type
+impl<'tcx> TypeFoldable<'tcx> for TypeckTables<'tcx> {
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        Self {
+            def_id: self.def_id,
+            adjustments: self.adjustments.iter().map(|(&k, v)| (k, v.fold_with(folder))).collect(),
+            node_types: self.node_types.iter().map(|(&k, v)| (k, v.fold_with(folder))).collect(),
+            node_substs: self.node_substs.iter().map(|(&k, v)| (k, v.fold_with(folder))).collect(),
+            field_indices: self.field_indices.clone(),
+            upvar_captures: self.upvar_captures.clone(),
+            type_relative_resolutions: self.type_relative_resolutions.clone(),
+        }
+    }
+
+    fn inner_visit_with<V>(&self, _visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        unimplemented!()
     }
 }

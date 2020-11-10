@@ -46,7 +46,6 @@ impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
 
         match self_ty.kind {
             ty::Array(..) => todo!(),
-            ty::FnDef(..) => todo!(),
             ty::FnPtr(..) => todo!(),
             ty::Tuple(..) => todo!(),
             ty::Infer(..) => todo!(),
