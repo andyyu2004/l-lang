@@ -1,7 +1,7 @@
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
 use lcore::queries::Queries;
-use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
+use lcore::ty::{HasTyFlags, Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
 use mir::MirVisitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
@@ -110,18 +110,15 @@ impl<'a, 'tcx> Monomorphize<'tcx> for InstanceCollector<'a, 'tcx> {
 impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
     fn visit_operand(&mut self, operand: &Operand<'tcx>) {
         // `Operand::Item` is currently the only way to reference a generic item
-        if let &Operand::Item(def_id, fn_ty) = operand {
-            // note that `fn_ty` is not the fully generic type obtained through collection
-            // it is the type of the function after typechecking and so will only contain
-            // type parameters if it was called in a generic context.
-            // we monomorphize the function type with the "parent" instance's substitutions
-            // and this should provide concrete types for the type parameters
-            let mono_ty = self.monomorphize(fn_ty);
-            debug_assert!(!mono_ty.has_ty_params());
-            let scheme = self.tcx.type_of(def_id);
-            // this `substs` is the substitution applied to the generic function with
-            // def_id `def_id` to obtain its concrete type
-            let substs = self.tcx.unify_scheme(scheme, mono_ty);
+        if let &Operand::Item(def_id, substs) = operand {
+            // substs on the line above are the substitutions
+            // used to obtain the partially instantiated type of the item
+            // we then monomorphize it using its parents substitutions
+            // and obtain a fully concrete substitution
+            // note that this monomorphization step is essentially
+            // just composing substitutions
+            let substs = self.monomorphize(substs);
+            assert!(!substs.has_ty_params());
             let instance = Instance::resolve(self.tcx, def_id, substs);
 
             if !self.mono_instances.borrow().contains(&instance) {

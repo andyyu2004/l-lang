@@ -3,7 +3,7 @@
 use crate::build;
 use ast::{Lit, UnaryOp};
 use index::Idx;
-use ir::{self, CtorKind, DefKind, FieldIdx, Res, VariantIdx};
+use ir::{self, CtorKind, DefId, DefKind, FieldIdx, Res, VariantIdx};
 use itertools::Itertools;
 use lcore::mir::Mir;
 use lcore::ty::*;
@@ -32,13 +32,13 @@ impl<'tcx> LoweringCtx<'tcx> {
 
     /// ir -> tir
     pub fn lower_item_tir(&mut self, item: &ir::Item<'tcx>) -> tir::Item<'tcx> {
-        let tir = item.to_tir(self);
-        tir
+        item.to_tir(self)
     }
 
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
+        eprintln!("{}", tir);
         build::build_fn(self, tir)
     }
 
@@ -293,6 +293,12 @@ impl<'tcx> LoweringCtx<'tcx> {
         self.lower_res(expr, res)
     }
 
+    fn lower_fn(&self, def_id: DefId, expr: &ir::Expr<'tcx>) -> tir::ExprKind<'tcx> {
+        let scheme = self.type_of(def_id);
+        let substs = self.unify_scheme(scheme, self.expr_ty(expr));
+        tir::ExprKind::ItemRef(def_id, substs)
+    }
+
     fn lower_res(&self, expr: &ir::Expr<'tcx>, res: Res) -> tir::ExprKind<'tcx> {
         match res {
             Res::Local(id) => tir::ExprKind::VarRef(id),
@@ -308,7 +314,7 @@ impl<'tcx> LoweringCtx<'tcx> {
                 }
                 // functions and variant constructors
                 DefKind::Fn | DefKind::Ctor(CtorKind::Tuple, ..) | DefKind::AssocFn =>
-                    tir::ExprKind::ItemRef(def_id),
+                    self.lower_fn(def_id, expr),
                 // unit structs
                 DefKind::Struct => {
                     let (adt, substs) = self.node_ty(expr.id).expect_adt();
@@ -339,7 +345,7 @@ impl<'tcx> LoweringCtx<'tcx> {
                         fields: vec![],
                         variant_idx: VariantIdx::new(0),
                     },
-                    TyKind::Fn(..) => tir::ExprKind::ItemRef(impl_def),
+                    TyKind::Fn(..) => self.lower_fn(impl_def, expr),
                     _ => unreachable!(),
                 }
             }

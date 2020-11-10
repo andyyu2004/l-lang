@@ -177,7 +177,6 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
                 }
                 debug_assert_eq!(substs.len(), forall.params.len());
                 let substs = self.intern_substs(&substs);
-                dbg!(substs);
                 ty.subst(self.tcx, substs)
             }
             _ => ty,

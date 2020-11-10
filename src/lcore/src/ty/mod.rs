@@ -291,21 +291,31 @@ impl<'tcx> TyFlag for SubstsRef<'tcx> {
     }
 }
 
-impl<'tcx> Type<'tcx> {
-    pub fn has_flags(&self, flags: TyFlags) -> bool {
-        self.flags.intersects(flags)
-    }
+pub trait HasTyFlags {
+    fn has_flags(&self, flags: TyFlags) -> bool;
 
-    pub fn has_infer_vars(&self) -> bool {
+    fn has_infer_vars(&self) -> bool {
         self.has_flags(TyFlags::HAS_INFER)
     }
 
-    pub fn has_ty_params(&self) -> bool {
+    fn has_ty_params(&self) -> bool {
         self.has_flags(TyFlags::HAS_PARAM)
     }
 
-    pub fn contains_err(&self) -> bool {
+    fn contains_err(&self) -> bool {
         self.has_flags(TyFlags::HAS_ERROR)
+    }
+}
+
+impl<'tcx> HasTyFlags for Type<'tcx> {
+    fn has_flags(&self, flags: TyFlags) -> bool {
+        self.flags.intersects(flags)
+    }
+}
+
+impl<'tcx> HasTyFlags for SubstsRef<'tcx> {
+    fn has_flags(&self, flags: TyFlags) -> bool {
+        self.iter().any(|ty| ty.has_flags(flags))
     }
 }
 

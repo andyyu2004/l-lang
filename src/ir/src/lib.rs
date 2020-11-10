@@ -56,7 +56,7 @@ impl<'ir> ExprOrPat<'ir> for ir::Pattern<'ir> {
 /// top level IR ast
 #[derive(Debug)]
 pub struct Ir<'ir> {
-    /// `DefId` of the entry/main function
+    /// DefId of the entry/main function
     pub entry_id: Option<DefId>,
     pub items: BTreeMap<DefId, ir::Item<'ir>>,
     pub impl_items: BTreeMap<ImplItemId, ir::ImplItem<'ir>>,

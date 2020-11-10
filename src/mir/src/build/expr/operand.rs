@@ -10,7 +10,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // assign each item reference a unique instance id
             // which is later resolved to a particular instance
             // during monomorphization
-            tir::ExprKind::ItemRef(def_id) => block.and(Operand::Item(def_id, expr.ty)),
+            tir::ExprKind::ItemRef(def_id, substs) => block.and(Operand::Item(def_id, substs)),
             tir::ExprKind::Field(..) | tir::ExprKind::Deref(..) | tir::ExprKind::VarRef(..) => {
                 let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Operand::Lvalue(lvalue))

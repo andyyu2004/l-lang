@@ -218,13 +218,13 @@ pub fn walk_lambda<'ir, V: Visitor<'ir>>(
 
 pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
     match &expr.kind {
+        ir::ExprKind::Box(expr) => v.visit_expr(expr),
         ir::ExprKind::Err => {}
         ir::ExprKind::Unary(_, expr) => v.visit_expr(expr),
         ir::ExprKind::Block(block) => v.visit_block(block),
         ir::ExprKind::Path(qpath) => v.visit_qpath(qpath),
         ir::ExprKind::Tuple(xs) => xs.iter().for_each(|x| v.visit_expr(x)),
         ir::ExprKind::Closure(sig, body) => v.visit_lambda(sig, body),
-        ir::ExprKind::Box(expr) => v.visit_expr(expr),
         ir::ExprKind::Call(f, args) => {
             v.visit_expr(f);
             args.iter().for_each(|arg| v.visit_expr(arg));

@@ -222,8 +222,8 @@ impl<'tcx> MirFmt<'tcx> for mir::Operand<'tcx> {
         match self {
             mir::Operand::Const(c) => write!(f, "{}", c),
             mir::Operand::Lvalue(lvalue) => lvalue.mir_fmt(f),
-            mir::Operand::Item(def, _ty) =>
-                write!(f, "{}", ty::tls::with_tcx(|tcx| tcx.defs().ident(*def))),
+            mir::Operand::Item(def, substs) =>
+                write!(f, "{}<{}>", ty::tls::with_tcx(|tcx| tcx.defs().ident(*def)), substs),
         }
     }
 }

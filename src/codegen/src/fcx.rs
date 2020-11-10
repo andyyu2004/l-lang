@@ -8,7 +8,7 @@ use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
 use lcore::mir::{self, BlockId, VarId};
-use lcore::ty::{AdtKind, ConstKind, Instance, InstanceKind, Projection, Subst, TypeFoldable};
+use lcore::ty::*;
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
@@ -100,18 +100,16 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(var) => {
-                return;
                 let lvalue_ref = self.vars[var];
                 assert!(lvalue_ref.ty.is_box());
                 let rc_retain = self.build_rc_retain(lvalue_ref);
                 self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(var) => {
-                return;
-                let lvalue_ref = self.vars[var];
-                assert!(lvalue_ref.ty.is_box());
-                let rc_release = self.build_rc_release(lvalue_ref);
-                self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
+                // let lvalue_ref = self.vars[var];
+                // assert!(lvalue_ref.ty.is_box());
+                // let rc_release = self.build_rc_release(lvalue_ref);
+                // self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
             }
             mir::StmtKind::Nop => {}
         }
@@ -288,12 +286,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let val = self.build_load(var.ptr, "load").into();
                 ValueRef { val, ty: var.ty }
             }
-            mir::Operand::Item(def_id, ty) => {
-                // TODO this is basically copy pasted from the monomorphization step
-                // there is definitely a nicer to go about this
-                let mono_ty = self.monomorphize(ty);
-                let scheme = self.tcx.type_of(def_id);
-                let substs = self.tcx.unify_scheme(scheme, mono_ty);
+            mir::Operand::Item(def_id, substs) => {
+                let substs = self.monomorphize(substs);
                 let instance = Instance::resolve(self.tcx, def_id, substs);
                 let llfn = match instance.kind {
                     InstanceKind::Item => self.instances.borrow()[&instance],

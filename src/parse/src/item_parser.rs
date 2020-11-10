@@ -121,6 +121,7 @@ impl<'a> Parse<'a> for TypeAliasParser {
     type Output = ItemKind;
 
     fn parse(&mut self, _parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let _ = self.type_kw;
         todo!()
     }
 }

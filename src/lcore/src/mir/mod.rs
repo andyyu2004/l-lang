@@ -208,7 +208,7 @@ pub enum Rvalue<'tcx> {
 pub enum Operand<'tcx> {
     Lvalue(Lvalue<'tcx>),
     Const(&'tcx Const<'tcx>),
-    Item(DefId, Ty<'tcx>),
+    Item(DefId, SubstsRef<'tcx>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

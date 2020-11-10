@@ -1,4 +1,5 @@
 use crate::mir::*;
+use crate::ty::Subst;
 
 pub trait MirTy<'tcx> {
     fn ty(&self, tcx: TyCtx<'tcx>, vars: &impl LvalueTy<'tcx>) -> Ty<'tcx>;
@@ -8,8 +9,8 @@ impl<'tcx> MirTy<'tcx> for Operand<'tcx> {
     fn ty(&self, tcx: TyCtx<'tcx>, vars: &impl LvalueTy<'tcx>) -> Ty<'tcx> {
         match self {
             Operand::Lvalue(lvalue) => lvalue.ty(tcx, vars),
+            Operand::Item(def_id, substs) => tcx.type_of(*def_id).subst(tcx, substs),
             Operand::Const(c) => c.ty,
-            Operand::Item(_, ty) => ty,
         }
     }
 }

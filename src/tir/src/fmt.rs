@@ -94,7 +94,6 @@ where
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
-            tir::ExprKind::ItemRef(_def_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
             tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),
             tir::ExprKind::Deref(expr) => indent!(self, "(*{})", expr),
@@ -107,6 +106,8 @@ where
                 indent!(self, "(λ({}) {})", util::join2(body.params.iter(), ","), body),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
             tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
+            tir::ExprKind::ItemRef(_def_id, substs) =>
+                indent!(self, "{}<{}>", expr.span.to_string(), substs),
             tir::ExprKind::Adt { adt, fields, .. } => {
                 indentln!(self, "{} {{", adt.ident)?;
                 self.with_indent(4, |fmt| {

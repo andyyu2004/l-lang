@@ -22,7 +22,10 @@ pub enum ExprKind<'tcx> {
     /// (reference not in the & sense, but just a usage of the variable)
     VarRef(ir::Id),
     /// reference to an item such as a function item or a constant
-    ItemRef(DefId),
+    /// the second field is the substituions used to obtain the "concrete"
+    /// type of the item
+    /// "concrete" because there may still be type parameters in these substs
+    ItemRef(DefId, SubstsRef<'tcx>),
     /// (x, y)
     Tuple(Vec<tir::Expr<'tcx>>),
     /// f(x)
