@@ -1,18 +1,17 @@
 use crate::TyConv;
-use ir::DefId;
+use ir::{DefId, DefNode};
 use lcore::queries::Queries;
 use lcore::ty::*;
 
 pub fn provide(queries: &mut Queries) {
-    *queries = Queries { type_of, ..*queries }
+    *queries = Queries { type_of, fn_sig, ..*queries }
 }
 
 fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     let def_node = tcx.defs().get(def_id);
     match def_node {
         ir::DefNode::Item(item) => match item.kind {
-            ir::ItemKind::Fn(sig, ..) =>
-                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
+            ir::ItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => self::type_of_adt(tcx, def_id),
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
@@ -21,23 +20,48 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
         ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) =>
             self::type_of_variant(tcx, variant),
         ir::DefNode::ImplItem(item) => match item.kind {
-            ir::ImplItemKind::Fn(sig, ..) =>
-                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
+            ir::ImplItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
         },
         ir::DefNode::ForeignItem(item) => match item.kind {
-            ir::ForeignItemKind::Fn(sig, ..) =>
-                tcx.mk_ty_scheme(tcx.generics_of(def_id), tcx.fn_sig_to_ty(sig)),
+            ir::ForeignItemKind::Fn(..) => tcx.mk_fn_def(def_id, Substs::id_for_def(tcx, def_id)),
         },
         ir::DefNode::Field(f) => tcx.ir_ty_to_ty(f.ty),
         ir::DefNode::TyParam(_) => panic!(),
     }
 }
 
+/// return the type of a function (as a FnSig)
+fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
+    match tcx.defs().get(def_id) {
+        DefNode::Item(item) => match item.kind {
+            ir::ItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
+            _ => panic!(),
+        },
+        DefNode::ImplItem(impl_item) => match impl_item.kind {
+            ir::ImplItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
+        },
+        DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
+            ir::ForeignItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
+        },
+        DefNode::Ctor(variant) => {
+            let adt = tcx.type_of(variant.adt_def_id);
+            match variant.kind {
+                ir::VariantKind::Tuple(fields) => FnSig {
+                    params: tcx.mk_substs(fields.iter().map(|f| tcx.type_of(f.id.def))),
+                    ret: adt,
+                },
+                _ => panic!("not a constructor function"),
+            }
+        }
+        _ => panic!(),
+    }
+}
+
 fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> Ty<'tcx> {
-    let ty = tcx.type_of(variant.adt_def_id);
-    let (forall, adt_ty) = ty.expect_scheme();
+    let adt_ty = tcx.type_of(variant.adt_def_id);
+    // we can ignore these substitutions as they are just the identity substs
     let (adt, _substs) = adt_ty.expect_adt();
-    let ctor_ty = match variant.kind {
+    match variant.kind {
         // these two variant kinds are already of the enum type
         ir::VariantKind::Struct(..) | ir::VariantKind::Unit => adt_ty,
         // represent enum tuples as injection functions
@@ -51,16 +75,13 @@ fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> 
         ir::VariantKind::Tuple(..) => {
             let variant = &adt.variants[variant.idx];
             let tys = tcx.mk_substs(variant.fields.iter().map(|f| tcx.type_of(f.def_id)));
-            tcx.mk_fn_ty(tys, adt_ty)
+            tcx.mk_fn_def(variant.def_id, Substs::id_for_def(tcx, variant.def_id))
         }
-    };
-    tcx.mk_ty_scheme(forall, ctor_ty)
+    }
 }
 
 fn type_of_adt<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
     let adt = tcx.adt_ty(def_id);
-    let generics = tcx.generics_of(def_id);
-    let substs = Substs::id_for_generics(tcx, generics);
-    let ty = tcx.mk_adt_ty(adt, substs);
-    tcx.mk_ty_scheme(generics, ty)
+    let substs = Substs::id_for_def(tcx, def_id);
+    tcx.mk_adt_ty(adt, substs)
 }

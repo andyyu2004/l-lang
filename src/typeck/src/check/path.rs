@@ -111,9 +111,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Res::Local(id) => self.local_ty(id).ty,
             Res::Def(def_id, def_kind) => self.check_res_def(span, def_id, def_kind),
             Res::SelfVal { impl_def } => self.type_of(impl_def),
+            Res::SelfTy { .. } => todo!(),
             Res::PrimTy(_) => panic!("found type resolution in value namespace"),
             Res::Err => self.set_ty_err(),
-            Res::SelfTy { .. } => todo!(),
         }
     }
 
@@ -131,7 +131,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::Enum
             | DefKind::Struct
             | DefKind::Ctor(..) => self.instantiate(span, self.type_of(def_id), partial_substs),
-            DefKind::Extern | DefKind::TyParam(_) | DefKind::Impl => unreachable!(),
+            DefKind::TyParam(..) | DefKind::Extern | DefKind::Impl => unreachable!(),
         }
     }
 

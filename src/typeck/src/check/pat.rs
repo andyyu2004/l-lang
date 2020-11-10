@@ -118,7 +118,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         for (pat, ty) in pats.iter().zip(params) {
             self.check_pat(pat, ty);
         }
-        let fn_ty = self.tcx.mk_fn_ty(params, pat_ty);
+        let fn_ty = self.tcx.mk_fn_ptr(FnSig { params, ret: pat_ty });
         // TODO maybe expected and actual should be the other way around?
         self.equate(pat.span, ctor_ty, fn_ty);
         pat_ty

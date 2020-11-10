@@ -69,11 +69,11 @@ impl<'tcx> DefMap<'tcx> {
             DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
                 ir::ForeignItemKind::Fn(_, generics) => generics,
             },
+            // these inherit the generics of their parents
+            DefNode::Ctor(variant) | DefNode::Variant(variant) => self.generics(variant.adt_def_id),
             DefNode::ImplItem(impl_item) => impl_item.generics,
-            DefNode::Field(..)
-            | DefNode::Ctor(..)
-            | DefNode::Variant(..)
-            | DefNode::TyParam(..) => panic!("def node has no generics: {}", node.descr()),
+            DefNode::Field(..) | DefNode::TyParam(..) =>
+                panic!("def node has no generics: {}", node.descr()),
         }
     }
 

@@ -48,6 +48,5 @@ fn variant_ty<'tcx>(tcx: TyCtx<'tcx>, variant: &ir::Variant<'tcx>) -> VariantTy<
         FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis }
     }));
 
-    // the constructor id is defined to be the def_id of the variant itself
-    VariantTy { ctor: id.def, ident, fields, ctor_kind: CtorKind::from(&kind) }
+    VariantTy { def_id: id.def, ident, fields, ctor_kind: CtorKind::from(&kind) }
 }

@@ -1,9 +1,10 @@
 //! conversion of `ir::Ty` to `lcore::ty::Ty`
 
 use ir::{DefKind, QPath, Res};
-use lcore::ty::{Generics, Subst, Ty, TyCtx, TyParam, TypeError};
+use lcore::ty::{FnSig, Generics, Subst, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
+/// refer to module comments
 pub trait TyConv<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx>;
 
@@ -14,10 +15,10 @@ pub trait TyConv<'tcx> {
         match &ir_ty.kind {
             ir::TyKind::Err => tcx.mk_ty_err(),
             ir::TyKind::Box(ty) => tcx.mk_box_ty(self.ir_ty_to_ty(ty)),
-            ir::TyKind::Fn(params, ret) => tcx.mk_fn_ty(
-                tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
-                ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
-            ),
+            ir::TyKind::Fn(params, ret) => tcx.mk_fn_ptr(FnSig {
+                params: tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
+                ret: ret.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit),
+            }),
             ir::TyKind::Path(qpath) => self.qpath_to_ty(qpath),
             ir::TyKind::Tuple(tys) => tcx.mk_tup_iter(tys.iter().map(|ty| self.ir_ty_to_ty(ty))),
             ir::TyKind::Ptr(ty) => tcx.mk_ptr_ty(self.ir_ty_to_ty(ty)),
@@ -43,10 +44,10 @@ pub trait TyConv<'tcx> {
             Res::Def(def_id, def_kind) => match def_kind {
                 DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident(def_id)),
                 DefKind::Struct | DefKind::Enum => {
-                    let ty = tcx.type_of(def_id);
-                    let (forall, adt_ty) = ty.expect_scheme();
+                    let adt_ty = tcx.type_of(def_id);
                     let (adt, _) = adt_ty.expect_adt();
-                    let expected_argc = forall.params.len();
+                    let generic_params = tcx.generics_of(def_id).params;
+                    let expected_argc = generic_params.len();
                     // there should only be generic args in the very last position
                     // the previous segments should be module path, and the segments
                     // afterwards are type relative
@@ -77,7 +78,7 @@ pub trait TyConv<'tcx> {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
                             },
                         None =>
-                            tcx.mk_substs(forall.params.iter().map(|_| self.infer_ty(path.span))),
+                            tcx.mk_substs(generic_params.iter().map(|_| self.infer_ty(path.span))),
                     };
                     adt_ty.subst(tcx, substs)
                 }
@@ -108,13 +109,16 @@ pub trait TyConv<'tcx> {
         self.tcx().alloc(Generics { params: self.tcx().alloc_iter(params) })
     }
 
-    fn fn_sig_to_ty(&self, sig: &ir::FnSig<'tcx>) -> Ty<'tcx> {
+    fn ir_fn_sig_to_ty(&self, sig: &ir::FnSig<'tcx>) -> Ty<'tcx> {
+        self.tcx().mk_fn_ptr(self.lower_fn_sig(sig))
+    }
+
+    fn lower_fn_sig(&self, sig: &ir::FnSig<'tcx>) -> FnSig<'tcx> {
         let tcx = self.tcx();
-        // None return type on fn sig implies unit type
-        let ret_ty = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);
-        let inputs = sig.inputs.iter().map(|ty| self.ir_ty_to_ty(ty));
-        let input_tys = tcx.mk_substs(inputs);
-        tcx.mk_fn_ty(input_tys, ret_ty)
+        let params = tcx.mk_substs(sig.inputs.iter().map(|ty| self.ir_ty_to_ty(ty)));
+        // `None` return type on fn sig implies unit type
+        let ret = sig.output.map(|ty| self.ir_ty_to_ty(ty)).unwrap_or(tcx.types.unit);
+        FnSig { params, ret }
     }
 }
 

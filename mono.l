@@ -1,7 +1,7 @@
 
 fn fst<T, U>((t, u): (T, U)) -> T { t }
 
-fn snd<T, U>((t, u): (T, U)) -> U { fst((u, t)) }
+/* fn snd<T, U>((t, u): (T, U)) -> U { fst((u, t)) } */
 
 struct S<T, U> {
     t: T,
@@ -19,7 +19,7 @@ enum Option<T> {
 
 
 fn main() -> int {
-    /* fst((1,false)); */
-    snd((1, false));
+    fst((1,false));
+    /* snd((1, false)); */
     0
 }

@@ -1,4 +1,4 @@
-use crate::ty::{Adjustment, Ty, UpvarId};
+use crate::ty::{Adjustment, SubstsRef, Ty, UpvarId};
 use ir::{self, DefId, FieldIdx, LocalId, Res};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry;
@@ -10,6 +10,9 @@ pub struct TypeckTables<'tcx> {
     def_id: DefId,
     adjustments: FxHashMap<LocalId, Vec<Adjustment<'tcx>>>,
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
+    /// the substitutions applied to a node to obtain its type
+    /// applied to generic objects (i.e. functions or adts)
+    node_substs: FxHashMap<LocalId, SubstsRef<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
     type_relative_resolutions: FxHashMap<LocalId, Res>,
@@ -21,10 +24,11 @@ impl<'tcx> TypeckTables<'tcx> {
         Self {
             def_id,
             node_types: Default::default(),
+            node_substs: Default::default(),
             adjustments: Default::default(),
             field_indices: Default::default(),
-            type_relative_resolutions: Default::default(),
             upvar_captures: Default::default(),
+            type_relative_resolutions: Default::default(),
         }
     }
 
@@ -63,6 +67,10 @@ impl<'tcx> TypeckTables<'tcx> {
         self.field_indices().get(id).copied()
     }
 
+    pub fn node_substs_opt(&self, id: ir::Id) -> Option<SubstsRef<'tcx>> {
+        self.node_substs().get(id).copied()
+    }
+
     pub fn node_type_opt(&self, id: ir::Id) -> Option<Ty<'tcx>> {
         self.node_types().get(id).copied()
     }
@@ -77,6 +85,14 @@ impl<'tcx> TypeckTables<'tcx> {
 
     pub fn node_types_mut(&mut self) -> TableDefIdValidatorMut<Ty<'tcx>> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.node_types }
+    }
+
+    pub fn node_substs(&self) -> TableDefIdValidator<SubstsRef<'tcx>> {
+        TableDefIdValidator { def_id: self.def_id, table: &self.node_substs }
+    }
+
+    pub fn node_substs_mut(&mut self) -> TableDefIdValidatorMut<SubstsRef<'tcx>> {
+        TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.node_substs }
     }
 
     pub fn field_indices(&self) -> TableDefIdValidator<FieldIdx> {

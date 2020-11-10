@@ -97,16 +97,16 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::Array(ty, n))
     }
 
-    pub fn mk_ty_scheme(self, forall: &'tcx Generics<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Scheme(forall, ty))
-    }
-
     pub fn mk_ty(self, ty: TyKind<'tcx>) -> Ty<'tcx> {
         self.interners.intern_ty(ty)
     }
 
-    pub fn mk_fn_ty(self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Fn(params, ret))
+    pub fn mk_fn_def(self, def_id: DefId, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::FnDef(def_id, substs))
+    }
+
+    pub fn mk_fn_ptr(self, fn_sig: FnSig<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::FnPtr(fn_sig))
     }
 
     pub fn mk_ptr_ty(self, ty: Ty<'tcx>) -> Ty<'tcx> {
@@ -295,7 +295,7 @@ impl<'tcx> CommonTypes<'tcx> {
             discr: mk(TyKind::Discr),
             never: mk(TyKind::Never),
             float: mk(TyKind::Float),
-            main: mk(TyKind::Fn(Substs::empty(), int)),
+            main: mk(TyKind::FnPtr(FnSig { params: Substs::empty(), ret: int })),
             unit: mk(TyKind::Tuple(Substs::empty())),
             int,
         }

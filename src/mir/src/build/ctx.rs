@@ -46,8 +46,18 @@ impl<'tcx> LoweringCtx<'tcx> {
         self.node_ty(expr.id)
     }
 
+    fn expr_substs(&self, expr: &ir::Expr) -> SubstsRef<'tcx> {
+        self.node_substs(expr.id)
+    }
+
+    fn node_substs(&self, id: ir::Id) -> SubstsRef<'tcx> {
+        self.tables
+            .node_substs()
+            .get(id)
+            .unwrap_or_else(|| panic!("no node substs for node `{}`", id))
+    }
+
     fn node_ty(&self, id: ir::Id) -> Ty<'tcx> {
-        debug!("irloweringctx: query typeof {:?}", id);
         self.tables.node_type(id)
     }
 
@@ -294,8 +304,15 @@ impl<'tcx> LoweringCtx<'tcx> {
     }
 
     fn lower_fn(&self, def_id: DefId, expr: &ir::Expr<'tcx>) -> tir::ExprKind<'tcx> {
-        let scheme = self.type_of(def_id);
-        let substs = self.unify_scheme(scheme, self.expr_ty(expr));
+        // let scheme = self.type_of(def_id);
+        // let ty = self.expr_ty(expr);
+        // the substitutions are the one's that will take it from the
+        // general `scheme` type into its current type (i.e. `ty`)
+        // however, substs may contain type parameters if it was called in
+        // a generic context
+        // these will be instantiated during monomorphization
+        // let substs = self.unify_scheme(scheme, ty);
+        let substs = self.expr_substs(expr);
         tir::ExprKind::ItemRef(def_id, substs)
     }
 
@@ -345,7 +362,10 @@ impl<'tcx> LoweringCtx<'tcx> {
                         fields: vec![],
                         variant_idx: VariantIdx::new(0),
                     },
-                    TyKind::Fn(..) => self.lower_fn(impl_def, expr),
+                    TyKind::FnDef(def_id, _) => {
+                        assert_eq!(def_id, impl_def);
+                        self.lower_fn(def_id, expr)
+                    }
                     _ => unreachable!(),
                 }
             }
@@ -432,6 +452,7 @@ impl<'tcx> LoweringCtx<'tcx> {
         let kind = match adjustment.kind {
             AdjustmentKind::Deref => tir::ExprKind::Deref(box expr),
             AdjustmentKind::NeverToAny => todo!(),
+            AdjustmentKind::Cast(_cast) => todo!(),
         };
         tir::Expr { ty: adjustment.ty, span, kind }
     }

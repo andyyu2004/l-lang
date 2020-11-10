@@ -50,10 +50,13 @@ pub type Substs<'tcx> = List<Ty<'tcx>>;
 
 impl<'tcx> Substs<'tcx> {
     /// crates an identity substitution given the generics for some item
-    pub fn id_for_generics(
-        tcx: TyCtx<'tcx>,
-        generics: &'tcx ty::Generics<'tcx>,
-    ) -> SubstsRef<'tcx> {
+    pub fn id_for_def(tcx: TyCtx<'tcx>, def_id: DefId) -> SubstsRef<'tcx> {
+        let generics = tcx.generics_of(def_id);
+        Self::id_for_generics(tcx, generics)
+    }
+
+    /// crates an identity substitution given the generics for some item
+    fn id_for_generics(tcx: TyCtx<'tcx>, generics: &'tcx ty::Generics<'tcx>) -> SubstsRef<'tcx> {
         let params = generics.params.iter().map(|p| tcx.mk_ty_param(p.id.def, p.index, p.ident));
         tcx.mk_substs(params)
     }
@@ -92,12 +95,13 @@ impl<'tcx> TyCtx<'tcx> {
     /// used for finding all the substitutions for monomorphization
     /// we can assume that these two types are unifiable as this should
     /// only be called after successful typechecking
-    pub fn unify_scheme(self, scheme: Ty<'tcx>, t: Ty<'tcx>) -> SubstsRef<'tcx> {
+    pub fn unify_scheme(self, def_id: DefId, t: Ty<'tcx>) -> SubstsRef<'tcx> {
         assert!(!t.has_infer_vars());
-        debug!("unify {} with {}", scheme, t);
-        let (generics, s) = scheme.expect_scheme();
-        let substs = Substs::id_for_generics(self, generics);
-        TypeMatcher::new(self, substs).unify(s, t)
+        todo!();
+        // debug!("unify {} with {}", scheme, t);
+        // let (generics, s) = scheme.unpack();
+        // let substs = Substs::id_for_generics(self, generics);
+        // TypeMatcher::new(self, substs).unify(s, t)
     }
 }
 
@@ -143,10 +147,12 @@ impl<'tcx> TypeMatcher<'tcx> {
             (Array(t, m), Array(u, n)) if m == n => self.unify_inner(t, u),
             (Adt(adtx, substsx), Adt(adty, substsy)) if adtx == adty =>
                 self.match_tuples(substsx, substsy),
+            (FnDef(defx, substsx), FnDef(defy, substsy)) if defx == defy =>
+                self.match_tuples(substsx, substsy),
             (_, ty::Never) | (ty::Never, _) => {}
-            (Fn(a, b), Fn(t, u)) => {
-                self.match_tuples(a, t);
-                self.unify_inner(b, u);
+            (FnPtr(f), FnPtr(g)) => {
+                self.match_tuples(f.params, g.params);
+                self.unify_inner(f.ret, g.ret);
             }
             _ => panic!("cannot match {} {}", s, t),
         }

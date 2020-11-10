@@ -18,7 +18,7 @@ pub trait TypeRelation<'tcx>: Sized {
     fn relate_inner(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>> {
         let tcx = self.tcx();
         match (a.kind, b.kind) {
-            // ignore mutability for now
+            (ty::Box(t), ty::Box(u)) => self.relate(t, u),
             (ty::Param(t), ty::Param(u)) if t.idx == u.idx => Ok(a),
             (ty::Tuple(xs), ty::Tuple(ys)) => self.relate_tuples(xs, ys),
             (ty::Array(t, m), ty::Array(u, n)) if m == n => self.relate(t, u),
@@ -28,14 +28,11 @@ pub trait TypeRelation<'tcx>: Sized {
             }
             (_, ty::Never) => Ok(a),
             (ty::Never, _) => Ok(b),
-            (ty::Box(t), ty::Box(u)) => self.relate(t, u),
-            (ty::Fn(a, b), ty::Fn(t, u)) => {
-                let s = self.relate(a, t)?;
-                let r = self.relate(b, u)?;
-                Ok(tcx.mk_fn_ty(s, r))
-            }
+            (ty::FnPtr(f), ty::FnPtr(g)) => Ok(tcx.mk_fn_ptr(self.relate(f, g)?)),
+            (ty::FnDef(defx, substsx), ty::FnDef(defy, substsy)) if defx == defy =>
+                Ok(tcx.mk_fn_def(defx, self.relate(substsx, substsy)?)),
             (ty::Infer(_), _) | (_, ty::Infer(_)) => panic!(),
-            _ => Err(TypeError::Mismatch(a, b)),
+            _ => TypeResult::Err(TypeError::Mismatch(a, b)),
         }
     }
 
@@ -61,9 +58,16 @@ impl<'tcx> Relate<'tcx> for Ty<'tcx> {
 impl<'tcx> Relate<'tcx> for SubstsRef<'tcx> {
     fn relate(relation: &mut impl TypeRelation<'tcx>, a: Self, b: Self) -> TypeResult<'tcx, Self> {
         if a.len() != b.len() {
-            return Err(TypeError::TupleSizeMismatch(a.len(), b.len()));
+            return TypeResult::Err(TypeError::TupleSizeMismatch(a.len(), b.len()));
         }
         let tys: Vec<_> = a.iter().zip(b).map(|(t, u)| relation.relate(t, u)).try_collect()?;
         Ok(relation.tcx().mk_substs(tys))
+    }
+}
+impl<'tcx> Relate<'tcx> for FnSig<'tcx> {
+    fn relate(relation: &mut impl TypeRelation<'tcx>, f: Self, g: Self) -> TypeResult<'tcx, Self> {
+        let params = relation.relate(f.params, g.params)?;
+        let ret = relation.relate(f.ret, g.ret)?;
+        Ok(Self { params, ret })
     }
 }

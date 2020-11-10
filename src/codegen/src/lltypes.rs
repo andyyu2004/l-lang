@@ -6,13 +6,14 @@ use lcore::ty::*;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
-        let (params, ret) = ty.expect_fn();
-        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+        let sig = ty.expect_fn(self.tcx);
+        self.llvm_fn_ty(sig)
     }
 
     // use a separate function for fn types as `FunctionType<'tcx>` is not considered a basic type
-    pub fn llvm_fn_ty(&self, params: SubstsRef<'tcx>, ret: Ty<'tcx>) -> FunctionType<'tcx> {
-        self.llvm_ty(ret).fn_type(&params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+    pub fn llvm_fn_ty(&self, sig: FnSig<'tcx>) -> FunctionType<'tcx> {
+        self.llvm_ty(sig.ret)
+            .fn_type(&sig.params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
     /// wraps a `Ty` with refcount info (place the refcount in the second field instead of the first
@@ -35,8 +36,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Char => todo!(),
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Array(_ty, _n) => todo!(),
-            TyKind::Fn(params, ret) =>
-                self.llvm_fn_ty(params, ret).ptr_type(AddressSpace::Generic).into(),
+            TyKind::FnPtr(sig) => self.llvm_fn_ty(sig).ptr_type(AddressSpace::Generic).into(),
+            TyKind::FnDef(..) => self.llvm_ty(ty.reify_fn_def(self.tcx)),
             TyKind::Tuple(tys) => {
                 // tuples are represented as anonymous structs
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
@@ -65,7 +66,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                             self.variant_size(s, substs).cmp(&self.variant_size(t, substs))
                         });
                         let llvariant =
-                            self.variant_ty_to_llvm_ty(ty, largest_variant.unwrap(), substs).into();
+                            self.variant_ty_to_llvm_ty(largest_variant.unwrap(), substs).into();
                         assert!(adt.variants.len() < 256, "too many variants");
                         opaque_ty.set_body(&[self.types.discr.into(), llvariant], false);
                     }
@@ -77,11 +78,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Box(ty) | TyKind::Ptr(ty) =>
                 self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
             TyKind::Opaque(..) => todo!(),
-            TyKind::Param(..)
-            | TyKind::Scheme(..)
-            | TyKind::Infer(..)
-            | TyKind::Never
-            | TyKind::Error => unreachable!("{}", ty),
+            TyKind::Param(..) | TyKind::Infer(..) | TyKind::Never | TyKind::Error =>
+                unreachable!("{}", ty),
         };
         self.lltypes.borrow_mut().insert(ty, llty);
         llty
@@ -89,7 +87,6 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn variant_ty_to_llvm_ty(
         &self,
-        adt_ty: Ty<'tcx>,
         variant: &VariantTy<'tcx>,
         substs: SubstsRef<'tcx>,
     ) -> StructType<'tcx> {

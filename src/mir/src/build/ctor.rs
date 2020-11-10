@@ -11,8 +11,7 @@ pub fn build_variant_ctor<'tcx>(
     tcx: TyCtx<'tcx>,
     variant: &'tcx ir::Variant<'tcx>,
 ) -> &'tcx Mir<'tcx> {
-    let scheme = tcx.type_of(variant.adt_def_id);
-    let (_forall, ty) = scheme.expect_scheme();
+    let ty = tcx.type_of(variant.adt_def_id);
     let (adt_ty, _) = ty.expect_adt();
     let idx = variant.idx;
     let variant_ty = &adt_ty.variants[idx];

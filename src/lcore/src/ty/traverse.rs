@@ -1,4 +1,4 @@
-use crate::ty::{List, Ty, TyCtx, TyKind};
+use crate::ty::{FnSig, List, Ty, TyCtx, TyKind};
 use crate::ArenaAllocatable;
 use smallvec::SmallVec;
 
@@ -27,18 +27,34 @@ pub trait TypeFoldable<'tcx>: Sized {
     }
 }
 
+impl<'tcx> TypeFoldable<'tcx> for FnSig<'tcx> {
+    fn inner_fold_with<F>(&self, folder: &mut F) -> Self
+    where
+        F: TypeFolder<'tcx>,
+    {
+        Self { params: self.params.fold_with(folder), ret: self.ret.fold_with(folder) }
+    }
+
+    fn inner_visit_with<V>(&self, visitor: &mut V) -> bool
+    where
+        V: TypeVisitor<'tcx>,
+    {
+        self.params.visit_with(visitor) || self.ret.visit_with(visitor)
+    }
+}
+
 impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     fn inner_fold_with<F>(&self, folder: &mut F) -> Self
     where
         F: TypeFolder<'tcx>,
     {
         let kind = match self.kind {
-            TyKind::Fn(inputs, ret) => TyKind::Fn(inputs.fold_with(folder), ret.fold_with(folder)),
+            TyKind::FnPtr(fn_ty) => TyKind::FnPtr(fn_ty.fold_with(folder)),
+            TyKind::FnDef(def_id, substs) => TyKind::FnDef(def_id, substs.fold_with(folder)),
             TyKind::Box(ty) => TyKind::Box(ty.fold_with(folder)),
             TyKind::Ptr(ty) => TyKind::Ptr(ty.fold_with(folder)),
             TyKind::Array(ty, n) => TyKind::Array(ty.fold_with(folder), n),
             TyKind::Tuple(tys) => TyKind::Tuple(tys.fold_with(folder)),
-            TyKind::Scheme(forall, ty) => TyKind::Scheme(forall, ty.fold_with(folder)),
             TyKind::Adt(adt, substs) => TyKind::Adt(adt, substs.fold_with(folder)),
             TyKind::Opaque(def, substs) => TyKind::Opaque(def, substs.fold_with(folder)),
             TyKind::Param(_)
@@ -69,14 +85,13 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
         V: TypeVisitor<'tcx>,
     {
         match self.kind {
-            TyKind::Fn(inputs, ret) => inputs.visit_with(visitor) || ret.visit_with(visitor),
-            TyKind::Scheme(_, ty) | TyKind::Ptr(ty) | TyKind::Box(ty) | TyKind::Array(ty, _) =>
-                ty.visit_with(visitor),
+            TyKind::FnPtr(sig) => sig.visit_with(visitor),
+            TyKind::Ptr(ty) | TyKind::Box(ty) | TyKind::Array(ty, _) => ty.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Opaque(_, substs) => substs.visit_with(visitor),
-            TyKind::Infer(_) => false,
-            TyKind::Adt(_, substs) => substs.visit_with(visitor),
+            TyKind::FnDef(_, substs) | TyKind::Adt(_, substs) => substs.visit_with(visitor),
             TyKind::Param(..)
+            | TyKind::Infer(..)
             | TyKind::Discr
             | TyKind::Never
             | TyKind::Error

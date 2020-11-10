@@ -117,7 +117,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ret_expr: Option<&ir::Expr<'tcx>>,
     ) -> Ty<'tcx> {
         let ty = ret_expr.map(|expr| self.check_expr(expr)).unwrap_or(self.tcx.types.unit);
-        self.equate(expr.span, self.ret_ty, ty);
+        self.equate(expr.span, self.sig.ret, ty);
         self.tcx.types.never
     }
 
@@ -255,12 +255,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         f: &ir::Expr<'tcx>,
         args: &[ir::Expr<'tcx>],
     ) -> Ty<'tcx> {
-        let ret_ty = self.new_infer_var(expr.span);
+        let ret = self.new_infer_var(expr.span);
         let f_ty = self.check_expr(f);
-        let arg_tys = self.check_expr_list(args);
-        let ty = self.tcx.mk_fn_ty(arg_tys, ret_ty);
-        self.equate(expr.span, f_ty, ty);
-        ret_ty
+        let params = self.check_expr_list(args);
+        let ty = self.tcx.mk_fn_ptr(FnSig { params, ret });
+        self.coerce(expr, f_ty, ty);
+        ret
     }
 
     fn check_closure_expr(
@@ -271,26 +271,27 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         // the resolver resolved the closure name to the id of the entire closure expr
         // so we define an immutable local variable for it with the closure's type
-        let clsr_ty = self.fn_sig_to_ty(sig);
+        let sig = self.lower_fn_sig(sig);
+        let ty = self.mk_fn_ptr(sig);
         self.record_upvars(closure, body);
-        self.def_local(closure.id, Mutability::Imm, clsr_ty);
-        let _fcx = self.check_fn(clsr_ty, body);
-        clsr_ty
+        self.def_local(closure.id, Mutability::Imm, ty);
+        let _fcx = self.check_fn(sig, body);
+        ty
     }
 
     /// inputs are the types from the type signature (or inference variables) adds the parameters
     /// to locals and typechecks the expr of the body
     pub fn check_body(&mut self, body: &ir::Body<'tcx>) {
-        for (param, ty) in body.params.iter().zip(self.param_tys) {
+        for (param, ty) in body.params.iter().zip(self.sig.params) {
             self.check_pat(param.pat, ty);
         }
         let body_ty = self.check_expr(body.expr);
-        self.equate(body.expr.span, self.ret_ty, body_ty);
+        self.equate(body.expr.span, self.sig.ret, body_ty);
         // explicitly overwrite the type of body with the return type of the function in the case
         // where it is inferred to be `!` this is a special case due to return statements in the
         // top level block expr without this overwrite, if the final statement is diverging (i.e.
         // return) then the body function will be recorded to have type `!` which is not correct
-        self.record_ty(body.id(), self.ret_ty);
+        self.record_ty(body.id(), self.sig.ret);
     }
 
     fn check_expr_list(&mut self, xs: &[ir::Expr<'tcx>]) -> SubstsRef<'tcx> {

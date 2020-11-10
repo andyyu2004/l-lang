@@ -74,7 +74,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
             return;
         }
 
-        if let Err(err) = self.at(span).equate(expected, ty) {
+        if let TypeResult::Err(err) = self.at(span).equate(expected, ty) {
             self.emit_ty_err(span, err);
         }
     }
@@ -165,25 +165,18 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         &self,
         span: Span,
         ty: Ty<'tcx>,
-        partial_substs: SubstsRef<'tcx>,
+        _partial_substs: SubstsRef<'tcx>,
     ) -> Ty<'tcx> {
-        match &ty.kind {
-            TyKind::Scheme(forall, ty) => {
-                let mut substs = partial_substs.to_vec();
-                // for the remaining params not covered by the partial substitution
-                // generate fresh inference variables
-                for _ in 0..forall.params.len() - substs.len() {
-                    substs.push(self.new_infer_var(span));
-                }
-                debug_assert_eq!(substs.len(), forall.params.len());
-                let substs = self.intern_substs(&substs);
-                ty.subst(self.tcx, substs)
-            }
-            _ => ty,
-        }
+        let (_def_id, substs) = match ty.kind {
+            TyKind::Adt(adt, substs) => (adt.def_id, substs),
+            TyKind::FnDef(def_id, substs) => (def_id, substs),
+            _ => unreachable!("not instantiable"),
+        };
+        let substs = self.mk_substs(substs.iter().map(|_| self.new_infer_var(span)));
+        ty.subst(self.tcx, substs)
     }
 
-    /// create new type inference variable
+    /// create a fresh type inference variable
     pub fn new_infer_var(&self, span: Span) -> Ty<'tcx> {
         let vid = self.inner.borrow_mut().type_variables().new_ty_var(span);
         self.tcx.mk_ty(TyKind::Infer(InferTy::TyVar(vid)))
@@ -200,6 +193,11 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         debug!("record ty {:?} : {}", id, ty);
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
+    }
+
+    pub fn record_substs(&self, id: ir::Id, substs: SubstsRef<'tcx>) {
+        debug!("record substs {:?} : {}", id, substs);
+        self.tables.borrow_mut().node_substs_mut().insert(id, substs);
     }
 
     pub fn record_type_relative_res(&self, id: ir::Id, res: Res) {

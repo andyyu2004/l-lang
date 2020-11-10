@@ -87,6 +87,7 @@ define_query_context! {
         // typecheck
         ([typeck] [DefId] [LResult<&'tcx TypeckTables<'tcx>>])
         ([type_of] [DefId] [Ty<'tcx>])
+        ([fn_sig] [DefId] [FnSig<'tcx>])
         ([adt_ty] [DefId] [&'tcx AdtTy<'tcx>])
         ([generics_of] [DefId] [&'tcx Generics<'tcx>])
         ([validate_item_type] [DefId] [()])

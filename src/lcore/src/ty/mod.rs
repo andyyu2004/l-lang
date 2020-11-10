@@ -8,7 +8,7 @@ mod tcx;
 mod traverse;
 mod type_error;
 
-pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
+pub use adjustments::{Adjuster, Adjustment, AdjustmentKind, PointerCast};
 pub use instance::{Instance, InstanceKind, Instances};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
@@ -84,13 +84,6 @@ impl<'tcx> Type<'tcx> {
         self.visit_with(&mut TyVidVisitor { tyvid })
     }
 
-    pub fn expect_scheme(&self) -> (&'tcx Generics<'tcx>, Ty<'tcx>) {
-        match self.kind {
-            TyKind::Scheme(forall, ty) => (forall, ty),
-            _ => panic!("expected TyKind::Scheme, found {}", self),
-        }
-    }
-
     pub fn expect_tuple(&self) -> SubstsRef<'tcx> {
         match self.kind {
             TyKind::Tuple(tys) => tys,
@@ -98,9 +91,18 @@ impl<'tcx> Type<'tcx> {
         }
     }
 
-    pub fn expect_fn(&self) -> (SubstsRef<'tcx>, Ty<'tcx>) {
+    /// reifies a FnDef to a FnPtr
+    pub fn reify_fn_def(&self, tcx: TyCtx<'tcx>) -> Ty<'tcx> {
         match self.kind {
-            TyKind::Fn(params, ret) => (params, ret),
+            TyKind::FnDef(def_id, substs) => tcx.mk_fn_ptr(tcx.fn_sig(def_id).subst(tcx, substs)),
+            _ => panic!(),
+        }
+    }
+
+    pub fn expect_fn(&self, tcx: TyCtx<'tcx>) -> FnSig<'tcx> {
+        match self.kind {
+            TyKind::FnPtr(fn_ty) => fn_ty,
+            TyKind::FnDef(def_id, substs) => tcx.fn_sig(def_id).subst(tcx, substs),
             _ => panic!("expected TyKind::Fn, found {}", self),
         }
     }
@@ -141,7 +143,6 @@ impl<'tcx> PartialEq for Type<'tcx> {
     }
 }
 
-// #[derive(Debug)]
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 pub enum TyKind<'tcx> {
     /// bool
@@ -156,21 +157,39 @@ pub enum TyKind<'tcx> {
     Int,
     Error,
     Never,
-    /// [<ty>; n]
-    Array(Ty<'tcx>, usize),
-    /// fn(<ty>...) -> <ty>
-    Fn(SubstsRef<'tcx>, Ty<'tcx>),
-    Tuple(SubstsRef<'tcx>),
-    Infer(InferTy),
-    Ptr(Ty<'tcx>),
-    Param(ParamTy),
-    Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
-    Scheme(&'tcx Generics<'tcx>, Ty<'tcx>),
     /// box pointer to a type
     /// created by box expressions
     /// x: T => box x: &T
     Box(Ty<'tcx>),
+    /// fn(<ty>...) -> <ty>
+    FnPtr(FnSig<'tcx>),
+    /// [<ty>; n]
+    Array(Ty<'tcx>, usize),
+    /// (T, U, V, ...)
+    /// the `SubstsRef` is to be treated as a list of types
+    /// not as a substitution itself
+    Tuple(SubstsRef<'tcx>),
+    Infer(InferTy),
+    Ptr(Ty<'tcx>),
+    Param(ParamTy),
     Opaque(DefId, SubstsRef<'tcx>),
+    // Adt and FnDef has a lot of similarities in the way they are treated
+    // both can be generic hence the SubstsRef field
+    FnDef(DefId, SubstsRef<'tcx>),
+    Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
+}
+
+/// this is the type-level representation of the type of a function
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+pub struct FnSig<'tcx> {
+    pub params: SubstsRef<'tcx>,
+    pub ret: Ty<'tcx>,
+}
+
+impl<'tcx> Display for FnSig<'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "fn({})->{}", util::join2(self.params.into_iter(), ","), self.ret)
+    }
 }
 
 #[derive(Eq, Hash, PartialEq, Debug)]
@@ -233,7 +252,7 @@ impl<'tcx> AdtTy<'tcx> {
     }
 
     pub fn variant_idx_with_ctor(&self, ctor_id: DefId) -> VariantIdx {
-        self.variants.iter_enumerated().find(|(_, v)| v.ctor == ctor_id).unwrap().0
+        self.variants.iter_enumerated().find(|(_, v)| v.def_id == ctor_id).unwrap().0
     }
 
     // find the variant who has the constructor that matches the `ctor_id`
@@ -245,8 +264,8 @@ impl<'tcx> AdtTy<'tcx> {
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct VariantTy<'tcx> {
+    pub def_id: DefId,
     pub ident: Ident,
-    pub ctor: DefId,
     pub ctor_kind: CtorKind,
     pub fields: &'tcx [FieldTy],
 }
@@ -290,6 +309,12 @@ impl<'tcx> TyFlag for Type<'tcx> {
     }
 }
 
+impl<'tcx> TyFlag for FnSig<'tcx> {
+    fn ty_flags(&self) -> TyFlags {
+        self.params.ty_flags() | self.ret.ty_flags()
+    }
+}
+
 impl<'tcx> TyFlag for SubstsRef<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         self.iter().fold(TyFlags::empty(), |acc, ty| acc | ty.ty_flags())
@@ -327,20 +352,19 @@ impl<'tcx> HasTyFlags for SubstsRef<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::Fn(params, ret) => params.ty_flags() | ret.ty_flags(),
+            TyKind::FnPtr(sig) => sig.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(..) => TyFlags::HAS_INFER,
             TyKind::Param(..) => TyFlags::HAS_PARAM,
-            TyKind::Error => TyFlags::HAS_ERROR,
-            TyKind::Adt(_, substs) => substs.ty_flags(),
-            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Scheme(_, ty) | TyKind::Box(ty) =>
-                ty.ty_flags(),
+            TyKind::FnDef(_, substs) | TyKind::Adt(_, substs) => substs.ty_flags(),
+            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Box(ty) => ty.ty_flags(),
             TyKind::Discr
             | TyKind::Float
             | TyKind::Never
             | TyKind::Bool
             | TyKind::Char
             | TyKind::Int => TyFlags::empty(),
+            TyKind::Error => TyFlags::HAS_ERROR,
         }
     }
 }
@@ -356,22 +380,22 @@ impl<'tcx> Display for TyKind<'tcx> {
         match self {
             TyKind::Box(ty) => write!(f, "&{}", ty),
             TyKind::Ptr(ty) => write!(f, "*{}", ty),
-            TyKind::Fn(params, ret) =>
-                write!(f, "fn({})->{}", util::join2(params.into_iter(), ","), ret),
+            TyKind::FnPtr(sig) => write!(f, "{}", sig),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
             TyKind::Array(ty, n) => write!(f, "[{};{}]", ty, n),
             TyKind::Tuple(tys) => write!(f, "({})", tys),
             TyKind::Param(param_ty) => write!(f, "{}", param_ty),
-            TyKind::Scheme(forall, ty) => write!(f, "∀{}.{}", forall, ty),
             TyKind::Adt(adt, substs) => write!(f, "{}<{}>", adt.ident, substs),
             TyKind::Opaque(_, _) => write!(f, "opaque"),
             TyKind::Bool => write!(f, "bool"),
             TyKind::Char => write!(f, "char"),
             TyKind::Int => write!(f, "int"),
             TyKind::Float => write!(f, "float"),
-            TyKind::Error => write!(f, "err"),
             TyKind::Never => write!(f, "!"),
             TyKind::Discr => write!(f, "discr"),
+            TyKind::Error => write!(f, "err"),
+            TyKind::FnDef(def_id, substs) =>
+                write!(f, "%{}", tls::with_tcx(|tcx| tcx.fn_sig(*def_id).subst(tcx, substs))),
         }
     }
 }

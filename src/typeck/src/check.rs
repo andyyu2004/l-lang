@@ -1,3 +1,4 @@
+mod coerce;
 mod expr;
 mod item;
 mod methods;
@@ -35,16 +36,14 @@ fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx TypeckTables<'
 }
 
 pub struct FnCtx<'a, 'tcx> {
+    crate sig: FnSig<'tcx>,
     inherited: &'a InheritedCtx<'a, 'tcx>,
     unsafe_ctx: bool,
-    crate param_tys: SubstsRef<'tcx>,
-    crate ret_ty: Ty<'tcx>,
 }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    pub fn new(inherited: &'a InheritedCtx<'a, 'tcx>, fn_ty: Ty<'tcx>) -> Self {
-        let (param_tys, ret_ty) = fn_ty.expect_fn();
-        Self { inherited, param_tys, ret_ty, unsafe_ctx: false }
+    pub fn new(inherited: &'a InheritedCtx<'a, 'tcx>, sig: FnSig<'tcx>) -> Self {
+        Self { inherited, sig, unsafe_ctx: false }
     }
 
     crate fn in_unsafe_ctx(&self) -> bool {
@@ -133,15 +132,14 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
 
     /// top level entry point for typechecking a function item
     pub fn check_fn_item(&'a self, def_id: DefId, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
-        let fn_ty = self.tcx.type_of(def_id);
+        let sig = self.tcx.fn_sig(def_id);
         // don't instantiate anything and typeck the body using the param tys
-        let (_forall, ty) = fn_ty.expect_scheme();
-        self.check_fn(ty, body)
+        self.check_fn(sig, body)
     }
 
     // common logic between closures and function items
-    pub fn check_fn(&'a self, fn_ty: Ty<'tcx>, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
-        let mut fcx = FnCtx::new(self, fn_ty);
+    pub fn check_fn(&'a self, sig: FnSig<'tcx>, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
+        let mut fcx = FnCtx::new(self, sig);
         fcx.check_body(body);
         fcx
     }

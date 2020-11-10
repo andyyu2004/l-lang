@@ -125,7 +125,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 match adt.kind {
                     // basically identical code to tuple but has potential substs to deal with
                     AdtKind::Struct => {
-                        assert_eq!(variant_idx.index(), 0);
+                        debug_assert_eq!(variant_idx.index(), 0);
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
                             let field_ptr = self
@@ -135,8 +135,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         }
                     }
                     AdtKind::Enum => {
-                        let (ty, substs) = (lvalue_ref.ty, self.instance.substs);
-                        assert!(!ty.has_ty_params());
+                        let (adt_ty, substs) = (lvalue_ref.ty, self.instance.substs);
+                        debug_assert!(!adt_ty.has_ty_params());
                         let idx = variant_idx.index() as u64;
                         let discr_ptr =
                             self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
@@ -144,7 +144,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         let content_ptr =
                             self.build_struct_gep(lvalue_ref.ptr, 1, "enum_gep").unwrap();
                         let variant_ty =
-                            self.variant_ty_to_llvm_ty(ty, &adt.variants[*variant_idx], substs);
+                            self.variant_ty_to_llvm_ty(&adt.variants[*variant_idx], substs);
                         let content_ptr = self.build_pointer_cast(
                             content_ptr,
                             variant_ty.ptr_type(AddressSpace::Generic),

@@ -16,10 +16,17 @@ impl<'tcx> Adjustment<'tcx> {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PointerCast {
+    /// from fndef to fnptr
+    ReifyFn,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum AdjustmentKind {
     Deref,
     NeverToAny,
+    Cast(PointerCast),
 }
 
 pub trait Adjuster<'tcx> {
