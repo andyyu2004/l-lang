@@ -73,33 +73,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let res = self.resolve_type_relative_path(xpat.span(), self_ty, segment);
         self.record_type_relative_res(xpat.id(), res);
         let (def_id, def_kind) = res.expect_def();
-        // these substitutions are used to partially initialize
-        // the type scheme of the resolved type
-        // consider the following example
-        // struct S<T> { t: T }
-        // impl<T> S<T> {
-        //     fn new(t: T) -> Self {
-        //         Self { t }
-        //     }
-        // }
-        // fn main() { S::new(5) }
-        //
-        // S::new will resolve to a type relative path on struct S
-        // in tyconv, we will implicitly create a new inference variable on S,
-        // S::<?0>::new
-        //
-        // S::new will resolve to the appropriate function
-        // however, if we instantiate S::new with entirely fresh inference variables like normal,
-        // it loses its connection to ?0 and we will have a false `type annotations required`
-        // error (on ?0 and S::new)
-        //
-        // the current solution to this is to pass a "partial substitution" so we
-        // instantiate the type scheme of `S::new` with ?0 instead of some new variable ?1
-        let substs = match self_ty.kind {
-            Adt(_, substs) => substs,
-            _ => todo!(),
-        };
-        self.check_res_def_with_partial_substs(xpat, qpath.span(), def_id, def_kind, substs)
+        self.check_res_def_with_partial_substs(xpat, qpath.span(), def_id, def_kind)
     }
 
     crate fn check_expr_path(
@@ -127,10 +101,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         span: Span,
         def_id: DefId,
         def_kind: DefKind,
-        _partial_substs: SubstsRef<'tcx>,
     ) -> Ty<'tcx> {
         match def_kind {
-            // instantiate ty params
+            // instantiate type parameters with a fresh substitution
             DefKind::Fn
             | DefKind::AssocFn
             | DefKind::Enum
@@ -147,6 +120,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         def_id: DefId,
         def_kind: DefKind,
     ) -> Ty<'tcx> {
-        self.check_res_def_with_partial_substs(xpat, span, def_id, def_kind, Substs::empty())
+        self.check_res_def_with_partial_substs(xpat, span, def_id, def_kind)
     }
 }

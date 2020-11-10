@@ -304,14 +304,6 @@ impl<'tcx> LoweringCtx<'tcx> {
     }
 
     fn lower_fn(&self, def_id: DefId, expr: &ir::Expr<'tcx>) -> tir::ExprKind<'tcx> {
-        // let scheme = self.type_of(def_id);
-        // let ty = self.expr_ty(expr);
-        // the substitutions are the one's that will take it from the
-        // general `scheme` type into its current type (i.e. `ty`)
-        // however, substs may contain type parameters if it was called in
-        // a generic context
-        // these will be instantiated during monomorphization
-        // let substs = self.unify_scheme(scheme, ty);
         let substs = self.expr_substs(expr);
         tir::ExprKind::ItemRef(def_id, substs)
     }

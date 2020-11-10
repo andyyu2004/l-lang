@@ -1,7 +1,7 @@
 //! conversion of `ir::Ty` to `lcore::ty::Ty`
 
 use ir::{DefKind, QPath, Res};
-use lcore::ty::{FnSig, Generics, Subst, Ty, TyCtx, TyParam, TypeError};
+use lcore::ty::{FnSig, Generics, Subst, Substs, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
 /// refer to module comments
@@ -48,14 +48,14 @@ pub trait TyConv<'tcx> {
                     let (adt, _) = adt_ty.expect_adt();
                     let generic_params = tcx.generics_of(def_id).params;
                     let expected_argc = generic_params.len();
-                    // there should only be generic args in the very last position
-                    // the previous segments should be module path, and the segments
-                    // afterwards are type relative
+                    // there should only be generic args in the very last position the preceding
+                    // segments should be a module path, and the segments afterwards are type
+                    // relative
                     let (last, segs) = path.segments.split_last().unwrap();
                     self.ensure_no_generic_args(segs);
                     let generic_args = last.args;
-                    // replace each generic parameter with either an inference variable
-                    // or the specified type
+                    // replace each generic parameter with either the specified type argument
+                    // or id generics
                     let substs = match generic_args {
                         Some(args) =>
                             if args.args.len() != expected_argc {
@@ -77,8 +77,7 @@ pub trait TyConv<'tcx> {
                             } else {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
                             },
-                        None =>
-                            tcx.mk_substs(generic_params.iter().map(|_| self.infer_ty(path.span))),
+                        None => Substs::id_for_def(tcx, def_id),
                     };
                     adt_ty.subst(tcx, substs)
                 }

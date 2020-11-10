@@ -10,11 +10,12 @@ pub struct TypeckTables<'tcx> {
     def_id: DefId,
     adjustments: FxHashMap<LocalId, Vec<Adjustment<'tcx>>>,
     node_types: FxHashMap<LocalId, Ty<'tcx>>,
-    /// the substitutions applied to a node to obtain its type
-    /// applied to generic objects (i.e. functions or adts)
+    /// the substitutions applied to a node to obtain its type;
+    /// this applies to generic objects (i.e. functions or adts)
     node_substs: FxHashMap<LocalId, SubstsRef<'tcx>>,
     /// the index within a struct a field is assigned
     field_indices: FxHashMap<LocalId, FieldIdx>,
+    /// the resolution of a type relative path
     type_relative_resolutions: FxHashMap<LocalId, Res>,
     upvar_captures: FxHashMap<ir::Id, FxHashSet<UpvarId>>,
 }

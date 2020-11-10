@@ -159,6 +159,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
+    /// instantiates the item with def_id, and records the substitutions
     pub fn instatiate(
         &self,
         xpat: &impl ir::ExprOrPat<'tcx>,
