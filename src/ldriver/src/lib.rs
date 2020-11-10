@@ -14,13 +14,13 @@ extern crate log;
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
+use codegen::CodegenCtx;
 use error::{LError, LResult};
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
 use inkwell::OptimizationLevel;
 use lcore::{GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
-use llvm::CodegenCtx;
 use log::LevelFilter;
 use mir::dump_mir;
 use parse::Parser;
@@ -108,12 +108,12 @@ impl<'tcx> Driver<'tcx> {
         SPAN_GLOBALS
             .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(path))));
         Self {
+            llvm_ctx: LLVMCtx::create(),
             resolver_arenas: Default::default(),
             core_arenas: Default::default(),
             ir_arena: Default::default(),
             global_ctx: Default::default(),
             sess: Default::default(),
-            llvm_ctx: LLVMCtx::create(),
         }
     }
 
@@ -150,9 +150,9 @@ impl<'tcx> Driver<'tcx> {
         self.with_tcx(|tcx| dump_mir(tcx, &mut std::io::stderr()))
     }
 
-    // pub fn check(&'tcx self) -> LResult<()> {
-    //     self.with_tcx(|tcx| tcx.check())
-    // }
+    pub fn check(&'tcx self) -> LResult<()> {
+        self.with_tcx(|tcx| tcx.analyze(()))
+    }
 
     pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
         self.with_tcx(|tcx| CodegenCtx::new(tcx, &self.llvm_ctx))

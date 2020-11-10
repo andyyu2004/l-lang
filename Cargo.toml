@@ -21,7 +21,7 @@ members = [
     "src/typeck",
     "src/tir",
     "src/mir",
-    "src/llvm",
+    "src/codegen",
     "tests/runner",
 ]
 

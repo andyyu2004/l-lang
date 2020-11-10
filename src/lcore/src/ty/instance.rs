@@ -1,5 +1,6 @@
 use crate::ty::{Subst, Substs, SubstsRef, Ty, TyCtx};
 use ir::DefId;
+use rustc_hash::FxHashSet;
 use std::fmt::{self, Display, Formatter};
 
 index::newtype_index! {
@@ -7,6 +8,8 @@ index::newtype_index! {
         DEBUG_FORMAT = "{}"
     }
 }
+
+pub type Instances<'tcx> = FxHashSet<Instance<'tcx>>;
 
 /// a generic definition along with its concrete substitutions
 /// used for monomorphization
@@ -35,11 +38,11 @@ impl<'tcx> Instance<'tcx> {
     }
 
     /// construct a new instance of an item
-    pub fn item(def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
+    fn item(def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
         Instance { substs, def_id, kind: InstanceKind::Item }
     }
 
-    pub fn intrinsic(def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
+    fn intrinsic(def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
         Instance { substs, def_id, kind: InstanceKind::Intrinsic }
     }
 

@@ -38,7 +38,7 @@ fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> 
     let (forall, adt_ty) = ty.expect_scheme();
     let (adt, _substs) = adt_ty.expect_adt();
     let ctor_ty = match variant.kind {
-        // these two constructor kinds are already of the enum type
+        // these two variant kinds are already of the enum type
         ir::VariantKind::Struct(..) | ir::VariantKind::Unit => adt_ty,
         // represent enum tuples as injection functions
         // enum Option<T> {

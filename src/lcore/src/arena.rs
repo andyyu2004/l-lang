@@ -1,6 +1,3 @@
-// use crate::ir::{self, Definitions};
-// use crate::ty::{Const, List, SubstsRef, Ty, TyFlag, TyKind, TyS};
-// use crate::typeck::TypeckTables;
 use crate::mir::Mir;
 use crate::ty::*;
 
@@ -13,6 +10,7 @@ macro_rules! arena_types {
             [] fields: FieldTy,
             [] generics: Generics<$tcx>,
             [] inherent_impls: InherentImpls,
+            [] instances: Instances<$tcx>,
             [] mir: Mir<$tcx>,
             [] typeck_tables: TypeckTables<$tcx>,
             [] typarams: TyParam<'tcx>,

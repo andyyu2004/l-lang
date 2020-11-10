@@ -15,7 +15,7 @@ ir = { path = "../ir" }
 tir = { path = "../tir" }
 mir = { path = "../mir" }
 lcore = { path = "../lcore" }
-llvm = { path = "../llvm" }
+codegen = { path = "../codegen" }
 session = { path = "../session" }
 error = { path = "../error" }
 typeck = { path = "../typeck" }

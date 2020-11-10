@@ -9,7 +9,7 @@ mod traverse;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
-pub use instance::{Instance, InstanceId, InstanceKind};
+pub use instance::{Instance, InstanceId, InstanceKind, Instances};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
 use rustc_hash::FxHashMap;

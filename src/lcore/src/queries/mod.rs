@@ -76,6 +76,8 @@ macro_rules! define_query_context {
     };
 }
 
+// currently queries only deal with stuff that happens post ir generation
+// maybe we can remove this inconsistency and make everything query based?
 define_query_context! {
     tcx: 'tcx,
     inputs: {
@@ -94,5 +96,8 @@ define_query_context! {
         // mir
         ([mir_of] [DefId] [LResult<&'tcx Mir<'tcx>>])
         ([instance_mir] [Instance<'tcx>] [LResult<&'tcx Mir<'tcx>>])
+
+        // codegen
+        ([monomorphization_instances] [()] [&'tcx Instances<'tcx>])
     }
 }

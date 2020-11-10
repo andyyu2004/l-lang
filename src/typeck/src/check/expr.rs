@@ -321,6 +321,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {
+            BinOp::Eq => todo!(),
             // TODO deal with floats
             BinOp::Mul | BinOp::Div | BinOp::Add | BinOp::Sub => {
                 self.equate(l.span, self.tcx.types.int, tl);
@@ -333,7 +334,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 self.equate(r.span, tl, tr);
                 self.tcx.types.bool
             }
-            BinOp::Eq => todo!(),
             BinOp::Neq => todo!(),
             BinOp::And | BinOp::Or => {
                 self.equate(l.span, self.tcx.types.int, tl);

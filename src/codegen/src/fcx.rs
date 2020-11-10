@@ -289,8 +289,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 ValueRef { val, ty: var.ty }
             }
             mir::Operand::Item(def_id, ty) => {
+                // TODO this is basically copy pasted from the monomorphization step
+                // there is definitely a nicer to go about this
                 let mono_ty = self.monomorphize(ty);
-                let instance = self.operand_instance_map.borrow()[&(def_id, mono_ty)];
+                let scheme = self.tcx.type_of(def_id);
+                let substs = self.tcx.unify_scheme(scheme, mono_ty);
+                let instance = Instance::resolve(self.tcx, def_id, substs);
                 let llfn = match instance.kind {
                     InstanceKind::Item => self.instances.borrow()[&instance],
                     InstanceKind::Intrinsic => self.intrinsics.borrow()[&instance],

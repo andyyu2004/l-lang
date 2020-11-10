@@ -5,7 +5,6 @@ use inkwell::types::*;
 use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
-use ir::DefId;
 use lcore::ty::*;
 use rustc_hash::FxHashMap;
 use span::{sym, Span};
@@ -23,8 +22,6 @@ pub struct CodegenCtx<'tcx> {
     pub native_functions: NativeFunctions<'tcx>,
     pub intrinsics: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
-    // we map Operand::Item to an instance via its DefId and monomorphized type
-    pub operand_instance_map: RefCell<FxHashMap<(DefId, Ty<'tcx>), Instance<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
     main_fn: Option<FunctionValue<'tcx>>,
 }
@@ -102,7 +99,6 @@ impl<'tcx> CodegenCtx<'tcx> {
             builder: llctx.create_builder(),
             intrinsics: Default::default(),
             instances: Default::default(),
-            operand_instance_map: Default::default(),
             lltypes: Default::default(),
             main_fn: None,
         }
@@ -113,9 +109,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         for<'a> &'a I: IntoIterator<Item = &'a Instance<'tcx>>,
     {
         instances.into_iter().for_each(|&instance| self.declare_instance(instance));
-        // we need to predeclare all items as we don't require them to be declared in the source
-        // file in topological order
-        // DeclarationCollector { cctx: self }.visit_ir(self.tcx.ir);
     }
 
     fn declare_instance(&mut self, instance: Instance<'tcx>) {
@@ -140,7 +133,9 @@ impl<'tcx> CodegenCtx<'tcx> {
                 if Some(def_id) == self.tcx.ir.entry_id {
                     self.main_fn = Some(llfn);
                 }
-                self.instances.borrow_mut().insert(Instance::item(def_id, substs), llfn);
+                self.instances
+                    .borrow_mut()
+                    .insert(Instance::resolve(self.tcx, def_id, substs), llfn);
             }
             InstanceKind::Intrinsic => self.codegen_intrinsic(instance),
         }
@@ -160,11 +155,11 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     /// returns the main function
     pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
-        let instances = self.collect_monomorphization_instances();
+        let instances = self.tcx.monomorphization_instances(());
         if self.tcx.sess.has_errors() {
             return None;
         }
-        self.declare_instances(&instances);
+        self.declare_instances(instances);
         self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();

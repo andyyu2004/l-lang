@@ -135,11 +135,11 @@ impl<'a, 'tcx> InheritedCtx<'a, 'tcx> {
     pub fn check_fn_item(&'a self, def_id: DefId, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
         let fn_ty = self.tcx.type_of(def_id);
         // don't instantiate anything and typeck the body using the param tys
-        // don't know if this is a good idea
         let (_forall, ty) = fn_ty.expect_scheme();
         self.check_fn(ty, body)
     }
 
+    // common logic between closures and function items
     pub fn check_fn(&'a self, fn_ty: Ty<'tcx>, body: &ir::Body<'tcx>) -> FnCtx<'a, 'tcx> {
         let mut fcx = FnCtx::new(self, fn_ty);
         fcx.check_body(body);

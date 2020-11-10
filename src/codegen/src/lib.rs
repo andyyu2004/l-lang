@@ -21,10 +21,15 @@ mod tests;
 pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
 use inkwell::values::{BasicValueEnum, FunctionValue, PointerValue};
+use lcore::queries::Queries;
 use lcore::ty::Ty;
 use llvm_error::LLVMError;
 use monomorphize::Monomorphize;
 use native::NativeFunctions;
+
+pub fn provide(queries: &mut Queries) {
+    monomorphize::provide(queries);
+}
 
 pub trait LLVMAsPtrVal<'tcx> {
     fn as_llvm_ptr(self) -> PointerValue<'tcx>;

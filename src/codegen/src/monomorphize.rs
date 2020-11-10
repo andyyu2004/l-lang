@@ -1,15 +1,18 @@
-use crate::CodegenCtx;
 use ir::{DefId, FnVisitor, ItemVisitor};
 use lcore::mir::Operand;
+use lcore::queries::Queries;
 use lcore::ty::{Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
 use mir::MirVisitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
 
-// pub fn provide(queries: &mut Queries) {
-//     *queries = Queries { monomorphization_instances }
-// }
+pub fn provide(queries: &mut Queries) {
+    *queries = Queries {
+        monomorphization_instances: |tcx, ()| monomorphization_instances(tcx),
+        ..*queries
+    }
+}
 
 pub trait Monomorphize<'tcx> {
     fn monomorphize<T>(&self, t: T) -> T
@@ -17,25 +20,24 @@ pub trait Monomorphize<'tcx> {
         T: TypeFoldable<'tcx>;
 }
 
-impl<'tcx> CodegenCtx<'tcx> {
-    /// collects all references to generic items along with substitutions representing
-    /// each unique instantiation of the generic parameters
-    /// we refer to these non-generic items as "roots"
-    pub fn collect_monomorphization_instances(&self) -> FxHashSet<Instance<'tcx>> {
-        let roots = RootCollector::new(self.tcx).collect_roots();
-        MonomorphizationCollector::new(self, &roots).collect_instances()
-    }
+/// collects all references to generic items along with substitutions representing
+/// each unique instantiation of the generic parameters
+/// we refer to these non-generic items as "roots"
+fn monomorphization_instances<'tcx>(tcx: TyCtx<'tcx>) -> &'tcx FxHashSet<Instance<'tcx>> {
+    let roots = RootCollector::new(tcx).collect_roots();
+    let instances = MonomorphizationCollector::new(tcx, &roots).collect_instances();
+    tcx.alloc(instances)
 }
 
 struct MonomorphizationCollector<'a, 'tcx> {
-    cctx: &'a CodegenCtx<'tcx>,
+    tcx: TyCtx<'tcx>,
     roots: &'a Vec<DefId>,
     mono_instances: RefCell<FxHashSet<Instance<'tcx>>>,
 }
 
 impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
-    fn new(cctx: &'a CodegenCtx<'tcx>, roots: &'a Vec<DefId>) -> Self {
-        Self { cctx, roots, mono_instances: Default::default() }
+    fn new(tcx: TyCtx<'tcx>, roots: &'a Vec<DefId>) -> Self {
+        Self { tcx, roots, mono_instances: Default::default() }
     }
 
     fn collect_instances(self) -> FxHashSet<Instance<'tcx>> {
@@ -115,19 +117,12 @@ impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
             // we monomorphize the function type with the "parent" instance's substitutions
             // and this should provide concrete types for the type parameters
             let mono_ty = self.monomorphize(fn_ty);
-            // `ty` should have no type parameters after monomorphization
             debug_assert!(!mono_ty.has_ty_params());
-            // this `substs` is the substitution applied to the generic function with def_id
-            // `def_id` to obtain its concrete type
             let scheme = self.tcx.type_of(def_id);
+            // this `substs` is the substitution applied to the generic function with
+            // def_id `def_id` to obtain its concrete type
             let substs = self.tcx.unify_scheme(scheme, mono_ty);
             let instance = Instance::resolve(self.tcx, def_id, substs);
-            if let Some(prev) =
-                self.collector.operand_instance_map.borrow_mut().insert((def_id, mono_ty), instance)
-            {
-                // the same operand key shouldn't map to different instances
-                assert_eq!(prev, instance);
-            }
 
             if !self.mono_instances.borrow().contains(&instance) {
                 // recursively collect all its neighbours
@@ -138,10 +133,10 @@ impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Deref for MonomorphizationCollector<'a, 'tcx> {
-    type Target = CodegenCtx<'tcx>;
+    type Target = TyCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.cctx
+        &self.tcx
     }
 }
 
