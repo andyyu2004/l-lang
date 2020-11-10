@@ -118,7 +118,7 @@ impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
             // note that this monomorphization step is essentially
             // just composing substitutions
             let substs = self.monomorphize(substs);
-            assert!(!substs.has_ty_params());
+            debug_assert!(!substs.has_ty_params());
             let instance = Instance::resolve(self.tcx, def_id, substs);
 
             if !self.mono_instances.borrow().contains(&instance) {

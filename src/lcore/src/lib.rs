@@ -19,5 +19,11 @@ pub mod queries;
 pub mod ty;
 
 pub use crate::arena::{Arena, ArenaAllocatable};
-use interners::CtxInterners;
 pub use ty::{GlobalCtx, TyCtx};
+
+use interners::CtxInterners;
+use queries::Queries;
+
+pub fn provide(queries: &mut Queries) {
+    ty::provide(queries);
+}

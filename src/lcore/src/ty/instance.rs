@@ -1,11 +1,24 @@
+use crate::queries::Queries;
 use crate::ty::{Subst, Substs, SubstsRef, Ty, TyCtx};
 use ir::DefId;
 use rustc_hash::FxHashSet;
 use std::fmt::{self, Display, Formatter};
 
-index::newtype_index! {
-    pub struct InstanceId {
-        DEBUG_FORMAT = "{}"
+crate fn provide(queries: &mut Queries) {
+    *queries = Queries { resolve_instance, ..*queries }
+}
+
+fn resolve_instance<'tcx>(
+    tcx: TyCtx<'tcx>,
+    (def_id, substs): (DefId, SubstsRef<'tcx>),
+) -> Instance<'tcx> {
+    match tcx.defs().get(def_id) {
+        // can just treat constructors as normal items
+        ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
+            Instance::item(def_id, substs),
+        ir::DefNode::ForeignItem(..) => Instance::intrinsic(def_id, substs),
+        ir::DefNode::Field(..) | ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) =>
+            unreachable!(),
     }
 }
 
@@ -27,14 +40,7 @@ impl<'tcx> Instance<'tcx> {
     }
 
     pub fn resolve(tcx: TyCtx<'tcx>, def_id: DefId, substs: SubstsRef<'tcx>) -> Self {
-        match tcx.defs().get(def_id) {
-            // can just treat constructors as normal items
-            ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
-                Instance::item(def_id, substs),
-            ir::DefNode::ForeignItem(..) => Instance::intrinsic(def_id, substs),
-            ir::DefNode::Field(..) | ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) =>
-                unreachable!(),
-        }
+        tcx.resolve_instance((def_id, substs))
     }
 
     /// construct a new instance of an item

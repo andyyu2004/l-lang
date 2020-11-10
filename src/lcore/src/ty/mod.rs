@@ -9,10 +9,9 @@ mod traverse;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind};
-pub use instance::{Instance, InstanceId, InstanceKind, Instances};
+pub use instance::{Instance, InstanceKind, Instances};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
-use rustc_hash::FxHashMap;
 pub use substs::*;
 pub use tables::TypeckTables;
 pub use tcx::{tls, GlobalCtx, TyCtx};
@@ -21,15 +20,21 @@ pub use type_error::{TypeError, TypeResult};
 pub use InferTy::*;
 pub use TyKind::*;
 
+use crate::queries::Queries;
 use ast::{Ident, Visibility};
 use bitflags::bitflags;
 use index::{Idx, IndexVec};
 use ir::{self, CtorKind, DefId, FieldIdx, ParamIdx, Res, VariantIdx};
+use rustc_hash::FxHashMap;
 use span::Span;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ptr;
 use util;
+
+crate fn provide(queries: &mut Queries) {
+    instance::provide(queries);
+}
 
 pub type Ty<'tcx> = &'tcx Type<'tcx>;
 

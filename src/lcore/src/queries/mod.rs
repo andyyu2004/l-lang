@@ -99,5 +99,6 @@ define_query_context! {
 
         // codegen
         ([monomorphization_instances] [()] [&'tcx Instances<'tcx>])
+        ([resolve_instance] [(DefId, SubstsRef<'tcx>)] [Instance<'tcx>])
     }
 }
