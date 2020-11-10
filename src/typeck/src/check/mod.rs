@@ -1,7 +1,7 @@
 mod coerce;
 mod expr;
 mod item;
-mod methods;
+mod method_resolution;
 mod pat;
 mod path;
 mod stmt;

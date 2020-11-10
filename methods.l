@@ -1,11 +1,12 @@
-// extern {
-//     fn print(i: int);
-// }
+extern {
+    fn print(i: int);
+}
 
 
 fn main() -> int {
     let s = S::new(5, false);
-    s.u
+    print(s.u);
+    0
 }
 
 
@@ -14,14 +15,14 @@ struct S<T, U> {
     u: U,
 }
 
-/* impl<T, U> S<T, U> { */
-/*     fn new(u: U, t: T) -> Self { */
-/*         Self { t, u } */
-/*     } */
-/* } */
-
-impl S<int, int> {
-    fn new(u: int, t: int) -> Self {
+impl<T, U> S<T, U> {
+    fn new(u: U, t: T) -> Self {
 	Self { t, u }
     }
 }
+
+/* impl S<int, int> { */
+/*     fn new(u: int, t: int) -> Self { */
+/*         Self { t, u } */
+/*     } */
+/* } */

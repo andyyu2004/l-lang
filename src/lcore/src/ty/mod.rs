@@ -9,6 +9,7 @@ mod traverse;
 mod type_error;
 
 pub use adjustments::{Adjuster, Adjustment, AdjustmentKind, PointerCast};
+use ena::unify::UnifyKey;
 pub use instance::{Instance, InstanceKind, Instances};
 pub use list::List;
 pub use relate::{Relate, TypeRelation};
@@ -62,6 +63,22 @@ struct TyVidVisitor {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct TyVid {
     pub index: u32,
+}
+
+impl UnifyKey for TyVid {
+    type Value = ();
+
+    fn index(&self) -> u32 {
+        self.index
+    }
+
+    fn from_index(i: u32) -> TyVid {
+        TyVid { index: i }
+    }
+
+    fn tag() -> &'static str {
+        "TyVid"
+    }
 }
 
 impl Display for TyVid {

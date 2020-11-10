@@ -7,8 +7,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// write the upvars mentioned by `closure` to `TypeckOutputs`
     crate fn record_upvars(&mut self, closure: &ir::Expr, body: &ir::Body) {
         let locals = LocalsVisitor::find_locals(body);
-        let upvar_vis = UpvarVisitor::new(self.tcx, closure.id, &locals);
-        let upvars = upvar_vis.resolve_upvars(body);
+        let upvar_visitor = UpvarVisitor::new(self.tcx, closure.id, &locals);
+        let upvars = upvar_visitor.resolve_upvars(body);
         self.tables.borrow_mut().record_upvar_capture_for_closure(closure.id, upvars);
     }
 }
@@ -59,8 +59,7 @@ impl LocalsVisitor {
 }
 
 impl ir::Visitor<'_> for LocalsVisitor {
-    /// ultimately, the only way to introduce a name in L is via a
-    /// PatternKind::Binding
+    /// ultimately, the only way to introduce a name in L is via PatternKind::Binding
     fn visit_pat(&mut self, pat: &ir::Pattern) {
         if let ir::PatternKind::Binding(..) = pat.kind {
             self.locals.insert(pat.id);

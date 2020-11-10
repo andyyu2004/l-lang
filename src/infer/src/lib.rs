@@ -7,6 +7,7 @@ mod at;
 mod equate;
 mod instantiate;
 mod type_variables;
+mod undo;
 
 use at::At;
 use equate::Equate;
@@ -19,6 +20,7 @@ use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::ops::Deref;
 use type_variables::*;
+use undo::*;
 
 pub struct InferCtxBuilder<'tcx> {
     tcx: TyCtx<'tcx>,

@@ -410,7 +410,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::TerminatorKind::Branch(block) => {
                 self.build_unconditional_branch(self.blocks[*block]);
             }
-            mir::TerminatorKind::Call { f, args, lvalue, target, unwind } => {
+            mir::TerminatorKind::Call { f, args, lvalue, target, unwind: _ } => {
                 let f = self.codegen_operand(f).val.into_pointer_value();
                 let args = args.iter().map(|arg| self.codegen_operand(arg).val).collect_vec();
                 let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();

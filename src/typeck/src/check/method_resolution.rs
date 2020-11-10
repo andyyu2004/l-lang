@@ -25,7 +25,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         segment: &ir::PathSegment<'tcx>,
     ) -> Res {
         // TODO maybe require the generic args in segment later?
-        ResolutionCtx::new(self, span, ty, segment.ident).resolve()
+        MethodResolutionCtx::new(self, span, ty, segment.ident).resolve()
     }
 }
 
@@ -42,7 +42,7 @@ impl<'tcx> Candidate<'tcx> {
     }
 }
 
-crate struct ResolutionCtx<'a, 'tcx> {
+crate struct MethodResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
     span: Span,
     self_ty: Ty<'tcx>,
@@ -51,10 +51,10 @@ crate struct ResolutionCtx<'a, 'tcx> {
 }
 
 trait InherentCandidates<'tcx> {
-    fn inherent_candidates(&self, rcx: &mut ResolutionCtx);
+    fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx);
 }
 
-impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
+impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
     fn new(fcx: &'a FnCtx<'a, 'tcx>, span: Span, self_ty: Ty<'tcx>, ident: Ident) -> Self {
         Self { fcx, self_ty, span, ident, inherent_candidates: Default::default() }
     }
@@ -93,7 +93,7 @@ impl<'a, 'tcx> ResolutionCtx<'a, 'tcx> {
 }
 
 impl<'tcx> InherentCandidates<'tcx> for Ty<'tcx> {
-    fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
+    fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         match self.kind {
             ty::Adt(adt, _) => adt.def_id.inherent_candidates(rcx),
             _ => todo!(),
@@ -102,7 +102,7 @@ impl<'tcx> InherentCandidates<'tcx> for Ty<'tcx> {
 }
 
 impl<'tcx> InherentCandidates<'tcx> for DefId {
-    fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
+    fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         let inherent_impls = rcx.inherent_impls_of(*self);
 
         for impl_def_id in inherent_impls {
@@ -130,13 +130,13 @@ impl<'tcx, T> InherentCandidates<'tcx> for [T]
 where
     T: InherentCandidates<'tcx>,
 {
-    fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
+    fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         self.iter().for_each(|t| t.inherent_candidates(rcx))
     }
 }
 
 impl<'tcx> InherentCandidates<'tcx> for ImplItemRef {
-    fn inherent_candidates(&self, rcx: &mut ResolutionCtx) {
+    fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         let impl_item = rcx.ir.impl_items[&self.id];
         if impl_item.ident != rcx.ident {
             return;
@@ -146,7 +146,7 @@ impl<'tcx> InherentCandidates<'tcx> for ImplItemRef {
     }
 }
 
-impl<'a, 'tcx> Deref for ResolutionCtx<'a, 'tcx> {
+impl<'a, 'tcx> Deref for MethodResolutionCtx<'a, 'tcx> {
     type Target = FnCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {

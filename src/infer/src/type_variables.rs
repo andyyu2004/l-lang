@@ -1,33 +1,14 @@
-use ena::undo_log::UndoLogs;
+use crate::*;
+use ena::snapshot_vec as sv;
 use ena::unify as ut;
 use lcore::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};
 use rustc_hash::FxHashMap;
 use span::Span;
 use std::marker::PhantomData;
 
-#[derive(Default)]
-pub struct InferCtxUndoLogs<'tcx> {
-    marker: PhantomData<&'tcx ()>,
-}
-
-// TODO this is unimplemented but I don't want it to crash :)
-impl<'tcx, T> UndoLogs<T> for InferCtxUndoLogs<'tcx> {
-    fn num_open_snapshots(&self) -> usize {
-        0
-    }
-
-    fn push(&mut self, _undo: T) {
-    }
-
-    fn clear(&mut self) {
-    }
-
-    fn extend<J>(&mut self, _undos: J)
-    where
-        Self: Sized,
-        J: IntoIterator<Item = T>,
-    {
-    }
+crate enum UndoLog<'tcx> {
+    EqRelation(sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>),
+    SubRelation(sv::UndoLog<ut::Delegate<ty::TyVid>>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -50,7 +31,7 @@ pub struct TypeVariableStorage<'tcx> {
 }
 
 impl<'tcx> TypeVariableStorage<'tcx> {
-    pub fn with_log<'a>(
+    crate fn with_log<'a>(
         &'a mut self,
         undo_log: &'a mut InferCtxUndoLogs<'tcx>,
     ) -> TypeVariableTable<'a, 'tcx> {
@@ -144,7 +125,6 @@ impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TyVidEqKey<'tcx> {
     pub vid: TyVid,
-
     // in the table, we map each ty-vid to one of these:
     phantom: PhantomData<TyVarValue<'tcx>>,
 }
@@ -168,5 +148,17 @@ impl<'tcx> ut::UnifyKey for TyVidEqKey<'tcx> {
 
     fn tag() -> &'static str {
         "TyVidEqKey"
+    }
+}
+
+impl<'tcx> From<sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>> for UndoLog<'tcx> {
+    fn from(l: sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>) -> Self {
+        UndoLog::EqRelation(l)
+    }
+}
+
+impl<'tcx> From<sv::UndoLog<ut::Delegate<ty::TyVid>>> for UndoLog<'tcx> {
+    fn from(l: sv::UndoLog<ut::Delegate<ty::TyVid>>) -> Self {
+        UndoLog::SubRelation(l)
     }
 }

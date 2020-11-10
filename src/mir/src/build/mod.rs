@@ -1,13 +1,13 @@
 mod cfg;
 mod ctor;
-mod ctx;
 mod expr;
+mod lowering_ctx;
 mod pat;
 mod scope;
 mod stmt;
 
 pub use ctor::build_variant_ctor;
-pub use ctx::LoweringCtx;
+pub use lowering_ctx::LoweringCtx;
 
 use crate::set;
 use ast::Mutability;

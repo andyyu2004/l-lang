@@ -38,7 +38,6 @@ impl<'tcx> LoweringCtx<'tcx> {
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
-        eprintln!("{}", tir);
         build::build_fn(self, tir)
     }
 
