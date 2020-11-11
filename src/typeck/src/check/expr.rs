@@ -8,26 +8,26 @@ use rustc_hash::FxHashMap;
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_expr(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let ty = match &expr.kind {
-            ir::ExprKind::Box(expr) => self.check_box_expr(expr),
+            ir::ExprKind::Box(expr) => self.check_expr_box(expr),
             ir::ExprKind::Err => self.set_ty_err(),
             ir::ExprKind::Lit(lit) => self.check_lit(lit),
-            ir::ExprKind::Bin(op, l, r) => self.check_binop(*op, l, r),
-            ir::ExprKind::Unary(op, operand) => self.check_unary_expr(expr, *op, operand),
+            ir::ExprKind::Bin(op, l, r) => self.check_expr_binop(*op, l, r),
+            ir::ExprKind::Unary(op, operand) => self.check_expr_unary(expr, *op, operand),
             ir::ExprKind::Block(block) => self.check_block(block),
             ir::ExprKind::Path(qpath) => self.check_qpath(expr, qpath),
             ir::ExprKind::Tuple(xs) => self.check_expr_tuple(xs),
             ir::ExprKind::Closure(sig, body) => self.check_closure_expr(expr, sig, body),
             ir::ExprKind::Call(f, args) => self.check_call_expr(expr, f, args),
-            ir::ExprKind::Match(expr, arms, src) => self.check_match_expr(expr, arms, src),
-            ir::ExprKind::Struct(qpath, fields) => self.check_struct_expr(expr, qpath, fields),
-            ir::ExprKind::Assign(l, r) => self.check_assign_expr(expr, l, r),
-            ir::ExprKind::Ret(ret) => self.check_ret_expr(expr, ret.as_deref()),
-            ir::ExprKind::Field(base, ident) => self.check_field_expr(expr, base, *ident),
+            ir::ExprKind::Match(expr, arms, src) => self.check_expr_match(expr, arms, src),
+            ir::ExprKind::Struct(qpath, fields) => self.check_expr_struct(expr, qpath, fields),
+            ir::ExprKind::Assign(l, r) => self.check_expr_assign(expr, l, r),
+            ir::ExprKind::Ret(ret) => self.check_expr_ret(expr, ret.as_deref()),
+            ir::ExprKind::Field(base, ident) => self.check_expr_field(expr, base, *ident),
         };
         self.record_ty(expr.id, ty)
     }
 
-    fn check_unary_expr(
+    fn check_expr_unary(
         &mut self,
         expr: &ir::Expr<'tcx>,
         op: UnaryOp,
@@ -51,12 +51,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_box_expr(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
+    fn check_expr_box(&mut self, expr: &ir::Expr<'tcx>) -> Ty<'tcx> {
         let ty = self.check_expr(expr);
         self.mk_box_ty(ty)
     }
 
-    fn check_field_expr(
+    fn check_expr_field(
         &mut self,
         expr: &ir::Expr<'tcx>,
         base: &ir::Expr<'tcx>,
@@ -114,7 +114,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     }
 
     /// return expressions have the type of the expression that follows the return
-    fn check_ret_expr(
+    fn check_expr_ret(
         &mut self,
         expr: &ir::Expr<'tcx>,
         ret_expr: Option<&ir::Expr<'tcx>>,
@@ -134,7 +134,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_assign_expr(
+    fn check_expr_assign(
         &mut self,
         expr: &ir::Expr<'tcx>,
         l: &ir::Expr<'tcx>,
@@ -147,7 +147,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         rty
     }
 
-    fn check_struct_expr(
+    fn check_expr_struct(
         &mut self,
         expr: &ir::Expr<'tcx>,
         qpath: &ir::QPath<'tcx>,
@@ -215,7 +215,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         has_error
     }
 
-    fn check_match_expr(
+    fn check_expr_match(
         &mut self,
         expr: &ir::Expr<'tcx>,
         arms: &[ir::Arm<'tcx>],
@@ -322,7 +322,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    fn check_binop(&mut self, op: ast::BinOp, l: &ir::Expr<'tcx>, r: &ir::Expr<'tcx>) -> Ty<'tcx> {
+    fn check_expr_binop(
+        &mut self,
+        op: ast::BinOp,
+        l: &ir::Expr<'tcx>,
+        r: &ir::Expr<'tcx>,
+    ) -> Ty<'tcx> {
         let tl = self.check_expr(l);
         let tr = self.check_expr(r);
         match op {
