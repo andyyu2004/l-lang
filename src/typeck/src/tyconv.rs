@@ -61,14 +61,25 @@ pub trait TyConv<'tcx> {
                     self.ensure_no_generic_args(segs);
                     let generic_args = last.args;
 
-                    let emit_err = |err| {
+                    let emit_err = |argc, err| {
                         tcx.sess.emit_error(
                             vec![
                                 (
                                     tcx.defs().generics(adt.def_id).span,
-                                    "generic parameter declaration",
+                                    format!(
+                                        "{} generic parameter{} declared here",
+                                        expected_argc,
+                                        pluralize!(expected_argc)
+                                    ),
                                 ),
-                                (path.span, "generic arguments"),
+                                (
+                                    path.span,
+                                    format!(
+                                        "but {} generic argument{} provided here",
+                                        argc,
+                                        pluralize!(argc)
+                                    ),
+                                ),
                             ],
                             err,
                         );
@@ -77,19 +88,21 @@ pub trait TyConv<'tcx> {
 
                     // replace each generic parameter with either the specified type argument or id generics
                     let substs = match generic_args {
-                        Some(args) =>
-                            if args.args.len() != expected_argc {
-                                return emit_err(TypeError::GenericArgCount(
-                                    expected_argc,
-                                    args.args.len(),
-                                ));
+                        Some(args) => {
+                            let argc = args.args.len();
+                            if argc != expected_argc {
+                                return emit_err(
+                                    argc,
+                                    TypeError::GenericArgCount(expected_argc, args.args.len()),
+                                );
                             } else {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
-                            },
+                            }
+                        }
                         // TODO this case below is probably not correct
                         None if self.allow_infer() => Substs::id_for_def(tcx, def_id),
                         None if expected_argc == 0 => Substs::empty(),
-                        None => return emit_err(TypeError::GenericArgCount(expected_argc, 0)),
+                        None => return emit_err(0, TypeError::GenericArgCount(expected_argc, 0)),
                     };
                     adt_ty.subst(tcx, substs)
                 }

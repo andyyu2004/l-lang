@@ -1061,6 +1061,7 @@ dependencies = [
  "rustc-hash",
  "span",
  "tir",
+ "util",
 ]
 
 [[package]]
