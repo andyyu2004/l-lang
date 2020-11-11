@@ -76,6 +76,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> (Autoderef<'_, 'tcx>, Ty<'tcx>) {
         let base_ty = self.check_expr(base);
         let mut autoderef = self.autoderef(expr.span, base_ty);
+        if base_ty.contains_err() {
+            return (autoderef, base_ty);
+        }
         for ty in &mut autoderef {
             match ty.kind {
                 Adt(adt, substs) if adt.kind != AdtKind::Enum => {

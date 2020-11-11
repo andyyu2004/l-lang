@@ -19,10 +19,12 @@ impl<'a, 'b, 'r, 'ast> PatternResolutionCtx<'a, 'b, 'r, 'ast> {
         match &pat.kind {
             &PatternKind::Ident(ident, ..) => {
                 if let Some(prev) = self.names.get(&ident) {
-                    self.emit_error(
-                        vec![prev.span, ident.span],
+                    self.build_error(
+                        ident.span,
                         ResolutionError::DuplicatePatternIdentifier(ident),
-                    );
+                    )
+                    .span(prev.span)
+                    .emit();
                 }
                 self.names.insert(ident);
                 self.def_val(ident, Res::Local(pat.id));

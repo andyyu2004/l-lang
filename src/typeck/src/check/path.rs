@@ -69,6 +69,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         segment: &ir::PathSegment<'tcx>,
     ) -> (Res, Ty<'tcx>) {
         let res = self.resolve_type_relative_path(xpat, self_ty, segment);
+        if let Res::Err = res {
+            return (res, self.mk_ty_err());
+        }
         self.record_type_relative_res(xpat.id(), res);
         let (def_id, def_kind) = res.expect_def();
         let ty = self.check_res_def(xpat, def_id, def_kind);

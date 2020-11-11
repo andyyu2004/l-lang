@@ -24,12 +24,12 @@ use scope::{Scope, Scopes};
 
 use arena::TypedArena;
 use ast::{Ast, Ident, NodeId};
-use error::{DiagnosticBuilder, MultiSpan};
+use error::DiagnosticBuilder;
 use index::IndexVec;
 use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PartialRes, PrimTy, Res, ROOT_MODULE};
 use rustc_hash::FxHashMap;
 use session::Session;
-use span::{kw, sym, Symbol};
+use span::{kw, sym, Span, Symbol};
 use std::error::Error;
 use std::ops::{Deref, Index, IndexMut};
 
@@ -110,15 +110,11 @@ impl<'a> Resolver<'a> {
         self.defs.def_node(def_id, node)
     }
 
-    pub fn build_error(
-        &self,
-        span: impl Into<MultiSpan>,
-        err: impl Error,
-    ) -> DiagnosticBuilder<'a> {
+    pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {
         self.sess.build_error(span, err)
     }
 
-    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> Res<NodeId> {
+    pub fn emit_error(&self, span: Span, err: impl Error) -> Res<NodeId> {
         self.sess.emit_error(span, err);
         Res::Err
     }

@@ -1,6 +1,10 @@
 #![feature(box_syntax, box_patterns)]
+#![feature(option_unwrap_none)]
 #![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
+
+#[cfg(test)]
+mod tests;
 
 mod expr_parser;
 mod item_parser;
@@ -180,12 +184,14 @@ impl<'a> Parse<'a> for ParamParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pattern = PatParser.parse(parser)?;
         let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
-            Ok(parser.parse_ty(!self.require_type_annotations))
+            parser.parse_ty(!self.require_type_annotations)
         } else if self.require_type_annotations {
-            Err(parser.build_err(pattern.span, ParseError::RequireTypeAnnotations))
+            let err = parser.build_err(pattern.span, ParseError::RequireTypeAnnotations);
+            err.emit();
+            parser.mk_ty_err(pattern.span)
         } else {
-            Ok(parser.mk_infer_ty())
-        }?;
+            parser.mk_infer_ty()
+        };
         Ok(Param { span: pattern.span.merge(ty.span), id: parser.mk_id(), pattern, ty })
     }
 }
@@ -240,7 +246,8 @@ where
         while self.separator.parse(parser).is_ok() {
             match self.inner.parse(parser) {
                 Ok(p) => vec.push(p),
-                Err(_) => break,
+                // don't emit the error here, things will break
+                Err(..) => break,
             }
         }
         // parse the trailing separator if there is one

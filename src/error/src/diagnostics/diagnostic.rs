@@ -1,10 +1,12 @@
 use crate::{Emitter, LError, LResult, TextEmitter};
 use codespan_reporting::diagnostic::Label;
 use span::{FileIdx, Span};
-use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::fmt::{self, Debug, Formatter};
 use std::ops::Deref;
+use std::{
+    cell::{Cell, RefCell}, ops::DerefMut
+};
 
 #[derive(Default)]
 pub struct Diagnostics {
@@ -42,62 +44,46 @@ impl Diagnostics {
     }
 }
 
-type DiagnosticInner = codespan_reporting::diagnostic::Diagnostic<FileIdx>;
-
 /// a single diagnostic error message
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Diagnostic {
-    crate inner: DiagnosticInner,
+    /// the main error of the diagnostic
+    crate error: String,
+    crate spans: Vec<Span>,
+    crate labelled_spans: Vec<(Span, String)>,
+    crate notes: Vec<String>,
 }
 
-impl Diagnostic {
-    pub fn from_err(span: impl Into<MultiSpan>, err: impl Error) -> Self {
-        let span = span.into();
-        let inner = DiagnosticInner::error().with_message(err.to_string()).with_labels(
-            span.primary_spans
-                .iter()
-                .map(|(span, msg)| Label::primary(span.file, **span).with_message(msg))
-                .collect(),
-        );
-        Self { inner }
-    }
-
-    pub fn get_first_span(&self) -> Span {
-        let label = self.inner.labels.iter().nth(0).unwrap();
-        Span::new(label.file_id, label.range.start, label.range.end)
-    }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
+#[derive(Debug)]
 pub struct MultiSpan {
-    /// spans along with an associated message
-    pub primary_spans: Vec<(Span, String)>,
+    spans: Vec<Span>,
 }
 
-// only impl for vectors to avoid overlapping impls
 impl From<Vec<Span>> for MultiSpan {
-    default fn from(spans: Vec<Span>) -> Self {
-        Self { primary_spans: spans.into_iter().map(|span| (span, String::new())).collect() }
-    }
-}
-
-impl<S> From<Vec<(Span, S)>> for MultiSpan
-where
-    S: Into<String>,
-{
-    default fn from(primary_spans: Vec<(Span, S)>) -> Self {
-        Self {
-            primary_spans: primary_spans
-                .into_iter()
-                .map(|(span, msg)| (span, msg.into()))
-                .collect(),
-        }
+    fn from(spans: Vec<Span>) -> Self {
+        Self { spans }
     }
 }
 
 impl From<Span> for MultiSpan {
     fn from(span: Span) -> Self {
-        Self::from(vec![span])
+        Self { spans: vec![span] }
+    }
+}
+
+impl Diagnostic {
+    pub fn from_err(spans: impl Into<MultiSpan>, error: impl Error) -> Self {
+        let multispan = spans.into();
+        Self {
+            labelled_spans: Default::default(),
+            notes: Default::default(),
+            error: error.to_string(),
+            spans: multispan.spans,
+        }
+    }
+
+    pub fn get_first_span(&self) -> Span {
+        self.labelled_spans[0].0
     }
 }
 
@@ -107,17 +93,40 @@ pub struct DiagnosticBuilder<'a> {
     emitter: RefCell<Box<dyn Emitter>>,
 }
 
+// builder methods
+impl<'a> DiagnosticBuilder<'a> {
+    pub fn labelled_span(&mut self, span: Span, msg: String) -> &mut Self {
+        self.labelled_spans.push((span, msg));
+        self
+    }
+
+    pub fn span(&mut self, span: Span) -> &mut Self {
+        self.spans.push(span);
+        self
+    }
+
+    pub fn note(&mut self, note: &str) -> &mut Self {
+        self.notes.push(note.to_owned());
+        self
+    }
+}
 impl<'a> Debug for DiagnosticBuilder<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.diagnostic)
     }
 }
 
-impl Deref for DiagnosticBuilder<'_> {
+impl<'a> Deref for DiagnosticBuilder<'a> {
     type Target = Diagnostic;
 
     fn deref(&self) -> &Self::Target {
         &self.diagnostic
+    }
+}
+
+impl<'a> DerefMut for DiagnosticBuilder<'a> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.diagnostic
     }
 }
 

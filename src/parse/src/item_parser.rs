@@ -243,16 +243,9 @@ impl<'a> Parse<'a> for FnParser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     macro parse($src:expr) {{
         let driver = ldriver::Driver::from_src($src);
         driver.parse().unwrap()
-    }}
-
-    macro fmt($src:expr) {{
-        let prog = parse!($src);
-        format!("{}", prog)
     }}
 
     #[test]

@@ -9,6 +9,7 @@ extern crate macros;
 mod source_map;
 mod symbol;
 
+use codespan_reporting::diagnostic::Label;
 pub use source_map::{FileIdx, SourceMap, ROOT_FILE_IDX};
 pub use symbol::{kw, sym, Symbol};
 
@@ -33,6 +34,12 @@ pub fn with_source_map<R>(f: impl FnOnce(&SourceMap) -> R) -> R {
 }
 
 thread_local!(pub static SPAN_GLOBALS: SpanGlobals = Default::default());
+
+impl Into<Label<FileIdx>> for Span {
+    fn into(self) -> Label<FileIdx> {
+        Label::primary(self.file, *self)
+    }
+}
 
 /// thin wrapper around codespan::Span for convenience
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]

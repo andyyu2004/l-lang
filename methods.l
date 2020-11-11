@@ -4,8 +4,8 @@ extern {
 
 
 fn main() -> int {
-    let s = S::new(5, false);
-    print(s.u);
+    let f = S::new;
+    f(1,false);
     0
 }
 
@@ -19,16 +19,22 @@ impl<T, U> S<T, U> {
     fn new(u: U, t: T) -> Self {
 	Self { t, u }
     }
-}
 
-impl S<bool, bool> {
-    fn new(u: bool, t: bool) -> Self {
-	Self { t, u }
+    fn fst(self)  {
+	/* self.t */
     }
 }
 
-impl S<int, int> {
-    fn new(u: int, t: int) -> Self {
-	Self { t, u }
-    }
-}
+
+
+// impl S<bool, bool> {
+//     fn new(t: bool, u: bool) -> Self {
+// 	Self { t, u }
+//     }
+// }
+//
+// impl S<int, int> {
+//     fn new(u: int, t: int) -> Self {
+// 	Self { t, u }
+//     }
+// }

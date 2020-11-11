@@ -188,6 +188,10 @@ impl<'a> Parser<'a> {
         self.mk_ty(self.empty_span(), TyKind::Infer)
     }
 
+    crate fn mk_ty_err(&self, span: Span) -> P<Ty> {
+        self.mk_ty(span, TyKind::Err)
+    }
+
     crate fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
         box Ty { span, id: self.mk_id(), kind }
     }

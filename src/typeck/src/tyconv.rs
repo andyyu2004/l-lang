@@ -52,37 +52,34 @@ pub trait TyConv<'tcx> {
                 DefKind::Struct | DefKind::Enum => {
                     let adt_ty = tcx.type_of(def_id);
                     let (adt, _) = adt_ty.expect_adt();
-                    let generic_params = tcx.generics_of(def_id).params;
-                    let expected_argc = generic_params.len();
-                    // there should only be generic args in the very last position the preceding
-                    // segments should be a module path, and the segments afterwards are type
-                    // relative
+                    let expected_argc = tcx.generics_of(def_id).params.len();
+                    // there should only be generic args in the very last position.
+                    // the preceding segments should be a module path
+                    // the segments afterwards are type relative
                     let (last, segs) = path.segments.split_last().unwrap();
                     self.ensure_no_generic_args(segs);
                     let generic_args = last.args;
 
                     let emit_err = |argc, err| {
-                        tcx.sess.emit_error(
-                            vec![
-                                (
-                                    tcx.defs().generics(adt.def_id).span,
-                                    format!(
-                                        "{} generic parameter{} declared here",
-                                        expected_argc,
-                                        pluralize!(expected_argc)
-                                    ),
+                        tcx.sess
+                            .build_error(path.span, err)
+                            .labelled_span(
+                                tcx.defs().generics(adt.def_id).span,
+                                format!(
+                                    "{} generic parameter{} declared here",
+                                    expected_argc,
+                                    pluralize!(expected_argc)
                                 ),
-                                (
-                                    path.span,
-                                    format!(
-                                        "but {} generic argument{} provided here",
-                                        argc,
-                                        pluralize!(argc)
-                                    ),
+                            )
+                            .labelled_span(
+                                generic_args.map(|args| args.span).unwrap_or(last.ident.span),
+                                format!(
+                                    "but {} generic argument{} provided here",
+                                    argc,
+                                    pluralize!(argc)
                                 ),
-                            ],
-                            err,
-                        );
+                            )
+                            .emit();
                         tcx.mk_ty_err()
                     };
 
@@ -106,8 +103,7 @@ pub trait TyConv<'tcx> {
                     };
                     adt_ty.subst(tcx, substs)
                 }
-                DefKind::Ctor(..) => todo!(),
-                DefKind::Fn | DefKind::AssocFn | DefKind::Impl => todo!(),
+                DefKind::Ctor(..) | DefKind::Fn | DefKind::AssocFn | DefKind::Impl => todo!(),
                 DefKind::Extern => todo!(),
             },
             Res::SelfTy { impl_def } => tcx.type_of(impl_def),
@@ -117,19 +113,16 @@ pub trait TyConv<'tcx> {
     }
 
     fn ensure_no_generic_args(&self, segments: &[ir::PathSegment<'tcx>]) {
-        for segments in segments {
-            if segments.args.is_some() {
-                panic!()
-            }
-        }
+        segments.iter().for_each(|segment| assert!(segment.args.is_none()))
     }
 
     fn lower_generics(&self, generics: &ir::Generics<'tcx>) -> &'tcx Generics<'tcx> {
+        let tcx = self.tcx();
         let params =
             generics.params.iter().map(|&ir::TyParam { id, index, ident, span, default }| {
                 TyParam { id, span, ident, index, default: default.map(|ty| self.ir_ty_to_ty(ty)) }
             });
-        self.tcx().alloc(Generics { params: self.tcx().alloc_iter(params) })
+        tcx.alloc(Generics { params: tcx.alloc_iter(params) })
     }
 
     fn ir_fn_sig_to_ty(&self, sig: &ir::FnSig<'tcx>) -> Ty<'tcx> {

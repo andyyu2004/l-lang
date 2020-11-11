@@ -5,6 +5,19 @@ use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
 use lcore::ty::{self, Subst, Ty};
 use std::ops::Deref;
+use thiserror::Error;
+
+pub type MethodResult<'tcx, T> = Result<T, MethodError<'tcx>>;
+
+#[derive(Error, Debug)]
+pub enum MethodError<'tcx> {
+    #[error("multiple applicable methods found")]
+    Ambiguous,
+    #[error("no applicable method found")]
+    None,
+    #[error("")]
+    _Marker(std::marker::PhantomData<&'tcx ()>),
+}
 
 // some ideas for dealing with overlapping trait impls
 // enum Specificity {
@@ -23,8 +36,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Res {
-        // TODO maybe require the generic args in segment later?
-        MethodResolutionCtx::new(self, xpat, self_ty, segment.ident).resolve()
+        // TODO maybe require the generic args in `segment` later?
+        let ctx = MethodResolutionCtx::new(self, xpat, self_ty, segment.ident);
+        ctx.resolve().unwrap_or_else(|err| {
+            self.sess.emit_error(xpat.span(), err);
+            Res::Err
+        })
     }
 }
 
@@ -69,20 +86,20 @@ impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
         ty.inherent_candidates(self)
     }
 
-    fn resolve(mut self) -> Res {
+    fn resolve(mut self) -> MethodResult<'tcx, Res> {
         self.collect_inherent_candidates();
         self.resolve_candidates()
     }
 
     /// chooses a single candidate from the possibilities and returns a resolution to it
-    fn resolve_candidates(mut self) -> Res {
+    fn resolve_candidates(mut self) -> MethodResult<'tcx, Res> {
         if self.inherent_candidates.len() == 1 {
             let selected = self.inherent_candidates.pop().unwrap();
-            Res::Def(selected.def_id, selected.def_kind)
+            Ok(Res::Def(selected.def_id, selected.def_kind))
         } else if self.inherent_candidates.len() < 1 {
-            panic!("no candidates found")
+            Err(MethodError::None)
         } else {
-            todo!("more than one candidate")
+            Err(MethodError::Ambiguous)
         }
     }
 
@@ -112,20 +129,6 @@ impl<'tcx> InherentCandidates<'tcx> for DefId {
 
         for &impl_def_id in inherent_impls {
             let impl_block = rcx.ir.items[&impl_def_id];
-            rcx.probe(|_| {
-                let impl_self_ty = rcx.impl_self_ty(impl_def_id);
-
-                // we only consider the impl if is "sufficiently general"
-                // we consider the impl sufficiently general if
-                // `impl_self_ty` can be unified to `rcx.self_ty`
-                match rcx.at(rcx.xpat.span()).equate(rcx.self_ty, impl_self_ty) {
-                    Ok(ty) => println!("{}", ty),
-                    Err(_) => println!(
-                        "impl_self_ty `{}` not sufficiently general for self_ty `{}`",
-                        impl_self_ty, rcx.self_ty
-                    ),
-                };
-            });
 
             match impl_block.kind {
                 ir::ItemKind::Impl { impl_item_refs, .. } =>
