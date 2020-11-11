@@ -6,7 +6,7 @@ use lcore::ty::*;
 
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
-        let sig = ty.expect_fn_ptr(self.tcx);
+        let sig = ty.expect_fn_ptr();
         self.llvm_fn_ty(sig)
     }
 

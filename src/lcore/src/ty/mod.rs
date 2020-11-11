@@ -108,7 +108,7 @@ impl<'tcx> Type<'tcx> {
         }
     }
 
-    pub fn expect_fn_ptr(&self, tcx: TyCtx<'tcx>) -> FnSig<'tcx> {
+    pub fn expect_fn_ptr(&self) -> FnSig<'tcx> {
         match self.kind {
             TyKind::FnPtr(fn_sig) => fn_sig,
             _ => panic!("expected TyKind::FnPtr, found {}", self),

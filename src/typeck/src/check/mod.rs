@@ -81,6 +81,10 @@ impl<'a, 'tcx> TyConv<'tcx> for InferCtx<'a, 'tcx> {
     fn infer_ty(&self, span: Span) -> Ty<'tcx> {
         self.new_infer_var(span)
     }
+
+    fn allow_infer(&self) -> bool {
+        true
+    }
 }
 
 impl<'a, 'tcx> Deref for InheritedCtx<'a, 'tcx> {

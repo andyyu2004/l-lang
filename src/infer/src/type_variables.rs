@@ -77,7 +77,8 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
     /// returns an error if the occurs check fails
     pub fn instantiate(&mut self, vid: TyVid, ty: Ty<'tcx>) -> TypeResult<'tcx, ()> {
         let root = self.root_var(vid);
-        // there maybe a way to check this without searching the type
+        // there probably is a way to check this without searching the type
+        // if this becomes a performance bottleneck we can have a look
         if ty.contains_tyvid(root) {
             Err(TypeError::OccursCheck(root, ty))
         } else {

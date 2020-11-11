@@ -19,8 +19,7 @@ pub struct Autoderef<'a, 'tcx> {
 
 impl<'a, 'tcx> Autoderef<'a, 'tcx> {
     pub fn new(infcx: &'a InferCtx<'a, 'tcx>, span: Span, base_ty: Ty<'tcx>) -> Self {
-        // if we don't instantiate, we may get an inference variable which is hard to deal with
-        let base_ty = infcx.inner.borrow_mut().type_variables().instantiate_if_known(base_ty);
+        let base_ty = infcx.partially_resolve_ty(span, base_ty);
         Self { infcx, span, base_ty, curr_ty: Some(base_ty), adjustments: Default::default() }
     }
 }

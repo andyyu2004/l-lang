@@ -18,7 +18,6 @@ enum Option<T> {
 }
 
 
-
 enum Expr {
     Int(int),
     Add(&Expr, &Expr),
@@ -30,6 +29,10 @@ fn main() -> int {
 	box Expr::Int(9),
     );
     eval(expr)
+}
+
+fn f(s: S) {
+
 }
 
 fn eval(expr: &Expr) -> int {

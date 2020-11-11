@@ -8,7 +8,13 @@ use span::Span;
 pub trait TyConv<'tcx> {
     fn tcx(&self) -> TyCtx<'tcx>;
 
+    /// new inference variable
     fn infer_ty(&self, span: Span) -> Ty<'tcx>;
+
+    /// whether or not inference variable are allowed
+    /// if not, then every type should be explicitly stated
+    /// e.g. this is false for parameter lists
+    fn allow_infer(&self) -> bool;
 
     fn ir_ty_to_ty(&self, ir_ty: &ir::Ty<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
@@ -54,41 +60,46 @@ pub trait TyConv<'tcx> {
                     let (last, segs) = path.segments.split_last().unwrap();
                     self.ensure_no_generic_args(segs);
                     let generic_args = last.args;
-                    // replace each generic parameter with either the specified type argument
-                    // or id generics
+
+                    let emit_err = |err| {
+                        tcx.sess.emit_error(
+                            vec![
+                                (
+                                    tcx.defs().generics(adt.def_id).span,
+                                    "generic parameter declaration",
+                                ),
+                                (path.span, "generic arguments"),
+                            ],
+                            err,
+                        );
+                        tcx.mk_ty_err()
+                    };
+
+                    // replace each generic parameter with either the specified type argument or id generics
                     let substs = match generic_args {
                         Some(args) =>
                             if args.args.len() != expected_argc {
-                                let err =
-                                    TypeError::GenericArgCount(expected_argc, args.args.len());
-                                tcx.sess
-                                    .build_error(
-                                        vec![
-                                            (
-                                                tcx.defs().generics(adt.def_id).span,
-                                                "generic parameter declaration",
-                                            ),
-                                            (path.span, "generic arguments"),
-                                        ],
-                                        err,
-                                    )
-                                    .emit();
-                                return tcx.mk_ty_err();
+                                return emit_err(TypeError::GenericArgCount(
+                                    expected_argc,
+                                    args.args.len(),
+                                ));
                             } else {
                                 tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
                             },
-                        None => Substs::id_for_def(tcx, def_id),
+                        // TODO this case below is probably not correct
+                        None if self.allow_infer() => Substs::id_for_def(tcx, def_id),
+                        None if expected_argc == 0 => Substs::empty(),
+                        None => return emit_err(TypeError::GenericArgCount(expected_argc, 0)),
                     };
                     adt_ty.subst(tcx, substs)
                 }
                 DefKind::Ctor(..) => todo!(),
-                DefKind::AssocFn | DefKind::Impl | DefKind::Fn => todo!(),
+                DefKind::Fn | DefKind::AssocFn | DefKind::Impl => todo!(),
                 DefKind::Extern => todo!(),
             },
             Res::SelfTy { impl_def } => tcx.type_of(impl_def),
-            Res::SelfVal { impl_def: _ } => todo!(),
+            Res::Local(..) | Res::SelfVal { .. } => panic!("unexpected resolution"),
             Res::Err => tcx.mk_ty_err(),
-            Res::Local(_) => panic!("unexpected resolution"),
         }
     }
 
@@ -128,5 +139,9 @@ impl<'tcx> TyConv<'tcx> for TyCtx<'tcx> {
 
     fn infer_ty(&self, _span: Span) -> Ty<'tcx> {
         panic!("tyctx can't lower types with inference variables")
+    }
+
+    fn allow_infer(&self) -> bool {
+        false
     }
 }

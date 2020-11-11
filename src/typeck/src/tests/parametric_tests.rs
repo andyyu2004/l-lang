@@ -18,6 +18,17 @@ fn incorrect_number_of_generic_args_in_struct_decl() {
 }
 
 #[test]
+fn disallow_inferred_path_generic_arguments_in_parameters() {
+    let src = r#"
+    struct S<T> { t: T }
+
+    fn f(t: S) {}
+    "#;
+
+    expect_error!(src);
+}
+
+#[test]
 fn simple_generic_struct() {
     let src = r#"
     struct G<T> {
