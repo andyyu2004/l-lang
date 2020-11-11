@@ -6,8 +6,8 @@ use std::fmt::{self, Debug, Display, Formatter};
 symbols! {
     Keywords {
         Empty: "",
-        UpperSelf: "Self",
-        LowerSelf: "self",
+        USelf: "Self",
+        LSelf: "self",
     }
     // the following must be in alphabetical order
     Symbols {

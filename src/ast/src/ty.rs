@@ -22,6 +22,8 @@ pub enum TyKind {
     Fn(Vec<P<Ty>>, Option<P<Ty>>),
     /// *<ty>
     Ptr(P<Ty>),
+    /// type of a self parameter
+    ImplicitSelf,
     /// _
     Infer,
     Err,

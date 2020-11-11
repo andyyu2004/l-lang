@@ -163,8 +163,18 @@ impl<'a> Resolver<'a> {
         })
     }
 
+    pub fn full_res(&self, id: NodeId) -> Res<NodeId> {
+        let partial_res = self.partial_res(id);
+        assert_eq!(partial_res.unresolved, 0);
+        partial_res.resolved
+    }
+
     pub fn partial_res(&self, id: NodeId) -> PartialRes {
         *self.partial_resolutions.get(&id).unwrap_or_else(|| panic!("unresolved node `{:?}`", id))
+    }
+
+    fn resolve_node(&mut self, node_id: NodeId, res: Res<NodeId>) {
+        self.partially_resolve_node(node_id, PartialRes::resolved(res));
     }
 
     /// writes the resolution for a given `NodeId` into the map

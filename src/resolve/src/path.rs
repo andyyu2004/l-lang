@@ -103,7 +103,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         path: &'ast Path,
         segment: &'ast PathSegment,
     ) -> ResResult<'a, Res<NodeId>> {
-        if let Some(&res) = self.scopes[NS::Type].lookup(&segment.ident) {
+        if let Some(&res) = self.scopes[NS::Type].lookup(segment.ident) {
             Ok(res)
         } else if let Some(res) = self.try_resolve_item(segment.ident) {
             Ok(res)

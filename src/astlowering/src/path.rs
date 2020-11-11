@@ -22,8 +22,9 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     }
 
     crate fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
-        let partial_res = self.resolver.partial_res(path.id);
-        assert_eq!(partial_res.unresolved, 0);
+        // this following line checks that this path is a fully resolved path
+        // otherwise, `lower_qpath` should be used
+        self.resolver.full_res(path.id);
         self.partial_lower_path(path)
     }
 
@@ -40,12 +41,8 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     }
 
     pub fn lower_path_segment(&mut self, segment: &PathSegment) -> ir::PathSegment<'ir> {
-        let &PathSegment { id, ident, ref args } = segment;
-        ir::PathSegment {
-            ident,
-            id: self.lower_node_id(id),
-            args: args.as_ref().map(|args| self.lower_generic_args(&args)),
-        }
+        let &PathSegment { id: _, ident, ref args } = segment;
+        ir::PathSegment { ident, args: args.as_ref().map(|args| self.lower_generic_args(&args)) }
     }
 
     fn lower_generic_args(&mut self, args: &GenericArgs) -> &'ir ir::GenericArgs<'ir> {

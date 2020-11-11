@@ -32,6 +32,7 @@ lazy_static! {
         "extern" => TokenType::Extern,
         "for" => TokenType::For,
         "loop" => TokenType::Loop,
+        "self" => TokenType::LSelf,
     };
 }
 
@@ -159,6 +160,7 @@ impl Lexer {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    LSelf,
     Extern,
     Const,
     For,

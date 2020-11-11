@@ -20,7 +20,7 @@ impl<T, U> S<T, U> {
 	Self { t, u }
     }
 
-    fn fst(self)  {
+    fn fst(&self)  {
 	/* self.t */
     }
 }

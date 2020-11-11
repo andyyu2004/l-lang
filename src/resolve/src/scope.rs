@@ -48,9 +48,9 @@ impl<T> Scopes<T> {
         self.curr_scope_mut().def(ident, value);
     }
 
-    pub fn lookup(&self, ident: &Ident) -> Option<&T> {
+    pub fn lookup(&self, ident: Ident) -> Option<&T> {
         for scope in self.scopes.iter().rev() {
-            if let Some(x) = scope.lookup(ident) {
+            if let Some(x) = scope.lookup(&ident) {
                 return Some(x);
             }
         }

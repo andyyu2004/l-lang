@@ -264,7 +264,7 @@ pub fn walk_ty<'ast>(visitor: &mut impl Visitor<'ast>, ty: &'ast Ty) {
             params.iter().for_each(|ty| visitor.visit_ty(ty));
             ret.iter().for_each(|ty| visitor.visit_ty(ty));
         }
-        TyKind::Err | TyKind::Infer => {}
+        TyKind::ImplicitSelf | TyKind::Err | TyKind::Infer => {}
     }
 }
 

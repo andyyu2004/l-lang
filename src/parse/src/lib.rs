@@ -23,7 +23,7 @@ use parse_error::{ParseError, ParseResult};
 pub use parser::Parser;
 use pattern_parser::*;
 use prog_parser::ProgParser;
-use span::Span;
+use span::{kw, Span};
 use stmt_parser::StmtParser;
 use ty_parser::*;
 
@@ -157,11 +157,7 @@ impl<'a> Parse<'a> for FnSigParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let require_type_annotations = self.require_type_annotations;
         parser.expect(TokenType::OpenParen)?;
-        let mut param_parser = PunctuatedParser {
-            inner: ParamParser { require_type_annotations },
-            separator: TokenType::Comma,
-        };
-        let inputs = param_parser.parse(parser)?;
+        let params = ParamsParser { require_type_annotations }.parse(parser)?;
         parser.expect(TokenType::CloseParen)?;
         let mut output = parser.accept(TokenType::RArrow).map(|_arrow| parser.parse_ty(false));
 
@@ -169,11 +165,64 @@ impl<'a> Parse<'a> for FnSigParser {
             output = Some(parser.mk_infer_ty())
         }
 
-        Ok(FnSig { params: inputs, ret_ty: output })
+        Ok(FnSig { params, ret_ty: output })
     }
 }
 
-/// parses function parameter <pat> (: <ty>)?
+pub struct ParamsParser {
+    pub require_type_annotations: bool,
+}
+
+impl<'a> Parse<'a> for ParamsParser {
+    type Output = Vec<Param>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let require_type_annotations = self.require_type_annotations;
+        let self_param = SelfParser.parse(parser)?;
+        let mut params = PunctuatedParser {
+            inner: ParamParser { require_type_annotations },
+            separator: TokenType::Comma,
+        }
+        .parse(parser)?;
+        if let Some(self_param) = self_param {
+            params.insert(0, self_param);
+        }
+        dbg!(&params);
+        Ok(params)
+    }
+}
+
+pub struct SelfParser;
+
+impl<'a> Parse<'a> for SelfParser {
+    type Output = Option<Param>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let boxed = parser.accept(TokenType::And);
+        let self_tok = match parser.accept(TokenType::LSelf) {
+            Some(self_param) => self_param,
+            None => return Ok(None),
+        };
+        let ty = if parser.accept(TokenType::Colon).is_some() {
+            parser.parse_ty(false)
+        } else {
+            let self_ty = parser.mk_ty(self_tok.span, TyKind::ImplicitSelf);
+            if let Some(amp) = boxed {
+                parser.mk_ty(amp.span.merge(self_ty.span), TyKind::Box(self_ty))
+            } else {
+                self_ty
+            }
+        };
+        let span = boxed.map(|tok| tok.span).unwrap_or(self_tok.span).merge(ty.span);
+        let pattern = parser.mk_pat(
+            span,
+            PatternKind::Ident(Ident::new(self_tok.span, kw::LSelf), None, Mutability::Mut),
+        );
+        Ok(Some(Param { span, id: parser.mk_id(), ty, pattern }))
+    }
+}
+
+/// parses a function parameter <pat> (: <ty>)?
 pub struct ParamParser {
     pub require_type_annotations: bool,
 }

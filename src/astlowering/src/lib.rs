@@ -25,6 +25,14 @@ use session::Session;
 use std::cell::Cell;
 use std::collections::BTreeMap;
 
+#[macro_export]
+macro_rules! arena_vec {
+    ($this:expr; $($x:expr),*) => ({
+        let a = [$($x),*];
+        $this.arena.alloc_from_iter(std::array::IntoIter::new(a))
+    });
+
+}
 ir::arena_types!(arena::declare_arena, [], 'tcx);
 
 pub struct AstLoweringCtx<'a, 'ir> {

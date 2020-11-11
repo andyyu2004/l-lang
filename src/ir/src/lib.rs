@@ -332,7 +332,6 @@ pub struct Param<'ir> {
 #[derive(Debug, Clone)]
 pub struct PathSegment<'ir> {
     pub ident: Ident,
-    pub id: ir::Id,
     pub args: Option<&'ir ir::GenericArgs<'ir>>,
 }
 

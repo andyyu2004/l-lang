@@ -30,11 +30,6 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         ret
     }
 
-    pub fn with_new_module<R>(&mut self, ident: Ident, f: impl FnOnce(&mut Self) -> R) -> R {
-        let new_module = self.new_module(ident);
-        self.with_module(new_module, f)
-    }
-
     pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         self.scopes[NS::Value].push(Scope::default());
         let ret = f(self);
@@ -68,10 +63,6 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         PatternResolutionCtx::new(self).resolve_pattern(pat);
     }
 
-    fn new_module(&mut self, name: Ident) -> ModuleId {
-        self.resolver.new_module(self.curr_module(), name)
-    }
-
     crate fn curr_module(&self) -> ModuleId {
         self.current_module.last().copied().unwrap()
     }
@@ -83,7 +74,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
 
     /// search for a local variable in the scopes otherwise look for a resolution to an item
     crate fn resolve_var(&mut self, ident: Ident) -> Option<Res<NodeId>> {
-        match self.scopes[NS::Value].lookup(&ident) {
+        match self.scopes[NS::Value].lookup(ident) {
             Some(&res) => Some(res),
             None => self.try_resolve_item(ident),
         }
@@ -113,7 +104,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     fn with_self_val<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_val_scope(|this| {
             let impl_def = this.resolver.def_id(impl_id);
-            this.def_val(Ident::unspanned(kw::UpperSelf), Res::SelfVal { impl_def });
+            this.def_val(Ident::unspanned(kw::USelf), Res::SelfVal { impl_def });
             f(this)
         })
     }
@@ -121,7 +112,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     fn with_self_ty<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_ty_scope(|this| {
             let impl_def = this.resolver.def_id(impl_id);
-            this.scopes[NS::Type].def(Ident::unspanned(kw::UpperSelf), Res::SelfTy { impl_def });
+            this.scopes[NS::Type].def(Ident::unspanned(kw::USelf), Res::SelfTy { impl_def });
             f(this)
         })
     }
@@ -213,6 +204,10 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
     fn visit_ty(&mut self, ty: &'ast Ty) {
         match &ty.kind {
             TyKind::Path(path) => self.resolve_path(path, NS::Type),
+            TyKind::ImplicitSelf => {
+                let res = *self.scopes[NS::Type].lookup(Ident::unspanned(kw::USelf)).unwrap();
+                self.resolver.resolve_node(ty.id, res);
+            }
             _ => {}
         };
         ast::walk_ty(self, ty);
