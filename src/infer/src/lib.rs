@@ -5,7 +5,7 @@ extern crate log;
 
 mod at;
 mod equate;
-mod instantiate;
+mod snapshot;
 mod type_variables;
 mod undo;
 
@@ -15,6 +15,7 @@ use error::{DiagnosticBuilder, MultiSpan};
 use index::Idx;
 use ir::{DefId, FieldIdx, Res};
 use lcore::ty::*;
+use snapshot::*;
 use span::Span;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
@@ -40,12 +41,12 @@ impl<'tcx> InferCtxBuilder<'tcx> {
 #[derive(Default)]
 pub struct InferCtxInner<'tcx> {
     type_variable_storage: TypeVariableStorage<'tcx>,
-    undo_log: InferCtxUndoLogs<'tcx>,
+    undo_logs: InferCtxUndoLogs<'tcx>,
 }
 
 impl<'tcx> InferCtxInner<'tcx> {
     pub fn type_variables(&mut self) -> TypeVariableTable<'_, 'tcx> {
-        self.type_variable_storage.with_log(&mut self.undo_log)
+        self.type_variable_storage.with_log(&mut self.undo_logs)
     }
 }
 
@@ -67,6 +68,15 @@ impl<'tcx> Deref for InferCtx<'_, 'tcx> {
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, tables: &'a RefCell<TypeckTables<'tcx>>) -> Self {
         Self { tcx, tables, has_error: Cell::new(false), inner: Default::default() }
+    }
+
+    /// execute `f` then undo any variables it creates
+    /// used to `probe` and try things that we don't want to persist
+    pub fn probe<R>(&self, f: impl FnOnce(&InferCtxSnapshot<'a, 'tcx>) -> R) -> R {
+        let snapshot = self.start_snapshot();
+        let r = f(&snapshot);
+        self.rollback_to(snapshot);
+        r
     }
 
     /// equates two types in the unification table
@@ -163,19 +173,15 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     /// instantiates the item with def_id, and records the substitutions
-    pub fn instatiate(
-        &self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
-        span: Span,
-        def_id: DefId,
-    ) -> Ty<'tcx> {
+    pub fn instatiate(&self, xpat: &dyn ir::ExprOrPat<'tcx>, def_id: DefId) -> Ty<'tcx> {
         let ty = self.type_of(def_id);
         match ty.kind {
             TyKind::Adt(..) | TyKind::FnPtr(..) => {}
             _ => unreachable!("not instantiable"),
         };
         let generics = self.generics_of(def_id);
-        let substs = self.mk_substs(generics.params.iter().map(|_| self.new_infer_var(span)));
+        let substs =
+            self.mk_substs(generics.params.iter().map(|_| self.new_infer_var(xpat.span())));
         self.record_substs(xpat.id(), substs);
         ty.subst(self.tcx, substs)
     }
@@ -195,28 +201,32 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     /// returns the same type purely for convenience
     pub fn record_ty(&self, id: ir::Id, ty: Ty<'tcx>) -> Ty<'tcx> {
         debug!("record ty {:?} : {}", id, ty);
+        // sometimes we deliberately overwrite the type for a given id
+        // e.g. in `check_body` so we don't perform the assertion
         self.tables.borrow_mut().node_types_mut().insert(id, ty);
         ty
     }
 
     pub fn record_substs(&self, id: ir::Id, substs: SubstsRef<'tcx>) {
         debug!("record substs {:?} : {}", id, substs);
-        self.tables.borrow_mut().node_substs_mut().insert(id, substs);
+        assert!(self.tables.borrow_mut().node_substs_mut().insert(id, substs).is_none());
     }
 
     pub fn record_type_relative_res(&self, id: ir::Id, res: Res) {
         debug!("record type relative res {:?} : {}", id, res);
-        self.tables.borrow_mut().type_relative_resolutions_mut().insert(id, res);
+        assert!(self.tables.borrow_mut().type_relative_resolutions_mut().insert(id, res).is_none());
     }
 
     pub fn record_adjustments(&self, id: ir::Id, adjustments: Vec<Adjustment<'tcx>>) {
         debug!("record adjustments {:?} : {:?}", id, adjustments);
-        self.tables.borrow_mut().adjustments_mut().insert(id, adjustments);
+        assert!(self.tables.borrow_mut().adjustments_mut().insert(id, adjustments).is_none());
     }
 
     pub fn record_field_index(&self, id: ir::Id, idx: usize) {
         debug!("record field_index {:?} : {}", id, idx);
-        self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx));
+        assert!(
+            self.tables.borrow_mut().field_indices_mut().insert(id, FieldIdx::new(idx)).is_none()
+        );
     }
 }
 

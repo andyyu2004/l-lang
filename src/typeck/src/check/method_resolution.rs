@@ -4,28 +4,27 @@ use crate::FnCtx;
 use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
 use lcore::ty::{self, Subst, Ty};
-use span::Span;
 use std::ops::Deref;
 
 // some ideas for dealing with overlapping trait impls
-enum Specificity {
-    // impl<V> Trait for V {}
-    Generic,
-    // impl<V> Trait for V where V : Bounds {}
-    BoundedGeneric,
-    // impl Trait for T {}
-    Type,
-}
+// enum Specificity {
+//     // impl<V> Trait for V {}
+//     Generic,
+//     // impl<V> Trait for V where V : Bounds {}
+//     BoundedGeneric,
+//     // impl Trait for T {}
+//     Type,
+// }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     crate fn resolve_type_relative_path(
         &mut self,
-        span: Span,
-        ty: Ty<'tcx>,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
+        self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Res {
         // TODO maybe require the generic args in segment later?
-        MethodResolutionCtx::new(self, span, ty, segment.ident).resolve()
+        MethodResolutionCtx::new(self, xpat, self_ty, segment.ident).resolve()
     }
 }
 
@@ -44,7 +43,8 @@ impl<'tcx> Candidate<'tcx> {
 
 crate struct MethodResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
-    span: Span,
+    // the expression or pattern that we are resolving
+    xpat: &'a dyn ir::ExprOrPat<'tcx>,
     self_ty: Ty<'tcx>,
     ident: Ident,
     inherent_candidates: Vec<Candidate<'tcx>>,
@@ -55,8 +55,13 @@ trait InherentCandidates<'tcx> {
 }
 
 impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
-    fn new(fcx: &'a FnCtx<'a, 'tcx>, span: Span, self_ty: Ty<'tcx>, ident: Ident) -> Self {
-        Self { fcx, self_ty, span, ident, inherent_candidates: Default::default() }
+    fn new(
+        fcx: &'a FnCtx<'a, 'tcx>,
+        xpat: &'a dyn ir::ExprOrPat<'tcx>,
+        self_ty: Ty<'tcx>,
+        ident: Ident,
+    ) -> Self {
+        Self { fcx, self_ty, xpat, ident, inherent_candidates: Default::default() }
     }
 
     fn collect_inherent_candidates(&mut self) {
@@ -105,17 +110,22 @@ impl<'tcx> InherentCandidates<'tcx> for DefId {
     fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         let inherent_impls = rcx.inherent_impls_of(*self);
 
-        for impl_def_id in inherent_impls {
+        for &impl_def_id in inherent_impls {
             let impl_block = rcx.ir.items[&impl_def_id];
-            // let _impl_self_ty = rcx.impl_self_ty(impl_def_id);
+            rcx.probe(|_| {
+                let impl_self_ty = rcx.impl_self_ty(impl_def_id);
 
-            // we only consider the impl if is "sufficiently general"
-            // we consider the impl sufficiently general if
-            // `impl_self_ty` can be unified to `rcx.self_ty`
-            // maybe doesn't work?
-            // dbg!(impl_self_ty);
-            // dbg!(rcx.self_ty);
-            // rcx.at(rcx.span).equate(rcx.self_ty, impl_self_ty).unwrap();
+                // we only consider the impl if is "sufficiently general"
+                // we consider the impl sufficiently general if
+                // `impl_self_ty` can be unified to `rcx.self_ty`
+                match rcx.at(rcx.xpat.span()).equate(rcx.self_ty, impl_self_ty) {
+                    Ok(ty) => println!("{}", ty),
+                    Err(_) => println!(
+                        "impl_self_ty `{}` not sufficiently general for self_ty `{}`",
+                        impl_self_ty, rcx.self_ty
+                    ),
+                };
+            });
 
             match impl_block.kind {
                 ir::ItemKind::Impl { impl_item_refs, .. } =>

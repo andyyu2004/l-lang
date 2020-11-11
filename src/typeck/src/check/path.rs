@@ -1,24 +1,14 @@
 use crate::{FnCtx, TyConv};
 use ir::{CtorKind, DefId, DefKind, QPath, Res};
-use lcore::ty::*;
-use span::Span;
+use lcore::ty::{self, *};
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    crate fn resolve_qpath(&mut self, qpath: &QPath<'tcx>) -> Res {
-        match qpath {
-            QPath::Resolved(path) => path.res,
-            QPath::TypeRelative(ty, segment) =>
-                self.resolve_type_relative_path(qpath.span(), self.ir_ty_to_ty(ty), segment),
-        }
-    }
-
     crate fn check_struct_path(
         &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &ir::QPath<'tcx>,
     ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
-        let ty = self.check_qpath(xpat, qpath);
-        let res = self.resolve_qpath(qpath);
+        let (res, ty) = self.resolve_qpath(xpat, qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {
             Res::Def(_, DefKind::Struct) => match ty.kind {
@@ -53,52 +43,60 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_qpath(
         &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &QPath<'tcx>,
     ) -> Ty<'tcx> {
+        let (_res, ty) = self.resolve_qpath(xpat, qpath);
+        ty
+    }
+
+    crate fn resolve_qpath(
+        &mut self,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
+        qpath: &QPath<'tcx>,
+    ) -> (Res, Ty<'tcx>) {
         match qpath {
-            QPath::Resolved(path) => self.check_expr_path(xpat, path),
+            QPath::Resolved(path) => (path.res, self.check_expr_path(xpat, path)),
             QPath::TypeRelative(self_ty, segment) =>
-                self.check_type_relative_path(xpat, qpath, self.ir_ty_to_ty(self_ty), segment),
+                self.check_type_relative_path(xpat, self.ir_ty_to_ty(self_ty), segment),
         }
     }
 
     crate fn check_type_relative_path(
         &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
-        qpath: &QPath<'tcx>,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
-    ) -> Ty<'tcx> {
-        let res = self.resolve_type_relative_path(xpat.span(), self_ty, segment);
+    ) -> (Res, Ty<'tcx>) {
+        let res = self.resolve_type_relative_path(xpat, self_ty, segment);
         self.record_type_relative_res(xpat.id(), res);
         let (def_id, def_kind) = res.expect_def();
-        self.check_res_def_with_partial_substs(xpat, qpath.span(), def_id, def_kind)
+        let ty = self.check_res_def(xpat, def_id, def_kind);
+        (res, ty)
     }
 
     crate fn check_expr_path(
         &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
         path: &ir::Path,
     ) -> Ty<'tcx> {
-        self.check_res(xpat, path.span, path.res)
+        self.check_res(xpat, path.res)
     }
 
-    fn check_res(&mut self, xpat: &impl ir::ExprOrPat<'tcx>, span: Span, res: Res) -> Ty<'tcx> {
+    fn check_res(&mut self, xpat: &dyn ir::ExprOrPat<'tcx>, res: Res) -> Ty<'tcx> {
         match res {
             Res::Local(id) => self.local_ty(id).ty,
-            Res::Def(def_id, def_kind) => self.check_res_def(xpat, span, def_id, def_kind),
-            Res::PrimTy(_) => panic!("found type resolution in value namespace"),
+            Res::Def(def_id, def_kind) => self.check_res_def(xpat, def_id, def_kind),
+            Res::PrimTy(..) => panic!("found type resolution in value namespace"),
             Res::SelfVal { impl_def } => self.type_of(impl_def),
             Res::SelfTy { .. } => todo!(),
             Res::Err => self.set_ty_err(),
         }
     }
 
-    fn check_res_def_with_partial_substs(
+    fn check_res_def(
         &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
-        span: Span,
+        xpat: &dyn ir::ExprOrPat<'tcx>,
         def_id: DefId,
         def_kind: DefKind,
     ) -> Ty<'tcx> {
@@ -108,18 +106,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::AssocFn
             | DefKind::Enum
             | DefKind::Struct
-            | DefKind::Ctor(..) => self.instatiate(xpat, span, def_id),
+            | DefKind::Ctor(..) => self.instatiate(xpat, def_id),
             DefKind::TyParam(..) | DefKind::Extern | DefKind::Impl => unreachable!(),
         }
-    }
-
-    fn check_res_def(
-        &mut self,
-        xpat: &impl ir::ExprOrPat<'tcx>,
-        span: Span,
-        def_id: DefId,
-        def_kind: DefKind,
-    ) -> Ty<'tcx> {
-        self.check_res_def_with_partial_substs(xpat, span, def_id, def_kind)
     }
 }

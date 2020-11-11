@@ -1,17 +1,34 @@
-use crate::type_variables;
+use crate::*;
 use ena::snapshot_vec as sv;
-use ena::undo_log::UndoLogs;
+use ena::undo_log::{Snapshots, UndoLogs};
 use ena::unify as ut;
 use lcore::ty;
 
-crate enum UndoLog<'tcx> {
-    TyVar(type_variables::UndoLog<'tcx>),
+pub enum UndoLog<'tcx> {
+    TyVar(type_variables::TyVarUndoLog<'tcx>),
 }
 
 #[derive(Default)]
 crate struct InferCtxUndoLogs<'tcx> {
-    logs: Vec<UndoLog<'tcx>>,
-    open_snapshot_count: usize,
+    crate logs: Vec<UndoLog<'tcx>>,
+    crate open_snapshots_count: usize,
+}
+
+impl<'tcx, T> UndoLogs<T> for InferCtxInner<'tcx>
+where
+    UndoLog<'tcx>: From<T>,
+{
+    fn num_open_snapshots(&self) -> usize {
+        self.undo_logs.num_open_snapshots()
+    }
+
+    fn push(&mut self, undo: T) {
+        self.undo_logs.push(undo)
+    }
+
+    fn clear(&mut self) {
+        self.undo_logs.clear()
+    }
 }
 
 impl<'tcx, T> UndoLogs<T> for InferCtxUndoLogs<'tcx>
@@ -19,7 +36,7 @@ where
     UndoLog<'tcx>: From<T>,
 {
     fn num_open_snapshots(&self) -> usize {
-        self.open_snapshot_count
+        self.open_snapshots_count
     }
 
     fn push(&mut self, undo: T) {
@@ -30,7 +47,7 @@ where
 
     fn clear(&mut self) {
         self.logs.clear();
-        self.open_snapshot_count = 0;
+        self.open_snapshots_count = 0;
     }
 
     fn extend<J>(&mut self, undos: J)
@@ -57,7 +74,7 @@ macro_rules! impl_from {
 }
 
 impl_from! {
-    TyVar(type_variables::UndoLog<'tcx>),
+    TyVar(type_variables::TyVarUndoLog<'tcx>),
     TyVar(sv::UndoLog<ut::Delegate<type_variables::TyVidEqKey<'tcx>>>),
     TyVar(sv::UndoLog<ut::Delegate<ty::TyVid>>),
 }

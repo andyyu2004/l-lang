@@ -3,14 +3,14 @@ use itertools::Itertools;
 
 pub trait TypeRelation<'tcx>: Sized {
     fn tcx(&self) -> TyCtx<'tcx>;
+    fn relate_tys(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>>;
+
     fn relate<T>(&mut self, a: T, b: T) -> TypeResult<'tcx, T>
     where
         T: Relate<'tcx>,
     {
         Relate::relate(self, a, b)
     }
-
-    fn relate_tys(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>>;
 
     /// recursively relates the inner types
     /// inference variable cases should be handled before calling this

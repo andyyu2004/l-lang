@@ -92,7 +92,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // a valid use of the pattern would be `Some(x)`
         // this should be an error instead as it should be handled under
         // PatKind::Variant not PatKind::Path
-        let res = self.resolve_qpath(qpath);
+        let (res, path_ty) = self.resolve_qpath(pat, qpath);
         match res {
             // this is the good case
             Res::Def(_, DefKind::Ctor(CtorKind::Unit)) => (),
@@ -101,7 +101,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Res::Err => return self.set_ty_err(),
             res => unreachable!("unexpected res `{}`", res),
         };
-        let path_ty = self.check_qpath(pat, qpath);
         self.equate(pat.span, ty, path_ty);
         path_ty
     }

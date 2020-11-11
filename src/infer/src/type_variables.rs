@@ -1,12 +1,13 @@
 use crate::*;
 use ena::snapshot_vec as sv;
+use ena::undo_log::Rollback;
 use ena::unify as ut;
 use lcore::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};
 use rustc_hash::FxHashMap;
 use span::Span;
 use std::marker::PhantomData;
 
-crate enum UndoLog<'tcx> {
+pub enum TyVarUndoLog<'tcx> {
     EqRelation(sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>),
     SubRelation(sv::UndoLog<ut::Delegate<ty::TyVid>>),
 }
@@ -29,6 +30,15 @@ pub struct TypeVariableStorage<'tcx> {
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
 }
 
+impl<'tcx> Rollback<TyVarUndoLog<'tcx>> for TypeVariableStorage<'tcx> {
+    fn reverse(&mut self, undo: TyVarUndoLog<'tcx>) {
+        match undo {
+            TyVarUndoLog::EqRelation(undo) => self.eq_relations.reverse(undo),
+            TyVarUndoLog::SubRelation(_) => unimplemented!(),
+        }
+    }
+}
+
 impl<'tcx> TypeVariableStorage<'tcx> {
     crate fn with_log<'a>(
         &'a mut self,
@@ -38,7 +48,7 @@ impl<'tcx> TypeVariableStorage<'tcx> {
     }
 }
 
-pub(crate) type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
+crate type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
     ut::InPlace<T, &'a mut ut::UnificationStorage<T>, &'a mut InferCtxUndoLogs<'tcx>>,
 >;
 
@@ -148,14 +158,14 @@ impl<'tcx> ut::UnifyKey for TyVidEqKey<'tcx> {
     }
 }
 
-impl<'tcx> From<sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>> for UndoLog<'tcx> {
+impl<'tcx> From<sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>> for TyVarUndoLog<'tcx> {
     fn from(l: sv::UndoLog<ut::Delegate<TyVidEqKey<'tcx>>>) -> Self {
-        UndoLog::EqRelation(l)
+        TyVarUndoLog::EqRelation(l)
     }
 }
 
-impl<'tcx> From<sv::UndoLog<ut::Delegate<ty::TyVid>>> for UndoLog<'tcx> {
+impl<'tcx> From<sv::UndoLog<ut::Delegate<ty::TyVid>>> for TyVarUndoLog<'tcx> {
     fn from(l: sv::UndoLog<ut::Delegate<ty::TyVid>>) -> Self {
-        UndoLog::SubRelation(l)
+        TyVarUndoLog::SubRelation(l)
     }
 }

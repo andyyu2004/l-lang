@@ -21,8 +21,14 @@ impl<T, U> S<T, U> {
     }
 }
 
-/* impl S<int, int> { */
-/*     fn new(u: int, t: int) -> Self { */
-/*         Self { t, u } */
-/*     } */
-/* } */
+impl S<bool, bool> {
+    fn new(u: bool, t: bool) -> Self {
+	Self { t, u }
+    }
+}
+
+impl S<int, int> {
+    fn new(u: int, t: int) -> Self {
+	Self { t, u }
+    }
+}
