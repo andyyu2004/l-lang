@@ -187,7 +187,6 @@ impl<'a> Parse<'a> for ParamsParser {
         if let Some(self_param) = self_param {
             params.insert(0, self_param);
         }
-        dbg!(&params);
         Ok(params)
     }
 }
@@ -206,11 +205,15 @@ impl<'a> Parse<'a> for SelfParser {
         let ty = if parser.accept(TokenType::Colon).is_some() {
             parser.parse_ty(false)
         } else {
-            let self_ty = parser.mk_ty(self_tok.span, TyKind::ImplicitSelf);
             if let Some(amp) = boxed {
-                parser.mk_ty(amp.span.merge(self_ty.span), TyKind::Box(self_ty))
+                // these two blocks are intentionally separate
+                // for nicer spans as we want the `&` to be part
+                // of `self_ty`s span
+                let span = amp.span.merge(self_tok.span);
+                let self_ty = parser.mk_ty(span, TyKind::ImplicitSelf);
+                parser.mk_ty(span, TyKind::Box(self_ty))
             } else {
-                self_ty
+                parser.mk_ty(self_tok.span, TyKind::ImplicitSelf)
             }
         };
         let span = boxed.map(|tok| tok.span).unwrap_or(self_tok.span).merge(ty.span);

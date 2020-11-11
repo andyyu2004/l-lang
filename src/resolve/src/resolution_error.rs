@@ -18,4 +18,6 @@ pub enum ResolutionError {
     DuplicateModuleDefinition(Ident),
     #[error("identifier `{0}` bound more than once in the same pattern")]
     DuplicatePatternIdentifier(Ident),
+    #[error("self parameter is only allowed in functions declared within an impl block")]
+    SelfParameterInFreeFunction,
 }

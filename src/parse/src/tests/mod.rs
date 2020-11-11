@@ -2,7 +2,7 @@ use super::*;
 use index::Idx;
 use span::{Span, ROOT_FILE_IDX};
 
-macro parse_expect_err($src:expr) {{
+macro expect_parse_err($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
     driver.parse().unwrap_err()
 }}
@@ -10,7 +10,7 @@ macro parse_expect_err($src:expr) {{
 #[test]
 fn parse_fn_sig_missing_type_annotation() {
     let src = "fn f(x) { x }";
-    parse_expect_err!(src);
+    expect_parse_err!(src);
 }
 
 macro parse_expr($src:expr) {{

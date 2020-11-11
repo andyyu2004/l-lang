@@ -205,7 +205,12 @@ impl<'a, 'ast> ast::Visitor<'ast> for LateResolver<'a, '_, 'ast> {
         match &ty.kind {
             TyKind::Path(path) => self.resolve_path(path, NS::Type),
             TyKind::ImplicitSelf => {
-                let res = *self.scopes[NS::Type].lookup(Ident::unspanned(kw::USelf)).unwrap();
+                let res = self.scopes[NS::Type]
+                    .lookup(Ident::unspanned(kw::USelf))
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        self.emit_error(ty.span, ResolutionError::SelfParameterInFreeFunction)
+                    });
                 self.resolver.resolve_node(ty.id, res);
             }
             _ => {}

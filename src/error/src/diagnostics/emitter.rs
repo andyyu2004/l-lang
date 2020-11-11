@@ -32,6 +32,7 @@ impl Emitter for TextEmitter {
             .with_message(&diagnostic.error)
             .with_labels(labels)
             .with_notes(diagnostic.notes.clone());
+
         span::with_source_map(|files| emit(&mut writer, &Config::default(), files, &diag)).unwrap()
     }
 }

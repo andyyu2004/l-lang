@@ -5,22 +5,22 @@ fn occurs_check() {
     // f : ?0
     // ?0 = () -> ?0
     // ?0 = () -> () -> ?0
-    expect_error_expr!("fn f() { f }; 5")
+    expect_type_error_expr!("fn f() { f }; 5")
 }
 
 #[test]
 fn check_lambda_wrong_arity_0() {
-    expect_error_expr!("(fn () => 5)(3); 5");
+    expect_type_error_expr!("(fn () => 5)(3); 5");
 }
 
 #[test]
 fn check_lambda_wrong_arity_1() {
-    expect_error_expr!("(fn (x) => x)(3, 5); 5");
+    expect_type_error_expr!("(fn (x) => x)(3, 5); 5");
 }
 
 #[test]
 fn check_call_non_function() {
-    expect_error_expr!("5(5); 5");
+    expect_type_error_expr!("5(5); 5");
 }
 
 #[test]

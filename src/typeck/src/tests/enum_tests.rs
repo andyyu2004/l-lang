@@ -13,7 +13,7 @@ fn enum_nullary_ctor_vs_unit_ctor() {
         5
     }"#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn enum_mismatching_ctor_patterns() {
         }
     }"#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 
     let src = r#"
     enum Option {
@@ -48,5 +48,5 @@ fn enum_mismatching_ctor_patterns() {
         }
     }"#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }

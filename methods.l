@@ -15,14 +15,17 @@ struct S<T, U> {
     u: U,
 }
 
+fn fst(&self)  {
+}
+
 impl<T, U> S<T, U> {
     fn new(u: U, t: T) -> Self {
 	Self { t, u }
     }
 
-    fn fst(&self)  {
+    /* fn fst(&self)  { */
 	/* self.t */
-    }
+    /* } */
 }
 
 

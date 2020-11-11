@@ -3,5 +3,5 @@ use super::*;
 #[test]
 fn function_without_body() {
     let src = "fn main();";
-    expect_error!(src);
+    expect_lowering_error!(src);
 }

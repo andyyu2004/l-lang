@@ -1,15 +1,15 @@
-use super::{expect_error, typeck};
+use super::{expect_type_error, typeck};
 
 // tuple tests are also here as they are similar to structs in many aspects
 #[test]
 fn check_tuple_out_of_bounds() {
-    expect_error!("fn main() -> int { (1,2).2 }")
+    expect_type_error!("fn main() -> int { (1,2).2 }")
 }
 
 #[test]
 fn check_struct_duplicate_fields() {
     let src = r#"struct S { x:int, x: int }"#;
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -25,17 +25,17 @@ fn check_struct_field_assign() {
 
 #[test]
 fn check_struct_badly_typed() {
-    expect_error!("struct S { x: int } fn main() -> int { S { x: false }; 5 }");
+    expect_type_error!("struct S { x: int } fn main() -> int { S { x: false }; 5 }");
 }
 
 #[test]
 fn check_struct_missing_fields() {
-    expect_error!("struct S { x: int, y: bool } fn main() -> int { S { x: 3 }; 5 }");
+    expect_type_error!("struct S { x: int, y: bool } fn main() -> int { S { x: 3 }; 5 }");
 }
 
 #[test]
 fn check_struct_set_field_multiple() {
-    expect_error!("struct S { x: int } fn main() -> int { S { x: 4, x: 5 }; 5 }");
+    expect_type_error!("struct S { x: int } fn main() -> int { S { x: 4, x: 5 }; 5 }");
 }
 
 #[test]

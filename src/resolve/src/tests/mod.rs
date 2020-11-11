@@ -7,7 +7,7 @@ macro resolve($src:expr) {{
     driver.gen_ir().unwrap();
 }}
 
-macro expect_error($src:expr) {{
+macro expect_resolution_error($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
     let _ = driver.gen_ir();
     // unwrapping ir is not sufficient as we continue with typechecking even if there are some
@@ -21,4 +21,9 @@ macro expect_error($src:expr) {{
 #[test]
 fn resolve_redeclaration() {
     let _res = resolve!("fn main() -> int { let x = 5; let x = x; x }");
+}
+
+#[test]
+fn self_in_free_function() {
+    let _res = expect_resolution_error!("fn f(self) {}");
 }

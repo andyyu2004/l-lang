@@ -14,7 +14,7 @@ fn incorrect_number_of_generic_args_in_struct_decl() {
     }
     "#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -25,7 +25,7 @@ fn disallow_inferred_path_generic_arguments_in_parameters() {
     fn f(t: S) {}
     "#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn check_generic_parameters_are_the_same() {
         g.x
     }"#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn incorrect_number_of_generic_args() {
         let s: S<_, _>;
         5
     }"#;
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn conflicting_generic_args_in_path() {
         s.t
     }"#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -208,6 +208,5 @@ fn nested_generic_structs() {
         g.s.t
     }"#;
 
-    let prog = typeck!(src);
-    eprintln!("{}", prog);
+    typeck!(src);
 }

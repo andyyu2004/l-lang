@@ -20,7 +20,7 @@ fn typeck_struct_pattern_field_bound_more_than_once() {
     }
     "#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
@@ -35,7 +35,7 @@ fn typeck_invalid_struct_pattern_unknown_field() {
     }
     "#;
 
-    expect_error!(src);
+    expect_type_error!(src);
 }
 
 #[test]
