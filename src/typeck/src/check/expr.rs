@@ -2,7 +2,7 @@ use super::FnCtx;
 use crate::{Autoderef, TyConv};
 use ast::{BinOp, Ident, Lit, Mutability, UnaryOp};
 use itertools::Itertools;
-use lcore::ty::*;
+use lcore::ty::{self, *};
 use rustc_hash::FxHashMap;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
@@ -81,35 +81,38 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         for ty in &mut autoderef {
             match ty.kind {
-                Adt(adt, substs) if adt.kind != AdtKind::Enum => {
+                ty::Adt(adt, substs) if adt.kind != AdtKind::Enum => {
                     let variant = adt.single_variant();
-                    let ty = if let Some((idx, field)) =
+                    if let Some((idx, field)) =
                         variant.fields.iter().find_position(|f| f.ident == ident)
                     {
                         // note the id belongs is the id of the entire field expression
                         // not just the identifier or base
                         self.record_field_index(expr.id, idx);
-                        field.ty(self.tcx, substs)
-                    } else {
-                        self.emit_ty_err(expr.span, TypeError::UnknownField(base_ty, ident))
-                    };
-                    return (autoderef, ty);
+                        return (autoderef, field.ty(self.tcx, substs));
+                    }
                 }
-                Tuple(tys) => {
+                ty::Tuple(tys) => {
                     // `tuple.i` literally means the i'th element of tuple
-                    // so we can weirdly parse the identifier as the actual index
-                    let idx = ident.as_str().parse::<usize>().unwrap();
-                    self.record_field_index(expr.id, idx);
-                    let ty = match tys.get(idx) {
-                        Some(ty) => ty,
-                        None =>
-                            self.emit_ty_err(expr.span, TypeError::TupleOutOfBounds(idx, tys.len())),
-                    };
-                    return (autoderef, ty);
+                    // so weirdly, we can parse the identifier as the actual index
+                    if let Ok(idx) = ident.as_str().parse::<usize>() {
+                        self.record_field_index(expr.id, idx);
+                        let ty = match tys.get(idx) {
+                            Some(ty) => ty,
+                            None => self.emit_ty_err(
+                                expr.span,
+                                TypeError::TupleOutOfBounds(idx, tys.len()),
+                            ),
+                        };
+                        return (autoderef, ty);
+                    }
                 }
                 _ => continue,
             }
         }
+
+        // TODO search for methods
+
         (autoderef, self.emit_ty_err(expr.span, TypeError::BadFieldAccess(base_ty)))
     }
 
@@ -126,7 +129,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// checks the expressions is a lvalue and mutable, hence assignable
     fn check_lvalue(&mut self, l: &ir::Expr) {
-        if !l.is_lvalue() {
+        if !l.is_syntactic_lvalue() {
             self.emit_ty_err(
                 l.span,
                 TypeError::Msg(format!("expected lvalue as target of assignment")),

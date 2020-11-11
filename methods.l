@@ -22,7 +22,7 @@ impl<T, U> S<T, U> {
     }
 
     fn fst(self) -> T {
-	self.t
+	self.fst()
     }
 }
 

@@ -17,14 +17,11 @@ impl<'ir> From<&'ir ir::Block<'ir>> for Expr<'ir> {
 }
 
 impl<'ir> ir::Expr<'ir> {
-    pub fn is_lvalue(&self) -> bool {
+    pub fn is_syntactic_lvalue(&self) -> bool {
         match self.kind {
             ir::ExprKind::Path(qpath) => match qpath {
                 QPath::Resolved(path) => match path.res {
                     Res::Local(..) => true,
-                    Res::SelfTy { .. } => false,
-                    // self could be an lvalue if it is a &self?
-                    Res::SelfVal { .. } => todo!(),
                     Res::Def(_, def_kind) => match def_kind {
                         DefKind::Fn
                         | DefKind::AssocFn
@@ -35,6 +32,7 @@ impl<'ir> ir::Expr<'ir> {
                         | DefKind::TyParam(_)
                         | DefKind::Ctor(..) => false,
                     },
+                    Res::SelfTy { .. } | Res::SelfVal { .. } => false,
                     Res::Err => false,
                     Res::PrimTy(_) => unreachable!(),
                 },
