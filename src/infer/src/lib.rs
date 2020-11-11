@@ -112,17 +112,18 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         let mut inner = self.inner.borrow_mut();
         let mut type_variables = inner.type_variables();
         // generates an indexed substitution based on the contents of the UnificationTable
-        let mut substs = self.tcx.mk_substs((0..type_variables.storage.tyvid_count).map(|index| {
-            let vid = TyVid { index };
-            let val = type_variables.probe(vid);
-            match val {
-                TyVarValue::Known(ty) => type_variables.instantiate_if_known(ty),
-                TyVarValue::Unknown => {
-                    let span = type_variables.storage.tyvar_data[&vid].span;
-                    self.emit_ty_err(span, TypeError::InferenceFailure)
+        let mut substs =
+            self.tcx.mk_substs((0..type_variables.storage.tyvar_data.len()).map(|index| {
+                let vid = TyVid { index: index as u32 };
+                let val = type_variables.probe(vid);
+                match val {
+                    TyVarValue::Known(ty) => type_variables.instantiate_if_known(ty),
+                    TyVarValue::Unknown => {
+                        let span = type_variables.storage.tyvar_data[&vid].span;
+                        self.emit_ty_err(span, TypeError::InferenceFailure)
+                    }
                 }
-            }
-        }));
+            }));
 
         // repeatedly substitute its inference variables for its value
         // until it contains no inference variables or failure

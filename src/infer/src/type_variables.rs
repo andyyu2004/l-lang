@@ -26,7 +26,6 @@ pub struct TyVarData {
 pub struct TypeVariableStorage<'tcx> {
     crate tyvar_data: FxHashMap<TyVid, TyVarData>,
     /// the number of type variables that have been generated
-    crate tyvid_count: u32,
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
 }
 
@@ -94,8 +93,6 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         let mut tables = self.eq_relations();
         let key = tables.new_key(TyVarValue::Unknown);
         self.storage.tyvar_data.insert(key.vid, TyVarData { span });
-        debug_assert_eq!(key.vid.index, self.storage.tyvid_count);
-        self.storage.tyvid_count += 1;
         key.vid
     }
 }
