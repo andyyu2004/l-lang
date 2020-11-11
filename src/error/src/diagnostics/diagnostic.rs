@@ -1,6 +1,5 @@
 use crate::{Emitter, LError, LResult, TextEmitter};
-use codespan_reporting::diagnostic::Label;
-use span::{FileIdx, Span};
+use span::Span;
 use std::error::Error;
 use std::fmt::{self, Debug, Formatter};
 use std::ops::Deref;
@@ -83,7 +82,7 @@ impl Diagnostic {
     }
 
     pub fn get_first_span(&self) -> Span {
-        self.labelled_spans[0].0
+        self.spans[0]
     }
 }
 

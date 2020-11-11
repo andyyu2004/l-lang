@@ -20,10 +20,10 @@ macro expect_resolution_error($src:expr) {{
 
 #[test]
 fn resolve_redeclaration() {
-    let _res = resolve!("fn main() -> int { let x = 5; let x = x; x }");
+    resolve!("fn main() -> int { let x = 5; let x = x; x }");
 }
 
 #[test]
 fn self_in_free_function() {
-    let _res = expect_resolution_error!("fn f(self) {}");
+    expect_resolution_error!("fn f(self) {}");
 }

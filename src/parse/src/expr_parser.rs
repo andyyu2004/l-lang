@@ -146,6 +146,14 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             LiteralParser { kind, span }.parse(parser)
         } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
             RetParser { ret_kw }.parse(parser)
+        } else if let Some(self_kw) = parser.accept(TokenType::LSelf) {
+            let segment = PathSegment {
+                id: parser.mk_id(),
+                ident: Ident::new(self_kw.span, kw::LSelf),
+                args: None,
+            };
+            let path = parser.mk_path(self_kw.span, vec![segment]);
+            Ok(parser.mk_expr(self_kw.span, ExprKind::Path(path)))
         } else if parser.is_ident()?.is_some() {
             PathExprParser.parse(parser)
         } else if let Some(tok) = parser.accept(TokenType::False) {
