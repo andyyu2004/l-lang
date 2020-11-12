@@ -36,7 +36,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         self.equate(pat.span, ty, struct_ty);
 
-        let (_adt_ty, substs) = struct_ty.expect_adt();
+        let (_adt, substs) = struct_ty.expect_adt();
 
         // keep track of fields seen to avoid duplicate bindings
         // however, we allow incomplete bindings like javascript

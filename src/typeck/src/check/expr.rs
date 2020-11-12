@@ -160,7 +160,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Some(tys) => tys,
             None => return self.tcx.mk_ty_err(),
         };
-        let (_adt_ty, substs) = ty.expect_adt();
+        let (_adt, substs) = ty.expect_adt();
         self.check_struct_expr_fields(expr, substs, variant_ty, fields);
         ty
     }

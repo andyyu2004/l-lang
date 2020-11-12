@@ -11,22 +11,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let (res, ty) = self.resolve_qpath(xpat, qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {
-            Res::Def(_, DefKind::Struct | DefKind::TypeAlias) => match ty.kind {
-                Adt(adt, _substs) => Some((adt.single_variant(), ty)),
-                _ => unreachable!(),
-            },
+            Res::Def(_, DefKind::Struct | DefKind::TypeAlias) | Res::SelfVal { .. } =>
+                match ty.kind {
+                    Adt(adt, _substs) => Some((adt.single_variant(), ty)),
+                    _ => unreachable!(),
+                },
             Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.variant_with_ctor(def_id), ty)),
                 _ => unreachable!(),
             },
-            Res::SelfVal { impl_def } => {
-                let self_ty = self.type_of(impl_def);
-                assert_eq!(self_ty, ty);
-                match self_ty.kind {
-                    Adt(adt, _substs) => Some((adt.single_variant(), self_ty)),
-                    _ => unreachable!(),
-                }
-            }
             Res::Local(..) => None,
             Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
             _ => unimplemented!("{} (res: {:?})", qpath, res),
