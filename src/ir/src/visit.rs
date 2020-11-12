@@ -179,6 +179,10 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_generics(generics);
             v.visit_body(body);
         }
+        ir::ItemKind::TypeAlias(generics, ty) => {
+            v.visit_generics(generics);
+            v.visit_ty(ty);
+        }
         ir::ItemKind::Enum(generics, variants) => {
             v.visit_generics(generics);
             variants.iter().for_each(|variant| v.visit_variant(variant));

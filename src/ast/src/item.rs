@@ -19,6 +19,7 @@ impl Item {
             ItemKind::Impl { generics: g, .. }
             | ItemKind::Fn(_, g, _)
             | ItemKind::Struct(g, _)
+            | ItemKind::TypeAlias(g, _)
             | ItemKind::Enum(g, _) => Some(g),
             ItemKind::Extern(..) => None,
         }
@@ -31,6 +32,7 @@ pub enum ItemKind {
     Enum(Generics, Vec<Variant>),
     Struct(Generics, VariantKind),
     Extern(Vec<P<ForeignItem>>),
+    TypeAlias(Generics, P<Ty>),
     Impl { generics: Generics, trait_path: Option<Path>, self_ty: P<Ty>, items: Vec<P<AssocItem>> },
 }
 
@@ -45,6 +47,7 @@ impl ItemKind {
             ItemKind::Struct(..) => "struct",
             ItemKind::Impl { .. } => "impl block",
             ItemKind::Extern(..) => "extern block",
+            ItemKind::TypeAlias(..) => "type alias",
         }
     }
 }
@@ -60,6 +63,7 @@ impl TryFrom<ItemKind> for AssocItemKind {
     fn try_from(kind: ItemKind) -> Result<Self, Self::Error> {
         match kind {
             ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
+            ItemKind::TypeAlias(..) => todo!("assoc types not impl"),
             ItemKind::Extern(..)
             | ItemKind::Enum(..)
             | ItemKind::Struct(..)
@@ -100,6 +104,8 @@ impl Display for Item {
                 sig.ret_ty,
                 body.as_ref().unwrap()
             ),
+            ItemKind::TypeAlias(generics, ty) =>
+                write!(f, "{} type {}<{}> = {}", self.vis.node, self.ident, generics, ty),
             ItemKind::Enum(_generics, _variants) => todo!(),
             ItemKind::Struct(_generics, _variant_kind) => todo!(),
             ItemKind::Impl { .. } => todo!(),

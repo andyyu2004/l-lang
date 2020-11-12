@@ -26,6 +26,7 @@ impl<'ir> Item<'ir> {
             ItemKind::Impl { generics: g, .. }
             | ItemKind::Fn(_, g, _)
             | ItemKind::Struct(g, _)
+            | ItemKind::TypeAlias(g, _)
             | ItemKind::Enum(g, _) => Some(g),
             ItemKind::Extern(_) => None,
         }
@@ -35,6 +36,7 @@ impl<'ir> Item<'ir> {
 #[derive(Debug, Copy, Clone)]
 pub enum ItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),
+    TypeAlias(&'ir ir::Generics<'ir>, &'ir ir::Ty<'ir>),
     Struct(&'ir ir::Generics<'ir>, ir::VariantKind<'ir>),
     Enum(&'ir ir::Generics<'ir>, &'ir [ir::Variant<'ir>]),
     Extern(&'ir [ir::ForeignItem<'ir>]),

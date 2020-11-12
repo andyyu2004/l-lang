@@ -173,7 +173,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     }
 
     /// instantiates the item with def_id, and records the substitutions
-    pub fn instatiate(&self, xpat: &dyn ir::ExprOrPat<'tcx>, def_id: DefId) -> Ty<'tcx> {
+    pub fn instantiate(&self, xpat: &dyn ir::ExprOrPat<'tcx>, def_id: DefId) -> Ty<'tcx> {
         let ty = self.type_of(def_id);
         match ty.kind {
             TyKind::Adt(..) | TyKind::FnPtr(..) => {}

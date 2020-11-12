@@ -34,9 +34,14 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let kind = lctx.lower_variant_kind(variant_kind);
                     ir::ItemKind::Struct(generics, kind)
                 }
+                ItemKind::Extern(items) => lctx.lower_foreign_mod(items),
+                ItemKind::TypeAlias(generics, ty) => {
+                    let generics = lctx.lower_generics(generics);
+                    let ty = lctx.lower_ty(ty);
+                    ir::ItemKind::TypeAlias(generics, ty)
+                }
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
-                ItemKind::Extern(items) => lctx.lower_foreign_mod(items),
             };
             let item = ir::Item { span, id, vis, ident, kind };
             lctx.def_node(id.def, item);

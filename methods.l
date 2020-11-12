@@ -9,6 +9,11 @@ fn main() -> int {
     0
 }
 
+type P<T> = S<T, int>;
+
+fn construct_p() -> P<bool> {
+    P { t: false, u: 9 }
+}
 
 struct S<T, U> {
     t: T,
@@ -22,7 +27,8 @@ impl<T, U> S<T, U> {
     }
 
     fn fst(self) -> T {
-	self.fst()
+	self.t
+	/* self.fst() */
     }
 }
 

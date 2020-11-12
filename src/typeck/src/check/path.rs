@@ -1,6 +1,6 @@
 use crate::{FnCtx, TyConv};
 use ir::{CtorKind, DefId, DefKind, QPath, Res};
-use lcore::ty::{self, *};
+use lcore::ty::*;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     crate fn check_struct_path(
@@ -11,8 +11,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let (res, ty) = self.resolve_qpath(xpat, qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {
-            Res::Def(_, DefKind::Struct) => match ty.kind {
+            Res::Def(_, DefKind::Struct | DefKind::TypeAlias) => match ty.kind {
                 Adt(adt, _substs) => Some((adt.single_variant(), ty)),
+                _ => unreachable!(),
+            },
+            Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
+                Adt(adt, _substs) => Some((adt.variant_with_ctor(def_id), ty)),
                 _ => unreachable!(),
             },
             Res::SelfVal { impl_def } => {
@@ -23,11 +27,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     _ => unreachable!(),
                 }
             }
-            Res::Def(def_id, DefKind::Ctor(CtorKind::Struct)) => match ty.kind {
-                Adt(adt, _substs) => Some((adt.variant_with_ctor(def_id), ty)),
-                _ => unreachable!(),
-            },
-            Res::Local(_) => None,
+            Res::Local(..) => None,
             Res::PrimTy(..) | ir::Res::SelfTy { .. } => unreachable!(),
             _ => unimplemented!("{} (res: {:?})", qpath, res),
         };
@@ -105,11 +105,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         match def_kind {
             // instantiate type parameters with a fresh substitution
-            DefKind::Fn
+            DefKind::Ctor(..)
+            | DefKind::Fn
             | DefKind::AssocFn
             | DefKind::Enum
-            | DefKind::Struct
-            | DefKind::Ctor(..) => self.instatiate(xpat, def_id),
+            | DefKind::TypeAlias
+            | DefKind::Struct => self.instantiate(xpat, def_id),
             DefKind::TyParam(..) | DefKind::Extern | DefKind::Impl => unreachable!(),
         }
     }

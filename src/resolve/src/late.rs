@@ -82,7 +82,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
 
     fn resolve_item(&mut self, item: &'ast Item) {
         match &item.kind {
-            ItemKind::Fn(_, g, _) => self.with_generics(g, |r| ast::walk_item(r, item)),
+            ItemKind::Fn(_, g, _) | ItemKind::TypeAlias(g, _) =>
+                self.with_generics(g, |r| ast::walk_item(r, item)),
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),

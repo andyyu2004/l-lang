@@ -5,7 +5,6 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-astlowering = { path = "../astlowering" }
 span = { path = "../span" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
@@ -15,6 +14,7 @@ ir = { path = "../ir" }
 tir = { path = "../tir" }
 mir = { path = "../mir" }
 lcore = { path = "../lcore" }
+astlowering = { path = "../astlowering" }
 codegen = { path = "../codegen" }
 session = { path = "../session" }
 error = { path = "../error" }

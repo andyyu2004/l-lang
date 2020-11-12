@@ -24,13 +24,14 @@ impl<'ir> ir::Expr<'ir> {
                     Res::Local(..) => true,
                     Res::Def(_, def_kind) => match def_kind {
                         DefKind::Fn
+                        | DefKind::TyParam(..)
+                        | DefKind::Ctor(..)
                         | DefKind::AssocFn
                         | DefKind::Enum
+                        | DefKind::TypeAlias
                         | DefKind::Struct
                         | DefKind::Impl
-                        | DefKind::Extern
-                        | DefKind::TyParam(_)
-                        | DefKind::Ctor(..) => false,
+                        | DefKind::Extern => false,
                     },
                     Res::SelfTy { .. } | Res::SelfVal { .. } => false,
                     Res::Err => false,

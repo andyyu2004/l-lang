@@ -77,8 +77,9 @@ impl HasDefKind for ast::ItemKind {
             ast::ItemKind::Fn(..) => DefKind::Fn,
             ast::ItemKind::Enum(..) => DefKind::Enum,
             ast::ItemKind::Struct(..) => DefKind::Struct,
-            ast::ItemKind::Impl { .. } => DefKind::Impl,
             ast::ItemKind::Extern(..) => DefKind::Extern,
+            ast::ItemKind::TypeAlias(..) => DefKind::TypeAlias,
+            ast::ItemKind::Impl { .. } => DefKind::Impl,
         }
     }
 }
@@ -120,6 +121,7 @@ impl CtorKind {
 pub enum DefKind {
     Fn,
     AssocFn,
+    TypeAlias,
     Enum,
     Struct,
     Impl,
@@ -151,6 +153,7 @@ impl Display for DefKind {
             },
             DefKind::TyParam(_) => write!(f, "type parameter"),
             DefKind::Extern => write!(f, "extern block"),
+            DefKind::TypeAlias => write!(f, "type alias"),
         }
     }
 }

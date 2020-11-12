@@ -3,6 +3,23 @@
 use super::*;
 
 #[test]
+fn generic_type_alias() {
+    let src = r#"
+    type P<T> = S<T, int>;
+
+    fn construct_p() -> P<bool> {
+        P { t: false, u: 9 }
+    }
+
+    struct S<T, U> {
+        t: T,
+        u: U,
+    }"#;
+
+    typeck!(src);
+}
+
+#[test]
 fn incorrect_number_of_generic_args_in_struct_decl() {
     let src = r#"
     struct S<T> {

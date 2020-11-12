@@ -4,13 +4,14 @@ use lex::{Tok, TokenType};
 use span::Span;
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 6] = [
+const ITEM_KEYWORDS: [TokenType; 7] = [
     TokenType::Fn,
     TokenType::Struct,
     TokenType::Enum,
     TokenType::Const,
     TokenType::Impl,
     TokenType::Extern,
+    TokenType::Type,
 ];
 
 pub struct ItemParser;
@@ -32,7 +33,7 @@ impl<'a> Parse<'a> for ItemParser {
                 TokenType::Fn => FnParser.parse(parser),
                 TokenType::Struct => StructDeclParser.parse(parser),
                 TokenType::Enum => EnumParser.parse(parser),
-                TokenType::Type => TypeAliasParser { type_kw: kw }.parse(parser),
+                TokenType::Type => TypeAliasParser.parse(parser),
                 _ => unreachable!(),
             },
             false,
@@ -113,16 +114,18 @@ impl<'a> Parse<'a> for ImplParser {
     }
 }
 
-pub struct TypeAliasParser {
-    type_kw: Tok,
-}
+pub struct TypeAliasParser;
 
 impl<'a> Parse<'a> for TypeAliasParser {
     type Output = ItemKind;
 
-    fn parse(&mut self, _parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let _ = self.type_kw;
-        todo!()
+    /// type <ident> "<" <generics> ">" = <type>
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let generics = parser.parse_generics()?;
+        parser.expect(TokenType::Eq)?;
+        let ty = parser.parse_ty(false);
+        parser.expect(TokenType::Semi)?;
+        Ok(ItemKind::TypeAlias(generics, ty))
     }
 }
 

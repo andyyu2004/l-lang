@@ -109,9 +109,10 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), box body.to_tir(ctx));
                 tir::Item { kind, span, id, ident, vis }
             }
-            ir::ItemKind::Impl { .. } => todo!(),
             ir::ItemKind::Extern(_) => todo!(),
-            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => unreachable!(),
+            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) | ir::ItemKind::TypeAlias(_, _) =>
+                unreachable!(),
+            ir::ItemKind::Impl { .. } => todo!(),
         }
     }
 }
@@ -335,10 +336,10 @@ impl<'tcx> LoweringCtx<'tcx> {
                     }
                 }
                 DefKind::Ctor(..) => todo!(),
-                DefKind::TyParam(_) => panic!(),
                 DefKind::Extern => todo!(),
                 DefKind::Impl => todo!(),
                 DefKind::Enum => todo!(),
+                DefKind::TyParam(..) | DefKind::TypeAlias => panic!(),
             },
             Res::SelfTy { .. } => todo!(),
             Res::SelfVal { impl_def } => {

@@ -1,6 +1,6 @@
 //! conversion of `ir::Ty` to `lcore::ty::Ty`
 
-use ir::{DefKind, QPath, Res};
+use ir::{DefId, DefKind, QPath, Res};
 use lcore::ty::{FnSig, Generics, Subst, Substs, Ty, TyCtx, TyParam, TypeError};
 use span::Span;
 
@@ -43,69 +43,74 @@ pub trait TyConv<'tcx> {
         }
     }
 
+    fn def_to_ty(&self, path: &ir::Path<'tcx>, def_id: DefId, def_kind: DefKind) -> Ty<'tcx> {
+        let tcx = self.tcx();
+        match def_kind {
+            DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident(def_id)),
+            DefKind::Struct | DefKind::Enum | DefKind::TypeAlias => {
+                let expected_argc = tcx.generics_of(def_id).params.len();
+                // there should only be generic args in the very last position.
+                // the preceding segments should be a module path
+                // the segments afterwards are type relative
+                let (last, segs) = path.segments.split_last().unwrap();
+                self.ensure_no_generic_args(segs);
+                let generic_args = last.args;
+
+                let emit_err = |argc, err| {
+                    tcx.sess
+                        .build_error(path.span, err)
+                        .labelled_span(
+                            tcx.defs().generics(def_id).span,
+                            format!(
+                                "{} generic parameter{} declared here",
+                                expected_argc,
+                                pluralize!(expected_argc)
+                            ),
+                        )
+                        .labelled_span(
+                            generic_args.map(|args| args.span).unwrap_or(last.ident.span),
+                            format!(
+                                "but {} generic argument{} provided here",
+                                argc,
+                                pluralize!(argc)
+                            ),
+                        )
+                        .emit();
+                    tcx.mk_ty_err()
+                };
+
+                // replace each generic parameter with either the specified
+                // type argument or id generics
+                let substs = match generic_args {
+                    Some(args) => {
+                        let argc = args.args.len();
+                        if argc != expected_argc {
+                            return emit_err(
+                                argc,
+                                TypeError::GenericArgCount(expected_argc, args.args.len()),
+                            );
+                        } else {
+                            tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
+                        }
+                    }
+                    // TODO this case below is probably not correct
+                    None if self.allow_infer() => Substs::id_for_def(tcx, def_id),
+                    None if expected_argc == 0 => Substs::empty(),
+                    None => return emit_err(0, TypeError::GenericArgCount(expected_argc, 0)),
+                };
+                let ty = tcx.type_of(def_id);
+                ty.subst(tcx, substs)
+            }
+            DefKind::Ctor(..) | DefKind::Fn | DefKind::AssocFn | DefKind::Impl => todo!(),
+            DefKind::Extern => todo!(),
+        }
+    }
+
     fn path_to_ty(&self, path: &ir::Path<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
         match path.res {
             Res::PrimTy(prim_ty) => tcx.mk_prim_ty(prim_ty),
-            Res::Def(def_id, def_kind) => match def_kind {
-                DefKind::TyParam(idx) => tcx.mk_ty_param(def_id, idx, tcx.defs().ident(def_id)),
-                DefKind::Struct | DefKind::Enum => {
-                    let adt_ty = tcx.type_of(def_id);
-                    let (adt, _) = adt_ty.expect_adt();
-                    let expected_argc = tcx.generics_of(def_id).params.len();
-                    // there should only be generic args in the very last position.
-                    // the preceding segments should be a module path
-                    // the segments afterwards are type relative
-                    let (last, segs) = path.segments.split_last().unwrap();
-                    self.ensure_no_generic_args(segs);
-                    let generic_args = last.args;
-
-                    let emit_err = |argc, err| {
-                        tcx.sess
-                            .build_error(path.span, err)
-                            .labelled_span(
-                                tcx.defs().generics(adt.def_id).span,
-                                format!(
-                                    "{} generic parameter{} declared here",
-                                    expected_argc,
-                                    pluralize!(expected_argc)
-                                ),
-                            )
-                            .labelled_span(
-                                generic_args.map(|args| args.span).unwrap_or(last.ident.span),
-                                format!(
-                                    "but {} generic argument{} provided here",
-                                    argc,
-                                    pluralize!(argc)
-                                ),
-                            )
-                            .emit();
-                        tcx.mk_ty_err()
-                    };
-
-                    // replace each generic parameter with either the specified type argument or id generics
-                    let substs = match generic_args {
-                        Some(args) => {
-                            let argc = args.args.len();
-                            if argc != expected_argc {
-                                return emit_err(
-                                    argc,
-                                    TypeError::GenericArgCount(expected_argc, args.args.len()),
-                                );
-                            } else {
-                                tcx.mk_substs(args.args.iter().map(|ty| self.ir_ty_to_ty(ty)))
-                            }
-                        }
-                        // TODO this case below is probably not correct
-                        None if self.allow_infer() => Substs::id_for_def(tcx, def_id),
-                        None if expected_argc == 0 => Substs::empty(),
-                        None => return emit_err(0, TypeError::GenericArgCount(expected_argc, 0)),
-                    };
-                    adt_ty.subst(tcx, substs)
-                }
-                DefKind::Ctor(..) | DefKind::Fn | DefKind::AssocFn | DefKind::Impl => todo!(),
-                DefKind::Extern => todo!(),
-            },
+            Res::Def(def_id, def_kind) => self.def_to_ty(path, def_id, def_kind),
             Res::SelfTy { impl_def } => tcx.type_of(impl_def),
             Res::Local(..) | Res::SelfVal { .. } => panic!("unexpected resolution"),
             Res::Err => tcx.mk_ty_err(),

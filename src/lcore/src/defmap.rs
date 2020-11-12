@@ -61,9 +61,10 @@ impl<'tcx> DefMap<'tcx> {
         match node {
             DefNode::Item(item) => match item.kind {
                 ir::ItemKind::Fn(_, generics, _)
-                | ir::ItemKind::Impl { generics, .. }
                 | ir::ItemKind::Enum(generics, _)
-                | ir::ItemKind::Struct(generics, _) => generics,
+                | ir::ItemKind::TypeAlias(generics, _)
+                | ir::ItemKind::Struct(generics, _)
+                | ir::ItemKind::Impl { generics, .. } => generics,
                 ir::ItemKind::Extern(_) => unreachable!(),
             },
             DefNode::ForeignItem(foreign_item) => match foreign_item.kind {

@@ -188,12 +188,24 @@ pub struct Generics {
     pub params: Vec<TyParam>,
 }
 
+impl Display for Generics {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", util::join(&self.params, ","))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct TyParam {
     pub span: Span,
     pub id: NodeId,
     pub ident: Ident,
     pub default: Option<P<Ty>>,
+}
+
+impl Display for TyParam {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ident)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

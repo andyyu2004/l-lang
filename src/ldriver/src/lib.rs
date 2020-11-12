@@ -1,4 +1,5 @@
 #![feature(crate_visibility_modifier)]
+#![feature(never_type)]
 #![feature(once_cell)]
 #![feature(decl_macro)]
 
@@ -49,7 +50,13 @@ pub fn main() -> ! {
     let _emit_mir = matches.is_present("emit-mir");
     // TODO take optimization level as parameter
 
-    let path = matches.value_of("INPUT").unwrap();
+    let path_str = matches.value_of("INPUT").unwrap();
+    let path = Path::new(path_str);
+    if !path.exists() {
+        eprintln!("file `{}` does not exist", path_str);
+        std::process::exit(1)
+    }
+
     let driver = Driver::new(path);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),
