@@ -3,12 +3,12 @@ mod lexing;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use lexing::TokenKind;
+pub use lexing::{Base, LiteralKind};
 use maplit::hashmap;
 use span::{self, with_interner, with_source_map, FileIdx, Span, Symbol};
 use std::collections::HashMap;
+use std::fmt::{self, Display, Formatter};
 use std::ops::Range;
-
-pub use lexing::{Base, LiteralKind};
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
@@ -24,6 +24,7 @@ lazy_static! {
         "else" => TokenType::Else,
         "return" => TokenType::Return,
         "mut" => TokenType::Mut,
+        "use" => TokenType::Use,
         "type" => TokenType::Type,
         "box" => TokenType::Box,
         "unsafe" => TokenType::Unsafe,
@@ -156,10 +157,19 @@ impl Lexer {
     }
 }
 
+impl Display for TokenType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            TokenType::Ident(sym) => write!(f, "identifier `{}`", sym),
+            _ => write!(f, "{:?}", self),
+        }
+    }
+}
 /// token kind that has been further processed to include keywords
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Use,
     LSelf,
     Extern,
     Const,

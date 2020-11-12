@@ -428,7 +428,7 @@ impl<'a> Parse<'a> for PathExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let path = parser.parse_path()?;
+        let path = parser.parse_expr_path()?;
         let span = path.span;
         // if the path is immediately followed by an open brace, it may be a struct expr
         // SomeStruct {
@@ -521,7 +521,7 @@ impl<'a> Parse<'a> for GenericArgsParser {
                     parser.backtrack(1);
                     return Ok(None);
                 }
-                PathKind::Module => todo!(),
+                PathKind::Module => panic!(),
                 PathKind::Type => lt,
             },
             None => return Ok(None),

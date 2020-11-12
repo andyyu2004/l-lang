@@ -1,5 +1,6 @@
+use crate::*;
 use ast::{Ident, NodeId};
-use ir::{ModuleId, Res, ROOT_MODULE};
+use ir::Res;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::marker::PhantomData;

@@ -30,6 +30,7 @@ where
         match item.kind {
             ir::ItemKind::Fn(..) => self.visit_fn(item.id.def),
             ir::ItemKind::Extern(..)
+            | ir::ItemKind::Use(..)
             | ir::ItemKind::TypeAlias(..)
             | ir::ItemKind::Enum(..)
             | ir::ItemKind::Struct(..)

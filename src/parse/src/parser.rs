@@ -52,7 +52,7 @@ impl<'a> Parser<'a> {
 
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
-    pub(super) fn with_span<R>(
+    crate fn with_span<R>(
         &mut self,
         parser: &mut impl Parse<'a, Output = R>,
         include_prev: bool,
@@ -149,11 +149,15 @@ impl<'a> Parser<'a> {
         PatParser.parse(self)
     }
 
+    pub fn parse_module_path(&mut self) -> ParseResult<'a, Path> {
+        PathParser { kind: PathKind::Module }.parse(self)
+    }
+
     pub fn parse_type_path(&mut self) -> ParseResult<'a, Path> {
         PathParser { kind: PathKind::Type }.parse(self)
     }
 
-    pub fn parse_path(&mut self) -> ParseResult<'a, Path> {
+    pub fn parse_expr_path(&mut self) -> ParseResult<'a, Path> {
         PathParser { kind: PathKind::Expr }.parse(self)
     }
 
@@ -210,6 +214,7 @@ impl<'a> Parser<'a> {
     }
 
     crate fn mk_item(&self, span: Span, vis: Visibility, ident: Ident, kind: ItemKind) -> P<Item> {
+        // validates identifier and visibility
         match kind {
             ItemKind::Fn(..) if !ident.is_lower() =>
                 self.build_err(span, ParseError::ExpectLowercaseIdentifier(*ident)).emit(),
@@ -217,6 +222,15 @@ impl<'a> Parser<'a> {
                 self.build_err(span, ParseError::ExpectUppercaseIdentifier(*ident)).emit(),
             _ => {}
         }
+
+        match kind {
+            ItemKind::Extern(..) | ItemKind::Impl { .. } =>
+                if *vis == VisibilityKind::Public {
+                    self.build_err(span, ParseError::RedundantVisibilityQualifier).emit()
+                },
+            _ => {}
+        }
+
         box Item { span, id: self.mk_id(), ident, vis, kind }
     }
 

@@ -79,6 +79,7 @@ impl HasDefKind for ast::ItemKind {
             ast::ItemKind::Struct(..) => DefKind::Struct,
             ast::ItemKind::Extern(..) => DefKind::Extern,
             ast::ItemKind::TypeAlias(..) => DefKind::TypeAlias,
+            ast::ItemKind::Use(..) => DefKind::Use,
             ast::ItemKind::Impl { .. } => DefKind::Impl,
         }
     }
@@ -125,6 +126,7 @@ pub enum DefKind {
     Enum,
     Struct,
     Impl,
+    Use,
     /// extern block
     Extern,
     /// constructor of enum variant
@@ -154,6 +156,7 @@ impl Display for DefKind {
             DefKind::TyParam(_) => write!(f, "type parameter"),
             DefKind::Extern => write!(f, "extern block"),
             DefKind::TypeAlias => write!(f, "type alias"),
+            DefKind::Use => write!(f, "use import"),
         }
     }
 }

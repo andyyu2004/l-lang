@@ -16,7 +16,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
             ir::ItemKind::TypeAlias(_, ty) => tcx.ir_ty_to_ty(ty),
-            ir::ItemKind::Extern(..) => unreachable!(),
+            ir::ItemKind::Use(..) | ir::ItemKind::Extern(..) => panic!(),
         },
         ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) =>
             self::type_of_variant(tcx, variant),

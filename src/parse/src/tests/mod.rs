@@ -8,6 +8,12 @@ macro expect_parse_err($src:expr) {{
 }}
 
 #[test]
+fn parse_redundant_visibility_qualifier() {
+    let src = "pub impl T {}";
+    expect_parse_err!(src);
+}
+
+#[test]
 fn parse_fn_sig_missing_type_annotation() {
     let src = "fn f(x) { x }";
     expect_parse_err!(src);

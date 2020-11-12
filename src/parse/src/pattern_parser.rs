@@ -13,7 +13,7 @@ impl<'a> Parse<'a> for PatParser {
         if let Some(token) = parser.accept(TokenType::Underscore) {
             Ok(parser.mk_pat(token.span, PatternKind::Wildcard))
         } else if parser.is_ident()?.is_some() {
-            let path = parser.parse_path()?;
+            let path = parser.parse_expr_path()?;
             if parser.accept(TokenType::OpenBrace).is_some() {
                 let (span, fields) =
                     PunctuatedParser { inner: FieldPatParser, separator: TokenType::Comma }

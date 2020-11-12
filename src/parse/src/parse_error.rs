@@ -8,9 +8,9 @@ pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
 
 #[derive(Debug, Error)]
 pub enum ParseError {
-    #[error("expected `{0:?}` found `{:?}`", .1.ttype)]
+    #[error("expected `{0:?}` found `{}`", .1.ttype)]
     Expected(TokenType, Tok),
-    #[error("expected one of `{0:?}` found `{:?}`", .1.ttype)]
+    #[error("expected one of `{0:?}` found `{}`", .1.ttype)]
     ExpectedOneOf(Vec<TokenType>, Tok),
     #[error("invalid impl item kind: {}", .0.descr())]
     InvalidImplItem(ItemKind),
@@ -24,6 +24,8 @@ pub enum ParseError {
     MissingSemi,
     #[error("unimplemented in parser")]
     Unimpl,
+    #[error("redundant visibility qualifier")]
+    RedundantVisibilityQualifier,
     #[error("generic arguments not allowed in module paths")]
     GenericArgsInModulePath,
     #[error("generic arguments in expression path require `::` prefix")]

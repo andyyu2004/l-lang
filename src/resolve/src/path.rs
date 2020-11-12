@@ -1,8 +1,8 @@
 //! this module implements path resolution
 
-use crate::{LateResolver, ResResult, ResolutionError, NS};
+use crate::*;
 use ast::*;
-use ir::{ModuleId, PartialRes, Res};
+use ir::{PartialRes, Res};
 
 impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     /// `id` belongs to the `Ty` or `Expr`

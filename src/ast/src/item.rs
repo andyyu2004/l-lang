@@ -21,7 +21,7 @@ impl Item {
             | ItemKind::Struct(g, _)
             | ItemKind::TypeAlias(g, _)
             | ItemKind::Enum(g, _) => Some(g),
-            ItemKind::Extern(..) => None,
+            ItemKind::Use(..) | ItemKind::Extern(..) => None,
         }
     }
 }
@@ -33,6 +33,7 @@ pub enum ItemKind {
     Struct(Generics, VariantKind),
     Extern(Vec<P<ForeignItem>>),
     TypeAlias(Generics, P<Ty>),
+    Use(Path),
     Impl { generics: Generics, trait_path: Option<Path>, self_ty: P<Ty>, items: Vec<P<AssocItem>> },
 }
 
@@ -48,6 +49,7 @@ impl ItemKind {
             ItemKind::Impl { .. } => "impl block",
             ItemKind::Extern(..) => "extern block",
             ItemKind::TypeAlias(..) => "type alias",
+            ItemKind::Use(..) => "use import",
         }
     }
 }
@@ -64,7 +66,8 @@ impl TryFrom<ItemKind> for AssocItemKind {
         match kind {
             ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
             ItemKind::TypeAlias(..) => todo!("assoc types not impl"),
-            ItemKind::Extern(..)
+            ItemKind::Use(..)
+            | ItemKind::Extern(..)
             | ItemKind::Enum(..)
             | ItemKind::Struct(..)
             | ItemKind::Impl { .. } => Err(kind),
@@ -110,6 +113,7 @@ impl Display for Item {
             ItemKind::Struct(_generics, _variant_kind) => todo!(),
             ItemKind::Impl { .. } => todo!(),
             ItemKind::Extern(_) => todo!(),
+            ItemKind::Use(path) => write!(f, "use {}", path),
         }
     }
 }

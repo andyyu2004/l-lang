@@ -1,6 +1,6 @@
-use super::Resolver;
+use crate::*;
 use ast::*;
-use ir::{CtorKind, DefKind, HasDefKind, ModuleId, ROOT_MODULE};
+use ir::{CtorKind, DefKind, HasDefKind};
 
 /// collects all `DefId`s
 /// this forward declares all "hoisted" things such as items & constructors

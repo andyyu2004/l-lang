@@ -76,13 +76,6 @@ index::newtype_index!(
 );
 
 index::newtype_index!(
-    pub struct ModuleId {
-        DEBUG_FORMAT = "ModuleId({})",
-        const ROOT_MODULE = 0
-    }
-);
-
-index::newtype_index!(
     pub struct ParamIdx {
         DEBUG_FORMAT ="{}"
     }

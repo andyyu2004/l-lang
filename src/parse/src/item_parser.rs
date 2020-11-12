@@ -1,10 +1,9 @@
 use crate::*;
 use ast::*;
-use lex::{Tok, TokenType};
-use span::Span;
+use lex::TokenType;
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 7] = [
+const ITEM_KEYWORDS: [TokenType; 8] = [
     TokenType::Fn,
     TokenType::Struct,
     TokenType::Enum,
@@ -12,6 +11,7 @@ const ITEM_KEYWORDS: [TokenType; 7] = [
     TokenType::Impl,
     TokenType::Extern,
     TokenType::Type,
+    TokenType::Use,
 ];
 
 pub struct ItemParser;
@@ -21,11 +21,15 @@ impl<'a> Parse<'a> for ItemParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
-        if let Some(impl_kw) = parser.accept(TokenType::Impl) {
-            return ImplParser { impl_kw, vis }.parse(parser);
-        } else if let Some(extern_kw) = parser.accept(TokenType::Extern) {
-            return ExternParser { extern_kw }.parse(parser);
+        // these items have a different syntax to the rest
+        if let Some(_impl_kw) = parser.accept(TokenType::Impl) {
+            return ImplParser { vis }.parse(parser);
+        } else if let Some(_extern_kw) = parser.accept(TokenType::Extern) {
+            return ExternParser { vis }.parse(parser);
+        } else if let Some(_use_kw) = parser.accept(TokenType::Use) {
+            return UseParser { vis }.parse(parser);
         }
+
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
@@ -45,8 +49,24 @@ impl<'a> Parse<'a> for ItemParser {
     }
 }
 
+pub struct UseParser {
+    vis: Visibility,
+}
+
+impl<'a> Parse<'a> for UseParser {
+    type Output = P<Item>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let path = parser.parse_module_path()?;
+        let span = self.vis.span.merge(path.span);
+        let kind = ItemKind::Use(path);
+        parser.expect(TokenType::Semi)?;
+        Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
+    }
+}
+
 pub struct ExternParser {
-    extern_kw: Tok,
+    vis: Visibility,
 }
 
 impl<'a> Parse<'a> for ExternParser {
@@ -66,20 +86,14 @@ impl<'a> Parse<'a> for ExternParser {
             };
         };
 
-        let span = self.extern_kw.span.merge(close_brace.span);
+        let span = self.vis.span.merge(close_brace.span);
 
         let kind = ItemKind::Extern(foreign_items);
-        Ok(parser.mk_item(
-            span,
-            Visibility::new(Span::default(), VisibilityKind::Public),
-            Ident::empty(),
-            kind,
-        ))
+        Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
     }
 }
 
 pub struct ImplParser {
-    impl_kw: Tok,
     vis: Visibility,
 }
 
@@ -108,7 +122,7 @@ impl<'a> Parse<'a> for ImplParser {
                 Err(kind) => parser.build_err(span, ParseError::InvalidImplItem(kind)).emit(),
             };
         };
-        let span = self.impl_kw.span.merge(close_brace.span);
+        let span = self.vis.span.merge(close_brace.span);
         let kind = ItemKind::Impl { generics, trait_path, self_ty, items };
         Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
     }

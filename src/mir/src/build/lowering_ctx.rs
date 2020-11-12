@@ -110,9 +110,11 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 tir::Item { kind, span, id, ident, vis }
             }
             ir::ItemKind::Extern(_) => todo!(),
-            ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) | ir::ItemKind::TypeAlias(_, _) =>
-                unreachable!(),
-            ir::ItemKind::Impl { .. } => todo!(),
+            ir::ItemKind::Use(..)
+            | ir::ItemKind::Enum(..)
+            | ir::ItemKind::Struct(..)
+            | ir::ItemKind::TypeAlias(..)
+            | ir::ItemKind::Impl { .. } => unreachable!(),
         }
     }
 }
@@ -339,7 +341,7 @@ impl<'tcx> LoweringCtx<'tcx> {
                 DefKind::Extern => todo!(),
                 DefKind::Impl => todo!(),
                 DefKind::Enum => todo!(),
-                DefKind::TyParam(..) | DefKind::TypeAlias => panic!(),
+                DefKind::TyParam(..) | DefKind::TypeAlias | DefKind::Use => panic!(),
             },
             Res::SelfTy { .. } => todo!(),
             Res::SelfVal { impl_def } => {

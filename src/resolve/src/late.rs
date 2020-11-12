@@ -1,7 +1,7 @@
 use crate::*;
 use ast::*;
 use index::Idx;
-use ir::{ModuleId, ParamIdx, Res, ROOT_MODULE};
+use ir::{ParamIdx, Res};
 use span::kw;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
@@ -87,7 +87,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
-            ItemKind::Extern(_) => ast::walk_item(self, item),
+            ItemKind::Extern(..) => ast::walk_item(self, item),
+            ItemKind::Use(..) => {}
         }
     }
 

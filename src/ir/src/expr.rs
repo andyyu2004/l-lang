@@ -22,20 +22,10 @@ impl<'ir> ir::Expr<'ir> {
             ir::ExprKind::Path(qpath) => match qpath {
                 QPath::Resolved(path) => match path.res {
                     Res::Local(..) => true,
-                    Res::Def(_, def_kind) => match def_kind {
-                        DefKind::Fn
-                        | DefKind::TyParam(..)
-                        | DefKind::Ctor(..)
-                        | DefKind::AssocFn
-                        | DefKind::Enum
-                        | DefKind::TypeAlias
-                        | DefKind::Struct
-                        | DefKind::Impl
-                        | DefKind::Extern => false,
-                    },
+                    Res::Def(..) => false,
                     Res::SelfTy { .. } | Res::SelfVal { .. } => false,
                     Res::Err => false,
-                    Res::PrimTy(_) => unreachable!(),
+                    Res::PrimTy(..) => unreachable!(),
                 },
                 ir::QPath::TypeRelative(..) => todo!(),
             },

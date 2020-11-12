@@ -332,5 +332,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             items.iter().for_each(|item| visitor.visit_assoc_item(item));
         }
         ItemKind::Extern(items) => items.iter().for_each(|item| visitor.visit_foreign_item(item)),
+        ItemKind::Use(path) => visitor.visit_path(path),
     }
 }

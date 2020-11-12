@@ -1,11 +1,13 @@
 #![feature(bindings_after_at)]
 #![feature(crate_visibility_modifier)]
+#![feature(const_panic)]
 #![feature(decl_macro)]
 
 #[cfg(test)]
 mod tests;
 
 mod def_visitor;
+mod imports;
 mod late;
 mod module;
 mod pat;
@@ -26,7 +28,7 @@ use arena::TypedArena;
 use ast::{Ast, Ident, NodeId};
 use error::DiagnosticBuilder;
 use index::IndexVec;
-use ir::{DefId, DefKind, Definitions, ModuleId, ParamIdx, PartialRes, PrimTy, Res, ROOT_MODULE};
+use ir::{DefId, DefKind, Definitions, ParamIdx, PartialRes, PrimTy, Res};
 use rustc_hash::FxHashMap;
 use session::Session;
 use span::{kw, sym, Span, Symbol};
@@ -38,6 +40,12 @@ pub struct ResolverArenas<'a> {
     pub modules: TypedArena<Module<'a>>,
 }
 
+index::newtype_index!(
+    pub struct ModuleId {
+        DEBUG_FORMAT = "ModuleId({})",
+        const ROOT_MODULE = 0
+    }
+);
 pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
     primitive_types: PrimitiveTypes,

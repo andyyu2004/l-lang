@@ -1,3 +1,6 @@
+use prelude::print;
+use prelude;
+
 extern {
     fn print(i: int);
 }

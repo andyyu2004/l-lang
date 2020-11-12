@@ -40,8 +40,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let ty = lctx.lower_ty(ty);
                     ir::ItemKind::TypeAlias(generics, ty)
                 }
+                ItemKind::Use(path) => ir::ItemKind::Use(lctx.lower_path(path)),
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
+                ItemKind::Use(_) => todo!(),
             };
             let item = ir::Item { span, id, vis, ident, kind };
             lctx.def_node(id.def, item);

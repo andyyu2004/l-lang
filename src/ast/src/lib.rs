@@ -258,6 +258,14 @@ pub struct Spanned<T> {
     pub node: T,
 }
 
+impl<T> Deref for Spanned<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.node
+    }
+}
+
 impl<T> Spanned<T> {
     pub fn new(span: Span, node: T) -> Self {
         Self { span, node }
