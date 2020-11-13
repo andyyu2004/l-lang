@@ -25,8 +25,11 @@ serde = "1"
 serde_derive = "1"
 clap = { version = "3.0.0-beta.1", features=["yaml"] }
 inkwell = { git = "https://github.com/andyyu2004/inkwell", branch = "llvm10-0" }
+codespan-reporting = "0.9.5"
+termcolor = "1.1.0"
 colour = "0.5"
 toml = "0.5.7"
 log = "0.4.11"
+lazy_static = "1"
 semver = { version = "0.11.0", features=["serde"] }
 simple-logging = "2.0.2"

@@ -48,11 +48,10 @@ index::newtype_index!(
 );
 pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
+    sess: &'a Session,
     primitive_types: PrimitiveTypes,
     modules: IndexVec<ModuleId, &'a Mod<'a>>,
     defs: Definitions<'a>,
-    sess: &'a Session,
-    /// map of resolved `NodeId`s to its resolution
     partial_resolutions: FxHashMap<NodeId, PartialRes>,
     node_id_to_def_id: FxHashMap<NodeId, DefId>,
     ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,
@@ -70,8 +69,8 @@ impl<'a> Resolver<'a> {
             sess,
             arenas,
             modules: IndexVec::from_elem_n(arenas.modules.alloc(Mod::root()), 1),
-            partial_resolutions: Default::default(),
             defs: Default::default(),
+            partial_resolutions: Default::default(),
             node_id_to_def_id: Default::default(),
             primitive_types: Default::default(),
             ty_param_id_to_idx: Default::default(),

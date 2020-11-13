@@ -85,6 +85,7 @@ pub struct SourceFile {
 impl SourceFile {
     pub fn new(file: ModuleFile) -> Self {
         let src = std::fs::read_to_string(&file.path).unwrap();
+
         Self {
             name: file.path.file_name().unwrap().to_str().unwrap().to_owned(),
             line_starts: line_starts(&src).collect(),
@@ -152,8 +153,8 @@ impl<'a> Files<'a> for SourceMap {
 impl SourceMap {
     pub fn new(main_file_path: impl AsRef<Path>) -> Self {
         let mut source_map = Self { modules: Default::default() };
-        // we consider the main module as a dir module, otherwise we won't be
-        // allowed to declare submodules in it
+        // we consider the main module as a `dir module`, otherwise we won't be allowed to declare
+        // submodules within it
         let module_file = ModuleFile::new(main_file_path, ModuleKind::Dir);
         source_map.modules.push(SourceFile::new(module_file));
         source_map

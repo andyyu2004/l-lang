@@ -1,5 +1,7 @@
 #![feature(crate_visibility_modifier)]
+#![feature(box_syntax)]
 #![feature(never_type)]
+#![feature(panic_info_message)]
 #![feature(once_cell)]
 #![feature(decl_macro)]
 
@@ -9,10 +11,13 @@ mod passes;
 mod queries;
 
 #[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
 extern crate colour;
 
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 
 #[macro_use]
 extern crate log;
@@ -20,8 +25,9 @@ extern crate log;
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
-use cli_error::{CliError, CliResult};
 use codegen::CodegenCtx;
+use codespan_reporting::term;
+use codespan_reporting::{diagnostic::Diagnostic, files::SimpleFiles};
 use config::LConfig;
 use error::{LError, LResult};
 use inkwell::context::Context as LLVMCtx;
@@ -40,13 +46,29 @@ use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io;
 use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::Path;
-use std::rc::Rc;
+use termcolor::{BufferedStandardStream, ColorChoice};
 
-pub fn main() -> io::Result<()> {
+lazy_static::lazy_static! {
+    static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
+}
+
+pub fn main() -> ! {
+    // our error handling in here is basically just using panic!()
+    // this makes the output look nicer and consistent with the compiler errors
+    std::panic::set_hook(box |info| {
+        if let Some(msg) = info.message() {
+            let mut buf = String::new();
+            std::fmt::write(&mut buf, *msg).unwrap();
+            let diag = Diagnostic::error().with_message(buf);
+            // nothing gets printed if we construct this stream in lazy_static!
+            let mut writer = BufferedStandardStream::stderr(ColorChoice::Auto);
+            term::emit(&mut writer, &term::Config::default(), &*SIMPLE_FILES, &diag).unwrap();
+        }
+    });
+
     let _ = std::fs::remove_file("log.txt");
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
     simple_logging::log_to_file("log.txt", level_filter).unwrap();
@@ -61,7 +83,7 @@ pub fn main() -> io::Result<()> {
     let path_str = matches.value_of("INPUT").unwrap();
     let path = Path::new(path_str);
 
-    let config = config::load_config(path)?;
+    let config = config::load_config(path).unwrap_or_else(|err| panic!("{}", err));
 
     let driver = Driver::new(config);
     match driver.llvm_exec() {
@@ -118,8 +140,8 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn new(config: LConfig) -> Self {
-        SPAN_GLOBALS
-            .with(|globals| *globals.source_map.borrow_mut() = SourceMap::new(config.main_path));
+        let path = config.root_path.join(&config.bin.main_path);
+        SPAN_GLOBALS.with(|globals| *globals.source_map.borrow_mut() = SourceMap::new(&path));
 
         Self {
             llvm_ctx: LLVMCtx::create(),
@@ -179,7 +201,6 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn llvm_exec(&'tcx self) -> LResult<i32> {
         let (cctx, main_fn) = self.llvm_compile()?;
-        println!("---");
         let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
         let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
         Ok(val)

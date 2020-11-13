@@ -1,27 +1,155 @@
 use semver::Version;
+use serde::de::{self, Deserialize};
+use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::io;
+use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
 
 /// deserialized representation of `L.toml`
 #[derive(Debug, Deserialize)]
 pub struct LConfig {
-    /// path to `L.toml`
-    crate toml_path: PathBuf,
-    /// path to `main.l`
-    crate main_path: PathBuf,
+    crate root_path: PathBuf,
     crate toml: TomlConfig,
+}
+
+crate fn load_config(path: &Path) -> io::Result<LConfig> {
+    let path =
+        path.canonicalize().unwrap_or_else(|_| panic!("path `{}` does not exist", path.display()));
+    let toml_path = match load_toml(&path)? {
+        Some(toml) => toml,
+        None => panic!("`L.toml` not found in `{}`", path.display()),
+    };
+
+    // the given path could be either `path/to/pkg/L.toml` or `path/to/pkg`
+    let content = fs::read_to_string(&toml_path)?;
+    // dbg!(toml::de::from_str::<toml::Value>(&content).unwrap());
+    let toml = toml::de::from_str(&content)?;
+    let mut main_path = toml_path.clone();
+    main_path.pop();
+
+    let config = LConfig { toml, root_path: toml_path.parent().unwrap().to_path_buf() };
+    config.validate()?;
+    Ok(config)
+}
+
+impl LConfig {
+    pub fn validate(&self) -> io::Result<()> {
+        for dep in self.dependencies.values() {
+            match dep {
+                Dependency::Simple(version) =>
+                    if let Err(err) = Version::parse(version) {
+                        panic!("{}", err)
+                    },
+                // check the dependencies exist
+                Dependency::Detailed(info) =>
+                    if let Some(path) = &info.path {
+                        let dep_path = Path::new(&path);
+                        let joined_path = self.root_path.join(dep_path);
+                        load_config(&joined_path)?;
+                    },
+            }
+        }
+        Ok(())
+    }
+}
+
+impl Deref for LConfig {
+    type Target = TomlConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.toml
+    }
+}
+
+impl DerefMut for LConfig {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.toml
+    }
+}
+
+impl LConfig {
+    /// create a config with the main set to the given parameter
+    /// used to run the driver on a test source file
+    pub fn from_main_path(main_path: PathBuf) -> Self {
+        let mut lcfg = Self { root_path: Default::default(), toml: TomlConfig::default() };
+        lcfg.bin.main_path = main_path;
+        lcfg
+    }
 }
 
 #[derive(Debug, Deserialize, Default)]
 pub struct TomlConfig {
-    package: PkgConfig,
+    pub package: PkgConfig,
+    #[serde(default = "Dependencies::default")]
+    pub dependencies: Dependencies,
+    #[serde(default = "BinConfig::default")]
+    pub bin: BinConfig,
 }
 
-impl LConfig {
-    pub fn from_main_path(main_path: PathBuf) -> Self {
-        Self { main_path, toml_path: Default::default(), toml: TomlConfig::default() }
+#[derive(Debug, Deserialize)]
+pub struct BinConfig {
+    /// path of the `main` file relative to
+    #[serde(default = "default_main_file")]
+    pub main_path: PathBuf,
+}
+
+impl Default for BinConfig {
+    fn default() -> Self {
+        Self { main_path: default_main_file() }
     }
+}
+
+pub type Dependencies = HashMap<String, Dependency>;
+
+#[derive(Debug)]
+pub enum Dependency {
+    Simple(String),
+    Detailed(DependencyInfo),
+}
+
+impl<'de> de::Deserialize<'de> for Dependency {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct TomlDependencyVisitor;
+
+        impl<'de> de::Visitor<'de> for TomlDependencyVisitor {
+            type Value = Dependency;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str(
+                    "a version string like \"0.9.8\" or a \
+                     detailed dependency like { version = \"0.9.8\" }",
+                )
+            }
+
+            fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(Dependency::Simple(s.to_owned()))
+            }
+
+            fn visit_map<V>(self, map: V) -> Result<Self::Value, V::Error>
+            where
+                V: de::MapAccess<'de>,
+            {
+                let mvd = de::value::MapAccessDeserializer::new(map);
+                DependencyInfo::deserialize(mvd).map(Dependency::Detailed)
+            }
+        }
+
+        deserializer.deserialize_any(TomlDependencyVisitor)
+    }
+}
+
+#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Deserialize)]
+pub struct DependencyInfo {
+    path: Option<String>,
 }
 
 // this impl only used to running tests
@@ -31,28 +159,14 @@ impl Default for PkgConfig {
     }
 }
 
+fn default_main_file() -> PathBuf {
+    "src/main.l".into()
+}
+
 #[derive(Debug, Deserialize)]
 pub struct PkgConfig {
     name: String,
     version: Version,
-}
-
-crate fn load_config(path: &Path) -> io::Result<LConfig> {
-    let path = path.canonicalize()?;
-    let toml_path = match load_toml(&path)? {
-        Some(toml) => toml,
-        None => panic!(),
-    };
-
-    // the given path could be either `path/to/pkg/L.toml`
-    // or `path/to/pkg`
-    // we expect `main_path` to be `path/to/pkg/src/main.l`
-    let content = fs::read_to_string(&toml_path)?;
-    let toml = toml::de::from_str(&content)?;
-    let mut main_path = toml_path.clone();
-    main_path.pop();
-    main_path.push("src/main.l");
-    Ok(LConfig { toml, main_path, toml_path: toml_path.to_path_buf() })
 }
 
 fn load_toml(path: &Path) -> io::Result<Option<PathBuf>> {
