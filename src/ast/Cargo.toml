@@ -12,3 +12,4 @@ span = { path = "../span" }
 util = { path = "../util" }
 lex = { path = "../lex" }
 thiserror = "1"
+rustc-hash = "1"

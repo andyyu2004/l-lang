@@ -17,6 +17,7 @@ mod pattern_parser;
 mod prog_parser;
 mod stmt_parser;
 mod ty_parser;
+mod validate;
 
 use ast::*;
 use expr_parser::*;

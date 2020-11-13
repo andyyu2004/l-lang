@@ -86,22 +86,21 @@ impl<'a> Parse<'a> for ModuleParser {
             debug!("found module `{}` at `{}`", self.name, map.path_of(module_file).display())
         });
 
-        // create a new parser for the new module file
-        let parser = &mut Parser::new(parser.sess, module_file);
+        parser.with_file(module_file, |parser| {
+            let mut items = vec![];
+            while !parser.reached_eof() {
+                items.push(ItemParser.parse(parser)?);
+            }
 
-        let mut items = vec![];
-        while !parser.reached_eof() {
-            items.push(ItemParser.parse(parser)?);
-        }
+            let span = if let Some(fst) = items.first() {
+                let last = items.last().unwrap();
+                fst.span.merge(last.span)
+            } else {
+                Span::default()
+            };
 
-        let span = if let Some(fst) = items.first() {
-            let last = items.last().unwrap();
-            fst.span.merge(last.span)
-        } else {
-            Span::default()
-        };
-
-        Ok(Module { name: self.name, span, items })
+            Ok(Module { name: self.name, span, items })
+        })
     }
 }
 

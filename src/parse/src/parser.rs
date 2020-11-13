@@ -5,23 +5,51 @@ use error::*;
 use index::Idx;
 use lex::*;
 use session::Session;
-use span::{self, kw, FileIdx, Span, SpanIdx, Symbol};
+use span::{self, kw, FileIdx, Span, SpanIdx, Symbol, ROOT_FILE_IDX};
 use std::cell::Cell;
 use std::error::Error;
+use std::ops::{Deref, DerefMut};
 
-/// parser for a single source file
 pub struct Parser<'a> {
     pub sess: &'a Session,
-    crate file: FileIdx,
-    tokens: Vec<Tok>,
+    fparser: Option<FileParser>,
     idx: usize,
     id_counter: Cell<usize>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(sess: &'a Session, file: FileIdx) -> Self {
+/// parser for a single source file
+pub struct FileParser {
+    crate file: FileIdx,
+    tokens: Vec<Tok>,
+}
+
+impl FileParser {
+    pub fn new(file: FileIdx) -> Self {
         let tokens = Lexer::new().lex(file);
-        Self { tokens: tokens.into_iter().collect(), file, idx: 0, id_counter: Cell::new(0), sess }
+        Self { file, tokens }
+    }
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(sess: &'a Session) -> Self {
+        Self { fparser: None, idx: 0, id_counter: Cell::new(0), sess }
+    }
+
+    /// entry point to parsing; parses starting from root file
+    pub fn parse(&mut self) -> Option<P<Ast>> {
+        self.with_file(ROOT_FILE_IDX, |parser| {
+            let ast = AstParser.parse(parser).map_err(|err| err.emit()).ok()?;
+            validate::AstValidator::default().visit_ast(&ast);
+            Some(ast)
+        })
+    }
+
+    crate fn with_file<R>(&mut self, file: FileIdx, f: impl FnOnce(&mut Self) -> R) -> R {
+        let fparser = self.fparser.take();
+        self.fparser = Some(FileParser::new(file));
+        let ret = f(self);
+        self.fparser = fparser;
+        ret
     }
 
     pub fn dump_token_stream(&self) {
@@ -111,11 +139,6 @@ impl<'a> Parser<'a> {
         self.mk_span(idx, idx)
     }
 
-    /// entry point to parsing
-    pub fn parse(&mut self) -> Option<P<Ast>> {
-        AstParser.parse(self).map_err(|err| err.emit()).ok()
-    }
-
     pub fn parse_stmt(&mut self) -> ParseResult<'a, P<Stmt>> {
         StmtParser.parse(self)
     }
@@ -124,10 +147,14 @@ impl<'a> Parser<'a> {
         ItemParser.parse(self)
     }
 
+    /// entry point to parsing a single expression from a file
+    /// used for testing purposes
     pub fn parse_expr(&mut self) -> P<Expr> {
-        ExprParser.parse(self).unwrap_or_else(|err| {
-            err.emit();
-            self.mk_expr(err.get_first_span(), ExprKind::Err)
+        self.with_file(ROOT_FILE_IDX, |parser| {
+            ExprParser.parse(parser).unwrap_or_else(|err| {
+                err.emit();
+                parser.mk_expr(err.get_first_span(), ExprKind::Err)
+            })
         })
     }
 
@@ -345,5 +372,19 @@ impl<'a> Parser<'a> {
             let err = ParseError::ExpectedOneOf(ttypes.into_iter().cloned().collect(), tok);
             self.build_err(tok.span, err)
         })
+    }
+}
+
+impl<'a> Deref for Parser<'a> {
+    type Target = FileParser;
+
+    fn deref(&self) -> &Self::Target {
+        self.fparser.as_ref().unwrap()
+    }
+}
+
+impl<'a> DerefMut for Parser<'a> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.fparser.as_mut().unwrap()
     }
 }

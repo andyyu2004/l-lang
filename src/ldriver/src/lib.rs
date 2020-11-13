@@ -133,7 +133,7 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn parse(&self) -> LResult<P<ast::Ast>> {
         // assume one file for now
-        let mut parser = Parser::new(&self.sess, ROOT_FILE_IDX);
+        let mut parser = Parser::new(&self.sess);
         let ast = parser.parse();
         // error!("{:#?}", ast);
         check_errors!(self, ast.unwrap())
@@ -197,7 +197,7 @@ impl<'tcx> Driver<'tcx> {
 
     /// used for testing parsing
     pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
-        let mut parser = Parser::new(&self.sess, ROOT_FILE_IDX);
+        let mut parser = Parser::new(&self.sess);
         let expr = parser.parse_expr();
         match &expr.kind {
             ExprKind::Err => None,

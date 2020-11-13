@@ -15,6 +15,7 @@ thiserror = "1"
 log = "0.4.11"
 salsa = "0.16.0"
 codespan = "0.9.5"
+rustc-hash = "1"
 
 [dev-dependencies]
 ldriver = { path = "../ldriver" }
