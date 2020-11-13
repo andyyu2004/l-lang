@@ -3,6 +3,9 @@
 #![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
+#[macro_use]
+extern crate log;
+
 #[cfg(test)]
 mod tests;
 
@@ -22,7 +25,7 @@ use lex::{Base, LiteralKind, Tok, TokenType};
 use parse_error::{ParseError, ParseResult};
 pub use parser::Parser;
 use pattern_parser::*;
-use prog_parser::ProgParser;
+use prog_parser::AstParser;
 use span::{kw, Span};
 use stmt_parser::StmtParser;
 use ty_parser::*;
@@ -521,7 +524,8 @@ impl<'a> Parse<'a> for GenericArgsParser {
                     parser.backtrack(1);
                     return Ok(None);
                 }
-                PathKind::Module => panic!(),
+                PathKind::Module =>
+                    return Err(parser.build_err(lt.span, ParseError::GenericArgsInModulePath)),
                 PathKind::Type => lt,
             },
             None => return Ok(None),

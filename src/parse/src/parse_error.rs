@@ -1,7 +1,8 @@
-use ast::ItemKind;
+use ast::{Ident, ItemKind};
 use error::DiagnosticBuilder;
 use lex::{Tok, TokenType};
 use span::Symbol;
+use std::path::PathBuf;
 use thiserror::Error;
 
 pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
@@ -16,6 +17,8 @@ pub enum ParseError {
     InvalidImplItem(ItemKind),
     #[error("invalid foreign item kind: {}", .0.descr())]
     InvalidForeignItem(ItemKind),
+    #[error("unresolved module `{0}`\ncreate file at either `{0}/{1}.l` or `{0}/{1}/{1}.l`")]
+    UnresolvedModule(PathBuf, Ident),
     #[error("unexpected <eof>")]
     Eof,
     #[error("function signature requires explicit type annotations")]
@@ -24,8 +27,8 @@ pub enum ParseError {
     MissingSemi,
     #[error("unimplemented in parser")]
     Unimpl,
-    #[error("redundant visibility qualifier")]
-    RedundantVisibilityQualifier,
+    #[error("redundant visibility modifier")]
+    RedundantVisibilityModifier,
     #[error("generic arguments not allowed in module paths")]
     GenericArgsInModulePath,
     #[error("generic arguments in expression path require `::` prefix")]

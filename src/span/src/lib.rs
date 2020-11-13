@@ -17,20 +17,19 @@ use codespan::ByteIndex;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use std::rc::Rc;
 
 #[derive(Default, Debug)]
 pub struct SpanGlobals {
     pub symbol_interner: RefCell<symbol::Interner>,
-    pub source_map: RefCell<Option<Rc<SourceMap>>>,
+    pub source_map: RefCell<SourceMap>,
 }
 
 pub fn with_interner<R>(f: impl FnOnce(&mut symbol::Interner) -> R) -> R {
     SPAN_GLOBALS.with(|globals| f(&mut globals.symbol_interner.borrow_mut()))
 }
 
-pub fn with_source_map<R>(f: impl FnOnce(&SourceMap) -> R) -> R {
-    SPAN_GLOBALS.with(|globals| f(&mut globals.source_map.borrow().as_ref().unwrap()))
+pub fn with_source_map<R>(f: impl FnOnce(&mut SourceMap) -> R) -> R {
+    SPAN_GLOBALS.with(|globals| f(&mut *globals.source_map.borrow_mut()))
 }
 
 thread_local!(pub static SPAN_GLOBALS: SpanGlobals = Default::default());

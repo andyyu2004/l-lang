@@ -9,9 +9,10 @@ use span::{self, kw, FileIdx, Span, SpanIdx, Symbol};
 use std::cell::Cell;
 use std::error::Error;
 
+/// parser for a single source file
 pub struct Parser<'a> {
     pub sess: &'a Session,
-    file: FileIdx,
+    crate file: FileIdx,
     tokens: Vec<Tok>,
     idx: usize,
     id_counter: Cell<usize>,
@@ -112,7 +113,7 @@ impl<'a> Parser<'a> {
 
     /// entry point to parsing
     pub fn parse(&mut self) -> Option<P<Ast>> {
-        ProgParser.parse(self).map_err(|err| err.emit()).ok()
+        AstParser.parse(self).map_err(|err| err.emit()).ok()
     }
 
     pub fn parse_stmt(&mut self) -> ParseResult<'a, P<Stmt>> {
@@ -226,7 +227,7 @@ impl<'a> Parser<'a> {
         match kind {
             ItemKind::Extern(..) | ItemKind::Impl { .. } =>
                 if *vis == VisibilityKind::Public {
-                    self.build_err(span, ParseError::RedundantVisibilityQualifier).emit()
+                    self.build_err(span, ParseError::RedundantVisibilityModifier).emit()
                 },
             _ => {}
         }

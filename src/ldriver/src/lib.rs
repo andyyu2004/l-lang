@@ -3,6 +3,8 @@
 #![feature(once_cell)]
 #![feature(decl_macro)]
 
+mod cli_error;
+mod config;
 mod passes;
 mod queries;
 
@@ -10,12 +12,17 @@ mod queries;
 extern crate colour;
 
 #[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
 extern crate log;
 
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
+use cli_error::{CliError, CliResult};
 use codegen::CodegenCtx;
+use config::LConfig;
 use error::{LError, LResult};
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
@@ -33,12 +40,13 @@ use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
+use std::io;
 use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::Path;
 use std::rc::Rc;
 
-pub fn main() -> ! {
+pub fn main() -> io::Result<()> {
     let _ = std::fs::remove_file("log.txt");
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
     simple_logging::log_to_file("log.txt", level_filter).unwrap();
@@ -52,12 +60,10 @@ pub fn main() -> ! {
 
     let path_str = matches.value_of("INPUT").unwrap();
     let path = Path::new(path_str);
-    if !path.exists() {
-        eprintln!("file `{}` does not exist", path_str);
-        std::process::exit(1)
-    }
 
-    let driver = Driver::new(path);
+    let config = config::load_config(path)?;
+
+    let driver = Driver::new(config);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),
         Err(..) => std::process::exit(1),
@@ -108,12 +114,13 @@ impl<'tcx> Driver<'tcx> {
         path.push(format!("tmp{}.l", hash));
         let mut file = File::create(&path).unwrap();
         file.write(src.as_bytes()).unwrap();
-        Self::new(path)
+        Self::new(LConfig::from_main_path(path))
     }
 
-    pub fn new(path: impl AsRef<Path>) -> Self {
+    pub fn new(config: LConfig) -> Self {
         SPAN_GLOBALS
-            .with(|globals| *globals.source_map.borrow_mut() = Some(Rc::new(SourceMap::new(path))));
+            .with(|globals| *globals.source_map.borrow_mut() = SourceMap::new(config.main_path));
+
         Self {
             llvm_ctx: LLVMCtx::create(),
             resolver_arenas: Default::default(),

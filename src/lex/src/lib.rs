@@ -12,10 +12,12 @@ use std::ops::Range;
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
+        "fn" => TokenType::Fn,
+        "box" => TokenType::Box,
         "match" => TokenType::Match,
+        "mod" => TokenType::Mod,
         "false" => TokenType::False,
         "true" => TokenType::True,
-        "fn" => TokenType::Fn,
         "pub" => TokenType::Pub,
         "enum" => TokenType::Enum,
         "struct" => TokenType::Struct,
@@ -26,7 +28,6 @@ lazy_static! {
         "mut" => TokenType::Mut,
         "use" => TokenType::Use,
         "type" => TokenType::Type,
-        "box" => TokenType::Box,
         "unsafe" => TokenType::Unsafe,
         "const" => TokenType::Const,
         "impl" => TokenType::Impl,
@@ -53,7 +54,7 @@ impl Lexer {
     /// transforms the rustc token with len into one with span
     pub fn lex(&mut self, file: FileIdx) -> Vec<Tok> {
         with_source_map(|map| {
-            let src: &str = &map.files[file];
+            let src: &str = map.get(file);
             let mut span_index = 0;
 
             // note: it is important to filter after so that the spans are correct
@@ -169,6 +170,7 @@ impl Display for TokenType {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Mod,
     Use,
     LSelf,
     Extern,

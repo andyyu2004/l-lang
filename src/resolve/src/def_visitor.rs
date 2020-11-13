@@ -30,8 +30,8 @@ impl<'a, 'r> DefVisitor<'a, 'r> {
         ret
     }
 
-    pub fn new_module(&mut self, name: Ident) -> ModuleId {
-        self.resolver.new_module(self.curr_mod, name)
+    pub fn def_module(&mut self, name: Ident) -> ModuleId {
+        self.resolver.def_module(self.curr_mod, name)
     }
 }
 
@@ -42,11 +42,16 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
             ItemKind::Enum(..) => {
                 // enums introduce a new namespace represented as a module
                 // where the variants are defined
-                let module = self.new_module(item.ident);
+                let module = self.def_module(item.ident);
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
             _ => ast::walk_item(self, item),
         }
+    }
+
+    fn visit_module(&mut self, module: &'ast ast::Module) {
+        let module_id = self.resolver.def_module(self.curr_mod, module.name);
+        self.with_module(module_id, |this| ast::walk_module(this, module))
     }
 
     fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {

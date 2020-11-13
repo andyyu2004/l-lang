@@ -6,13 +6,13 @@ use std::cell::RefCell;
 use std::marker::PhantomData;
 
 #[derive(Default, Debug)]
-pub struct Module<'a> {
+pub struct Mod<'a> {
     pub items: RefCell<FxHashMap<Ident, Res<NodeId>>>,
     pub submodules: RefCell<FxHashMap<Ident, ModuleId>>,
     pd: PhantomData<&'a ()>,
 }
 
-impl<'a> Module<'a> {
+impl<'a> Mod<'a> {
     pub fn root() -> Self {
         let root = Self::default();
         root

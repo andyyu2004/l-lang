@@ -21,20 +21,37 @@ impl Item {
             | ItemKind::Struct(g, _)
             | ItemKind::TypeAlias(g, _)
             | ItemKind::Enum(g, _) => Some(g),
-            ItemKind::Use(..) | ItemKind::Extern(..) => None,
+            ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) => None,
         }
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ItemKind {
+    /// fn f() {}
     Fn(FnSig, Generics, Option<P<Expr>>),
+    /// enum E {}
     Enum(Generics, Vec<Variant>),
+    /// struct S {}
     Struct(Generics, VariantKind),
+    /// extern "abi" {}
     Extern(Vec<P<ForeignItem>>),
+    /// type T = S;
     TypeAlias(Generics, P<Ty>),
+    /// mod foo;
+    Mod(Module),
+    /// use some::path;
     Use(Path),
+    /// impl Trait for Type {}
+    /// impl Type {}
     Impl { generics: Generics, trait_path: Option<Path>, self_ty: P<Ty>, items: Vec<P<AssocItem>> },
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Module {
+    pub name: Ident,
+    pub span: Span,
+    pub items: Vec<P<Item>>,
 }
 
 impl ItemKind {
@@ -50,6 +67,7 @@ impl ItemKind {
             ItemKind::Extern(..) => "extern block",
             ItemKind::TypeAlias(..) => "type alias",
             ItemKind::Use(..) => "use import",
+            ItemKind::Mod(..) => "module",
         }
     }
 }
@@ -67,6 +85,7 @@ impl TryFrom<ItemKind> for AssocItemKind {
             ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
             ItemKind::TypeAlias(..) => todo!("assoc types not impl"),
             ItemKind::Use(..)
+            | ItemKind::Mod(..)
             | ItemKind::Extern(..)
             | ItemKind::Enum(..)
             | ItemKind::Struct(..)
@@ -114,6 +133,7 @@ impl Display for Item {
             ItemKind::Impl { .. } => todo!(),
             ItemKind::Extern(_) => todo!(),
             ItemKind::Use(path) => write!(f, "use {}", path),
+            ItemKind::Mod(..) => todo!(),
         }
     }
 }

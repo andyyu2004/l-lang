@@ -19,7 +19,7 @@ mod scope;
 extern crate log;
 
 use late::LateResolver;
-use module::Module;
+use module::Mod;
 use pat::PatternResolutionCtx;
 use resolution_error::{ResResult, ResolutionError};
 use scope::{Scope, Scopes};
@@ -37,7 +37,7 @@ use std::ops::{Deref, Index, IndexMut};
 
 #[derive(Default)]
 pub struct ResolverArenas<'a> {
-    pub modules: TypedArena<Module<'a>>,
+    pub modules: TypedArena<Mod<'a>>,
 }
 
 index::newtype_index!(
@@ -49,7 +49,7 @@ index::newtype_index!(
 pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
     primitive_types: PrimitiveTypes,
-    modules: IndexVec<ModuleId, &'a Module<'a>>,
+    modules: IndexVec<ModuleId, &'a Mod<'a>>,
     defs: Definitions<'a>,
     sess: &'a Session,
     /// map of resolved `NodeId`s to its resolution
@@ -69,7 +69,7 @@ impl<'a> Resolver<'a> {
         Self {
             sess,
             arenas,
-            modules: IndexVec::from_elem_n(arenas.modules.alloc(Module::root()), 1),
+            modules: IndexVec::from_elem_n(arenas.modules.alloc(Mod::root()), 1),
             partial_resolutions: Default::default(),
             defs: Default::default(),
             node_id_to_def_id: Default::default(),
@@ -81,6 +81,7 @@ impl<'a> Resolver<'a> {
     /// top level function to run the resolver on the given prog
     pub fn resolve(&mut self, prog: &Ast) {
         self.collect_defs(prog);
+        self.resolve_imports(prog);
         self.late_resolve(prog);
     }
 
@@ -94,12 +95,12 @@ impl<'a> Resolver<'a> {
         par.submodules.borrow().get(&ident).copied()
     }
 
-    pub fn root_module(&mut self) -> &Module<'a> {
+    pub fn root_module(&mut self) -> &Mod<'a> {
         self.modules[ROOT_MODULE]
     }
 
-    pub fn new_module(&mut self, par: ModuleId, name: Ident) -> ModuleId {
-        let module = self.arenas.modules.alloc(Module::default());
+    pub fn def_module(&mut self, par: ModuleId, name: Ident) -> ModuleId {
+        let module = self.arenas.modules.alloc(Mod::default());
         let id = self.modules.push(module);
         if self.modules[par].submodules.borrow_mut().insert(name, id).is_some() {
             self.emit_error(name.span, ResolutionError::DuplicateModuleDefinition(name));

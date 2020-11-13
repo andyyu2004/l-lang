@@ -104,7 +104,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::Enum
             | DefKind::TypeAlias
             | DefKind::Struct => self.instantiate(xpat, def_id),
-            DefKind::TyParam(..) | DefKind::Extern | DefKind::Impl | DefKind::Use => unreachable!(),
+            DefKind::TyParam(..)
+            | DefKind::Impl
+            | DefKind::Use
+            | DefKind::Mod
+            | DefKind::Extern => unreachable!(),
         }
     }
 }

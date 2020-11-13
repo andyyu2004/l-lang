@@ -1,7 +1,3 @@
-fn main() {
+fn main() -> std::io::Result<()> {
     ldriver::main()
-}
-
-struct S<T> {
-    t: T,
 }

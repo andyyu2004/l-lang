@@ -64,6 +64,19 @@ pub struct Ir<'ir> {
 }
 
 index::newtype_index!(
+    pub struct PkgId {
+        DEBUG_FORMAT = "{}",
+        const LOCAL_PKG_ID = 0,
+    }
+);
+
+// #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
+// pub struct DefId {
+//     pub pkg: PkgId,
+//     pub idx: DefIdx,
+// }
+
+index::newtype_index!(
     pub struct DefId {
         DEBUG_FORMAT = "{}"
     }

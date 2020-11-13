@@ -83,6 +83,10 @@ pub trait Visitor<'ast>: Sized {
         walk_pat(self, pattern);
     }
 
+    fn visit_module(&mut self, module: &'ast Module) {
+        walk_module(self, module);
+    }
+
     fn visit_path(&mut self, path: &'ast Path) {
         walk_path(self, path);
     }
@@ -154,6 +158,11 @@ pub fn walk_let<'ast>(visitor: &mut impl Visitor<'ast>, Let { pat, ty, init, .. 
     init.iter().for_each(|expr| visitor.visit_expr(expr));
     visitor.visit_pattern(pat);
     ty.iter().for_each(|ty| visitor.visit_ty(ty));
+}
+
+pub fn walk_module<'ast>(visitor: &mut impl Visitor<'ast>, module: &'ast Module) {
+    visitor.visit_ident(module.name);
+    module.items.iter().for_each(|item| visitor.visit_item(item))
 }
 
 pub fn walk_path<'ast>(visitor: &mut impl Visitor<'ast>, path: &'ast Path) {
@@ -333,5 +342,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
         }
         ItemKind::Extern(items) => items.iter().for_each(|item| visitor.visit_foreign_item(item)),
         ItemKind::Use(path) => visitor.visit_path(path),
+        ItemKind::Mod(module) => visitor.visit_module(module),
     }
 }

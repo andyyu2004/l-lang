@@ -10,6 +10,8 @@ pub enum ResolutionError {
     UnresolvedPath(PathSegment, Path),
     #[error("unresolved type `{0}`")]
     UnresolvedType(Path),
+    #[error("unresolved module segment `{0}` in path `{1}`")]
+    UnresolvedModule(PathSegment, Path),
     #[error("let binding to named closure")]
     BindingToNamedClosure,
     #[error("item with name `{0}` already defined")]

@@ -1,16 +1,63 @@
-use crate::Span;
+use crate::{Span, Symbol};
 use codespan_reporting::files::{line_starts, Files};
 use index::{newtype_index, IndexVec};
+use std::ffi::OsString;
 use std::ops::{Deref, Index};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SourceMap {
-    pub files: IndexVec<FileIdx, SourceFile>,
+    files: IndexVec<FileIdx, SourceFile>,
+}
+
+impl SourceMap {
+    pub fn add_src_file(&mut self, path: impl AsRef<Path>) -> FileIdx {
+        let src_file = SourceFile::new(path);
+        self.files.push(src_file)
+    }
+
+    pub fn add_module(&mut self, current_file: FileIdx, sym: Symbol) -> Option<FileIdx> {
+        self.find_module_file(current_file, sym).map(|path| self.add_src_file(path))
+    }
+
+    fn find_module_file(&mut self, current_file: FileIdx, sym: Symbol) -> Option<PathBuf> {
+        let path = self.path_of(current_file).parent().unwrap();
+
+        let check_path = |p: &Path| p.is_file() && p.extension() == Some(&OsString::from("l"));
+
+        // suppose we are in a module at `/path/to/file.l`
+        // and we see a `mod foo` in `file.l`,
+        // then we check both `/path/to/foo.l` and `path/to/foo/foo.l`
+        // we call these `module_file_path` and `module_dir_path` respectively
+        // for the `foo` module file
+        let module_file_path = path.join(format!("{}.l", sym));
+        if check_path(&module_file_path) {
+            return Some(module_file_path);
+        } else {
+            let module_dir_path = path.join(format!("{}/{}.l", sym, sym));
+            if check_path(&module_dir_path) {
+                return Some(module_dir_path);
+            }
+        };
+        None
+    }
+
+    pub fn dir_of(&self, file: FileIdx) -> &Path {
+        self.path_of(file).parent().unwrap()
+    }
+
+    pub fn path_of(&self, file: FileIdx) -> &Path {
+        &self.files[file].path
+    }
+
+    pub fn get(&self, file: FileIdx) -> &SourceFile {
+        &self.files[file]
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct SourceFile {
+    path: PathBuf,
     name: String,
     src: String,
     line_starts: Vec<usize>,
@@ -18,9 +65,10 @@ pub struct SourceFile {
 
 impl SourceFile {
     pub fn new(path: impl AsRef<Path>) -> Self {
-        let path = path.as_ref();
-        let src = std::fs::read_to_string(path).unwrap();
+        let path = path.as_ref().canonicalize().unwrap();
+        let src = std::fs::read_to_string(&path).unwrap();
         Self {
+            path: path.to_path_buf(),
             name: path.file_name().unwrap().to_str().unwrap().to_owned(),
             line_starts: line_starts(&src).collect(),
             src,
@@ -52,7 +100,6 @@ newtype_index!(
         const ROOT_FILE_IDX = 0,
     }
 );
-
 // mostly copied from
 // https://docs.rs/codespan-reporting/0.9.5/src/codespan_reporting/files.rs.html#208-215
 impl<'a> Files<'a> for SourceMap {

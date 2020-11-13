@@ -1,9 +1,9 @@
 use super::*;
 use ast::{Ast, P};
 
-pub struct ProgParser;
+pub struct AstParser;
 
-impl<'a> Parse<'a> for ProgParser {
+impl<'a> Parse<'a> for AstParser {
     type Output = P<Ast>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {

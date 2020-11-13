@@ -1,9 +1,10 @@
 use crate::*;
 use ast::*;
 use lex::TokenType;
+use span::with_source_map;
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 8] = [
+const ITEM_KEYWORDS: [TokenType; 9] = [
     TokenType::Fn,
     TokenType::Struct,
     TokenType::Enum,
@@ -12,6 +13,7 @@ const ITEM_KEYWORDS: [TokenType; 8] = [
     TokenType::Extern,
     TokenType::Type,
     TokenType::Use,
+    TokenType::Mod,
 ];
 
 pub struct ItemParser;
@@ -28,6 +30,17 @@ impl<'a> Parse<'a> for ItemParser {
             return ExternParser { vis }.parse(parser);
         } else if let Some(_use_kw) = parser.accept(TokenType::Use) {
             return UseParser { vis }.parse(parser);
+        }
+        if let Some(_) = parser.accept(TokenType::Mod) {
+            let name = parser.expect_lident()?;
+            parser.expect(TokenType::Semi)?;
+            let module = ModuleParser { name }.parse(parser)?;
+            return Ok(parser.mk_item(
+                vis.span.merge(name.span),
+                vis,
+                Ident::empty(),
+                ItemKind::Mod(module),
+            ));
         }
 
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
@@ -46,6 +59,49 @@ impl<'a> Parse<'a> for ItemParser {
         parser.accept(TokenType::Semi);
 
         Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
+    }
+}
+
+pub struct ModuleParser {
+    crate name: Ident,
+}
+
+impl<'a> Parse<'a> for ModuleParser {
+    type Output = Module;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let module_file = match with_source_map(|map| map.add_module(parser.file, *self.name)) {
+            Some(file) => file,
+            None =>
+                return Err(parser.build_err(
+                    self.name.span,
+                    ParseError::UnresolvedModule(
+                        with_source_map(|map| map.dir_of(parser.file).to_path_buf()),
+                        self.name,
+                    ),
+                )),
+        };
+
+        with_source_map(|map| {
+            debug!("found module `{}` at `{}`", self.name, map.path_of(module_file).display())
+        });
+
+        // create a new parser for the new module file
+        let parser = &mut Parser::new(parser.sess, module_file);
+
+        let mut items = vec![];
+        while !parser.reached_eof() {
+            items.push(ItemParser.parse(parser)?);
+        }
+
+        let span = if let Some(fst) = items.first() {
+            let last = items.last().unwrap();
+            fst.span.merge(last.span)
+        } else {
+            Span::default()
+        };
+
+        Ok(Module { name: self.name, span, items })
     }
 }
 

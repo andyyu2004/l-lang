@@ -23,14 +23,19 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
-    pub fn with_module<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
+    crate fn with_module<R>(&mut self, module: &ast::Module, f: impl FnOnce(&mut Self) -> R) -> R {
+        let module_id = self.resolve_module(module.name).unwrap();
+        self.with_module_id(module_id, f)
+    }
+
+    crate fn with_module_id<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.current_module.push(module);
         let ret = f(self);
         self.current_module.pop();
         ret
     }
 
-    pub fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+    crate fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         self.scopes[NS::Value].push(Scope::default());
         let ret = f(self);
         self.scopes[NS::Value].pop();
@@ -72,8 +77,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         self.resolver.resolve_item(self.curr_module(), ident)
     }
 
-    /// search for a local variable in the scopes otherwise look for a resolution to an item
-    crate fn resolve_var(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+    /// search for a local variable in scope otherwise look for a resolution to an item
+    crate fn resolve_ident(&mut self, ident: Ident) -> Option<Res<NodeId>> {
         match self.scopes[NS::Value].lookup(ident) {
             Some(&res) => Some(res),
             None => self.try_resolve_item(ident),
@@ -88,6 +93,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Extern(..) => ast::walk_item(self, item),
+            ItemKind::Mod(module) =>
+                self.with_module(module, |this| ast::walk_module(this, module)),
             ItemKind::Use(..) => {}
         }
     }

@@ -36,10 +36,10 @@ impl TestCtx {
     }
 
     fn run_test(&self, path: &Path) -> io::Result<()> {
-        let dir_path = path.parent().unwrap();
-        let driver = ldriver::Driver::new(&dir_path);
+        // let dir_path = path.parent().unwrap();
+        // let driver = ldriver::Driver::new(&dir_path);
         // Command::new("cargo rj");
-        dbg!(driver.llvm_exec()).unwrap();
+        // dbg!(driver.llvm_exec()).unwrap();
         Ok(())
     }
 }

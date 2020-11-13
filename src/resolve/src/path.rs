@@ -22,7 +22,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         self.resolve_val_path_segments(path, &path.segments)
     }
 
-    fn resolve_module(&mut self, ident: Ident) -> Option<ModuleId> {
+    crate fn resolve_module(&mut self, ident: Ident) -> Option<ModuleId> {
         self.resolver.find_module(self.curr_module(), ident)
     }
 
@@ -35,8 +35,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             [segment] =>
                 self.resolve_path_segment(path, segment, NS::Value).map(PartialRes::resolved),
             [segment, remaining @ ..] =>
-                match self.resolve_module(segment.ident).and_then(|module| {
-                    self.with_module(module, |this| {
+                match self.resolve_module(segment.ident).and_then(|module_id| {
+                    self.with_module_id(module_id, |this| {
                         this.resolve_val_path_segments(path, remaining).ok()
                     })
                 }) {
@@ -69,7 +69,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         path: &'ast Path,
         segment: &'ast PathSegment,
     ) -> ResResult<'a, Res<NodeId>> {
-        self.resolve_var(segment.ident).ok_or_else(|| {
+        self.resolve_ident(segment.ident).ok_or_else(|| {
             self.build_error(
                 path.span,
                 ResolutionError::UnresolvedPath(segment.clone(), path.clone()),

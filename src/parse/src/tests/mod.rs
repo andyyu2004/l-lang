@@ -8,7 +8,7 @@ macro expect_parse_err($src:expr) {{
 }}
 
 #[test]
-fn parse_redundant_visibility_qualifier() {
+fn parse_redundant_visibility_modifier() {
     let src = "pub impl T {}";
     expect_parse_err!(src);
 }
