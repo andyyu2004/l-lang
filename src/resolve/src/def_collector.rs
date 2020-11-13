@@ -6,18 +6,16 @@ use ir::{CtorKind, DefKind, HasDefKind};
 /// this forward declares all "hoisted" things such as items & constructors
 /// the following things are assigned def_ids
 ///
-/// items
-/// impl/assoc items
-/// foreign items
+/// impl/assoc/trait/foreign items
 /// type parameters (in generics)
 /// variants and constructors
 /// fields declarations
-pub struct DefVisitor<'a, 'r> {
+pub struct DefCollector<'a, 'r> {
     resolver: &'a mut Resolver<'r>,
     curr_mod: ModuleId,
 }
 
-impl<'a, 'r> DefVisitor<'a, 'r> {
+impl<'a, 'r> DefCollector<'a, 'r> {
     pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self { resolver, curr_mod: ROOT_MODULE }
     }
@@ -35,7 +33,7 @@ impl<'a, 'r> DefVisitor<'a, 'r> {
     }
 }
 
-impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
+impl<'ast, 'r> Visitor<'ast> for DefCollector<'ast, 'r> {
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
         match &item.kind {
@@ -90,7 +88,7 @@ impl<'ast, 'r> Visitor<'ast> for DefVisitor<'ast, 'r> {
 
 impl<'a> Resolver<'a> {
     pub fn collect_defs(&mut self, prog: &Ast) {
-        let mut visitor = DefVisitor::new(self);
+        let mut visitor = DefCollector::new(self);
         visitor.visit_ast(prog);
     }
 }

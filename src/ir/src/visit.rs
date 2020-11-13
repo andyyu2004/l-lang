@@ -10,7 +10,7 @@ pub trait Visitor<'ir>: Sized {
         walk_item(self, item)
     }
 
-    fn visit_id(&mut self, id: ir::Id) {
+    fn visit_id(&mut self, _id: ir::Id) {
     }
 
     fn visit_body(&mut self, body: &'ir ir::Body<'ir>) {

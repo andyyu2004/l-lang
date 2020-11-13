@@ -23,9 +23,9 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                         lctx.sess.emit_error(item.span, AstError::FunctionWithoutBody);
                         return;
                     }
-                    let body = lctx.lower_body(sig, expr.as_ref().unwrap());
                     let lowered_sig = lctx.lower_fn_sig(sig);
                     let generics = lctx.lower_generics(generics);
+                    let body = lctx.lower_body(sig, expr.as_ref().unwrap());
                     ir::ItemKind::Fn(lowered_sig, generics, body)
                 }
                 ItemKind::Enum(generics, variants) => {
@@ -58,7 +58,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
             };
             let item = ir::Item { span, id, vis, ident, kind };
             lctx.def_node(id.def, item);
-            lctx.items.insert(item.id.def, item);
+            lctx.items.insert(id.def, item);
         });
     }
 

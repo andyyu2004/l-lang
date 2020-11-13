@@ -6,7 +6,7 @@
 #[cfg(test)]
 mod tests;
 
-mod def_visitor;
+mod def_collector;
 mod imports;
 mod late;
 mod module;

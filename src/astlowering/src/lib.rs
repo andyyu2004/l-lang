@@ -12,13 +12,14 @@ mod pat;
 mod path;
 mod stmt;
 mod ty;
+mod validate;
 
 #[cfg(test)]
 mod tests;
 
 use ast::*;
 use index::Idx;
-use ir::{DefId, LocalId, Res};
+use ir::{DefId, LocalId, Res, Visitor};
 use resolve::Resolver;
 use rustc_hash::FxHashMap;
 use session::Session;
@@ -89,12 +90,15 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     pub fn lower_ast(mut self, prog: &Ast) -> &'ir ir::Ir<'ir> {
         self.lower_items(&prog.items);
-        self.arena.alloc(ir::Ir {
+        let ir = self.arena.alloc(ir::Ir {
             entry_id: self.entry_id,
             items: self.items,
             impl_items: self.impl_items,
             trait_items: self.trait_items,
-        })
+        });
+        debug!("{:#?}", ir);
+        validate::Validator::new().visit_ir(ir);
+        ir
     }
 
     fn lower_generics(&mut self, generics: &Generics) -> &'ir ir::Generics<'ir> {
@@ -152,12 +156,13 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {
-        self.lower_node_id_generic(node_id, |this| {
+        let id = self.lower_node_id_generic(node_id, |this| {
             let &mut (def, ref mut counter) = this.owner_stack.last_mut().unwrap();
             let local_id = *counter;
             *counter += 1;
             ir::Id { def, local: LocalId::new(local_id) }
-        })
+        });
+        dbg!(id)
     }
 
     fn lower_body(&mut self, sig: &FnSig, expr: &Expr) -> &'ir ir::Body<'ir> {

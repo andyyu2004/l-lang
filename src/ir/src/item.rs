@@ -4,8 +4,8 @@ use span::Span;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Item<'ir> {
-    pub span: Span,
     pub id: ir::Id,
+    pub span: Span,
     pub vis: Visibility,
     pub ident: Ident,
     pub kind: ir::ItemKind<'ir>,
