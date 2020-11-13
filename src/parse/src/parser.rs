@@ -13,7 +13,6 @@ use std::ops::{Deref, DerefMut};
 pub struct Parser<'a> {
     pub sess: &'a Session,
     fparser: Option<FileParser>,
-    idx: usize,
     id_counter: Cell<usize>,
 }
 
@@ -21,23 +20,25 @@ pub struct Parser<'a> {
 pub struct FileParser {
     crate file: FileIdx,
     tokens: Vec<Tok>,
+    idx: usize,
 }
 
 impl FileParser {
     pub fn new(file: FileIdx) -> Self {
         let tokens = Lexer::new().lex(file);
-        Self { file, tokens }
+        Self { file, tokens, idx: 0 }
     }
 }
 
 impl<'a> Parser<'a> {
     pub fn new(sess: &'a Session) -> Self {
-        Self { fparser: None, idx: 0, id_counter: Cell::new(0), sess }
+        Self { fparser: None, id_counter: Cell::new(0), sess }
     }
 
     /// entry point to parsing; parses starting from root file
     pub fn parse(&mut self) -> Option<P<Ast>> {
         self.with_file(ROOT_FILE_IDX, |parser| {
+            dbg!("parse");
             let ast = AstParser.parse(parser).map_err(|err| err.emit()).ok()?;
             validate::AstValidator::default().visit_ast(&ast);
             Some(ast)
@@ -149,12 +150,14 @@ impl<'a> Parser<'a> {
 
     /// entry point to parsing a single expression from a file
     /// used for testing purposes
+    pub fn test_parse_expr(&mut self) -> P<Expr> {
+        self.with_file(ROOT_FILE_IDX, |parser| parser.parse_expr())
+    }
+
     pub fn parse_expr(&mut self) -> P<Expr> {
-        self.with_file(ROOT_FILE_IDX, |parser| {
-            ExprParser.parse(parser).unwrap_or_else(|err| {
-                err.emit();
-                parser.mk_expr(err.get_first_span(), ExprKind::Err)
-            })
+        ExprParser.parse(self).unwrap_or_else(|err| {
+            err.emit();
+            self.mk_expr(err.get_first_span(), ExprKind::Err)
         })
     }
 

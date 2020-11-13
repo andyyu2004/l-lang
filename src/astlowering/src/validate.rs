@@ -22,7 +22,6 @@ impl<'ir> Validator<'ir> {
 
 impl<'ir> Visitor<'ir> for Validator<'ir> {
     fn visit_item(&mut self, item: &'ir ir::Item<'ir>) {
-        dbg!(item.id.def);
         self.with_def_id(item.id.def, |this| ir::walk_item(this, item))
     }
 

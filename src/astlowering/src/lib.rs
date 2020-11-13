@@ -156,13 +156,12 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn lower_node_id(&mut self, node_id: NodeId) -> ir::Id {
-        let id = self.lower_node_id_generic(node_id, |this| {
+        self.lower_node_id_generic(node_id, |this| {
             let &mut (def, ref mut counter) = this.owner_stack.last_mut().unwrap();
             let local_id = *counter;
             *counter += 1;
             ir::Id { def, local: LocalId::new(local_id) }
-        });
-        dbg!(id)
+        })
     }
 
     fn lower_body(&mut self, sig: &FnSig, expr: &Expr) -> &'ir ir::Body<'ir> {

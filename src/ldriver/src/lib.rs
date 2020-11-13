@@ -195,10 +195,9 @@ impl<'tcx> Driver<'tcx> {
         Ok(tokens)
     }
 
-    /// used for testing parsing
     pub fn parse_expr(&self) -> Option<P<ast::Expr>> {
         let mut parser = Parser::new(&self.sess);
-        let expr = parser.parse_expr();
+        let expr = parser.test_parse_expr();
         match &expr.kind {
             ExprKind::Err => None,
             _ => Some(expr),
