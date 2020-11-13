@@ -35,6 +35,8 @@ pub enum ParseError {
     AmbiguousGenericArgsInExprPath,
     #[error("elided type annotation not allowed here")]
     ElidedTypeNotAllowedInThisContext,
+    #[error("modules declared as a file cannot have submodules")]
+    FileModuleWithSubmodules(Ident),
     #[error("expected uppercase identifier, found `{0}`")]
     ExpectUppercaseIdentifier(Symbol),
     #[error("expected lowercase identifier, found `{0}`")]

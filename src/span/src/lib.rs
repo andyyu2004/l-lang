@@ -10,7 +10,7 @@ mod source_map;
 mod symbol;
 
 use codespan_reporting::diagnostic::Label;
-pub use source_map::{FileIdx, SourceMap, ROOT_FILE_IDX};
+pub use source_map::{FileIdx, ModuleKind, SourceMap, ROOT_FILE_IDX};
 pub use symbol::{kw, sym, Symbol};
 
 use codespan::ByteIndex;

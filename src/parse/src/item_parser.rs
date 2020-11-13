@@ -1,7 +1,7 @@
 use crate::*;
 use ast::*;
 use lex::TokenType;
-use span::with_source_map;
+use span::{with_source_map, ModuleKind};
 use std::convert::TryFrom;
 
 const ITEM_KEYWORDS: [TokenType; 9] = [
@@ -70,6 +70,12 @@ impl<'a> Parse<'a> for ModuleParser {
     type Output = Module;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        if with_source_map(|map| map.get(parser.file).file.kind == ModuleKind::File) {
+            return Err(
+                parser.build_err(self.name.span, ParseError::FileModuleWithSubmodules(self.name))
+            );
+        }
+
         let module_file = match with_source_map(|map| map.add_module(parser.file, *self.name)) {
             Some(file) => file,
             None =>

@@ -7,20 +7,39 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug, Default)]
 pub struct SourceMap {
-    files: IndexVec<FileIdx, SourceFile>,
+    modules: IndexVec<FileIdx, SourceFile>,
+}
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum ModuleKind {
+    File,
+    Dir,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ModuleFile {
+    pub path: PathBuf,
+    pub kind: ModuleKind,
+}
+
+impl ModuleFile {
+    pub fn new(path: impl AsRef<Path>, kind: ModuleKind) -> Self {
+        let path = path.as_ref().canonicalize().unwrap();
+        Self { path, kind }
+    }
 }
 
 impl SourceMap {
-    pub fn add_src_file(&mut self, path: impl AsRef<Path>) -> FileIdx {
-        let src_file = SourceFile::new(path);
-        self.files.push(src_file)
+    pub fn add_src_file(&mut self, module_file: ModuleFile) -> FileIdx {
+        let src_file = SourceFile::new(module_file);
+        self.modules.push(src_file)
     }
 
     pub fn add_module(&mut self, current_file: FileIdx, sym: Symbol) -> Option<FileIdx> {
         self.find_module_file(current_file, sym).map(|path| self.add_src_file(path))
     }
 
-    fn find_module_file(&mut self, current_file: FileIdx, sym: Symbol) -> Option<PathBuf> {
+    fn find_module_file(&mut self, current_file: FileIdx, sym: Symbol) -> Option<ModuleFile> {
         let path = self.path_of(current_file).parent().unwrap();
 
         let check_path = |p: &Path| p.is_file() && p.extension() == Some(&OsString::from("l"));
@@ -32,11 +51,11 @@ impl SourceMap {
         // for the `foo` module file
         let module_file_path = path.join(format!("{}.l", sym));
         if check_path(&module_file_path) {
-            return Some(module_file_path);
+            return Some(ModuleFile::new(module_file_path, ModuleKind::File));
         } else {
             let module_dir_path = path.join(format!("{}/{}.l", sym, sym));
             if check_path(&module_dir_path) {
-                return Some(module_dir_path);
+                return Some(ModuleFile::new(module_dir_path, ModuleKind::Dir));
             }
         };
         None
@@ -47,30 +66,29 @@ impl SourceMap {
     }
 
     pub fn path_of(&self, file: FileIdx) -> &Path {
-        &self.files[file].path
+        &self.modules[file].file.path
     }
 
     pub fn get(&self, file: FileIdx) -> &SourceFile {
-        &self.files[file]
+        &self.modules[file]
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct SourceFile {
-    path: PathBuf,
+    pub file: ModuleFile,
     name: String,
     src: String,
     line_starts: Vec<usize>,
 }
 
 impl SourceFile {
-    pub fn new(path: impl AsRef<Path>) -> Self {
-        let path = path.as_ref().canonicalize().unwrap();
-        let src = std::fs::read_to_string(&path).unwrap();
+    pub fn new(file: ModuleFile) -> Self {
+        let src = std::fs::read_to_string(&file.path).unwrap();
         Self {
-            path: path.to_path_buf(),
-            name: path.file_name().unwrap().to_str().unwrap().to_owned(),
+            name: file.path.file_name().unwrap().to_str().unwrap().to_owned(),
             line_starts: line_starts(&src).collect(),
+            file,
             src,
         }
     }
@@ -108,22 +126,22 @@ impl<'a> Files<'a> for SourceMap {
     type Source = &'a str;
 
     fn name(&'a self, id: Self::FileId) -> Option<Self::Name> {
-        Some(&self.files[id].name)
+        Some(&self.modules[id].name)
     }
 
     fn source(&'a self, id: Self::FileId) -> Option<Self::Source> {
-        Some(&self.files[id].src)
+        Some(&self.modules[id].src)
     }
 
     fn line_index(&'a self, id: Self::FileId, byte_index: usize) -> Option<usize> {
-        Some(match self.files[id].line_starts.binary_search(&byte_index) {
+        Some(match self.modules[id].line_starts.binary_search(&byte_index) {
             Ok(line) => line,
             Err(next_line) => next_line - 1,
         })
     }
 
     fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Option<std::ops::Range<usize>> {
-        let file = &self.files[id];
+        let file = &self.modules[id];
         let line_start = file.line_start(line_index)?;
         let next_line_start = file.line_start(line_index + 1)?;
 
@@ -132,15 +150,17 @@ impl<'a> Files<'a> for SourceMap {
 }
 
 impl SourceMap {
-    // just one sourcefile for now
-    pub fn new(path: impl AsRef<Path>) -> Self {
-        let mut source_map = Self { files: Default::default() };
-        source_map.files.push(SourceFile::new(path));
+    pub fn new(main_file_path: impl AsRef<Path>) -> Self {
+        let mut source_map = Self { modules: Default::default() };
+        // we consider the main module as a dir module, otherwise we won't be
+        // allowed to declare submodules in it
+        let module_file = ModuleFile::new(main_file_path, ModuleKind::Dir);
+        source_map.modules.push(SourceFile::new(module_file));
         source_map
     }
 
     pub fn span_to_slice(&self, span: Span) -> &str {
-        &self.files[span.file].src[span.start().to_usize()..span.end().to_usize()]
+        &self.modules[span.file].src[span.start().to_usize()..span.end().to_usize()]
     }
 
     pub fn span_to_string(&self, span: Span) -> String {

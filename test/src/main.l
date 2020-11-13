@@ -2,6 +2,6 @@ mod fib;
 mod dir;
 
 fn main() -> int {
-    0
+    fib::fib(20)
 }
 
