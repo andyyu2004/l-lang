@@ -6,6 +6,10 @@ use span::sym;
 use span::Symbol;
 
 impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
+    pub fn lower_items(&mut self, item: &[P<Item>]) {
+        item.iter().for_each(|item| self.lower_item(item));
+    }
+
     pub fn lower_item(&mut self, item: &Item) {
         self.with_def_id(item.id, |lctx| {
             let &Item { span, id, vis, ref kind, ident } = item;
@@ -43,7 +47,14 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Use(path) => ir::ItemKind::Use(lctx.lower_path(path)),
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
-                ItemKind::Mod(_) => todo!(),
+                ItemKind::Mod(module) => {
+                    let items = lctx.arena.alloc_from_iter(module.items.iter().map(|item| {
+                        lctx.lower_item(item);
+                        lctx.lower_node_id(item.id).def
+                    }));
+                    let module = ir::Mod { span: module.span, items };
+                    ir::ItemKind::Mod(module)
+                }
             };
             let item = ir::Item { span, id, vis, ident, kind };
             lctx.def_node(id.def, item);

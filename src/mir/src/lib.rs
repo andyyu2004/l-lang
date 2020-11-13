@@ -92,7 +92,8 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
             // note that no tir is generated for enum constructors
             // the constructor code is generated at mir level only
             ir::ItemKind::TypeAlias(..) | ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => {}
-            ir::ItemKind::Use(..) | ir::ItemKind::Impl { .. } => unreachable!(),
+            ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Impl { .. } =>
+                unreachable!(),
         }
     }
     halt_on_error!(tcx);

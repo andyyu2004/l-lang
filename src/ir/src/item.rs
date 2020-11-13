@@ -28,7 +28,7 @@ impl<'ir> Item<'ir> {
             | ItemKind::Struct(g, _)
             | ItemKind::TypeAlias(g, _)
             | ItemKind::Enum(g, _) => Some(g),
-            ItemKind::Use(..) | ItemKind::Extern(..) => None,
+            ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) => None,
         }
     }
 }
@@ -41,12 +41,19 @@ pub enum ItemKind<'ir> {
     Struct(&'ir ir::Generics<'ir>, ir::VariantKind<'ir>),
     Enum(&'ir ir::Generics<'ir>, &'ir [ir::Variant<'ir>]),
     Extern(&'ir [ir::ForeignItem<'ir>]),
+    Mod(ir::Mod<'ir>),
     Impl {
         generics: &'ir ir::Generics<'ir>,
         trait_path: Option<&'ir ir::Path<'ir>>,
         self_ty: &'ir ir::Ty<'ir>,
         impl_item_refs: &'ir [ImplItemRef],
     },
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Mod<'ir> {
+    pub span: Span,
+    pub items: &'ir [ir::DefId],
 }
 
 #[derive(Debug, Clone)]

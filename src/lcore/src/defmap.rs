@@ -65,7 +65,7 @@ impl<'tcx> DefMap<'tcx> {
                 | ir::ItemKind::TypeAlias(generics, _)
                 | ir::ItemKind::Struct(generics, _)
                 | ir::ItemKind::Impl { generics, .. } => generics,
-                ir::ItemKind::Use(..) | ir::ItemKind::Extern(_) => unreachable!(),
+                ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Extern(_) => panic!(),
             },
             DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
                 ir::ForeignItemKind::Fn(_, generics) => generics,

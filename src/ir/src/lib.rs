@@ -8,6 +8,7 @@ mod item_visitor;
 mod pat;
 mod stmt;
 mod ty;
+mod validate;
 mod visit;
 
 use crate as ir;

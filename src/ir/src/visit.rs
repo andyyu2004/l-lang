@@ -10,6 +10,9 @@ pub trait Visitor<'ir>: Sized {
         walk_item(self, item)
     }
 
+    fn visit_id(&mut self, id: ir::Id) {
+    }
+
     fn visit_body(&mut self, body: &'ir ir::Body<'ir>) {
         walk_body(self, body)
     }
@@ -111,6 +114,9 @@ pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, ir: &'ir ir::Ir<'ir>) {
 }
 
 pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplItem<'ir>) {
+    v.visit_id(impl_item.id);
+    v.visit_ident(impl_item.ident);
+    v.visit_vis(impl_item.vis);
     match impl_item.kind {
         ir::ImplItemKind::Fn(sig, body) => {
             v.visit_fn_sig(sig);
@@ -120,6 +126,9 @@ pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplIt
 }
 
 pub fn walk_foreign_item<'ir>(v: &mut impl Visitor<'ir>, item: &'ir ForeignItem<'ir>) {
+    v.visit_id(item.id);
+    v.visit_ident(item.ident);
+    v.visit_vis(item.vis);
     match item.kind {
         ForeignItemKind::Fn(sig, generics) => {
             v.visit_fn_sig(sig);
@@ -129,11 +138,13 @@ pub fn walk_foreign_item<'ir>(v: &mut impl Visitor<'ir>, item: &'ir ForeignItem<
 }
 
 pub fn walk_variant<'ir>(v: &mut impl Visitor<'ir>, variant: &'ir ir::Variant<'ir>) {
+    v.visit_id(variant.id);
     v.visit_ident(variant.ident);
     v.visit_variant_kind(&variant.kind);
 }
 
 pub fn walk_field_decl<'ir>(v: &mut impl Visitor<'ir>, decl: &'ir ir::FieldDecl<'ir>) {
+    v.visit_id(decl.id);
     v.visit_ident(decl.ident);
     v.visit_vis(decl.vis);
     v.visit_ty(decl.ty);
@@ -148,6 +159,7 @@ pub fn walk_variant_kind<'ir>(v: &mut impl Visitor<'ir>, kind: &'ir ir::VariantK
 }
 
 pub fn walk_ty_param<'ir>(v: &mut impl Visitor<'ir>, param: &'ir ir::TyParam<'ir>) {
+    v.visit_id(param.id);
     param.default.iter().for_each(|ty| v.visit_ty(ty));
 }
 
@@ -171,6 +183,7 @@ pub fn walk_qpath<'ir>(v: &mut impl Visitor<'ir>, qpath: &'ir ir::QPath<'ir>) {
 }
 
 pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
+    v.visit_id(item.id);
     v.visit_vis(item.vis);
     v.visit_ident(item.ident);
     match &item.kind {
@@ -193,13 +206,16 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_variant_kind(kind);
         }
         ir::ItemKind::Extern(items) => items.iter().for_each(|item| v.visit_foreign_item(item)),
+        // currently, the top level `walk_ir` just walks through the items, impl_items, and
+        // trait_items map
+        // this doesn't visit things in proper nested order but maybe it is fine?
+        // this is why modules and impls don't recursively walk
         ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs: _ } => {
             v.visit_generics(generics);
             trait_path.iter().for_each(|path| v.visit_path(path));
             v.visit_ty(self_ty);
-            // TODO
-            // impl_item_refs.iter().for_each();
         }
+        ir::ItemKind::Mod(..) => {}
     }
 }
 
@@ -209,6 +225,7 @@ pub fn walk_body<'ir, V: Visitor<'ir>>(v: &mut V, body: &'ir ir::Body<'ir>) {
 }
 
 pub fn walk_param<'ir, V: Visitor<'ir>>(v: &mut V, param: &'ir ir::Param<'ir>) {
+    v.visit_id(param.id);
     v.visit_pat(param.pat)
 }
 
@@ -222,6 +239,7 @@ pub fn walk_lambda<'ir, V: Visitor<'ir>>(
 }
 
 pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
+    v.visit_id(expr.id);
     match &expr.kind {
         ir::ExprKind::Box(expr) => v.visit_expr(expr),
         ir::ExprKind::Err => {}
@@ -260,17 +278,20 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
 }
 
 pub fn walk_field<'ir, V: Visitor<'ir>>(v: &mut V, field: &'ir ir::Field<'ir>) {
+    v.visit_id(field.id);
     v.visit_ident(field.ident);
     v.visit_expr(field.expr);
 }
 
 pub fn walk_arm<'ir, V: Visitor<'ir>>(v: &mut V, arm: &'ir ir::Arm<'ir>) {
+    v.visit_id(arm.id);
     v.visit_pat(arm.pat);
     arm.guard.iter().for_each(|expr| v.visit_expr(expr));
     v.visit_expr(arm.body);
 }
 
 pub fn walk_stmt<'ir, V: Visitor<'ir>>(v: &mut V, stmt: &'ir ir::Stmt<'ir>) {
+    v.visit_id(stmt.id);
     match &stmt.kind {
         ir::StmtKind::Let(l) => v.visit_let(l),
         ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) => v.visit_expr(expr),
@@ -283,6 +304,7 @@ pub fn walk_block<'ir, V: Visitor<'ir>>(v: &mut V, block: &'ir ir::Block<'ir>) {
 }
 
 pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
+    v.visit_id(ty.id);
     match &ty.kind {
         ir::TyKind::Fn(params, ret) => {
             params.iter().for_each(|ty| v.visit_ty(ty));
@@ -299,6 +321,7 @@ pub fn walk_ty<'ir, V: Visitor<'ir>>(v: &mut V, ty: &'ir ir::Ty<'ir>) {
 }
 
 pub fn walk_let<'ir, V: Visitor<'ir>>(v: &mut V, l: &'ir ir::Let<'ir>) {
+    v.visit_id(l.id);
     l.init.iter().for_each(|expr| v.visit_expr(expr));
     v.visit_pat(l.pat);
     l.ty.iter().for_each(|ty| v.visit_ty(ty));
@@ -314,6 +337,7 @@ pub fn walk_path_segment<'ir, V: Visitor<'ir>>(v: &mut V, segment: &'ir ir::Path
 }
 
 pub fn walk_pat<'ir, V: Visitor<'ir>>(v: &mut V, pat: &'ir ir::Pattern<'ir>) {
+    v.visit_id(pat.id);
     match &pat.kind {
         ir::PatternKind::Box(pat) => v.visit_pat(pat),
         ir::PatternKind::Struct(qpath, fields) => {

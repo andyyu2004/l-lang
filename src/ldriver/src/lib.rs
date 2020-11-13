@@ -144,7 +144,7 @@ impl<'tcx> Driver<'tcx> {
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
         resolver.resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &self.sess, &mut resolver);
-        let ir = lctx.lower_prog(&ast);
+        let ir = lctx.lower_ast(&ast);
         let resolutions = resolver.complete();
         debug!("{:#?}", ir);
         Ok((ir, resolutions))

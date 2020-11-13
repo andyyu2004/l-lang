@@ -33,6 +33,7 @@ where
             | ir::ItemKind::Use(..)
             | ir::ItemKind::TypeAlias(..)
             | ir::ItemKind::Enum(..)
+            | ir::ItemKind::Mod(..)
             | ir::ItemKind::Struct(..)
             | ir::ItemKind::Impl { .. } => {}
         }

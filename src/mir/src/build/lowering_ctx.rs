@@ -112,6 +112,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
             ir::ItemKind::Extern(_) => todo!(),
             ir::ItemKind::Use(..)
             | ir::ItemKind::Enum(..)
+            | ir::ItemKind::Mod(..)
             | ir::ItemKind::Struct(..)
             | ir::ItemKind::TypeAlias(..)
             | ir::ItemKind::Impl { .. } => unreachable!(),
