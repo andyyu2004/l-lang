@@ -82,13 +82,10 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                     return Err(
                         self.build_error(path.span, ResolutionError::InvalidValuePath(def_kind))
                     ),
-                DefKind::TyParam(..)
-                | DefKind::Extern
-                | DefKind::Use
-                | DefKind::Impl
-                | DefKind::TypeAlias => panic!(),
+                DefKind::TyParam(..) | DefKind::Extern | DefKind::Use | DefKind::Impl => panic!(),
                 DefKind::Ctor(..)
                 | DefKind::Fn
+                | DefKind::TypeAlias
                 | DefKind::AssocFn
                 | DefKind::Enum
                 | DefKind::Struct => {}
