@@ -1,12 +1,15 @@
-mod fib;
-mod dir;
+/* mod fib; */
+/* mod dir; */
 
 extern {
     fn print(i: int);
 }
 
 fn main() -> int {
-    print(fib::fib(20));
+    let x = 5;
+    /* print(fib::fib(20)); */
+    /* print(i); */
+    i;
     0
 }
 

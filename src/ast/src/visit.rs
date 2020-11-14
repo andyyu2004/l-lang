@@ -4,7 +4,7 @@ use super::*;
 /// by default, just recursively visits each substructure
 pub trait Visitor<'ast>: Sized {
     fn visit_ast(&mut self, ast: &'ast Ast) {
-        self.visit_module(&ast.module);
+        walk_ast(self, ast);
     }
 
     fn visit_id(&mut self, _node_id: NodeId) {
@@ -116,6 +116,10 @@ pub trait Visitor<'ast>: Sized {
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         walk_assoc_item(self, item)
     }
+}
+
+pub fn walk_ast<'ast>(visitor: &mut impl Visitor<'ast>, ast: &'ast Ast) {
+    visitor.visit_module(&ast.module);
 }
 
 pub fn walk_fn_sig<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig) {

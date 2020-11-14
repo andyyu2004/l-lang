@@ -11,21 +11,3 @@ pub struct Mod<'a> {
     pub submodules: RefCell<FxHashMap<Ident, ModuleId>>,
     pd: PhantomData<&'a ()>,
 }
-
-impl<'a> Mod<'a> {
-    pub fn root() -> Self {
-        let root = Self::default();
-        root
-    }
-}
-
-pub enum ModuleTree<'a> {
-    Module(ModuleId),
-    Tree(&'a ModuleTree<'a>),
-}
-
-impl<'a> Default for ModuleTree<'a> {
-    fn default() -> Self {
-        Self::Module(ROOT_MODULE)
-    }
-}

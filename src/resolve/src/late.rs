@@ -17,9 +17,9 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     pub fn new(resolver: &'a mut Resolver<'r>) -> Self {
         Self {
             resolver,
-            _pd: &PhantomData,
             scopes: Default::default(),
             current_module: vec![ROOT_MODULE],
+            _pd: &PhantomData,
         }
     }
 
@@ -102,7 +102,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     fn resolve_foreign_item(&mut self, item: &'ast ForeignItem) {
         match &item.kind {
             ForeignItemKind::Fn(sig, generics) =>
-                self.with_generics(generics, |this| ast::walk_fn_sig(this, sig)),
+                self.with_generics(generics, |this| this.visit_fn(sig, None)),
         }
     }
 

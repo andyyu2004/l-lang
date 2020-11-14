@@ -68,7 +68,7 @@ impl<'a> Resolver<'a> {
         Self {
             sess,
             arenas,
-            modules: IndexVec::from_elem_n(arenas.modules.alloc(Mod::root()), 1),
+            modules: Default::default(),
             defs: Default::default(),
             partial_resolutions: Default::default(),
             node_id_to_def_id: Default::default(),

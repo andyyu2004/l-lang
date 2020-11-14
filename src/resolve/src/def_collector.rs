@@ -34,6 +34,12 @@ impl<'a, 'r> DefCollector<'a, 'r> {
 }
 
 impl<'ast, 'r> Visitor<'ast> for DefCollector<'ast, 'r> {
+    fn visit_ast(&mut self, ast: &'ast Ast) {
+        let module_id = self.def_module(Ident::empty());
+        assert_eq!(module_id, ROOT_MODULE);
+        ast::walk_ast(self, ast);
+    }
+
     fn visit_item(&mut self, item: &'ast Item) {
         self.resolver.def_item(self.curr_mod, item.ident, item.id, item.kind.def_kind());
         match &item.kind {
@@ -44,7 +50,7 @@ impl<'ast, 'r> Visitor<'ast> for DefCollector<'ast, 'r> {
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
             ItemKind::Mod(module) => {
-                let module_id = self.resolver.def_module(self.curr_mod, item.ident);
+                let module_id = self.def_module(item.ident);
                 self.with_module(module_id, |this| ast::walk_module(this, module))
             }
             _ => ast::walk_item(self, item),
