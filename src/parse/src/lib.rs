@@ -258,8 +258,10 @@ impl<'a> Parse<'a> for VisibilityParser {
     type Output = Visibility;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(pub_keyword) = parser.accept(TokenType::Pub) {
-            Ok(Visibility { span: pub_keyword.span, node: VisibilityKind::Public })
+        if let Some(pub_kw) = parser.accept(TokenType::Pub) {
+            Ok(Visibility { span: pub_kw.span, node: VisibilityKind::Public })
+        } else if let Some(internal_kw) = parser.accept(TokenType::Internal) {
+            Ok(Visibility { span: internal_kw.span, node: VisibilityKind::Public })
         } else {
             Ok(Visibility { span: parser.empty_span(), node: VisibilityKind::Private })
         }

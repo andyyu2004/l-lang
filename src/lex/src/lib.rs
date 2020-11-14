@@ -15,6 +15,7 @@ lazy_static! {
         "fn" => TokenType::Fn,
         "box" => TokenType::Box,
         "match" => TokenType::Match,
+        "internal" => TokenType::Internal,
         "mod" => TokenType::Mod,
         "false" => TokenType::False,
         "true" => TokenType::True,
@@ -170,6 +171,7 @@ impl Display for TokenType {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Internal,
     Mod,
     Use,
     LSelf,
