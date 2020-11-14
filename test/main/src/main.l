@@ -7,7 +7,8 @@ extern {
 
 fn main() -> int {
     let x = 5;
-    print(fib::fib(20));
+    fib;
+    /* print(fib::fib(20)); */
     0
 }
 

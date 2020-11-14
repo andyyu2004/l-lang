@@ -1,5 +1,6 @@
 use ast::{Ident, Path, PathSegment};
 use error::DiagnosticBuilder;
+use ir::DefKind;
 use thiserror::Error;
 
 pub type ResResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
@@ -12,6 +13,8 @@ pub enum ResolutionError {
     UnresolvedType(Path),
     #[error("unresolved module segment `{0}` in path `{1}`")]
     UnresolvedModule(PathSegment, Path),
+    #[error("expected value, found {0}")]
+    InvalidValuePath(DefKind),
     #[error("let binding to named closure")]
     BindingToNamedClosure,
     #[error("item with name `{0}` already defined")]

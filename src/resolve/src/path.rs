@@ -69,12 +69,33 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         path: &'ast Path,
         segment: &'ast PathSegment,
     ) -> ResResult<'a, Res<NodeId>> {
-        self.resolve_ident(segment.ident).ok_or_else(|| {
+        let res = self.resolve_ident(segment.ident).ok_or_else(|| {
             self.build_error(
                 path.span,
                 ResolutionError::UnresolvedPath(segment.clone(), path.clone()),
             )
-        })
+        })?;
+
+        if let Res::Def(_, def_kind) = res {
+            match def_kind {
+                DefKind::Mod =>
+                    return Err(
+                        self.build_error(path.span, ResolutionError::InvalidValuePath(def_kind))
+                    ),
+                DefKind::TyParam(..)
+                | DefKind::Extern
+                | DefKind::Use
+                | DefKind::Impl
+                | DefKind::TypeAlias => panic!(),
+                DefKind::Ctor(..)
+                | DefKind::Fn
+                | DefKind::AssocFn
+                | DefKind::Enum
+                | DefKind::Struct => {}
+            }
+        };
+
+        Ok(res)
     }
 
     fn resolve_ty_path(&mut self, path: &'ast Path) -> ResResult<Res<NodeId>> {
