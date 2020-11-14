@@ -49,6 +49,8 @@ pub enum ItemKind {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Module {
+    // no identifier stored here
+    // refer to the `Item` struct wrapping this
     pub span: Span,
     pub items: Vec<P<Item>>,
 }

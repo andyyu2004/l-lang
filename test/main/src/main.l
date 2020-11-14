@@ -1,4 +1,4 @@
-/* mod fib; */
+mod fib;
 /* mod dir; */
 
 extern {
@@ -7,9 +7,7 @@ extern {
 
 fn main() -> int {
     let x = 5;
-    /* print(fib::fib(20)); */
-    /* print(i); */
-    i;
+    print(fib::fib(20));
     0
 }
 

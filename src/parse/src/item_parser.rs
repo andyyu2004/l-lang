@@ -36,12 +36,7 @@ impl<'a> Parse<'a> for ItemParser {
             parser.expect(TokenType::Semi)?;
             let span = mod_kw.span.merge(name.span);
             let module = SubModuleParser { span, name }.parse(parser)?;
-            return Ok(parser.mk_item(
-                vis.span.merge(name.span),
-                vis,
-                Ident::empty(),
-                ItemKind::Mod(module),
-            ));
+            return Ok(parser.mk_item(vis.span.merge(name.span), vis, name, ItemKind::Mod(module)));
         }
 
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
