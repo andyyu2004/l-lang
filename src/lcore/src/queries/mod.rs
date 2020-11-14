@@ -66,7 +66,6 @@ macro_rules! define_query_context {
                     return value;
                 }
 
-
                 let value = (self.queries.$name)(self, key);
                 // let ptr = self.cache.arena.$name.alloc(computed);
                 self.cache.$name.borrow_mut().insert(key, value);

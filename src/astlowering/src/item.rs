@@ -47,19 +47,20 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Use(path) => ir::ItemKind::Use(lctx.lower_path(path)),
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
-                ItemKind::Mod(module) => {
-                    let items = lctx.arena.alloc_from_iter(module.items.iter().map(|item| {
-                        lctx.lower_item(item);
-                        lctx.lower_node_id(item.id).def
-                    }));
-                    let module = ir::Mod { span: module.span, items };
-                    ir::ItemKind::Mod(module)
-                }
+                ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
             };
             let item = ir::Item { span, id, vis, ident, kind };
             lctx.def_node(id.def, item);
             lctx.items.insert(id.def, item);
         });
+    }
+
+    crate fn lower_module(&mut self, module: &Module) -> ir::Mod<'ir> {
+        let items = self.arena.alloc_from_iter(module.items.iter().map(|item| {
+            self.lower_item(item);
+            self.lower_node_id(item.id).def
+        }));
+        ir::Mod { span: module.span, items }
     }
 
     /// inserts DefId -> DefNode mapping into the `DefMap`

@@ -31,10 +31,11 @@ impl<'a> Parse<'a> for ItemParser {
         } else if let Some(_use_kw) = parser.accept(TokenType::Use) {
             return UseParser { vis }.parse(parser);
         }
-        if let Some(_) = parser.accept(TokenType::Mod) {
+        if let Some(mod_kw) = parser.accept(TokenType::Mod) {
             let name = parser.expect_lident()?;
             parser.expect(TokenType::Semi)?;
-            let module = ModuleParser { name }.parse(parser)?;
+            let span = mod_kw.span.merge(name.span);
+            let module = SubModuleParser { span, name }.parse(parser)?;
             return Ok(parser.mk_item(
                 vis.span.merge(name.span),
                 vis,
@@ -62,17 +63,45 @@ impl<'a> Parse<'a> for ItemParser {
     }
 }
 
-pub struct ModuleParser {
-    crate name: Ident,
-}
+pub struct ModuleParser;
 
 impl<'a> Parse<'a> for ModuleParser {
     type Output = Module;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if with_source_map(|map| map.get(parser.file).file.kind == ModuleKind::File) {
+        let mut items = vec![];
+        while !parser.reached_eof() {
+            items.push(ItemParser.parse(parser)?);
+        }
+
+        let span = if let Some(fst) = items.first() {
+            let last = items.last().unwrap();
+            fst.span.merge(last.span)
+        } else {
+            Span::default()
+        };
+
+        Ok(Module { span, items })
+    }
+}
+
+pub struct SubModuleParser {
+    /// the span of the declaration
+    crate span: Span,
+    /// the name of the module
+    crate name: Ident,
+}
+
+impl<'a> Parse<'a> for SubModuleParser {
+    type Output = Module;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        // disallow a `file module` having submodules
+        if with_source_map(|map| {
+            map.get_opt(parser.file).map(|src| src.file.kind) == Some(ModuleKind::File)
+        }) {
             return Err(
-                parser.build_err(self.name.span, ParseError::FileModuleWithSubmodules(self.name))
+                parser.build_err(self.span, ParseError::FileModuleWithSubmodules(self.name))
             );
         }
 
@@ -80,7 +109,7 @@ impl<'a> Parse<'a> for ModuleParser {
             Some(file) => file,
             None =>
                 return Err(parser.build_err(
-                    self.name.span,
+                    self.span,
                     ParseError::UnresolvedModule(
                         with_source_map(|map| map.dir_of(parser.file).to_path_buf()),
                         self.name,
@@ -92,21 +121,7 @@ impl<'a> Parse<'a> for ModuleParser {
             debug!("found module `{}` at `{}`", self.name, map.path_of(module_file).display())
         });
 
-        parser.with_file(module_file, |parser| {
-            let mut items = vec![];
-            while !parser.reached_eof() {
-                items.push(ItemParser.parse(parser)?);
-            }
-
-            let span = if let Some(fst) = items.first() {
-                let last = items.last().unwrap();
-                fst.span.merge(last.span)
-            } else {
-                Span::default()
-            };
-
-            Ok(Module { name: self.name, span, items })
-        })
+        parser.with_file(module_file, |parser| ModuleParser.parse(parser))
     }
 }
 

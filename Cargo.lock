@@ -448,6 +448,8 @@ dependencies = [
  "resolve",
  "rustc-hash",
  "salsa",
+ "serde",
+ "serde_derive",
  "session",
  "smallvec",
  "span",

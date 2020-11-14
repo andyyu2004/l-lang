@@ -69,6 +69,10 @@ impl SourceMap {
         &self.modules[file].file.path
     }
 
+    pub fn get_opt(&self, file: FileIdx) -> Option<&SourceFile> {
+        self.modules.get(file)
+    }
+
     pub fn get(&self, file: FileIdx) -> &SourceFile {
         &self.modules[file]
     }

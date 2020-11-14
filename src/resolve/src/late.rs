@@ -23,8 +23,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
-    crate fn with_module<R>(&mut self, module: &ast::Module, f: impl FnOnce(&mut Self) -> R) -> R {
-        let module_id = self.resolve_module(module.name).unwrap();
+    crate fn with_module<R>(&mut self, name: Ident, f: impl FnOnce(&mut Self) -> R) -> R {
+        let module_id = self.resolve_module(name).unwrap();
         self.with_module_id(module_id, f)
     }
 
@@ -94,7 +94,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                 self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Extern(..) => ast::walk_item(self, item),
             ItemKind::Mod(module) =>
-                self.with_module(module, |this| ast::walk_module(this, module)),
+                self.with_module(item.ident, |this| ast::walk_module(this, module)),
             ItemKind::Use(..) => {}
         }
     }

@@ -43,13 +43,12 @@ impl<'ast, 'r> Visitor<'ast> for DefCollector<'ast, 'r> {
                 let module = self.def_module(item.ident);
                 self.with_module(module, |this| ast::walk_item(this, item));
             }
+            ItemKind::Mod(module) => {
+                let module_id = self.resolver.def_module(self.curr_mod, item.ident);
+                self.with_module(module_id, |this| ast::walk_module(this, module))
+            }
             _ => ast::walk_item(self, item),
         }
-    }
-
-    fn visit_module(&mut self, module: &'ast ast::Module) {
-        let module_id = self.resolver.def_module(self.curr_mod, module.name);
-        self.with_module(module_id, |this| ast::walk_module(this, module))
     }
 
     fn visit_foreign_item(&mut self, item: &'ast ForeignItem) {

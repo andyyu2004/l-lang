@@ -7,11 +7,8 @@ impl<'a> Parse<'a> for AstParser {
     type Output = P<Ast>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let mut items = vec![];
-        while !parser.reached_eof() {
-            items.push(ItemParser.parse(parser)?);
-        }
-        Ok(box Ast { items })
+        let module = ModuleParser.parse(parser)?;
+        Ok(box Ast { module })
     }
 }
 

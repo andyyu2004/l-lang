@@ -9,6 +9,9 @@
 #![feature(type_name_of_val)]
 
 #[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
 extern crate log;
 
 mod arena;

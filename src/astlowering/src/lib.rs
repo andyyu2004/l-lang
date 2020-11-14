@@ -89,7 +89,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     pub fn lower_ast(mut self, prog: &Ast) -> &'ir ir::Ir<'ir> {
-        self.lower_items(&prog.items);
+        self.lower_module(&prog.module);
         let ir = self.arena.alloc(ir::Ir {
             entry_id: self.entry_id,
             items: self.items,
