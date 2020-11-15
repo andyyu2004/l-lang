@@ -1,0 +1,78 @@
+MIR
+%ret:int (Ret)
+n:int (Arg)
+%tmp2:bool (Tmp)
+%tmp3:bool (Tmp)
+%tmp4:bool (Tmp)
+%tmp5:bool (Tmp)
+%tmp6:bool (Tmp)
+%tmp7:int (Tmp)
+%tmp8:int (Tmp)
+%tmp9:int (Tmp)
+%tmp10:int (Tmp)
+
+basic_block bb0:
+    %tmp2:bool ← n < 2
+    branch bb1
+
+basic_block bb1:
+    %tmp3:bool ← true
+    %tmp4:bool ← true
+    %tmp5:bool ← %tmp4 == %tmp2
+    %tmp3:bool ← %tmp5 & %tmp3
+    if %tmp3 then bb2 else bb3
+
+basic_block bb2:
+    %ret:int ← n
+    branch bb5
+
+basic_block bb3:
+    %tmp6:bool ← true
+    if %tmp6 then bb4 else bb6
+
+basic_block bb4:
+    %tmp8:int ← n - 1
+    %tmp7:int ← call fib<>(%tmp8) -> [bb7]
+
+
+basic_block bb5:
+    return
+
+basic_block bb6:
+    abort
+
+basic_block bb7:
+    %tmp10:int ← n - 2
+    %tmp9:int ← call fib<>(%tmp10) -> [bb8]
+
+
+basic_block bb8:
+    %ret:int ← %tmp7 + %tmp9
+    branch bb5
+
+
+
+MIR
+%ret:int (Ret)
+%tmp1:() (Tmp)
+%tmp2:int (Tmp)
+
+basic_block bb0:
+    %tmp2:int ← call fib<>(20) -> [bb1]
+
+
+basic_block bb1:
+    %tmp1:() ← call print<>(%tmp2) -> [bb2]
+
+
+basic_block bb2:
+    %ret:int ← 0
+    return
+
+basic_block bb3:
+    %ret:int ← ()
+    return
+
+
+
+-1695182561

@@ -37,8 +37,10 @@ impl<'ir> ir::Expr<'ir> {
 
 #[derive(Debug)]
 pub enum ExprKind<'ir> {
+    Box(&'ir ir::Expr<'ir>),
     Lit(ast::Lit),
     Bin(ast::BinOp, &'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
+    Loop(&'ir ir::Block<'ir>),
     Unary(ast::UnaryOp, &'ir ir::Expr<'ir>),
     Ret(Option<&'ir ir::Expr<'ir>>),
     Block(&'ir ir::Block<'ir>),
@@ -49,7 +51,6 @@ pub enum ExprKind<'ir> {
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
     Struct(&'ir QPath<'ir>, &'ir [ir::Field<'ir>]),
-    Box(&'ir ir::Expr<'ir>),
     /// named field access `foo.x` or `tuple.1`
     Field(&'ir ir::Expr<'ir>, Ident),
     Err,

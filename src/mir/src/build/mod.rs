@@ -24,8 +24,8 @@ pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> 
     let mut builder = Builder::new(ctx, &body);
     let _ = builder.build_body();
     let mir = ctx.alloc(builder.complete());
-    // crate::analyse(&mir, &ctx);
-    crate::typecheck(ctx.tcx, &mir);
+    crate::analyze(ctx.tcx, mir);
+    crate::typecheck(ctx.tcx, mir);
     // eprintln!("{}", mir);
     mir
 }

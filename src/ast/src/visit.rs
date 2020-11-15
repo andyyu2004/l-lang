@@ -233,6 +233,11 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(expr);
             arms.iter().for_each(|arm| visitor.visit_arm(arm));
         }
+        ExprKind::Loop(block) => visitor.visit_block(block),
+        ExprKind::While(expr, block) => {
+            visitor.visit_expr(expr);
+            visitor.visit_block(block);
+        }
     }
 }
 

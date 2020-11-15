@@ -25,18 +25,6 @@ pub trait Idx: Copy + 'static + Ord + Debug + Hash {
     }
 }
 
-impl Idx for usize {
-    #[inline]
-    fn new(idx: usize) -> Self {
-        idx
-    }
-
-    #[inline]
-    fn index(self) -> usize {
-        self
-    }
-}
-
 /// Creates a struct type `S` that can be used as an index with
 /// `IndexVec` and so on.
 ///

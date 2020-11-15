@@ -5,9 +5,20 @@ extern {
     fn print(i: int);
 }
 
-internal fn main() -> int {
-    let x = 5;
+fn main() -> int {
+    /* let x = 5; */
+    /* loop { */
+
     /* print(fib::fib(20)); */
-    0
+    /* }; */
+    /* while x < 10 { */
+    /*     print(x); */
+    /*     x = x + 1; */
+    /* }; */
+    print(fib::fib(20));
+
+    return 0;
+    /* return 0; */
 }
+
 

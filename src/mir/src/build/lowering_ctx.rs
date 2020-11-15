@@ -379,6 +379,7 @@ impl<'tcx> LoweringCtx<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_ty(expr.id);
         let kind = match kind {
+            ir::ExprKind::Box(expr) => tir::ExprKind::Box(box expr.to_tir(self)),
             ir::ExprKind::Bin(op, l, r) =>
                 tir::ExprKind::Bin(*op, box l.to_tir(self), box r.to_tir(self)),
             ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
@@ -415,7 +416,7 @@ impl<'tcx> LoweringCtx<'tcx> {
                 tir::ExprKind::Assign(box l.to_tir(self), box r.to_tir(self)),
             ir::ExprKind::Field(base, _) =>
                 tir::ExprKind::Field(box base.to_tir(self), self.tables.field_index(expr.id)),
-            ir::ExprKind::Box(expr) => tir::ExprKind::Box(box expr.to_tir(self)),
+            ir::ExprKind::Loop(block) => todo!(),
             ir::ExprKind::Err => unreachable!(),
         };
         tir::Expr { span, kind, ty }

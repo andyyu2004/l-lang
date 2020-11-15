@@ -2,6 +2,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(box_syntax, box_patterns)]
 
+mod analyze;
 mod build;
 mod traverse;
 mod typecheck;
@@ -12,6 +13,7 @@ extern crate log;
 pub use build::*;
 pub use traverse::MirVisitor;
 
+use analyze::analyze;
 use error::{LError, LResult};
 use ir::{DefId, DefNode, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;

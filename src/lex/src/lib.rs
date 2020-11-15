@@ -35,6 +35,7 @@ lazy_static! {
         "extern" => TokenType::Extern,
         "for" => TokenType::For,
         "loop" => TokenType::Loop,
+        "while" => TokenType::While,
         "self" => TokenType::LSelf,
     };
 }
@@ -171,6 +172,7 @@ impl Display for TokenType {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    While,
     Internal,
     Mod,
     Use,
