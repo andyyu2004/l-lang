@@ -196,7 +196,7 @@ pub enum Rvalue<'tcx> {
     Discriminant(Lvalue<'tcx>),
     Closure(Ty<'tcx>, mir::Mir<'tcx>),
     Adt {
-        adt: &'tcx AdtTy<'tcx>,
+        adt: &'tcx AdtTy,
         variant_idx: VariantIdx,
         substs: SubstsRef<'tcx>,
         fields: Vec<Operand<'tcx>>,

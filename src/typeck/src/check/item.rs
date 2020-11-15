@@ -37,7 +37,7 @@ fn validate_adt<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
     // (this is implicitly what `type_of` will do to the field)
     // the conversion step performs the necessary checks for correctness
     for variant in &adt.variants {
-        for field in variant.fields {
+        for field in &variant.fields {
             tcx.type_of(field.def_id);
         }
     }

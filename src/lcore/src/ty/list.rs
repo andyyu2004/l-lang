@@ -1,4 +1,5 @@
 use crate::Arena;
+use serde::{Deserialize, Serialize};
 use std::alloc::Layout;
 use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
@@ -118,6 +119,18 @@ impl<T> Hash for List<T> {
     #[inline]
     fn hash<H: Hasher>(&self, s: &mut H) {
         (self as *const List<T>).hash(s)
+    }
+}
+
+impl<T> Serialize for List<T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
     }
 }
 

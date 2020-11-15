@@ -11,5 +11,6 @@ index = { path = "../index" }
 span = { path = "../span" }
 util = { path = "../util" }
 lex = { path = "../lex" }
+serde = { version = "1", features = ["derive"] }
 thiserror = "1"
 rustc-hash = "1"

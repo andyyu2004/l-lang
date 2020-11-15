@@ -169,7 +169,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &mut self,
         expr: &ir::Expr<'tcx>,
         substs: SubstsRef<'tcx>,
-        variant: &VariantTy<'tcx>,
+        variant: &VariantTy,
         fields: &[ir::Field<'tcx>],
     ) -> bool {
         // note we preserve the field declaration order of the struct

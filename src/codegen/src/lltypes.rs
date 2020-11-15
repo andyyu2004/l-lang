@@ -86,7 +86,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     pub fn variant_ty_to_llvm_ty(
         &self,
-        variant: &VariantTy<'tcx>,
+        variant: &VariantTy,
         substs: SubstsRef<'tcx>,
     ) -> StructType<'tcx> {
         // TODO cache results

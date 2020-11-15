@@ -23,7 +23,7 @@ fn build_variant_ctor_inner<'tcx>(
     tcx: TyCtx<'tcx>,
     ret_ty: Ty<'tcx>,
     variant_idx: VariantIdx,
-    variant: &VariantTy<'tcx>,
+    variant: &VariantTy,
 ) -> Option<&'tcx Mir<'tcx>> {
     // don't construct any mir for a constructor that is not a function
     if !variant.ctor_kind.is_function() {

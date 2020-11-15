@@ -48,7 +48,7 @@ pub enum ExprKind<'tcx> {
         upvars: Vec<tir::Expr<'tcx>>,
     },
     Adt {
-        adt: &'tcx AdtTy<'tcx>,
+        adt: &'tcx AdtTy,
         variant_idx: VariantIdx,
         substs: SubstsRef<'tcx>,
         fields: Vec<tir::Field<'tcx>>,

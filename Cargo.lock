@@ -35,6 +35,7 @@ dependencies = [
  "index",
  "lex",
  "rustc-hash",
+ "serde",
  "span",
  "thiserror",
  "util",
@@ -184,6 +185,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ebaf6bb6a863ad6aa3a18729e9710c53d75df03306714d9cc1f7357a00cd789"
 dependencies = [
  "codespan-reporting",
+ "serde",
 ]
 
 [[package]]
@@ -192,6 +194,7 @@ version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e0762455306b1ed42bc651ef6a2197aabda5e1d4a43c34d5eab5c1a3634e81d"
 dependencies = [
+ "serde",
  "termcolor",
  "unicode-width",
 ]
@@ -317,6 +320,9 @@ dependencies = [
 [[package]]
 name = "index"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "indexmap"
@@ -396,6 +402,7 @@ dependencies = [
  "ast",
  "index",
  "rustc-hash",
+ "serde",
  "span",
  "util",
 ]
@@ -912,6 +919,9 @@ name = "serde"
 version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b88fa983de7720629c9387e9f517353ed404164b1e482c970a90c1a4aaf7dc1a"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
@@ -986,6 +996,7 @@ dependencies = [
  "index",
  "macros",
  "rustc-hash",
+ "serde",
 ]
 
 [[package]]

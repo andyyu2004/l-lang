@@ -7,6 +7,9 @@
 #![feature(test)]
 #![feature(fn_traits)]
 
+#[macro_use]
+extern crate serde;
+
 pub mod indexvec;
 
 pub use indexvec::{Idx, IndexVec};

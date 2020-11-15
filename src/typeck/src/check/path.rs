@@ -7,7 +7,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &ir::QPath<'tcx>,
-    ) -> Option<(&'tcx VariantTy<'tcx>, Ty<'tcx>)> {
+    ) -> Option<(&'tcx VariantTy, Ty<'tcx>)> {
         let (res, ty) = self.resolve_qpath(xpat, qpath);
         // we don't directly return `substs` as it can be accessed through `ty`
         let variant = match res {

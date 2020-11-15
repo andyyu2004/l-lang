@@ -1,4 +1,5 @@
 mod adjustments;
+mod codec;
 mod instance;
 mod list;
 mod relate;
@@ -39,7 +40,7 @@ crate fn provide(queries: &mut Queries) {
 
 pub type Ty<'tcx> = &'tcx Type<'tcx>;
 
-#[derive(Debug, Eq)]
+#[derive(Debug, Eq, Serialize)]
 pub struct Type<'tcx> {
     pub flags: TyFlags,
     pub kind: TyKind<'tcx>,
@@ -60,7 +61,7 @@ struct TyVidVisitor {
 }
 
 /// type variable id
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct TyVid {
     pub index: u32,
 }
@@ -129,7 +130,7 @@ impl<'tcx> Type<'tcx> {
         }
     }
 
-    pub fn expect_adt(&self) -> (&'tcx AdtTy<'tcx>, SubstsRef<'tcx>) {
+    pub fn expect_adt(&self) -> (&'tcx AdtTy, SubstsRef<'tcx>) {
         match self.kind {
             TyKind::Adt(adt, substs) => (adt, substs),
             _ => panic!("expected TyKind::Adt, found {}", self),
@@ -151,7 +152,7 @@ impl<'tcx> PartialEq for Type<'tcx> {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Serialize)]
 pub enum TyKind<'tcx> {
     /// bool
     Bool,
@@ -181,11 +182,11 @@ pub enum TyKind<'tcx> {
     Ptr(Ty<'tcx>),
     Param(ParamTy),
     Opaque(DefId, SubstsRef<'tcx>),
-    Adt(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>),
+    Adt(&'tcx AdtTy, SubstsRef<'tcx>),
 }
 
 /// this is the type-level representation of the type of a function
-#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Serialize)]
 pub struct FnSig<'tcx> {
     pub params: SubstsRef<'tcx>,
     pub ret: Ty<'tcx>,
@@ -223,28 +224,28 @@ pub enum Projection<'tcx> {
     PointerCast(Ty<'tcx>),
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AdtKind {
     Struct,
     Enum,
 }
 
-#[derive(Debug, Eq, Hash)]
-pub struct AdtTy<'tcx> {
+#[derive(Debug, Eq, Hash, Serialize, Deserialize)]
+pub struct AdtTy {
     pub def_id: DefId,
     pub kind: AdtKind,
     pub ident: Ident,
-    pub variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
+    pub variants: IndexVec<VariantIdx, VariantTy>,
 }
 
-impl<'tcx> PartialEq for AdtTy<'tcx> {
+impl PartialEq for AdtTy {
     fn eq(&self, other: &Self) -> bool {
         ptr::eq(self, other)
     }
 }
 
-impl<'tcx> AdtTy<'tcx> {
-    pub fn single_variant(&self) -> &VariantTy<'tcx> {
+impl AdtTy {
+    pub fn single_variant(&self) -> &VariantTy {
         assert_eq!(self.variants.len(), 1);
         &self.variants[VariantIdx::new(0)]
     }
@@ -261,23 +262,23 @@ impl<'tcx> AdtTy<'tcx> {
     }
 
     // find the variant who has the constructor that matches the `ctor_id`
-    pub fn variant_with_ctor(&self, ctor_id: DefId) -> &VariantTy<'tcx> {
+    pub fn variant_with_ctor(&self, ctor_id: DefId) -> &VariantTy {
         let idx = self.variant_idx_with_ctor(ctor_id);
         &self.variants[idx]
     }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
-pub struct VariantTy<'tcx> {
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Deserialize)]
+pub struct VariantTy {
     pub def_id: DefId,
     pub ident: Ident,
     pub ctor_kind: CtorKind,
-    pub fields: &'tcx [FieldTy],
+    pub fields: Vec<FieldTy>,
 }
 
 /// the type representation of a field
 /// the `ty::Ty` can be found using `type_of` with this def_id
-#[derive(Debug, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct FieldTy {
     pub def_id: DefId,
     pub ident: Ident,
@@ -297,6 +298,7 @@ impl FieldTy {
 }
 
 bitflags! {
+    #[derive(Serialize)]
     pub struct TyFlags: u32  {
         const HAS_ERROR = 1 << 0;
         const HAS_INFER = 1 << 1;
@@ -415,7 +417,7 @@ impl<'tcx> Display for Generics<'tcx> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub struct ParamTy {
     pub def_id: DefId,
     pub idx: ParamIdx,
@@ -440,7 +442,7 @@ impl Display for ParamTy {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub enum InferTy {
     TyVar(TyVid),
 }

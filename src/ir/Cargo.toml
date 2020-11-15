@@ -12,3 +12,4 @@ ast = { path = "../ast" }
 span = { path = "../span" }
 util = { path = "../util" }
 rustc-hash = "1"
+serde = { version = "1", features = ["derive"] }

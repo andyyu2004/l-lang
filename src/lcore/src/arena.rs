@@ -5,7 +5,7 @@ use crate::ty::*;
 macro_rules! arena_types {
     ($macro:path, $args:tt, $tcx:lifetime) => (
         $macro!($args, [
-            [] adt_def: AdtTy<$tcx>,
+            [] adt_def: AdtTy,
             [] consts: Const<$tcx>,
             [] fields: FieldTy,
             [] generics: Generics<$tcx>,

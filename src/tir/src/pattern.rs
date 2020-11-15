@@ -78,6 +78,6 @@ pub enum PatternKind<'tcx> {
     Field(Vec<tir::FieldPat<'tcx>>),
     Lit(Box<tir::Expr<'tcx>>),
     /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
-    Variant(&'tcx AdtTy<'tcx>, SubstsRef<'tcx>, VariantIdx, Vec<tir::Pattern<'tcx>>),
+    Variant(&'tcx AdtTy, SubstsRef<'tcx>, VariantIdx, Vec<tir::Pattern<'tcx>>),
     Wildcard,
 }

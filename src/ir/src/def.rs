@@ -100,7 +100,7 @@ impl<Id> Display for Res<Id> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum CtorKind {
     /// Option::Some(x)
     Tuple,

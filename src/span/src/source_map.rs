@@ -118,6 +118,7 @@ impl Deref for SourceFile {
 }
 
 newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct FileIdx {
         DEBUG_FORMAT = "{}",
         const ROOT_FILE_IDX = 0,

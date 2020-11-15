@@ -16,7 +16,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         size
     }
 
-    pub fn variant_size(&self, variant_ty: &'tcx VariantTy<'tcx>, substs: SubstsRef<'tcx>) -> u64 {
+    pub fn variant_size(&self, variant_ty: &'tcx VariantTy, substs: SubstsRef<'tcx>) -> u64 {
         variant_ty.fields.iter().map(|f| f.ty(self.tcx, substs)).map(|ty| self.sizeof_ty(ty)).sum()
     }
 }

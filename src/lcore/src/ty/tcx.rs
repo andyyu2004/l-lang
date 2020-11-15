@@ -56,12 +56,7 @@ impl<'tcx> TyCtx<'tcx> {
         self.interners.arena.alloc_from_iter(iter)
     }
 
-    pub fn mk_struct_ty(
-        self,
-        def_id: DefId,
-        ident: Ident,
-        variant: VariantTy<'tcx>,
-    ) -> &'tcx AdtTy<'tcx> {
+    pub fn mk_struct_ty(self, def_id: DefId, ident: Ident, variant: VariantTy) -> &'tcx AdtTy {
         self.mk_adt(def_id, AdtKind::Struct, ident, std::iter::once(variant).collect())
     }
 
@@ -69,8 +64,8 @@ impl<'tcx> TyCtx<'tcx> {
         self,
         def_id: DefId,
         ident: Ident,
-        variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
-    ) -> &'tcx AdtTy<'tcx> {
+        variants: IndexVec<VariantIdx, VariantTy>,
+    ) -> &'tcx AdtTy {
         self.mk_adt(def_id, AdtKind::Enum, ident, variants)
     }
 
@@ -79,13 +74,13 @@ impl<'tcx> TyCtx<'tcx> {
         def_id: DefId,
         kind: AdtKind,
         ident: Ident,
-        variants: IndexVec<VariantIdx, VariantTy<'tcx>>,
-    ) -> &'tcx AdtTy<'tcx> {
+        variants: IndexVec<VariantIdx, VariantTy>,
+    ) -> &'tcx AdtTy {
         debug_assert!(kind != AdtKind::Struct || variants.len() == 1);
         self.arena.alloc(AdtTy { ident, def_id, kind, variants })
     }
 
-    pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy<'tcx>, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
+    pub fn mk_adt_ty(self, adt_ty: &'tcx AdtTy, substs: SubstsRef<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Adt(adt_ty, substs))
     }
 

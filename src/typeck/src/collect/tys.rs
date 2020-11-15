@@ -10,7 +10,7 @@ crate fn provide(queries: &mut Queries) {
     *queries = Queries { adt_ty, ..*queries }
 }
 
-fn adt_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx AdtTy<'tcx> {
+fn adt_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx AdtTy {
     let item = match tcx.defs().get(def_id) {
         ir::DefNode::Item(item) => item,
         _ => panic!(),
@@ -36,17 +36,23 @@ fn adt_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx AdtTy<'tcx> {
     tcx.mk_adt(def_id, kind, item.ident, variants)
 }
 
-fn variant_ty<'tcx>(tcx: TyCtx<'tcx>, variant: &ir::Variant<'tcx>) -> VariantTy<'tcx> {
+fn variant_ty<'tcx>(tcx: TyCtx<'tcx>, variant: &ir::Variant<'tcx>) -> VariantTy {
     let &ir::Variant { id, ident, kind, .. } = variant;
 
     let mut seen = FxHashMap::default();
-    let fields = tcx.alloc_iter(kind.fields().iter().map(|f| {
-        if let Some(span) = seen.insert(f.ident, f.span) {
-            tcx.sess
-                .emit_error(vec![f.span, span], TypeError::FieldAlreadyDeclared(f.ident, ident));
-        }
-        FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis }
-    }));
+    let fields = kind
+        .fields()
+        .iter()
+        .map(|f| {
+            if let Some(span) = seen.insert(f.ident, f.span) {
+                tcx.sess.emit_error(
+                    vec![f.span, span],
+                    TypeError::FieldAlreadyDeclared(f.ident, ident),
+                );
+            }
+            FieldTy { def_id: f.id.def, ident: f.ident, vis: f.vis }
+        })
+        .collect();
 
     VariantTy { def_id: id.def, ident, fields, ctor_kind: CtorKind::from(&kind) }
 }

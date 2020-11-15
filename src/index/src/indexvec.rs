@@ -93,7 +93,7 @@ macro_rules! newtype_index {
      @debug_format [$debug_format:tt]) => (
         $(#[$attrs])*
         #[derive(Copy, PartialEq, Eq, Hash, PartialOrd, Ord, $($derives),*)]
-        #[rustc_layout_scalar_valid_range_end($max)]
+        // #[rustc_layout_scalar_valid_range_end($max)]
         $v struct $type {
             private: u32
         }
@@ -466,7 +466,7 @@ macro_rules! newtype_index {
     );
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct IndexVec<I: Idx, T> {
     pub raw: Vec<T>,
     _marker: PhantomData<fn(&I)>,

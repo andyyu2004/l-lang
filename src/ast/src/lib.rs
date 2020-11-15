@@ -1,6 +1,9 @@
 #![feature(crate_visibility_modifier)]
 #![feature(const_panic)]
 
+#[macro_use]
+extern crate serde;
+
 mod error;
 mod expr;
 mod item;
@@ -85,7 +88,7 @@ pub enum VariantKind {
     Unit,
 }
 
-#[derive(Debug, Copy, Clone, Eq)]
+#[derive(Debug, Copy, Clone, Eq, Serialize, Deserialize)]
 pub struct Ident {
     pub span: Span,
     pub symbol: Symbol,
@@ -237,7 +240,7 @@ impl Display for Param {
 
 pub type Visibility = Spanned<VisibilityKind>;
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash, Serialize, Deserialize)]
 pub enum VisibilityKind {
     Public,
     Private,
@@ -252,7 +255,7 @@ impl Display for VisibilityKind {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash, Serialize, Deserialize)]
 pub struct Spanned<T> {
     pub span: Span,
     pub node: T,

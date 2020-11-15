@@ -1,5 +1,8 @@
 #![feature(const_panic)]
 
+#[macro_use]
+extern crate serde;
+
 mod arena;
 mod def;
 mod expr;
@@ -64,6 +67,7 @@ pub struct Ir<'ir> {
 }
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct PkgId {
         DEBUG_FORMAT = "{}",
         const LOCAL_PKG_ID = 0,
@@ -77,30 +81,35 @@ index::newtype_index!(
 // }
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct DefId {
         DEBUG_FORMAT = "{}"
     }
 );
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct LocalId {
         DEBUG_FORMAT = "{}"
     }
 );
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct ParamIdx {
         DEBUG_FORMAT ="{}"
     }
 );
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct VariantIdx {
         DEBUG_FORMAT = "VariantIdx({})"
     }
 );
 
 index::newtype_index!(
+    #[derive(Serialize, Deserialize)]
     pub struct FieldIdx {
         DEBUG_FORMAT = "{}"
     }

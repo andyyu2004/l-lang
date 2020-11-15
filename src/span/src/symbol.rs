@@ -33,7 +33,7 @@ pub mod kw {
     keywords!();
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Symbol(pub usize);
 
 fn with_interner<T, F: FnOnce(&mut Interner) -> T>(f: F) -> T {

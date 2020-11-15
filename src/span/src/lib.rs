@@ -6,6 +6,9 @@
 #[macro_use]
 extern crate macros;
 
+#[macro_use]
+extern crate serde;
+
 mod source_map;
 mod symbol;
 
@@ -41,7 +44,7 @@ impl Into<Label<FileIdx>> for Span {
 }
 
 /// thin wrapper around codespan::Span for convenience
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Span {
     pub file: FileIdx,
     span: codespan::Span,
