@@ -18,6 +18,12 @@ pub enum Res<Id = ir::Id> {
     SelfVal { impl_def: DefId },
 }
 
+/// stuff that is useful later in `TyCtx` that the resolver computes
+#[derive(Debug, Default)]
+pub struct Resolutions<'a> {
+    pub defs: Definitions<'a>,
+}
+
 impl<Id> Res<Id> {
     pub fn expect_def(self) -> (DefId, DefKind) {
         match self {

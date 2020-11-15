@@ -10,6 +10,7 @@ lex = { path = "../lex" }
 parse = { path = "../parse" }
 ast = { path = "../ast" }
 session = { path = "../session" }
+meta = { path = "../meta" }
 index = { path = "../index" }
 error = { path = "../error" }
 arena = { path = "../arena" }

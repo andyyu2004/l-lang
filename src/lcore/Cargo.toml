@@ -6,13 +6,13 @@ edition = "2018"
 
 [dependencies]
 arena = { path = "../arena" }
-resolve = { path = "../resolve" }
 ir = { path = "../ir" }
 ast = { path = "../ast" }
 span = { path = "../span" }
 index = { path = "../index" }
 session = { path = "../session" }
 error = { path = "../error" }
+macros = { path = "../macros" }
 util = { path = "../util" }
 smallvec = "1.4.2"
 log = "0.4.11"

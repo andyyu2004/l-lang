@@ -417,7 +417,7 @@ impl<'tcx> Display for Generics<'tcx> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ParamTy {
     pub def_id: DefId,
     pub idx: ParamIdx,
@@ -442,7 +442,7 @@ impl Display for ParamTy {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum InferTy {
     TyVar(TyVid),
 }

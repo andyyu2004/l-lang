@@ -452,7 +452,7 @@ dependencies = [
  "ir",
  "itertools",
  "log",
- "resolve",
+ "macros",
  "rustc-hash",
  "salsa",
  "serde",
@@ -482,6 +482,7 @@ dependencies = [
  "lcore",
  "lex",
  "log",
+ "meta",
  "mir",
  "parse",
  "resolve",
@@ -583,6 +584,16 @@ name = "memchr"
 version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
+
+[[package]]
+name = "meta"
+version = "0.1.0"
+dependencies = [
+ "ir",
+ "lcore",
+ "rustc-hash",
+ "serde",
+]
 
 [[package]]
 name = "mio"
@@ -825,6 +836,7 @@ dependencies = [
  "ldriver",
  "lex",
  "log",
+ "meta",
  "parse",
  "rustc-hash",
  "session",

@@ -19,6 +19,7 @@ mod scope;
 extern crate log;
 
 use late::LateResolver;
+use meta::PkgMetadata;
 use module::Mod;
 use pat::PatternResolutionCtx;
 use resolution_error::{ResResult, ResolutionError};
@@ -28,7 +29,7 @@ use arena::TypedArena;
 use ast::{Ast, Ident, NodeId};
 use error::DiagnosticBuilder;
 use index::IndexVec;
-use ir::{DefId, DefKind, Definitions, ParamIdx, PartialRes, PrimTy, Res};
+use ir::{DefId, DefKind, Definitions, ParamIdx, PartialRes, PkgId, PrimTy, Res, Resolutions};
 use rustc_hash::FxHashMap;
 use session::Session;
 use span::{kw, sym, Span, Symbol};
@@ -48,6 +49,7 @@ index::newtype_index!(
 );
 pub struct Resolver<'a> {
     arenas: &'a ResolverArenas<'a>,
+    pkgs: &'a IndexVec<PkgId, PkgMetadata>,
     sess: &'a Session,
     primitive_types: PrimitiveTypes,
     modules: IndexVec<ModuleId, &'a Mod<'a>>,
@@ -57,17 +59,16 @@ pub struct Resolver<'a> {
     ty_param_id_to_idx: FxHashMap<NodeId, ParamIdx>,
 }
 
-/// stuff that is useful later in `TyCtx` that the resolver computes
-#[derive(Debug, Default)]
-pub struct Resolutions<'a> {
-    pub defs: Definitions<'a>,
-}
-
 impl<'a> Resolver<'a> {
-    pub fn new(sess: &'a Session, arenas: &'a ResolverArenas<'a>) -> Self {
+    pub fn new(
+        sess: &'a Session,
+        arenas: &'a ResolverArenas<'a>,
+        pkgs: &'a IndexVec<PkgId, PkgMetadata>,
+    ) -> Self {
         Self {
             sess,
             arenas,
+            pkgs,
             modules: Default::default(),
             defs: Default::default(),
             partial_resolutions: Default::default(),

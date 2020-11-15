@@ -26,21 +26,23 @@ use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
 use clap::App;
 use codegen::CodegenCtx;
+use codespan_reporting::diagnostic::Diagnostic;
+use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
-use codespan_reporting::{diagnostic::Diagnostic, files::SimpleFiles};
 use config::LConfig;
 use error::{LError, LResult};
+use index::IndexVec;
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
 use inkwell::OptimizationLevel;
+use ir::{PkgId, Resolutions};
 use lcore::{GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
 use log::LevelFilter;
+use meta::PkgMetadata;
 use mir::dump_mir;
 use parse::Parser;
-use resolve::Resolutions;
-use resolve::Resolver;
-use resolve::ResolverArenas;
+use resolve::{Resolver, ResolverArenas};
 use session::Session;
 use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
@@ -108,6 +110,8 @@ pub fn main() -> ! {
 
 pub struct Driver<'tcx> {
     sess: Session,
+    /// metadata of the dependencies specified in `L.toml`
+    dependencies: IndexVec<PkgId, PkgMetadata>,
     core_arenas: lcore::Arena<'tcx>,
     ir_arena: astlowering::Arena<'tcx>,
     resolver_arenas: ResolverArenas<'tcx>,
@@ -145,7 +149,11 @@ impl<'tcx> Driver<'tcx> {
         let path = config.root_path.join(&config.bin.main_path);
         SPAN_GLOBALS.with(|globals| *globals.source_map.borrow_mut() = SourceMap::new(&path));
 
+        // let dependencies = config.dependencies.values().collect();
+        let dependencies = IndexVec::new();
+
         Self {
+            dependencies,
             llvm_ctx: LLVMCtx::create(),
             resolver_arenas: Default::default(),
             core_arenas: Default::default(),
@@ -165,7 +173,7 @@ impl<'tcx> Driver<'tcx> {
 
     pub fn gen_ir(&'tcx self) -> LResult<(&'tcx ir::Ir<'tcx>, Resolutions)> {
         let ast = self.parse()?;
-        let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas);
+        let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas, &self.dependencies);
         resolver.resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &self.sess, &mut resolver);
         let ir = lctx.lower_ast(&ast);
