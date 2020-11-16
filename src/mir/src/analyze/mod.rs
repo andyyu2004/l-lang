@@ -1,9 +1,9 @@
 use crate::traverse;
+use ds::Bitset;
 use index::Idx;
 use itertools::Itertools;
 use lcore::mir::{BlockId, Mir};
 use lcore::TyCtx;
-use rustc_hash::FxHashSet;
 
 pub fn analyze<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
     self::remove_dead_blocks(mir);
@@ -25,9 +25,8 @@ mod test {
 /// this should be run before `typecheck` as some unreachable blocks
 /// may be type incorrect
 fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
-    let reachable = traverse::preorder(mir).collect::<FxHashSet<_>>();
-    let mut reachable = reachable.into_iter().map(|idx| idx.index()).collect_vec();
-    reachable.sort();
+    let mut reachable = Bitset::new(mir.len());
+    traverse::preorder(mir).for_each(|block| reachable.set(block));
 
     // this number is to essentially ensure an error if it isn't overwritten
     let mut swaps = (0..mir.len()).map(BlockId::new).collect_vec();
@@ -54,21 +53,15 @@ fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
     // truncate (i = 2)
     // mir.basic_blocks = [bb1, bb3]
     //
-    //
     // *update successors*
-    //
-    // consider the following example
-    // mir.basic_blocks = [bb0,bb1,bb2,bb3]
-    // reachable = { 3, 1 }
-    // swaps[3] = 0;
-    // [bb3,bb1,bb2,bb0]
-    //
-    // swaps[1] = 1;
-    //
-    // bbs = [bb3,bb1]
-    // swaps = [0, 1, 2, 0]
+
     let mut i = 0;
-    for &block in &reachable {
+    // note that this iteration will occur in ascending order of block ids
+    // due to how bitsets work
+    // in a prior implementation using HashSet (i.e. unordered iteration)
+    // the algorithm did not work (unsure why this is the case)
+    for block in &reachable {
+        let block = block.index();
         swaps[block] = BlockId::new(i);
         if i != block {
             mir.raw.swap(block, i);
@@ -76,12 +69,10 @@ fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
         i += 1
     }
 
-    debug_assert_eq!(i, reachable.len());
     mir.truncate(i);
 
     for block in &mut mir.basic_blocks {
         for successor in block.terminator_mut().successors_mut() {
-            debug_assert!(reachable.contains(&successor.index()));
             *successor = swaps[successor.index()]
         }
     }
