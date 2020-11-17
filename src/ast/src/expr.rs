@@ -24,6 +24,32 @@ impl Expr {
             _ => false,
         }
     }
+
+    pub fn has_block(&self) -> bool {
+        match self.kind {
+            ExprKind::Box(..)
+            | ExprKind::Lit(..)
+            | ExprKind::Bin(..)
+            | ExprKind::Unary(..)
+            | ExprKind::Paren(..)
+            | ExprKind::Path(..)
+            | ExprKind::Tuple(..)
+            | ExprKind::Ret(..)
+            | ExprKind::Assign(..)
+            | ExprKind::Closure(..)
+            | ExprKind::Call(..)
+            | ExprKind::Struct(..)
+            | ExprKind::Field(..)
+            | ExprKind::Err
+            | ExprKind::Break
+            | ExprKind::Continue => false,
+            ExprKind::Block(..)
+            | ExprKind::Loop(..)
+            | ExprKind::While(..)
+            | ExprKind::If(..)
+            | ExprKind::Match(..) => true,
+        }
+    }
 }
 
 impl Expr {

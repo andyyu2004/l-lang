@@ -9,7 +9,7 @@ fn main() -> int {
     let x = 0;
     loop {
 	break;
-    };
+    }
     print(x);
     /* while x < 10 { */
     /*     print(x); */

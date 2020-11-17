@@ -4,10 +4,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn check_stmt(&mut self, stmt: &ir::Stmt<'tcx>) {
         match &stmt.kind {
             ir::StmtKind::Let(l) => self.check_let_stmt(l),
-            ir::StmtKind::Semi(expr) => {
+            ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) => {
                 self.check_expr(expr);
             }
-            ir::StmtKind::Expr(expr) => unreachable!(),
         }
     }
 
