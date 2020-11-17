@@ -182,6 +182,10 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             let open_brace = parser.expect(TokenType::OpenBrace)?;
             let block = parser.parse_block(open_brace)?;
             Ok(parser.mk_expr(while_kw.span.merge(block.span), ExprKind::While(condition, block)))
+        } else if let Some(break_kw) = parser.accept(TokenType::Break) {
+            Ok(parser.mk_expr(break_kw.span, ExprKind::Break))
+        } else if let Some(continue_kw) = parser.accept(TokenType::Continue) {
+            Ok(parser.mk_expr(continue_kw.span, ExprKind::Continue))
         } else {
             Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }

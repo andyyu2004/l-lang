@@ -183,14 +183,14 @@ impl std::fmt::Display for UnaryOp {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
+    /// box x
+    Box(Operand<'tcx>),
     /// x
     Operand(Operand<'tcx>),
     /// - x
     Unary(UnaryOp, Operand<'tcx>),
     /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
-    /// box x
-    Box(Operand<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
     /// reads the discriminant of an enum

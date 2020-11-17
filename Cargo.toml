@@ -4,6 +4,7 @@ members = [
     "src/queries",
     "src/infer",
     "src/macros",
+    "src/ds",
     "src/ldriver",
     "src/span",
     "src/lex",

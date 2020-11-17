@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     /// expr is handled in this function if there is a
     /// `Rvalue` variant corresponding directly to that expression
     pub fn as_rvalue(
@@ -58,14 +58,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
+            | tir::ExprKind::Loop(..)
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Tuple(..)
             | tir::ExprKind::Deref(_)
             | tir::ExprKind::Const(..)
+            | tir::ExprKind::Ret(..)
             | tir::ExprKind::VarRef(..)
-            | tir::ExprKind::Ret(..) => {
+            | tir::ExprKind::Break
+            | tir::ExprKind::Continue => {
                 let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Operand(operand))
             }

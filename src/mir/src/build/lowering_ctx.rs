@@ -385,6 +385,7 @@ impl<'tcx> LoweringCtx<'tcx> {
             ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
                 tir::ExprKind::Deref(box expr.to_tir(self)),
             ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(box expr.to_tir(self)),
+            ir::ExprKind::Loop(block) => tir::ExprKind::Loop(box block.to_tir(self)),
             ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, box expr.to_tir(self)),
             ir::ExprKind::Block(block) => tir::ExprKind::Block(box block.to_tir(self)),
             ir::ExprKind::Path(qpath) => self.lower_qpath(expr, qpath),
@@ -416,7 +417,8 @@ impl<'tcx> LoweringCtx<'tcx> {
                 tir::ExprKind::Assign(box l.to_tir(self), box r.to_tir(self)),
             ir::ExprKind::Field(base, _) =>
                 tir::ExprKind::Field(box base.to_tir(self), self.tables.field_index(expr.id)),
-            ir::ExprKind::Loop(block) => todo!(),
+            ir::ExprKind::Break => tir::ExprKind::Break,
+            ir::ExprKind::Continue => tir::ExprKind::Continue,
             ir::ExprKind::Err => unreachable!(),
         };
         tir::Expr { span, kind, ty }

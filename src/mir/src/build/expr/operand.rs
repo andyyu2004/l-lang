@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     crate fn as_operand(
         &mut self,
         mut block: BlockId,
@@ -19,18 +19,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let constant = set!(block = self.as_const(block, expr));
                 block.and(Operand::Const(constant))
             }
-            tir::ExprKind::Unary(..)
-            | tir::ExprKind::Adt { .. }
+            tir::ExprKind::Box(..)
+            | tir::ExprKind::Loop(..)
+            | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
-            | tir::ExprKind::Box(..)
-            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Ref(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Ret(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Call(..)
-            | tir::ExprKind::Tuple(..) => {
+            | tir::ExprKind::Tuple(..)
+            | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Closure { .. }
+            | tir::ExprKind::Break
+            | tir::ExprKind::Continue => {
                 // create temporary var to hold the result
                 let lvalue = set!(block = self.as_tmp(block, expr)).into();
                 block.and(Operand::Lvalue(lvalue))

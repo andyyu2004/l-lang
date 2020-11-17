@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     crate fn build_closure(
         &mut self,
         mut block: BlockId,

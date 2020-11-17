@@ -1,4 +1,5 @@
 mod closure_tests;
+mod control_flow_tests;
 mod enum_tests;
 mod impl_tests;
 mod match_tests;

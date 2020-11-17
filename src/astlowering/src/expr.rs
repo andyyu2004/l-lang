@@ -47,6 +47,8 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 self.lower_arms(arms),
                 ir::MatchSource::Match,
             ),
+            ExprKind::Continue => ir::ExprKind::Continue,
+            ExprKind::Break => ir::ExprKind::Break,
             ExprKind::Err => ir::ExprKind::Err,
         };
 

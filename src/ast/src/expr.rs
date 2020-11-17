@@ -40,6 +40,7 @@ impl Display for Expr {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ExprKind {
+    Box(P<Expr>),
     Lit(Lit),
     Bin(BinOp, P<Expr>, P<Expr>),
     Unary(UnaryOp, P<Expr>),
@@ -56,8 +57,9 @@ pub enum ExprKind {
     If(P<Expr>, P<Block>, Option<P<Expr>>),
     Struct(Path, Vec<Field>),
     Field(P<Expr>, Ident),
-    Box(P<Expr>),
     Match(P<Expr>, Vec<Arm>),
+    Break,
+    Continue,
     Err,
 }
 
@@ -92,6 +94,8 @@ impl Display for ExprKind {
             },
             Self::Match(_, _) => todo!(),
             Self::Err => write!(fmt, "<expr-err>"),
+            Self::Continue => write!(fmt, "continue"),
+            Self::Break => write!(fmt, "break"),
         }
     }
 }

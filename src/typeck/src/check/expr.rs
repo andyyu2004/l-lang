@@ -23,6 +23,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Assign(l, r) => self.check_expr_assign(expr, l, r),
             ir::ExprKind::Ret(ret) => self.check_expr_ret(expr, ret.as_deref()),
             ir::ExprKind::Field(base, ident) => self.check_expr_field(expr, base, *ident),
+            ir::ExprKind::Break | ir::ExprKind::Continue => self.tcx.types.never,
             ir::ExprKind::Err => self.set_ty_err(),
         };
         self.record_ty(expr.id, ty)
@@ -31,7 +32,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn check_expr_loop(&mut self, expr: &ir::Expr<'tcx>, block: &ir::Block<'tcx>) -> Ty<'tcx> {
         let ty = self.check_block(block);
         self.unify(expr.span, self.types.unit, ty);
-        ty
+        self.types.unit
     }
 
     fn check_expr_unary(

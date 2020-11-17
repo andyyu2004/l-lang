@@ -16,21 +16,23 @@ use index::{Idx, IndexVec};
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx};
 use rustc_hash::FxHashMap;
+use scope::*;
 use scope::{ReleaseInfo, Scopes};
 use span::Span;
 
 /// lowers `tir::Body` into `mir::Body`
 pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
-    let mut builder = Builder::new(ctx, &body);
+    let mut builder = MirBuilder::new(ctx, &body);
     let _ = builder.build_body();
     let mir = ctx.alloc(builder.complete());
     crate::analyze(ctx.tcx, mir);
+    println!("{}", mir);
     crate::typecheck(ctx.tcx, mir);
     // eprintln!("{}", mir);
     mir
 }
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     fn new(ctx: &'a LoweringCtx<'tcx>, body: &'a tir::Body<'tcx>) -> Self {
         let tcx = ctx.tcx;
         let body_ty = body.expr.ty;
@@ -75,7 +77,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 }
 
-struct Builder<'a, 'tcx> {
+struct MirBuilder<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     ctx: &'a LoweringCtx<'tcx>,
     body: &'a tir::Body<'tcx>,
@@ -86,7 +88,7 @@ struct Builder<'a, 'tcx> {
     argc: usize,
 }
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn span_info(&self, span: Span) -> SpanInfo {
         SpanInfo { span }
     }
@@ -137,28 +139,31 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 }
 
-impl<'tcx> LvalueTy<'tcx> for Builder<'_, 'tcx> {
+impl<'tcx> LvalueTy<'tcx> for MirBuilder<'_, 'tcx> {
     fn locals(&self) -> &IndexVec<VarId, Var<'tcx>> {
         &self.vars
     }
 }
 
 #[must_use]
-struct BlockAnd<T>(BlockId, T);
+struct BlockAnd<T> {
+    block: BlockId,
+    t: T,
+}
 
 /// set a block pointer and return the value
 /// `let x = set!(block = self.foo(block, foo))`
 #[macro_export]
 macro_rules! set {
     ($x:ident = $c:expr) => {{
-        let BlockAnd(b, v) = $c;
-        $x = b;
-        v
+        let BlockAnd { block, t } = $c;
+        $x = block;
+        t
     }};
 
     ($c:expr) => {{
-        let BlockAnd(b, ()) = $c;
-        b
+        let BlockAnd { block, t: () } = $c;
+        block
     }};
 }
 
@@ -168,11 +173,11 @@ trait BlockAndExt {
 }
 
 impl BlockAndExt for BlockId {
-    fn and<T>(self, v: T) -> BlockAnd<T> {
-        BlockAnd(self, v)
+    fn and<T>(self, t: T) -> BlockAnd<T> {
+        BlockAnd { block: self, t }
     }
 
     fn unit(self) -> BlockAnd<()> {
-        BlockAnd(self, ())
+        BlockAnd { block: self, t: () }
     }
 }

@@ -195,7 +195,7 @@ pub fn walk_arm<'ast>(visitor: &mut impl Visitor<'ast>, arm: &'ast Arm) {
 pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
     visitor.visit_id(expr.id);
     match &expr.kind {
-        ExprKind::Err | ExprKind::Lit(_) => {}
+        ExprKind::Err | ExprKind::Lit(..) | ExprKind::Continue | ExprKind::Break => {}
         ExprKind::Ret(expr) => expr.iter().for_each(|expr| visitor.visit_expr(expr)),
         ExprKind::Unary(_, expr) => visitor.visit_expr(expr),
         ExprKind::Paren(expr) => visitor.visit_expr(expr),

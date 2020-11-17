@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
         match &stmt.kind {
             tir::StmtKind::Let(tir::Let { pat, init, .. }) => match init {
@@ -26,9 +26,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             tir::ExprKind::Ret(ret_expr) => {
                 let ret_lvalue = self.ret_lvalue();
                 match ret_expr {
-                    Some(expr) => {
-                        set!(block = self.write_expr(block, ret_lvalue, expr));
-                    }
+                    Some(ret_expr) => set!(block = self.write_expr(block, ret_lvalue, ret_expr)),
                     None => self.push_assign_unit(info, block, ret_lvalue),
                 }
                 self.terminate(info, block, TerminatorKind::Return);
@@ -41,7 +39,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.push_assignment(info, block, lvalue, rvalue);
                 block.unit()
             }
-            tir::ExprKind::Const(..)
+            tir::ExprKind::Break => self.break_scope(info, block, BreakType::Break),
+            tir::ExprKind::Continue => self.break_scope(info, block, BreakType::Continue),
+            tir::ExprKind::Box(..)
+            | tir::ExprKind::Loop(..)
+            | tir::ExprKind::Const(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
@@ -54,8 +56,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Adt { .. }
-            | tir::ExprKind::Box(..)
             | tir::ExprKind::Match(..) => {
+                debug_assert_ne!(expr.ty, self.tcx.types.never);
                 // write the expr stmt into some (unused) tmp var
                 set!(block = self.as_tmp(block, expr));
                 block.unit()

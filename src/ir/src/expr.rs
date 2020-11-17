@@ -53,5 +53,7 @@ pub enum ExprKind<'ir> {
     Struct(&'ir QPath<'ir>, &'ir [ir::Field<'ir>]),
     /// named field access `foo.x` or `tuple.1`
     Field(&'ir ir::Expr<'ir>, Ident),
+    Break,
+    Continue,
     Err,
 }

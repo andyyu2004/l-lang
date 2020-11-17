@@ -274,7 +274,7 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(base);
             v.visit_ident(*ident);
         }
-        ir::ExprKind::Err => {}
+        ir::ExprKind::Err | ir::ExprKind::Break | ir::ExprKind::Continue => {}
     }
 }
 

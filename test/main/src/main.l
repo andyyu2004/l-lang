@@ -1,4 +1,4 @@
-mod fib;
+/* mod fib; */
 /* mod dir; */
 
 extern {
@@ -6,16 +6,16 @@ extern {
 }
 
 fn main() -> int {
-    /* let x = 5; */
-    /* loop { */
-
-    /* print(fib::fib(20)); */
-    /* }; */
+    let x = 0;
+    loop {
+	break;
+    };
+    print(x);
     /* while x < 10 { */
     /*     print(x); */
     /*     x = x + 1; */
     /* }; */
-    print(fib::fib(20));
+    /* print(fib::fib(20)); */
 
     return 0;
     /* return 0; */

@@ -1,6 +1,6 @@
 //! control flow graph
 
-use super::{BasicBlock, BlockId, Builder, ReleaseInfo, ENTRY_BLOCK};
+use super::{BasicBlock, BlockId, MirBuilder, ReleaseInfo, ENTRY_BLOCK};
 use index::IndexVec;
 use lcore::mir::*;
 
@@ -39,14 +39,14 @@ impl<'tcx> Cfg<'tcx> {
         &mut self.basic_blocks[block]
     }
 
-    pub fn terminate(&mut self, info: SpanInfo, block: BlockId, kind: TerminatorKind<'tcx>) {
-        let block = self.block_mut(block);
-        debug_assert!(block.terminator.is_none(), "block already has terminator");
+    pub fn terminate(&mut self, info: SpanInfo, block_id: BlockId, kind: TerminatorKind<'tcx>) {
+        let block = self.block_mut(block_id);
+        debug_assert!(block.terminator.is_none(), "block `{:?}` already has terminator", block_id);
         block.terminator = Some(Terminator { info, kind })
     }
 }
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn append_basic_block(&mut self) -> BlockId {
         self.cfg.append_basic_block()
     }
