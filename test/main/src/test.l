@@ -8,9 +8,12 @@ struct S {
 
 fn uninit() {
     let mut s = S { x: 5 };
-    s.x = 10;
+    s.x = 9;
+    let s = box S { x : 4 };
     let mut x = 5;
     x = 10;
-    print(x);
+    print(s.x)
 }
+
+
 

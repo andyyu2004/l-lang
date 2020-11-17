@@ -68,7 +68,7 @@ fn llvm_struct_field_assign() {
     let src = r#"
     struct S { x: int }
     fn main() -> int {
-        let s: S = S { x: 4 };
+        let mut s: S = S { x: 4 };
         // intentionally separate these expressions two to ensure s.x has really been assigned to
         s.x = 9;
         s.x

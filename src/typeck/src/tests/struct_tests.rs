@@ -1,4 +1,4 @@
-use super::{expect_type_error, typeck};
+use super::*;
 
 // tuple tests are also here as they are similar to structs in many aspects
 #[test]
@@ -16,9 +16,11 @@ fn check_struct_duplicate_fields() {
 fn check_struct_field_assign() {
     let src = r#"
     struct S { x: int }
+
     fn main() -> int {
-        let s: S = S { x: 4 };
-        s.x = 5
+        let mut s = S { x: 4 };
+        s.x = 5;
+        0
     }"#;
     typeck!(src);
 }
