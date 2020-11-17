@@ -8,9 +8,15 @@ extern {
 fn main() -> int {
     let x = 0;
     loop {
-	break;
+	x = x + 1;
+	if x < 5 {
+	    continue;
+	}
+	if x > 10 {
+	    break;
+	}
+	print(x);
     }
-    print(x);
     /* while x < 10 { */
     /*     print(x); */
     /*     x = x + 1; */

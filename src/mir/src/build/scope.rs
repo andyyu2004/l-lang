@@ -45,8 +45,11 @@ struct Scope<'tcx> {
 
 #[derive(Debug)]
 struct BreakableScope<'tcx> {
+    /// the block to branch to on continue
+    /// typically the start of the loop
+    continue_block: BlockId,
     /// the block to branch to on break
-    block: BlockId,
+    break_block: BlockId,
     /// the lvalue to write the break expression to
     /// only available for `loops` (not `for` or `while` loops)
     lvalue: Option<Lvalue<'tcx>>,
@@ -74,17 +77,16 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn break_scope(&mut self, info: SpanInfo, block: BlockId, kind: BreakType) -> BlockAnd<()> {
         match kind {
             BreakType::Continue => {
-                todo!();
-                // let scope = self.scopes.peek_breakable();
+                let continue_block = self.scopes.peek_breakable().continue_block;
+                self.branch(info, block, continue_block);
             }
             BreakType::Break => {
-                let scope = self.scopes.peek_breakable();
-                let break_block = scope.block;
+                let break_block = self.scopes.peek_breakable().break_block;
                 self.branch(info, block, break_block);
-                // new unreachable block to write the unreachable stuff into
-                self.append_basic_block().unit()
             }
         }
+        // return some new unreachable block to write the unreachable stuff into
+        self.append_basic_block().unit()
     }
 
     /// `block` is the block where a `break` expr should branch to
@@ -92,17 +94,22 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn with_breakable_scope(
         &mut self,
         span: Span,
-        block: BlockId,
+        continue_block: BlockId,
+        break_block: BlockId,
         f: impl FnOnce(&mut Self) -> BlockAnd<()>,
     ) -> BlockAnd<()> {
         let info = self.span_info(span);
-        self.scopes.breakable_scopes.push(BreakableScope { block, lvalue: None });
+        self.scopes.breakable_scopes.push(BreakableScope {
+            break_block,
+            continue_block,
+            lvalue: None,
+        });
         let normal_block = f(self).block;
         self.scopes.breakable_scopes.pop();
 
         let new = self.append_basic_block();
         self.branch(info, normal_block, new);
-        self.branch(info, block, new);
+        self.branch(info, break_block, new);
         new.unit()
     }
 

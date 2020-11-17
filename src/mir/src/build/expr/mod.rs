@@ -123,9 +123,9 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
         ir: &tir::Block<'tcx>,
     ) -> BlockAnd<()> {
         let next = self.append_basic_block();
-        self.with_breakable_scope(expr.span, next, |this| {
+        let loop_start = self.append_basic_block();
+        self.with_breakable_scope(expr.span, loop_start, next, |this| {
             let info = this.span_info(expr.span);
-            let loop_start = this.append_basic_block();
             this.branch(info, prev, loop_start);
             let loop_end = set!(this.build_ir_block(loop_start, lvalue, expr, ir));
             this.branch(info, loop_end, loop_start);
