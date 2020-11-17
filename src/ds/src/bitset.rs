@@ -25,9 +25,9 @@ impl<T: Idx> Bitset<T> {
         self.words[index] |= shift;
     }
 
-    pub fn is_set(&mut self, idx: T) -> bool {
+    pub fn is_set(&self, idx: T) -> bool {
         let (index, shift) = Self::bit_indices(idx);
-        self.words[index] & 1 << shift != 0
+        self.words[index] & shift != 0
     }
 
     pub fn unset(&mut self, idx: T) {
@@ -131,12 +131,15 @@ mod tests {
         // 0010 1000
         bitset.set(3);
         assert_eq!(bitset.words[0], 40);
+        assert!(bitset.is_set(3));
 
         // 0010 1001
         bitset.set(0);
+        assert!(bitset.is_set(0));
         assert_eq!(bitset.words[0], 41);
 
         bitset.unset(3);
         assert_eq!(bitset.words[0], 33);
+        assert!(!bitset.is_set(3));
     }
 }

@@ -3,7 +3,7 @@ extern {
 }
 
 fn uninit() {
-    let x;
+    let x = 5;
     print(x);
 }
 

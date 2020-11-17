@@ -138,7 +138,7 @@ pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> 
 
     mir::early_opt(tcx, mir);
     mir::typecheck(tcx, mir);
-    // mir::analyze(tcx, mir);
+    mir::analyze(tcx, mir);
     mir::late_opt(tcx, mir);
 
     println!("{}", mir);

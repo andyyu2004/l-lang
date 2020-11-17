@@ -7,6 +7,9 @@
 #[macro_use]
 extern crate log;
 
+#[cfg(test)]
+mod tests;
+
 mod dataflow;
 mod opt;
 mod typecheck;

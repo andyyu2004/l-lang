@@ -41,14 +41,13 @@ impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
         self.walk_stmt(stmt);
     }
 
-    fn visit_operand(&mut self, info: SpanInfo, operand: &Operand<'tcx>) {
-        match operand {
-            Operand::Lvalue(lvalue) =>
-                if !self.initialized.is_set(lvalue.id) {
-                    self.sess.emit_error(info.span, MirError::UninitializedVariable);
-                },
-            Operand::Const(_) => {}
-            Operand::Item(_, _) => {}
+    fn visit_lvalue(&mut self, info: SpanInfo, lvalue: &Lvalue<'tcx>) {
+        let varkind = self.mir.vars[lvalue.id].kind;
+        if varkind == VarKind::Local && !self.initialized.is_set(lvalue.id) {
+            self.sess.emit_error(
+                info.span,
+                MirError::UninitializedVariable(self.mir.vars[lvalue.id].info.span),
+            );
         }
     }
 }

@@ -646,6 +646,7 @@ dependencies = [
  "ir",
  "itertools",
  "lcore",
+ "ldriver",
  "log",
  "rustc-hash",
  "smallvec",
