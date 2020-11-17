@@ -27,6 +27,10 @@ pub struct Pattern<'tcx> {
 }
 
 impl<'tcx> Pattern<'tcx> {
+    pub fn is_irrefutable(&self) -> bool {
+        !self.is_refutable()
+    }
+
     pub fn is_refutable(&self) -> bool {
         match &self.kind {
             PatternKind::Box(pat) => pat.is_refutable(),

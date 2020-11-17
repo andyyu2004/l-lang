@@ -1,11 +1,14 @@
 /* mod fib; */
 /* mod dir; */
+mod test;
 
 extern {
     fn print(i: int);
 }
 
 fn main() -> int {
+    test::mutable();
+    return 0;
     let x = 0;
     loop {
 	x = x + 1;

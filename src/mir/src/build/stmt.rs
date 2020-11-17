@@ -3,13 +3,13 @@ use super::*;
 impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
         match &stmt.kind {
-            tir::StmtKind::Let(tir::Let { pat, init, .. }) => match init {
-                Some(expr) => {
-                    let lvalue = set!(block = self.as_lvalue(block, expr));
-                    self.bind_pat_to_lvalue(block, &pat, lvalue)
-                }
-                None => todo!(),
-            },
+            tir::StmtKind::Let(tir::Let { pat, init, .. }) => {
+                let lvalue = match init {
+                    Some(expr) => set!(block = self.as_lvalue(block, expr)),
+                    None => self.alloc_tmp(self.span_info(stmt.span), pat.ty).into(),
+                };
+                self.bind_pat_to_lvalue(block, &pat, lvalue)
+            }
             tir::StmtKind::Expr(expr) => self.build_expr_stmt(block, expr),
         }
     }

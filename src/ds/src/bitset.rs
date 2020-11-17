@@ -76,7 +76,7 @@ impl<'a, T: Idx> Iterator for BitsetIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if self.word == 0 {
+            while self.word == 0 {
                 self.word = *self.words.next()?;
                 self.count += 1;
             }

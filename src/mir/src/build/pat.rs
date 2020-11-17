@@ -14,13 +14,12 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
         irref_pat: &tir::Pattern<'tcx>,
         lvalue: Lvalue<'tcx>,
     ) -> BlockAnd<()> {
-        debug_assert!(!irref_pat.is_refutable());
+        debug_assert!(irref_pat.is_irrefutable());
         let info = self.span_info(irref_pat.span);
         match irref_pat.kind {
             // we know `pat` is also irrefutable as the outer pat was irrefutable
             tir::PatternKind::Box(ref pat) =>
                 self.bind_pat_to_lvalue(block, pat, self.tcx.project_deref(lvalue)),
-            tir::PatternKind::Wildcard => block.unit(),
             tir::PatternKind::Binding(m, _, _) => {
                 let &tir::Pattern { id, span, ty, .. } = irref_pat;
                 let rvalue = Rvalue::Operand(Operand::Lvalue(lvalue));
@@ -46,6 +45,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
             }
             tir::PatternKind::Lit(_) => panic!("refutable binding"),
             tir::PatternKind::Variant(..) => todo!(),
+            tir::PatternKind::Wildcard => block.unit(),
         }
     }
 }
