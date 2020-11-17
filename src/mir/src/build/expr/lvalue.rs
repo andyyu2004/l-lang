@@ -42,7 +42,7 @@ impl<'tcx> From<VarId> for LvalueBuilder<'tcx> {
     }
 }
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn as_lvalue(
         &mut self,
         mut block: BlockId,
@@ -75,19 +75,22 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let builder = set!(block = self.as_lvalue_builder(block, expr));
                 block.and(builder.project_deref())
             }
-            tir::ExprKind::Const(_)
+            tir::ExprKind::Box(..)
+            | tir::ExprKind::Loop(..)
+            | tir::ExprKind::Const(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Ref(..)
-            | tir::ExprKind::Box(..)
-            | tir::ExprKind::Adt { .. }
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Block(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Tuple(..)
-            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Call(..)
             | tir::ExprKind::Match(..)
             | tir::ExprKind::Assign(..)
+            | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Closure { .. }
+            | tir::ExprKind::Break
+            | tir::ExprKind::Continue
             | tir::ExprKind::Ret(..) => {
                 // if the expr is not an lvalue, create a temporary and return that as an lvalue
                 let var = set!(block = self.as_tmp(block, expr));

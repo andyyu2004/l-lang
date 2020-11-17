@@ -2,6 +2,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(box_syntax, box_patterns)]
 
+mod analyze;
 mod build;
 mod traverse;
 mod typecheck;
@@ -12,6 +13,7 @@ extern crate log;
 pub use build::*;
 pub use traverse::MirVisitor;
 
+use analyze::analyze;
 use error::{LError, LResult};
 use ir::{DefId, DefNode, FnVisitor, ItemVisitor};
 use lcore::mir::Mir;
@@ -41,13 +43,13 @@ fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> LResult<&'t
 fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
     let node = tcx.defs().get(def_id);
     match node {
-        DefNode::Ctor(variant) => Ok(build_variant_ctor(tcx, variant)),
+        DefNode::Ctor(variant) => Ok(self::build_variant_ctor(tcx, variant)),
         DefNode::Item(item) => match item.kind {
-            ir::ItemKind::Fn(_, _, body) => build_mir(tcx, def_id, body),
+            ir::ItemKind::Fn(_, _, body) => self::build_mir(tcx, def_id, body),
             _ => panic!(),
         },
         DefNode::ImplItem(item) => match item.kind {
-            ir::ImplItemKind::Fn(_, body) => build_mir(tcx, def_id, body),
+            ir::ImplItemKind::Fn(_, body) => self::build_mir(tcx, def_id, body),
         },
         DefNode::Field(..)
         | DefNode::ForeignItem(..)

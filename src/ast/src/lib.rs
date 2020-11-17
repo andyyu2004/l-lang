@@ -170,15 +170,6 @@ pub struct Block {
     pub stmts: Vec<P<Stmt>>,
 }
 
-impl Block {
-    pub fn any_expr(&self, f: fn(&Expr) -> bool) -> bool {
-        self.stmts.iter().any(|stmt| match &stmt.kind {
-            StmtKind::Let(l) => l.init.as_ref().map(|expr| expr.any(f)).unwrap_or(false),
-            StmtKind::Expr(expr) | StmtKind::Semi(expr) => expr.any(f),
-        })
-    }
-}
-
 impl Display for Block {
     fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         todo!()

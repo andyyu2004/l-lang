@@ -74,8 +74,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     /// entry point of `FnCtx` code generation
     pub fn codegen(&mut self) {
-        for id in self.mir.basic_blocks.indices() {
-            self.codegen_basic_block(id);
+        for block in self.mir.indices() {
+            self.codegen_basic_block(block);
         }
         // self.fpm.run_on(&self.llfn);
     }

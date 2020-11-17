@@ -18,6 +18,7 @@ pub enum ExprKind<'tcx> {
     Bin(ast::BinOp, Box<tir::Expr<'tcx>>, Box<tir::Expr<'tcx>>),
     Unary(ast::UnaryOp, Box<tir::Expr<'tcx>>),
     Block(Box<tir::Block<'tcx>>),
+    Loop(Box<tir::Block<'tcx>>),
     /// reference to a local variable
     /// (reference not in the & sense, but just a usage of the variable)
     VarRef(ir::Id),
@@ -53,6 +54,8 @@ pub enum ExprKind<'tcx> {
         substs: SubstsRef<'tcx>,
         fields: Vec<tir::Field<'tcx>>,
     },
+    Break,
+    Continue,
 }
 
 impl<'tcx> Display for Expr<'tcx> {

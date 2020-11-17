@@ -15,7 +15,7 @@ mod operand;
 mod rvalue;
 mod tmp;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     /// writes `expr` into `dest`
     // this method exists as it is easier to implement certain expressions
     // given an `lvalue` to write the result of the expression into
@@ -31,24 +31,28 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         match &expr.kind {
             tir::ExprKind::Block(ir) => self.build_ir_block(block, dest, expr, ir),
+            tir::ExprKind::Loop(ir) => self.build_loop(block, dest, expr, ir),
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => {
                 self.build_naive_match(block, dest, expr, &scrut, &arms)
                 // self.build_match(block, dest, expr, scrut, arms)
             }
-            tir::ExprKind::Ret(_) => self.build_expr_stmt(block, expr),
+            // these expressions have `!` type, so have no return value so we can build them as a
+            // expression statement
+            tir::ExprKind::Ret(..) | tir::ExprKind::Break | tir::ExprKind::Continue =>
+                self.build_expr_stmt(block, expr),
             tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, &xs),
-            tir::ExprKind::VarRef(..)
-            | tir::ExprKind::Adt { .. }
-            | tir::ExprKind::Closure { .. }
+            tir::ExprKind::Box(..)
+            | tir::ExprKind::VarRef(..)
             | tir::ExprKind::Ref(..)
-            | tir::ExprKind::Box(..)
             | tir::ExprKind::ItemRef(..)
             | tir::ExprKind::Field(..)
             | tir::ExprKind::Assign(..)
             | tir::ExprKind::Unary(..)
             | tir::ExprKind::Bin(..)
             | tir::ExprKind::Deref(..)
+            | tir::ExprKind::Adt { .. }
+            | tir::ExprKind::Closure { .. }
             | tir::ExprKind::Const(..) => {
                 let rvalue = set!(block = self.as_rvalue(block, expr));
                 self.push_assignment(info, block, dest, rvalue);
@@ -93,6 +97,40 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let block = self.append_basic_block();
         self.terminate(info, block, TerminatorKind::Abort);
         block
+    }
+
+    /// fn f() {
+    ///     loop {
+    ///         ...
+    ///     }
+    /// }
+    ///
+    /// f:
+    ///   br loop
+    ///
+    /// loop:
+    ///   ...
+    ///   br loop
+    ///
+    /// next:
+    ///
+    ///
+    fn build_loop(
+        &mut self,
+        prev: BlockId,
+        lvalue: Lvalue<'tcx>,
+        expr: &tir::Expr<'tcx>,
+        ir: &tir::Block<'tcx>,
+    ) -> BlockAnd<()> {
+        let next = self.append_basic_block();
+        let loop_start = self.append_basic_block();
+        self.with_breakable_scope(expr.span, loop_start, next, |this| {
+            let info = this.span_info(expr.span);
+            this.branch(info, prev, loop_start);
+            let loop_end = set!(this.build_ir_block(loop_start, lvalue, expr, ir));
+            this.branch(info, loop_end, loop_start);
+            this.append_basic_block().unit()
+        })
     }
 
     fn build_ir_block(

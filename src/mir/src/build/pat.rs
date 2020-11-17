@@ -1,7 +1,7 @@
 use super::*;
 use crate::set;
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     /// binds each subpattern to the relevant value
     ///
     /// let l = (3,4);

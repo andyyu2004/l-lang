@@ -9,6 +9,7 @@ use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};
 pub use mirty::{LvalueTy, MirTy};
 use span::Span;
+use std::ops::{Deref, DerefMut};
 
 index::newtype_index! {
     pub struct BlockId {
@@ -35,7 +36,7 @@ index::newtype_index! {
 
 /// top level mir structure
 /// approximately analogous to a tir::Body
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Mir<'tcx> {
     pub basic_blocks: IndexVec<BlockId, BasicBlock<'tcx>>,
     pub vars: IndexVec<VarId, Var<'tcx>>,
@@ -182,14 +183,14 @@ impl std::fmt::Display for UnaryOp {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Rvalue<'tcx> {
+    /// box x
+    Box(Operand<'tcx>),
     /// x
     Operand(Operand<'tcx>),
     /// - x
     Unary(UnaryOp, Operand<'tcx>),
     /// + x y
     Bin(ast::BinOp, Operand<'tcx>, Operand<'tcx>),
-    /// box x
-    Box(Operand<'tcx>),
     /// &x
     Ref(Lvalue<'tcx>),
     /// reads the discriminant of an enum
@@ -220,12 +221,24 @@ pub struct Terminator<'tcx> {
 impl<'tcx> Terminator<'tcx> {
     pub fn successors(&self) -> Vec<BlockId> {
         match self.kind {
-            TerminatorKind::Branch(block)
-            | TerminatorKind::Call { target: block, unwind: None, .. } => vec![block],
-            TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
             TerminatorKind::Cond(_, a, b) => vec![a, b],
-            TerminatorKind::Switch { ref arms, default: _, .. } =>
-                arms.iter().map(|(_, b)| *b).collect(),
+            TerminatorKind::Branch(block) => vec![block],
+            TerminatorKind::Call { target, unwind, .. } =>
+                Some(target).into_iter().chain(unwind).collect(),
+            TerminatorKind::Switch { ref arms, default, .. } =>
+                arms.iter().map(|(_, b)| *b).chain(Some(default)).collect(),
+            TerminatorKind::Abort | TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
+        }
+    }
+
+    pub fn successors_mut(&mut self) -> Vec<&mut BlockId> {
+        match &mut self.kind {
+            TerminatorKind::Cond(_, a, b) => vec![a, b],
+            TerminatorKind::Branch(target) | TerminatorKind::Call { target, unwind: None, .. } =>
+                vec![target],
+            TerminatorKind::Call { target, unwind: Some(unwind), .. } => vec![target, unwind],
+            TerminatorKind::Switch { arms, default, .. } =>
+                arms.iter_mut().map(|(_, b)| b).chain(Some(default)).collect(),
             TerminatorKind::Abort | TerminatorKind::Return | TerminatorKind::Unreachable => vec![],
         }
     }
@@ -261,4 +274,28 @@ pub enum TerminatorKind<'tcx> {
         arms: Vec<(Operand<'tcx>, BlockId)>,
         default: BlockId,
     },
+}
+
+// instead of these could maybe just implement deref from mir -> basic blocks
+impl<'tcx> Deref for Mir<'tcx> {
+    type Target = IndexVec<BlockId, BasicBlock<'tcx>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.basic_blocks
+    }
+}
+
+impl<'tcx> DerefMut for Mir<'tcx> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.basic_blocks
+    }
+}
+
+impl<'a, 'tcx> IntoIterator for &'a Mir<'tcx> {
+    type IntoIter = <&'a IndexVec<BlockId, BasicBlock<'tcx>> as IntoIterator>::IntoIter;
+    type Item = &'a BasicBlock<'tcx>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.basic_blocks.iter()
+    }
 }

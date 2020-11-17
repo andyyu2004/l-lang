@@ -585,8 +585,10 @@ impl<'a> Parse<'a> for BlockParser {
             let len = stmts.len() - 1;
             // check there are no missing semicolons in expression statements
             for stmt in &stmts[..len] {
-                if let StmtKind::Expr(_) = stmt.kind {
-                    return Err(parser.build_err(stmt.span, ParseError::MissingSemi));
+                if let StmtKind::Expr(expr) = &stmt.kind {
+                    if !expr.has_block() {
+                        return Err(parser.build_err(stmt.span, ParseError::MissingSemi));
+                    }
                 }
             }
             // for easier typechecking when the final statement is diverging

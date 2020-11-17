@@ -14,6 +14,8 @@ lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
         "fn" => TokenType::Fn,
         "box" => TokenType::Box,
+        "break" => TokenType::Break,
+        "continue" => TokenType::Continue,
         "match" => TokenType::Match,
         "internal" => TokenType::Internal,
         "mod" => TokenType::Mod,
@@ -35,6 +37,7 @@ lazy_static! {
         "extern" => TokenType::Extern,
         "for" => TokenType::For,
         "loop" => TokenType::Loop,
+        "while" => TokenType::While,
         "self" => TokenType::LSelf,
     };
 }
@@ -171,6 +174,9 @@ impl Display for TokenType {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenType {
     Ident(Symbol),
+    Break,
+    Continue,
+    While,
     Internal,
     Mod,
     Use,

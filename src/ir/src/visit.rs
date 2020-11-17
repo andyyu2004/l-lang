@@ -242,7 +242,7 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
     v.visit_id(expr.id);
     match &expr.kind {
         ir::ExprKind::Box(expr) => v.visit_expr(expr),
-        ir::ExprKind::Err => {}
+        ir::ExprKind::Loop(block) => v.visit_block(block),
         ir::ExprKind::Unary(_, expr) => v.visit_expr(expr),
         ir::ExprKind::Block(block) => v.visit_block(block),
         ir::ExprKind::Path(qpath) => v.visit_qpath(qpath),
@@ -274,6 +274,7 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(base);
             v.visit_ident(*ident);
         }
+        ir::ExprKind::Err | ir::ExprKind::Break | ir::ExprKind::Continue => {}
     }
 }
 

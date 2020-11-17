@@ -37,7 +37,7 @@ pub mod tls {
 }
 
 impl<'tcx> TyCtx<'tcx> {
-    pub fn alloc<T>(self, t: T) -> &'tcx T
+    pub fn alloc<T>(self, t: T) -> &'tcx mut T
     where
         T: ArenaAllocatable<'tcx>,
     {

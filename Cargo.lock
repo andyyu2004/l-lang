@@ -251,6 +251,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ds"
+version = "0.1.0"
+dependencies = [
+ "index",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -631,6 +638,7 @@ name = "mir"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "ds",
  "error",
  "index",
  "infer",

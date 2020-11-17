@@ -3,7 +3,7 @@ use ast::BinOp;
 use std::ops::{Deref, DerefMut};
 
 struct PatternBuilder<'a, 'b, 'tcx> {
-    builder: &'b mut Builder<'a, 'tcx>,
+    builder: &'b mut MirBuilder<'a, 'tcx>,
     /// predicate blocks
     pblocks: Vec<BlockId>,
     body_blocks: Vec<BlockId>,
@@ -12,12 +12,12 @@ struct PatternBuilder<'a, 'b, 'tcx> {
 }
 
 impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
-    pub fn new(builder: &'b mut Builder<'a, 'tcx>, dest: Lvalue<'tcx>) -> Self {
+    pub fn new(builder: &'b mut MirBuilder<'a, 'tcx>, dest: Lvalue<'tcx>) -> Self {
         Self { builder, dest, pblocks: Default::default(), body_blocks: Default::default() }
     }
 }
 
-impl<'a, 'tcx> Builder<'a, 'tcx> {
+impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     pub fn build_naive_match(
         &mut self,
         block: BlockId,
@@ -224,7 +224,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
 }
 
 impl<'a, 'b, 'tcx> Deref for PatternBuilder<'a, 'b, 'tcx> {
-    type Target = Builder<'a, 'tcx>;
+    type Target = MirBuilder<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
         &self.builder

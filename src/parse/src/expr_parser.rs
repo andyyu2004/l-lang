@@ -173,6 +173,19 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             Ok(parser.mk_expr(unsafe_kw.span.merge(blk.span), ExprKind::Block(blk)))
         } else if let Some(match_kw) = parser.accept(TokenType::Match) {
             MatchParser { match_kw }.parse(parser)
+        } else if let Some(loop_kw) = parser.accept(TokenType::Loop) {
+            let open_brace = parser.expect(TokenType::OpenBrace)?;
+            let block = parser.parse_block(open_brace)?;
+            Ok(parser.mk_expr(loop_kw.span.merge(block.span), ExprKind::Loop(block)))
+        } else if let Some(while_kw) = parser.accept(TokenType::While) {
+            let condition = parser.parse_expr();
+            let open_brace = parser.expect(TokenType::OpenBrace)?;
+            let block = parser.parse_block(open_brace)?;
+            Ok(parser.mk_expr(while_kw.span.merge(block.span), ExprKind::While(condition, block)))
+        } else if let Some(break_kw) = parser.accept(TokenType::Break) {
+            Ok(parser.mk_expr(break_kw.span, ExprKind::Break))
+        } else if let Some(continue_kw) = parser.accept(TokenType::Continue) {
+            Ok(parser.mk_expr(continue_kw.span, ExprKind::Continue))
         } else {
             Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }

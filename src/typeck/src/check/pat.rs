@@ -34,7 +34,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             return self.mk_ty_err();
         };
 
-        self.equate(pat.span, ty, struct_ty);
+        self.unify(pat.span, ty, struct_ty);
 
         let (_adt, substs) = struct_ty.expect_adt();
 
@@ -101,7 +101,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             Res::Err => return self.set_ty_err(),
             res => unreachable!("unexpected res `{}`", res),
         };
-        self.equate(pat.span, ty, path_ty);
+        self.unify(pat.span, ty, path_ty);
         path_ty
     }
 
@@ -119,13 +119,13 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         let fn_ty = self.mk_fn_ptr(self.mk_fn_sig(params, pat_ty));
         // TODO maybe expected and actual should be the other way around?
-        self.equate(pat.span, ctor_ty, fn_ty);
+        self.unify(pat.span, ctor_ty, fn_ty);
         pat_ty
     }
 
     fn check_pat_lit(&mut self, expr: &ir::Expr<'tcx>, expected: Ty<'tcx>) -> Ty<'tcx> {
         let lit_ty = self.check_expr(expr);
-        self.equate(expr.span, expected, lit_ty);
+        self.unify(expr.span, expected, lit_ty);
         lit_ty
     }
 
@@ -142,7 +142,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
         let pat_ty = self.tcx.mk_tup(tys);
         // we expect `ty` to be a tuple
-        self.equate(pat.span, ty, pat_ty);
+        self.unify(pat.span, ty, pat_ty);
         pat_ty
     }
 }
