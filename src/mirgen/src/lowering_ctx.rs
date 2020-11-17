@@ -1,6 +1,5 @@
 //! context for lowering from ir to tir/mir
 
-use crate::build;
 use ast::{Lit, UnaryOp};
 use index::Idx;
 use ir::{self, CtorKind, DefId, DefKind, FieldIdx, Res, VariantIdx};
@@ -39,7 +38,7 @@ impl<'tcx> LoweringCtx<'tcx> {
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);
         // println!("{}\n", tir);
-        build::build_fn(self, tir)
+        crate::build_fn(self, tir)
     }
 
     fn expr_ty(&self, expr: &ir::Expr) -> Ty<'tcx> {

@@ -25,12 +25,17 @@ impl<T: Idx> Bitset<T> {
         self.words[index] |= shift;
     }
 
+    pub fn is_set(&mut self, idx: T) -> bool {
+        let (index, shift) = Self::bit_indices(idx);
+        self.words[index] & 1 << shift != 0
+    }
+
     pub fn unset(&mut self, idx: T) {
         let (index, shift) = Self::bit_indices(idx);
         self.words[index] &= !shift;
     }
 
-    pub fn bit_indices(idx: impl Idx) -> (usize, Word) {
+    fn bit_indices(idx: impl Idx) -> (usize, Word) {
         let idx = idx.index();
         let index = idx / WORD_BITS;
         let shift = 1 << (idx % WORD_BITS);

@@ -1,3 +1,5 @@
+use index::Idx;
+
 use super::*;
 
 impl<'a, 'tcx> MirBuilder<'a, 'tcx> {

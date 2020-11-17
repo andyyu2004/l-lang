@@ -1,4 +1,4 @@
-use lcore::mir::{BlockId, Mir, ENTRY_BLOCK};
+use crate::mir::{BlockId, Mir, ENTRY_BLOCK};
 use rustc_hash::FxHashSet;
 
 pub struct Preorder<'a, 'tcx> {

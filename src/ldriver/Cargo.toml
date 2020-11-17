@@ -13,6 +13,7 @@ ast = { path = "../ast" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }
 mir = { path = "../mir" }
+mirgen = { path = "../mirgen" }
 meta = { path = "../meta" }
 lcore = { path = "../lcore" }
 astlowering = { path = "../astlowering" }

@@ -1,12 +1,14 @@
-use crate::traverse;
 use ds::Bitset;
 use index::Idx;
 use itertools::Itertools;
-use lcore::mir::{BlockId, Mir};
+use lcore::mir::{self, BlockId, Mir};
 use lcore::TyCtx;
 
-pub fn analyze<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
+pub fn early_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
     self::remove_dead_blocks(mir);
+}
+
+pub fn late_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
 }
 
 #[cfg(test)]
@@ -26,7 +28,7 @@ mod test {
 /// may be type incorrect
 fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
     let mut reachable = Bitset::new(mir.len());
-    traverse::preorder(mir).for_each(|block| reachable.set(block));
+    mir::preorder(mir).for_each(|block| reachable.set(block));
 
     // this number is to essentially ensure an error if it isn't overwritten
     let mut swaps = (0..mir.len()).map(BlockId::new).collect_vec();

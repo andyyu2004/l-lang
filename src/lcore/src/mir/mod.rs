@@ -1,13 +1,18 @@
 //! mid-level intermediate representation (control flow graph)
 mod fmt;
 mod mirty;
+mod traverse;
+mod visit;
+
+pub use mirty::{LvalueTy, MirTy};
+pub use traverse::preorder;
+pub use visit::MirVisitor;
 
 use crate::mir;
 use crate::ty::{AdtTy, Const, List, Projection, SubstsRef, Ty, TyCtx};
 use ast::Mutability;
 use index::{Idx, IndexVec};
 use ir::{DefId, VariantIdx};
-pub use mirty::{LvalueTy, MirTy};
 use span::Span;
 use std::ops::{Deref, DerefMut};
 
@@ -24,15 +29,6 @@ index::newtype_index! {
         const RET_VAR = 0,
     }
 }
-
-/// mir analyses go here
-/// dataflow etc...
-// pub fn analyse<'a, 'tcx>(mir: &mir::Mir<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
-//     // dataflow::check_assignments(mir, ctx);
-// }
-
-// pub fn validate<'a, 'tcx>(mir: &mir::Mir<'tcx>, ctx: &TirCtx<'a, 'tcx>) {
-// }
 
 /// top level mir structure
 /// approximately analogous to a tir::Body

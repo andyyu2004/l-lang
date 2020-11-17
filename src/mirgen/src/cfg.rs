@@ -1,6 +1,6 @@
 //! control flow graph
 
-use super::{BasicBlock, BlockId, MirBuilder, ReleaseInfo, ENTRY_BLOCK};
+use crate::{BasicBlock, BlockId, MirBuilder, ReleaseInfo, ENTRY_BLOCK};
 use index::IndexVec;
 use lcore::mir::*;
 

@@ -1,5 +1,6 @@
 use super::*;
 use ast::BinOp;
+use index::Idx;
 use std::ops::{Deref, DerefMut};
 
 struct PatternBuilder<'a, 'b, 'tcx> {

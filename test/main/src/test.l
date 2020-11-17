@@ -2,7 +2,7 @@ extern {
     fn print(i: int);
 }
 
-fn mutable() {
+fn uninit() {
     let x;
     print(x);
 }

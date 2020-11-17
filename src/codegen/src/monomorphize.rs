@@ -1,8 +1,7 @@
 use ir::{DefId, FnVisitor, ItemVisitor};
-use lcore::mir::Operand;
+use lcore::mir::{MirVisitor, Operand, SpanInfo};
 use lcore::queries::Queries;
 use lcore::ty::{HasTyFlags, Instance, InstanceKind, Subst, TyCtx, TypeFoldable};
-use mir::MirVisitor;
 use rustc_hash::FxHashSet;
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -108,7 +107,7 @@ impl<'a, 'tcx> Monomorphize<'tcx> for InstanceCollector<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> MirVisitor<'tcx> for InstanceCollector<'a, 'tcx> {
-    fn visit_operand(&mut self, operand: &Operand<'tcx>) {
+    fn visit_operand(&mut self, _info: SpanInfo, operand: &Operand<'tcx>) {
         // `Operand::Item` is currently the only way to reference a generic item
         if let &Operand::Item(def_id, substs) = operand {
             // substs on the line above are the substitutions

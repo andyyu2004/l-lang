@@ -491,6 +491,7 @@ dependencies = [
  "log",
  "meta",
  "mir",
+ "mirgen",
  "parse",
  "resolve",
  "semver 0.11.0",
@@ -649,6 +650,29 @@ dependencies = [
  "rustc-hash",
  "smallvec",
  "span",
+ "thiserror",
+ "tir",
+ "typeck",
+]
+
+[[package]]
+name = "mirgen"
+version = "0.1.0"
+dependencies = [
+ "ast",
+ "ds",
+ "error",
+ "index",
+ "infer",
+ "ir",
+ "itertools",
+ "lcore",
+ "log",
+ "mir",
+ "rustc-hash",
+ "smallvec",
+ "span",
+ "thiserror",
  "tir",
  "typeck",
 ]

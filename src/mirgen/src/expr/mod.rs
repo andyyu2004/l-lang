@@ -1,5 +1,5 @@
-use super::*;
 use crate::set;
+use crate::*;
 use ir::FieldIdx;
 use itertools::Itertools;
 use lcore::mir::*;

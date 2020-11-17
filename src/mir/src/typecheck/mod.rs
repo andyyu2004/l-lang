@@ -1,11 +1,10 @@
 //! this module performs sanity type checks on mir
 //! there are not intended to be any errors so it panics on error
 
-use crate::MirVisitor;
 use lcore::mir::*;
 use lcore::ty::{Ty, TyCtx};
 
-pub fn typecheck<'tcx>(tcx: TyCtx<'tcx>, mir: &'tcx Mir<'tcx>) {
+pub fn typecheck<'a, 'tcx>(tcx: TyCtx<'tcx>, mir: &'a Mir<'tcx>) {
     Typechecker::new(tcx, mir).typecheck()
 }
 
@@ -15,7 +14,7 @@ struct Typechecker<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Typechecker<'a, 'tcx> {
-    pub fn new(tcx: TyCtx<'tcx>, mir: &'tcx Mir<'tcx>) -> Self {
+    pub fn new(tcx: TyCtx<'tcx>, mir: &'a Mir<'tcx>) -> Self {
         Self { tcx, mir }
     }
 
@@ -68,7 +67,7 @@ impl<'a, 'tcx> Typechecker<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> MirVisitor<'tcx> for Typechecker<'a, 'tcx> {
-    fn visit_assignment(&mut self, lvalue: &Lvalue<'tcx>, rvalue: &Rvalue<'tcx>) {
+    fn visit_assignment(&mut self, _info: SpanInfo, lvalue: &Lvalue<'tcx>, rvalue: &Rvalue<'tcx>) {
         let lvalue_ty = self.lvalue_ty(lvalue);
         let rvalue_ty = self.rvalue_ty(rvalue);
         assert_eq!(lvalue_ty, rvalue_ty);

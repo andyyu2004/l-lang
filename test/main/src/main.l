@@ -7,7 +7,7 @@ extern {
 }
 
 fn main() -> int {
-    test::mutable();
+    test::uninit();
     return 0;
     let x = 0;
     loop {

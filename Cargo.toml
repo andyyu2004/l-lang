@@ -23,6 +23,7 @@ members = [
     "src/typeck",
     "src/tir",
     "src/mir",
+    "src/mirgen",
     "src/codegen",
     "tests/runner",
 ]

@@ -40,7 +40,6 @@ use lcore::{GlobalCtx, TyCtx};
 use lex::{Lexer, Tok};
 use log::LevelFilter;
 use meta::PkgMetadata;
-use mir::dump_mir;
 use parse::Parser;
 use resolve::{Resolver, ResolverArenas};
 use session::Session;
@@ -191,10 +190,6 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ret)
     }
 
-    pub fn dump_mir(&'tcx self) -> LResult<()> {
-        self.with_tcx(|tcx| dump_mir(tcx, &mut std::io::stderr()))
-    }
-
     pub fn check(&'tcx self) -> LResult<()> {
         self.with_tcx(|tcx| tcx.analyze(()))
     }
@@ -238,6 +233,6 @@ impl<'tcx> Driver<'tcx> {
 
 impl<'tcx> Driver<'tcx> {
     pub fn gen_tir(&'tcx self) -> LResult<tir::Prog<'tcx>> {
-        self.with_tcx(mir::build_tir)?
+        self.with_tcx(mirgen::build_tir)?
     }
 }
