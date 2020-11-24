@@ -15,7 +15,7 @@ pub fn analyze<'a, 'tcx>(tcx: TyCtx<'tcx>, mir: &'a Mir<'tcx>) {
 struct MirAnalysisCtxt<'a, 'tcx> {
     tcx: TyCtx<'tcx>,
     mir: &'a Mir<'tcx>,
-    // bit set to one if initialized
+    // bit is set to one if variable is initialized
     initialized: Bitset<VarId>,
 }
 
@@ -46,9 +46,6 @@ impl<'a, 'tcx> MirAnalysisCtxt<'a, 'tcx> {
     }
 }
 
-// BIG TODO this is all wrong; we need to walk the mir in some specified order
-// which the visitor does not provide (RPO probably)
-//
 impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
     fn visit_stmt(&mut self, stmt: &Stmt<'tcx>) {
         match &stmt.kind {
@@ -80,6 +77,8 @@ impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
                 MirError::UninitializedVariable(self.mir.vars[lvalue.id].info.span),
             );
         }
+
+        self.walk_lvalue(info, lvalue)
     }
 }
 

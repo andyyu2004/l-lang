@@ -51,7 +51,7 @@ pub trait MirVisitor<'tcx> {
         self.walk_lvalue(info, lvalue);
     }
 
-    fn walk_lvalue(&mut self, info: SpanInfo, _lvalue: &Lvalue<'tcx>) {
+    fn walk_lvalue(&mut self, _info: SpanInfo, _lvalue: &Lvalue<'tcx>) {
     }
 
     fn visit_rvalue(&mut self, info: SpanInfo, rvalue: &Rvalue<'tcx>) {
