@@ -28,7 +28,7 @@ mod test {
 /// may be type incorrect
 fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
     let mut reachable = Bitset::new(mir.len());
-    mir::preorder(mir).for_each(|block| reachable.set(block));
+    mir::preorder(mir).for_each(|(block_id, _)| reachable.set(block_id));
 
     // this number is to essentially ensure an error if it isn't overwritten
     let mut swaps = (0..mir.len()).map(BlockId::new).collect_vec();

@@ -8,6 +8,7 @@ edition = "2018"
 arena = { path = "../arena" }
 ir = { path = "../ir" }
 ast = { path = "../ast" }
+ds = { path = "../ds" }
 span = { path = "../span" }
 index = { path = "../index" }
 session = { path = "../session" }

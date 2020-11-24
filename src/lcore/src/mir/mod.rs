@@ -5,7 +5,7 @@ mod traverse;
 mod visit;
 
 pub use mirty::{LvalueTy, MirTy};
-pub use traverse::preorder;
+pub use traverse::{postorder, preorder, rpo};
 pub use visit::MirVisitor;
 
 use crate::mir;

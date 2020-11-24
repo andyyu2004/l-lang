@@ -20,9 +20,20 @@ impl<T: Idx> Bitset<T> {
         Self { size, words: vec![0; Self::words_required(size)], pd: std::marker::PhantomData }
     }
 
+    /// return whether the set has changed
+    pub fn insert(&mut self, idx: T) -> bool {
+        let has_changed = !self.is_set(idx);
+        self.set(idx);
+        has_changed
+    }
+
     pub fn set(&mut self, idx: T) {
         let (index, shift) = Self::bit_indices(idx);
         self.words[index] |= shift;
+    }
+
+    pub fn is_unset(&self, idx: T) -> bool {
+        !self.is_set(idx)
     }
 
     pub fn is_set(&self, idx: T) -> bool {

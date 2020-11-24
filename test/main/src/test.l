@@ -8,6 +8,7 @@ struct S {
 
 fn uninit() {
     let x;
+    let y  = x;
     print(x);
     let mut s = S { x: 5 };
     s.x = 9;

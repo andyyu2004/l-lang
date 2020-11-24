@@ -2,7 +2,7 @@ mod error;
 
 use ast::Mutability;
 use ds::Bitset;
-use lcore::mir::*;
+use lcore::mir::{self, *};
 use lcore::ty::TyCtx;
 use std::ops::Deref;
 
@@ -25,7 +25,10 @@ impl<'a, 'tcx> MirAnalysisCtxt<'a, 'tcx> {
     }
 
     pub fn analyze(&mut self) {
-        self.visit_mir(self.mir);
+        // can't just call `visit_mir`, as that visits blocks in some arbitrary order
+        for (_, block) in mir::rpo(self.mir) {
+            self.visit_basic_block(block);
+        }
     }
 }
 
@@ -37,11 +40,15 @@ impl<'a, 'tcx> MirAnalysisCtxt<'a, 'tcx> {
     fn is_uninit(&self, lvalue: &Lvalue<'tcx>) -> bool {
         // we only need to check `lvalue.id` as all the projections of an lvalue will
         // also be uninit if the variable itself is uninit
+        // we only need to check locals for initialization
         let varkind = self.mir.vars[lvalue.id].kind;
-        varkind == VarKind::Local && !self.initialized.is_set(lvalue.id)
+        varkind == VarKind::Local && self.initialized.is_unset(lvalue.id)
     }
 }
 
+// BIG TODO this is all wrong; we need to walk the mir in some specified order
+// which the visitor does not provide (RPO probably)
+//
 impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
     fn visit_stmt(&mut self, stmt: &Stmt<'tcx>) {
         match &stmt.kind {
@@ -58,10 +65,11 @@ impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
                 }
                 self.initialized.set(lvalue.id);
             }
-            StmtKind::Retain(..) => {}
-            StmtKind::Release(..) => {}
+            StmtKind::Retain(..) => return,
+            StmtKind::Release(..) => return,
             StmtKind::Nop => {}
         }
+
         self.walk_stmt(stmt);
     }
 

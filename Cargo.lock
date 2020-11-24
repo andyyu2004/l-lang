@@ -453,6 +453,7 @@ dependencies = [
  "arena",
  "ast",
  "bitflags",
+ "ds",
  "ena",
  "error",
  "index",
