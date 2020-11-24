@@ -46,8 +46,9 @@ impl<'a, 'tcx> Formatter<'a, 'tcx> {
         writeln!(self, "MIR")?;
 
         for (id, var) in self.mir.vars.iter_enumerated() {
+            write!(self, "{}", var.mtbl)?;
             id.mir_fmt(self)?;
-            writeln!(self, ":{} ({:?})", var.ty, var.kind,)?;
+            writeln!(self, ":{} ({:?})", var.ty, var.kind)?;
         }
 
         writeln!(self)?;

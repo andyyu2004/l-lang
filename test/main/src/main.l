@@ -1,4 +1,4 @@
-/* mod fib; */
+mod fib;
 /* mod dir; */
 mod test;
 
@@ -8,8 +8,8 @@ extern {
 
 fn main() -> int {
     test::uninit();
-    return 0;
-    let x = 0;
+    print(fib::fib(40));
+    let mut x = 0;
     loop {
 	x = x + 1;
 	if x < 5 {

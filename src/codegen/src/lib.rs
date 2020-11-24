@@ -25,7 +25,7 @@ use lcore::queries::Queries;
 use lcore::ty::Ty;
 use llvm_error::LLVMError;
 use monomorphize::Monomorphize;
-use native::NativeFunctions;
+use native::{NativeFunctions, NativeFunctionsBuilder};
 
 pub fn provide(queries: &mut Queries) {
     monomorphize::provide(queries);

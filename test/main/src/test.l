@@ -7,6 +7,8 @@ struct S {
 }
 
 fn uninit() {
+    let x;
+    print(x);
     let mut s = S { x: 5 };
     s.x = 9;
     let s = box S { x : 4 };

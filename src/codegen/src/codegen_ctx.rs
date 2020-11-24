@@ -87,7 +87,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             unit: types.unit.get_undef(),
         };
 
-        let native_functions = NativeFunctions::new(&module);
+        let native_functions = NativeFunctionsBuilder::new(llctx, &module).build();
+
         Self {
             tcx,
             llctx,
