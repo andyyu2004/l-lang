@@ -50,10 +50,10 @@ impl<'a, 'tcx> MonomorphizationCollector<'a, 'tcx> {
     fn collect_instance(&self, instance: Instance<'tcx>) {
         self.mono_instances.borrow_mut().insert(instance);
         match instance.kind {
-            InstanceKind::Item =>
-                if let Ok(mir) = self.tcx.mir_of(instance.def_id) {
-                    InstanceCollector { collector: self, instance }.visit_mir(mir)
-                },
+            InstanceKind::Item => {
+                let mir = self.tcx.mir_of(instance.def_id);
+                InstanceCollector { collector: self, instance }.visit_mir(mir);
+            }
             // no need to recurse on intrinsics as they do not have associated mir
             InstanceKind::Intrinsic => {}
         }

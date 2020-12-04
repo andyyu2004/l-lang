@@ -84,18 +84,19 @@ define_query_context! {
         ([analyze] [()] [()])
 
         // typecheck
-        ([typeck] [DefId] [LResult<&'tcx TypeckTables<'tcx>>])
+        ([typeck] [DefId] [&'tcx TypeckTables<'tcx>])
         ([type_of] [DefId] [Ty<'tcx>])
         ([fn_sig] [DefId] [FnSig<'tcx>])
         ([adt_ty] [DefId] [&'tcx AdtTy])
         ([generics_of] [DefId] [&'tcx Generics<'tcx>])
         ([validate_item_type] [DefId] [()])
+        ([check_patterns] [DefId] [()])
         ([inherent_impls] [()] [&'tcx InherentImpls])
         ([inherent_impls_of] [DefId] [&'tcx [DefId]])
 
         // mir
-        ([mir_of] [DefId] [LResult<&'tcx Mir<'tcx>>])
-        ([instance_mir] [Instance<'tcx>] [LResult<&'tcx Mir<'tcx>>])
+        ([mir_of] [DefId] [&'tcx Mir<'tcx>])
+        ([instance_mir] [Instance<'tcx>] [&'tcx Mir<'tcx>])
 
         // codegen
         ([monomorphization_instances] [()] [&'tcx Instances<'tcx>])

@@ -15,10 +15,6 @@
 //!
 //! One solution to this is to run some passes that will force everything to be checked, even if
 //! never used.
-//!
-//!
-//!
-//!
 
 use ir::{FnVisitor, ItemVisitor};
 use lcore::queries::Queries;
@@ -28,16 +24,15 @@ pub fn provide(queries: &mut Queries) {
     *queries = Queries { analyze: |tcx, ()| analyze(tcx), ..*queries }
 }
 
-/// runs all phases of analyses using the api queries provide
+/// runs all phases of analyses using the api that the query system provides
 /// if no errors are caught during this, then the code should be correct
 /// and safe to codegen
 fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
-    // TODO
-    // collect -> validate -> check
     PassRunner { tcx }.run_passes(&mut [
         &mut ItemTypeCollectionPass { tcx },
         &mut ItemTypeValidationPass { tcx },
         &mut TypecheckPass { tcx },
+        &mut PatternCheckPass { tcx },
     ]);
 }
 
@@ -95,23 +90,27 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
     }
 }
 
-/// typecheck function bodies
-struct TypecheckPass<'tcx> {
-    tcx: TyCtx<'tcx>,
-}
+impl_body_check_pass!(PatternCheckPass, tcx, "pattern check pass", check_patterns);
+impl_body_check_pass!(TypecheckPass, tcx, "type check pass", typeck);
 
-impl<'tcx> AnalysisPass<'tcx> for TypecheckPass<'tcx> {
-    fn name(&self) -> &'static str {
-        "typecheck pass"
+macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident) {
+    struct $type<'tcx> {
+        $tcx: TyCtx<'tcx>,
     }
 
-    fn run_pass(&mut self) {
-        self.visit_ir(self.tcx.ir)
-    }
-}
+    impl<'tcx> AnalysisPass<'tcx> for $type<'tcx> {
+        fn name(&self) -> &'static str {
+            $name
+        }
 
-impl<'tcx> FnVisitor<'tcx> for TypecheckPass<'tcx> {
-    fn visit_fn(&mut self, def_id: ir::DefId) {
-        let _ = self.tcx.typeck(def_id);
+        fn run_pass(&mut self) {
+            self.visit_ir(self.$tcx.ir)
+        }
+    }
+
+    impl<'tcx> FnVisitor<'tcx> for $type<'tcx> {
+        fn visit_fn(&mut self, def_id: ir::DefId) {
+            let _ = self.$tcx.$fn(def_id);
+        }
     }
 }

@@ -13,11 +13,10 @@ pub trait ItemVisitor<'ir> {
     }
 }
 
-/// visits the def_id of all (non-foreign) function items
+/// visits the DefId of all (non-foreign) function items
 /// this includes all the things that have the following properties:
-/// - has corresponding mir
-/// - requires typeck
-///
+/// - has corresponding mir/body
+/// - requires type check
 pub trait FnVisitor<'ir> {
     fn visit_fn(&mut self, def_id: DefId);
 }

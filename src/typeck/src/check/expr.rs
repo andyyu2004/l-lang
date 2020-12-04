@@ -120,7 +120,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
 
         // TODO search for methods
-
         (autoderef, self.emit_ty_err(expr.span, TypeError::BadFieldAccess(base_ty)))
     }
 

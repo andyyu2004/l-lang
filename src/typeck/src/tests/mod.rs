@@ -16,18 +16,23 @@ fn wrap_in_main(src: &str) -> String {
 
 macro expect_type_error($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
-    driver.gen_tir().unwrap_err();
+    driver.check().unwrap_err();
 }}
 
 macro expect_type_error_expr($src:expr) {{ expect_type_error!(&wrap_in_main($src)) }}
 
 macro typeck($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
+    let tir = driver.check().unwrap();
+}}
+
+macro tir($src:expr) {{
+    let driver = ldriver::Driver::from_src($src);
     let tir = driver.gen_tir().unwrap();
     tir.to_string()
 }}
 
-macro typeck_expr($src:expr) {{ typeck!(&wrap_in_main($src)) }}
+macro typeck_expr($src:expr) {{ tir!(&wrap_in_main($src)) }}
 
 macro lines($s:expr) {{
     let mut lines = $s.lines();

@@ -8,7 +8,6 @@ mod stmt;
 
 use crate::TyConv;
 use ast::Mutability;
-use error::{LError, LResult};
 use infer::{InferCtx, InferCtxBuilder, TyCtxtInferExt};
 use ir::{self, DefId};
 use lcore::queries::Queries;
@@ -24,14 +23,11 @@ pub fn provide(queries: &mut Queries) {
 }
 
 /// checks the bodies of item
-fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx TypeckTables<'tcx>> {
+fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx TypeckTables<'tcx> {
     let body = tcx.defs().body(def_id);
     InheritedCtx::build(tcx, def_id).enter(|inherited| {
         let fcx = inherited.check_fn_item(def_id, body);
-        if tcx.sess.has_errors() {
-            return Err(LError::ErrorReported);
-        }
-        Ok(fcx.resolve_inference_variables(body))
+        fcx.resolve_inference_variables(body)
     })
 }
 

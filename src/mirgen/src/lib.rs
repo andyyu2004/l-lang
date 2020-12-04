@@ -35,6 +35,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 
 pub fn provide(queries: &mut Queries) {
+    pat::provide(queries);
     *queries = Queries { mir_of, instance_mir, ..*queries }
 }
 
@@ -44,17 +45,17 @@ macro halt_on_error($tcx:expr) {{
     }
 }}
 
-fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> LResult<&'tcx Mir<'tcx>> {
+fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> &'tcx Mir<'tcx> {
     match instance.kind {
         InstanceKind::Item => tcx.mir_of(instance.def_id),
         InstanceKind::Intrinsic => unreachable!("intrinsics don't have mir"),
     }
 }
 
-fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
+fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx Mir<'tcx> {
     let node = tcx.defs().get(def_id);
     match node {
-        DefNode::Ctor(variant) => Ok(self::build_variant_ctor(tcx, variant)),
+        DefNode::Ctor(variant) => self::build_variant_ctor(tcx, variant),
         DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(_, _, body) => self::build_mir(tcx, def_id, body),
             _ => panic!(),
@@ -69,25 +70,23 @@ fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> LResult<&'tcx Mir<'tcx>> {
     }
 }
 
-fn build_mir<'tcx>(
-    tcx: TyCtx<'tcx>,
-    def_id: DefId,
-    body: &'tcx ir::Body<'tcx>,
-) -> LResult<&'tcx Mir<'tcx>> {
+fn build_mir<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId, body: &'tcx ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
     with_lowering_ctx(tcx, def_id, |mut lctx| lctx.build_mir(body))
+        .unwrap_or_else(|| tcx.alloc(Mir::default()))
 }
 
 fn with_lowering_ctx<'tcx, R>(
     tcx: TyCtx<'tcx>,
     def_id: DefId,
     f: impl FnOnce(LoweringCtx<'tcx>) -> R,
-) -> LResult<R> {
-    let tables = tcx.typeck(def_id)?;
+) -> Option<R> {
+    // we return `None` if any errors occur during typecheck
+    let tables = tcx.sess.try_run(|| tcx.typeck(def_id))?;
     let lctx = LoweringCtx::new(tcx, tables);
-    Ok(f(lctx))
+    Some(f(lctx))
 }
 
-// used only in tests
+// used only in old tests
 pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
     let prog = tcx.ir;
     let mut items = BTreeMap::new();
@@ -95,7 +94,7 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
     for item in prog.items.values() {
         match item.kind {
             ir::ItemKind::Fn(..) => {
-                if let Ok(tir) =
+                if let Some(tir) =
                     with_lowering_ctx(tcx, item.id.def, |mut lctx| lctx.lower_item_tir(item))
                 {
                     items.insert(item.id, tir);

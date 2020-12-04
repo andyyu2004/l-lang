@@ -27,7 +27,7 @@ pub struct FnCtx<'a, 'tcx> {
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(cctx: &'a CodegenCtx<'tcx>, instance: Instance<'tcx>) -> Self {
         let llfn = cctx.instances.borrow()[&instance];
-        let mir = cctx.tcx.instance_mir(instance).unwrap();
+        let mir = cctx.tcx.instance_mir(instance);
 
         let blocks = mir
             .basic_blocks

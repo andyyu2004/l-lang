@@ -46,7 +46,8 @@ fn enum_mismatching_ctor_patterns() {
             Option::Some(x) => x,
             Option::None => 99,
         }
-    }"#;
+    }
+    "#;
 
     expect_type_error!(src);
 }

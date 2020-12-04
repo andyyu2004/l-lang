@@ -2,18 +2,37 @@
 //! http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
 #![allow(dead_code)]
 
-use arena::TypedArena;
+use super::MatchCtxt;
 use ir::DefId;
 use smallvec::SmallVec;
 use std::iter::FromIterator;
 use std::ops::Deref;
 
+impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
+    crate fn check_match(&self, scrut: &ir::Expr<'tcx>, arms: &[ir::Arm<'tcx>]) {
+        let pcx = PatCtxt { mcx: self };
+        pcx.check_match_exhaustiveness(scrut, arms)
+    }
+}
+
 /// context for usefulness check
-struct PatCtxt<'p, 'tcx> {
-    arena: &'p TypedArena<Pat<'p, 'tcx>>,
+struct PatCtxt<'a, 'tcx> {
+    mcx: &'a MatchCtxt<'a, 'tcx>,
+}
+
+impl<'a, 'tcx> Deref for PatCtxt<'a, 'tcx> {
+    type Target = MatchCtxt<'a, 'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.mcx
+    }
 }
 
 impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
+    crate fn check_match_exhaustiveness(&self, scrut: &ir::Expr<'tcx>, arms: &[ir::Arm<'tcx>]) {
+        // let matrix = arms.iter().map(|arm| self.lower_pattern(arm.pat)).collect();
+    }
+
     fn lower_pattern(&self, pat: &tir::Pattern<'tcx>) -> &'p Pat<'p, 'tcx> {
         let pat = self.lower_pattern_inner(pat);
         self.arena.alloc(pat)
@@ -102,6 +121,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     }
 }
 
+#[derive(Default, Debug)]
 struct Matrix<'p, 'tcx> {
     rows: Vec<PatternVector<'p, 'tcx>>,
 }
@@ -112,6 +132,7 @@ impl<'p, 'tcx> FromIterator<PatternVector<'p, 'tcx>> for Matrix<'p, 'tcx> {
     }
 }
 
+#[derive(Debug)]
 struct PatternVector<'p, 'tcx> {
     /// the elements of the (row) vector
     pats: SmallVec<[&'p Pat<'p, 'tcx>; 2]>,
