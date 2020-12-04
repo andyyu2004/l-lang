@@ -34,6 +34,10 @@ impl<'tcx> LoweringCtx<'tcx> {
         item.to_tir(self)
     }
 
+    pub fn lower_pattern_tir(&mut self, pattern: &ir::Pattern<'tcx>) -> tir::Pattern<'tcx> {
+        pattern.to_tir(self)
+    }
+
     /// ir -> tir -> mir
     pub fn build_mir(&mut self, body: &ir::Body<'tcx>) -> &'tcx Mir<'tcx> {
         let tir = body.to_tir(self);

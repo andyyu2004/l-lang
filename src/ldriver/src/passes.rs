@@ -44,7 +44,10 @@ impl<'tcx> PassManager<'tcx> for PassRunner<'tcx> {
     fn run_passes(&mut self, passes: &mut [&mut dyn AnalysisPass<'tcx>]) {
         let tcx = self.tcx;
         for pass in passes {
-            tcx.sess.prof.time(pass.name(), || pass.run_pass())
+            if tcx.sess.try_run(|| tcx.sess.prof.time(pass.name(), || pass.run_pass())) == Err(true)
+            {
+                return;
+            }
         }
     }
 }
@@ -55,7 +58,10 @@ trait PassManager<'tcx> {
 
 trait AnalysisPass<'tcx> {
     fn name(&self) -> &'static str;
-    fn run_pass(&mut self);
+
+    /// returns whether we should halt on any errors
+    // try to avoid halting if possible
+    fn run_pass(&mut self) -> bool;
 }
 
 struct ItemTypeCollectionPass<'tcx> {
@@ -67,10 +73,11 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeCollectionPass<'tcx> {
         "item type collection pass"
     }
 
-    fn run_pass(&mut self) {
+    fn run_pass(&mut self) -> bool {
         for item in self.tcx.ir.items.values() {
             self.tcx.validate_item_type(item.id.def);
         }
+        false
     }
 }
 
@@ -83,17 +90,18 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
         "item type validation pass"
     }
 
-    fn run_pass(&mut self) {
+    fn run_pass(&mut self) -> bool {
         for item in self.tcx.ir.items.values() {
             self.tcx.validate_item_type(item.id.def);
         }
+        false
     }
 }
 
-impl_body_check_pass!(PatternCheckPass, tcx, "pattern check pass", check_patterns);
-impl_body_check_pass!(TypecheckPass, tcx, "type check pass", typeck);
+impl_body_check_pass!(TypecheckPass, tcx, "type check pass", typeck, true);
+impl_body_check_pass!(PatternCheckPass, tcx, "pattern check pass", check_patterns, false);
 
-macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident) {
+macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident, $halt_on_failure:expr) {
     struct $type<'tcx> {
         $tcx: TyCtx<'tcx>,
     }
@@ -103,8 +111,9 @@ macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident) {
             $name
         }
 
-        fn run_pass(&mut self) {
-            self.visit_ir(self.$tcx.ir)
+        fn run_pass(&mut self) -> bool {
+            self.visit_ir(self.$tcx.ir);
+            $halt_on_failure
         }
     }
 

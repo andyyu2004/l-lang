@@ -17,11 +17,11 @@ impl Diagnostics {
         self.err_count.set(1 + self.err_count.get());
     }
 
-    pub fn try_run<R>(&self, f: impl FnOnce() -> R) -> Option<R> {
+    pub fn try_run<R>(&self, f: impl FnOnce() -> R) -> Result<R, R> {
         let old = self.err_count();
         let ret = f();
         // no errors have occured during `f`
-        if self.err_count() == old { Some(ret) } else { None }
+        if self.err_count() == old { Ok(ret) } else { Err(ret) }
     }
 
     pub fn err_count(&self) -> usize {

@@ -23,7 +23,7 @@ macro expect_type_error_expr($src:expr) {{ expect_type_error!(&wrap_in_main($src
 
 macro typeck($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
-    let tir = driver.check().unwrap();
+    driver.check().unwrap();
 }}
 
 macro tir($src:expr) {{

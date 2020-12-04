@@ -6,9 +6,18 @@ use arena::DroplessArena;
 use ir::Visitor;
 use lcore::queries::Queries;
 use lcore::ty::TypeckTables;
+use std::ops::Deref;
+use thiserror::Error;
 
 crate fn provide(queries: &mut Queries) {
     *queries = Queries { check_patterns, ..*queries }
+}
+
+#[derive(Debug, Error)]
+pub enum PatternError {
+    #[error("non-exhaustive match expression")]
+    // todo add witness
+    NonexhaustiveMatch,
 }
 
 /// validate match expressions and patterns in general in the body of `def_id`
@@ -25,8 +34,8 @@ struct PatVisitor<'tcx> {
 }
 
 struct MatchCtxt<'a, 'tcx> {
-    tcx: TyCtx<'tcx>,
-    arena: &'a DroplessArena,
+    visitor: &'a PatVisitor<'tcx>,
+    arenaref: &'a DroplessArena,
 }
 
 impl<'tcx> PatVisitor<'tcx> {
@@ -35,14 +44,22 @@ impl<'tcx> PatVisitor<'tcx> {
     }
 
     fn with_match_ctxt<R>(&self, f: impl for<'a> FnOnce(MatchCtxt<'a, 'tcx>) -> R) -> R {
-        f(MatchCtxt { tcx: self.tcx, arena: &self.arena })
+        f(MatchCtxt { visitor: self, arenaref: &self.arena })
+    }
+}
+
+impl<'a, 'tcx> Deref for MatchCtxt<'a, 'tcx> {
+    type Target = PatVisitor<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.visitor
     }
 }
 
 impl<'tcx> Visitor<'tcx> for PatVisitor<'tcx> {
     fn visit_expr(&mut self, expr: &'tcx ir::Expr<'tcx>) {
         if let ir::ExprKind::Match(scrut, arms, _src) = &expr.kind {
-            self.with_match_ctxt(|mcx| mcx.check_match(scrut, arms));
+            self.with_match_ctxt(|mcx| mcx.check_match(expr, scrut, arms));
         };
         ir::walk_expr(self, expr);
     }

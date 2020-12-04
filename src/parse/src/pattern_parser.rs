@@ -50,6 +50,12 @@ impl<'a> Parse<'a> for PatParser {
         } else if let Some((kind, span)) = parser.accept_literal() {
             let expr = LiteralParser { kind, span }.parse(parser)?;
             Ok(parser.mk_pat(span, PatternKind::Lit(expr)))
+        } else if let Some(false_kw) = parser.accept(TokenType::False) {
+            let expr = parser.mk_expr(false_kw.span, ExprKind::Lit(Lit::Bool(false)));
+            Ok(parser.mk_pat(false_kw.span, PatternKind::Lit(expr)))
+        } else if let Some(true_kw) = parser.accept(TokenType::True) {
+            let expr = parser.mk_expr(true_kw.span, ExprKind::Lit(Lit::Bool(true)));
+            Ok(parser.mk_pat(true_kw.span, PatternKind::Lit(expr)))
         } else {
             Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
         }

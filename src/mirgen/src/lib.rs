@@ -81,7 +81,7 @@ fn with_lowering_ctx<'tcx, R>(
     f: impl FnOnce(LoweringCtx<'tcx>) -> R,
 ) -> Option<R> {
     // we return `None` if any errors occur during typecheck
-    let tables = tcx.sess.try_run(|| tcx.typeck(def_id))?;
+    let tables = tcx.sess.try_run(|| tcx.typeck(def_id)).ok()?;
     let lctx = LoweringCtx::new(tcx, tables);
     Some(f(lctx))
 }
@@ -144,7 +144,6 @@ pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> 
     mir::analyze(tcx, mir);
     mir::late_opt(tcx, mir);
 
-    println!("{}", mir);
     // eprintln!("{}", mir);
     mir
 }

@@ -17,6 +17,7 @@ mir = { path = "../mir" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }
 typeck = { path = "../typeck" }
+util = { path = "../util" }
 thiserror = "1"
 rustc-hash = "1"
 smallvec = "1"
