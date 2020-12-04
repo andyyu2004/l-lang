@@ -34,6 +34,7 @@ macro_rules! arena_vec {
     });
 
 }
+
 ir::arena_types!(arena::declare_arena, [], 'tcx);
 
 pub struct AstLoweringCtx<'a, 'ir> {

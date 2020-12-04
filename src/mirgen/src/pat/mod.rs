@@ -1,3 +1,5 @@
+mod exhaustiveness;
+
 use super::*;
 use crate::set;
 

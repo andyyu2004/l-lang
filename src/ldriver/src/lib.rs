@@ -53,6 +53,7 @@ use std::path::Path;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
 lazy_static::lazy_static! {
+    /// just a dummy to allow us to use codespan to print out our panics
     static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
 }
 
@@ -86,8 +87,9 @@ pub fn main() -> ! {
 
     let config = config::load_config(path).unwrap_or_else(|err| panic!("{}", err));
 
-    // we unregister our panic hook above as the panic error handling section is over
+    // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
+
     let driver = Driver::new(config);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),

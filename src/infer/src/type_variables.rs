@@ -18,6 +18,19 @@ pub enum TyVarValue<'tcx> {
     Unknown,
 }
 
+impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
+    type Error = ut::NoError;
+
+    fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
+        match (s, t) {
+            (&Self::Known(_), &Self::Known(_)) => panic!("unifying two known type variables"),
+            (&Self::Known(_), _) => Ok(*s),
+            (_, &Self::Known(_)) => Ok(*t),
+            (&Self::Unknown, &Self::Unknown) => Ok(TyVarValue::Unknown),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct TyVarData {
     pub span: Span,
@@ -105,25 +118,6 @@ impl<'a, 'tcx> TypeVariableTable<'a, 'tcx> {
         let key = tables.new_key(TyVarValue::Unknown);
         self.storage.tyvar_data.insert(key.vid, TyVarData { span });
         key.vid
-    }
-}
-
-impl<'tcx> TyVarValue<'tcx> {
-    pub fn is_unknown(&self) -> bool {
-        matches!(self, Self::Unknown)
-    }
-}
-
-impl<'tcx> ut::UnifyValue for TyVarValue<'tcx> {
-    type Error = ut::NoError;
-
-    fn unify_values(s: &Self, t: &Self) -> Result<Self, Self::Error> {
-        match (s, t) {
-            (&Self::Known(_), &Self::Known(_)) => panic!("unifying two known type variables"),
-            (&Self::Known(_), _) => Ok(*s),
-            (_, &Self::Known(_)) => Ok(*t),
-            (&Self::Unknown, &Self::Unknown) => Ok(TyVarValue::Unknown),
-        }
     }
 }
 

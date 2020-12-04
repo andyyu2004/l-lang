@@ -1,47 +1,37 @@
-use prelude::print;
-
-extern {
-    fn print(i: int);
-}
-
-
-fn main() -> int {
-    let f = S::new;
-    f(1,false);
-    0
-}
-
-type P<T> = S<T, int>;
-
-fn construct_p() -> P<bool> {
-    P { t: false, u: 9 }
-}
-
 struct S<T, U> {
     t: T,
     u: U,
 }
 
+extern {
+    fn print(i: int);
+}
 
-impl<T, U> S<T, U> {
-    fn new(u: U, t: T) -> Self {
-	Self { t, u }
-    }
+pub fn run() {
+    let s = S { t: 4, u: false };
+    let s1 = S::new(false, 8);
+    print(s.t);
+    print(s1.u);
+}
 
-    fn fst(self) -> T {
-	self.t
-	/* self.fst() */
+// impl<T, U> S<T, U> {
+//     fn new(u: U, t: T) -> Self {
+//         Self { t, u }
+//     }
+
+//     fn fst(self) -> T {
+//         self.t
+//     }
+// }
+
+
+
+impl S<bool, int> {
+    fn new(t: bool, u: int) -> Self {
+        Self { t, u }
     }
 }
 
-
-
-// impl S<bool, bool> {
-//     fn new(t: bool, u: bool) -> Self {
-// 	Self { t, u }
-//     }
-// }
-//
 // impl S<int, int> {
 //     fn new(u: int, t: int) -> Self {
 // 	Self { t, u }

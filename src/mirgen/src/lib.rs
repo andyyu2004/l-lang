@@ -1,5 +1,6 @@
 #![feature(decl_macro)]
 #![feature(crate_visibility_modifier)]
+#![feature(once_cell)]
 #![feature(box_patterns, box_syntax)]
 
 mod cfg;
@@ -12,6 +13,9 @@ mod stmt;
 
 #[macro_use]
 extern crate log;
+
+#[macro_use]
+extern crate smallvec;
 
 use cfg::Cfg;
 pub use ctor::build_variant_ctor;

@@ -5,6 +5,7 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+arena = { path = "../arena" }
 span = { path = "../span" }
 ds = { path = "../ds" }
 lcore = { path = "../lcore" }

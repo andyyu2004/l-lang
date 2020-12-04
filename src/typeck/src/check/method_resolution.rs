@@ -1,5 +1,3 @@
-//! resolves methods and associated functions relative to a type
-
 use crate::FnCtx;
 use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
@@ -37,8 +35,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         segment: &ir::PathSegment<'tcx>,
     ) -> Res {
         // TODO maybe require the generic args in `segment` later?
-        let ctx = MethodResolutionCtx::new(self, xpat, self_ty, segment.ident);
-        ctx.resolve().unwrap_or_else(|err| {
+        let rcx = MethodResolutionCtx::new(self, xpat, self_ty, segment.ident);
+        rcx.resolve().unwrap_or_else(|err| {
             self.sess.emit_error(xpat.span(), err);
             Res::Err
         })
