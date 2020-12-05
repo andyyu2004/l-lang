@@ -72,8 +72,12 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
 
     fn lower_pattern_inner(&self, pat: &tir::Pattern<'tcx>) -> Pat<'p, 'tcx> {
         let kind = match &pat.kind {
-            tir::PatternKind::Box(..) | tir::PatternKind::Field(..) =>
-                PatKind::Ctor(Ctor::Unit, Fields::empty()),
+            tir::PatternKind::Box(pat) => {
+                let field = self.arenaref.alloc(self.lower_pattern_inner(pat));
+                let fields = Fields::new(std::slice::from_ref(field));
+                PatKind::Ctor(Ctor::Box, fields)
+            }
+            tir::PatternKind::Field(..) => todo!(),
             tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => PatKind::Wildcard,
             tir::PatternKind::Lit(c) => PatKind::Ctor(Ctor::Literal(c), Fields::empty()),
             tir::PatternKind::Variant(adt, _, idx, pats) => {
@@ -155,6 +159,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     /// returns a set of all constructors of `ty`
     fn all_ctors(&self, ty: Ty<'tcx>) -> HashSet<Ctor<'tcx>> {
         match ty.kind {
+            TyKind::Box(..) => hashset! { Ctor::Box },
             TyKind::Adt(adt, _) =>
                 adt.variants.iter().map(|variant| Ctor::Variant(variant.def_id)).collect(),
             TyKind::Bool => hashset! {
@@ -360,20 +365,19 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 enum Ctor<'tcx> {
+    Box,
     Variant(DefId),
     Literal(&'tcx Const<'tcx>),
     NonExhaustive,
-    /// nullary constructor
-    Unit,
 }
 
 impl Display for Ctor<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
+            Ctor::Box => write!(f, "box"),
             Ctor::Variant(def_id) =>
                 write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
             Ctor::Literal(lit) => write!(f, "{}", lit),
-            Ctor::Unit => write!(f, "unit"),
             Ctor::NonExhaustive => write!(f, "nonexhaustive"),
         }
     }

@@ -72,12 +72,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &mut self,
         pat: &ir::Pattern<'tcx>,
         inner: &ir::Pattern<'tcx>,
-        ty: Ty<'tcx>,
+        expected: Ty<'tcx>,
     ) -> Ty<'tcx> {
-        let ty = self.partially_resolve_ty(pat.span, ty);
+        let ty = self.partially_resolve_ty(pat.span, expected);
         let deref_ty = self.deref_ty(pat.span, ty);
         self.check_pat(inner, deref_ty);
-        ty
+        let box_ty = self.mk_box_ty(deref_ty);
+        self.unify(pat.span, expected, box_ty);
+        box_ty
     }
 
     fn check_pat_path(

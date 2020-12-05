@@ -46,3 +46,22 @@ fn check_adt_match_nonexhaustive() {
 
     expect_analysis_error!(src);
 }
+
+#[test]
+fn check_nonexhaustive_box_pattern() {
+    let src = r#"
+    enum Option<T> {
+        Some(T),
+        None,
+    }
+
+    fn f() -> int {
+        let opt = box Option::None;
+        match opt {
+            &Option::Some(x) => x,
+        }
+    }
+    "#;
+
+    expect_analysis_error!(src);
+}

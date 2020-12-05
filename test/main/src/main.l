@@ -13,16 +13,16 @@ fn main() -> int {
     return 0;
 }
 
-enum Option {
-    Some(int),
+enum Option<T> {
+    Some(T),
     None,
 }
 
 fn run() -> int {
-    let opt = Option::None;
+    let opt = box Option::None;
     match opt {
-        Option::None => 5,
-        Option::Some(x) => 55,
+        &Option::Some(x) => x,
+        // &Option::None => x,
     }
 }
 
