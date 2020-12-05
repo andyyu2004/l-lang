@@ -7,6 +7,7 @@ crate fn query_ctx<'tcx>() -> QueryCtx<'tcx> {
     passes::provide(&mut queries);
     typeck::provide(&mut queries);
     mirgen::provide(&mut queries);
+    mir::provide(&mut queries);
     lcore::provide(&mut queries);
     codegen::provide(&mut queries);
 

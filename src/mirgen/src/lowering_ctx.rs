@@ -146,7 +146,7 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
                 tir::PatternKind::Binding(m, ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
-            ir::PatternKind::Lit(expr) => tir::PatternKind::Lit(box expr.to_tir(ctx)),
+            ir::PatternKind::Lit(expr) => ctx.lower_pat_lit(expr),
             ir::PatternKind::Variant(qpath, pats) => ctx.lower_variant_pat(self, qpath, pats),
             ir::PatternKind::Wildcard => tir::PatternKind::Wildcard,
         };
@@ -156,6 +156,18 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
 }
 
 impl<'tcx> LoweringCtx<'tcx> {
+    fn lower_pat_lit(&mut self, expr: &ir::Expr<'tcx>) -> tir::PatternKind<'tcx> {
+        let c = match expr.kind {
+            ir::ExprKind::Lit(lit) => match lit {
+                Lit::Float(f) => self.mk_const_float(f),
+                Lit::Int(i) => self.mk_const_int(i),
+                Lit::Bool(b) => self.mk_const_bool(b),
+            },
+            _ => unreachable!(),
+        };
+        tir::PatternKind::Lit(c)
+    }
+
     fn lower_struct_pat(
         &mut self,
         pat: &ir::Pattern<'tcx>,

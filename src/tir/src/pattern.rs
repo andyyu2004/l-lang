@@ -1,7 +1,7 @@
 use crate as tir;
 use ast::{Ident, Mutability};
 use ir::{self, FieldIdx, VariantIdx};
-use lcore::ty::{AdtTy, SubstsRef, Ty};
+use lcore::ty::{AdtTy, Const, SubstsRef, Ty};
 use span::Span;
 use std::fmt::{self, Display, Formatter};
 use util;
@@ -80,7 +80,7 @@ pub enum PatternKind<'tcx> {
     /// `(...)`, `Foo(...)`, `Foo{...}`, or `Foo`, where `Foo` is a variant name from an ADT with
     /// a single variant.
     Field(Vec<tir::FieldPat<'tcx>>),
-    Lit(Box<tir::Expr<'tcx>>),
+    Lit(&'tcx Const<'tcx>),
     /// `Foo(...)` or `Foo {...}` or `Foo`, where `Foo` is a variant name from an ADT with multiple variants.
     Variant(&'tcx AdtTy, SubstsRef<'tcx>, VariantIdx, Vec<tir::Pattern<'tcx>>),
     Wildcard,

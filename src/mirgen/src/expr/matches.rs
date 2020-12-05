@@ -132,9 +132,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                         )
                     );
                 },
-            tir::PatternKind::Lit(ref expr) => {
-                let tmp = self.alloc_tmp(info, expr.ty).into();
-                set!(pblock = self.write_expr(pblock, tmp, expr));
+            tir::PatternKind::Lit(c) => {
                 // compare the literal expression with the scrutinee
                 let cmp_rvalue = set!(
                     pblock = self.build_binary_op(
@@ -142,7 +140,7 @@ impl<'a, 'b, 'tcx> PatternBuilder<'a, 'b, 'tcx> {
                         pat.span,
                         tcx.types.bool,
                         BinOp::Eq,
-                        Operand::Lvalue(tmp),
+                        Operand::Const(c),
                         Operand::Lvalue(scrut),
                     )
                 );

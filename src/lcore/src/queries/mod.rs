@@ -1,6 +1,5 @@
 use crate::mir::Mir;
 use crate::ty::*;
-use error::LResult;
 use ir::DefId;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
@@ -27,7 +26,6 @@ macro_rules! define_query_caches {
 
         #[derive(Default)]
         pub struct QueryCache<$tcx> {
-            // arena: &$tcx QueryArena<$tcx>,
             $($name: RefCell<FxHashMap<$K, $R>>),*
         }
 

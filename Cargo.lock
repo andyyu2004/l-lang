@@ -641,7 +641,6 @@ dependencies = [
  "span",
  "thiserror",
  "tir",
- "typeck",
 ]
 
 [[package]]
@@ -664,7 +663,6 @@ dependencies = [
  "span",
  "thiserror",
  "tir",
- "typeck",
  "util",
 ]
 

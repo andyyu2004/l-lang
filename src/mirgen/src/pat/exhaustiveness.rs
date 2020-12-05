@@ -4,9 +4,8 @@
 
 use super::{MatchCtxt, PatternError};
 use crate::LoweringCtx;
-use ast::Lit;
 use ir::DefId;
-use lcore::ty::{tls, Ty, TyKind};
+use lcore::ty::{tls, Const, Ty, TyKind};
 use std::fmt::{self, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -20,7 +19,7 @@ impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
     ) {
         let pcx = PatCtxt { mcx: self };
         if !pcx.check_match_exhaustiveness(scrut, arms) {
-            self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch);
+            // self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch);
         }
     }
 }
@@ -72,9 +71,9 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
     fn lower_pattern_inner(&self, pat: &tir::Pattern<'tcx>) -> Pat<'p, 'tcx> {
         match &pat.kind {
             tir::PatternKind::Box(..) | tir::PatternKind::Field(..) =>
-                Pat::Ctor(Ctor::Constant, Fields::empty()),
+                Pat::Ctor(Ctor::Unit, Fields::empty()),
             tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => Pat::Wildcard,
-            tir::PatternKind::Lit(lit) => Pat::Ctor(Ctor::Literal(lit), Fields::empty()),
+            tir::PatternKind::Lit(c) => Pat::Ctor(Ctor::Literal(c), Fields::empty()),
             tir::PatternKind::Variant(adt, _, idx, pats) => {
                 let ctor = Ctor::Variant(adt.variants[*idx].def_id);
                 let pats = self
@@ -266,7 +265,7 @@ impl<'p, 'tcx> Deref for Fields<'p, 'tcx> {
 /// pattern as defined in the paper
 #[derive(Clone, Debug)]
 enum Pat<'p, 'tcx> {
-    Ctor(Ctor, Fields<'p, 'tcx>),
+    Ctor(Ctor<'tcx>, Fields<'p, 'tcx>),
     Wildcard,
 }
 
@@ -308,20 +307,20 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Ctor {
+enum Ctor<'tcx> {
     Variant(DefId),
-    Literal(Lit),
+    Literal(&'tcx Const<'tcx>),
     /// nullary constructor
-    Constant,
+    Unit,
 }
 
-impl Display for Ctor {
+impl Display for Ctor<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Ctor::Variant(def_id) =>
                 write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
             Ctor::Literal(lit) => write!(f, "{}", lit),
-            Ctor::Constant => write!(f, "unit"),
+            Ctor::Unit => write!(f, "unit"),
         }
     }
 }

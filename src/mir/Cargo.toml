@@ -14,7 +14,6 @@ infer = { path = "../infer" }
 error = { path = "../error" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }
-typeck = { path = "../typeck" }
 thiserror = "1"
 rustc-hash = "1"
 smallvec = "1"
