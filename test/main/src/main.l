@@ -18,12 +18,14 @@ enum Option<T> {
     None,
 }
 
-fn run() -> int {
-    let opt = box Option::None;
-    match opt {
-        &Option::Some(x) => x,
-        // &Option::None => x,
-    }
+fn run() {
+    let opt = Option::Some(5);
+    let boxed = Option::Some(false);
+    match (opt, boxed) {
+        (Option::Some(x), Option::Some(false)) => x,
+        (Option::Some(x), Option::Some(true)) => x,
+        (Option::None, _) => 0,
+    };
 }
 
 

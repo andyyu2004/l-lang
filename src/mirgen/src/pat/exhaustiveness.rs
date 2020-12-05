@@ -7,7 +7,7 @@ use crate::LoweringCtx;
 use ir::DefId;
 use lcore::ty::{tls, Const, Ty, TyKind};
 use std::collections::HashSet;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
 
@@ -77,7 +77,17 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
                 let fields = Fields::new(std::slice::from_ref(field));
                 PatKind::Ctor(Ctor::Box, fields)
             }
-            tir::PatternKind::Field(..) => todo!(),
+            tir::PatternKind::Field(fields) => {
+                let fields = self
+                    .arenaref
+                    .alloc_from_iter(fields.iter().map(|f| self.lower_pattern_inner(&f.pat)));
+                let ctor = match pat.ty.kind {
+                    TyKind::Tuple(..) => Ctor::Tuple,
+                    TyKind::Adt(..) => Ctor::Struct,
+                    _ => unreachable!(),
+                };
+                PatKind::Ctor(ctor, Fields::new(fields))
+            }
             tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => PatKind::Wildcard,
             tir::PatternKind::Lit(c) => PatKind::Ctor(Ctor::Literal(c), Fields::empty()),
             tir::PatternKind::Variant(adt, _, idx, pats) => {
@@ -110,10 +120,11 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     /// implementation of `U_rec` as defined in the paper
     fn is_useful(&self, v: &PatternVector<'p, 'tcx>) -> bool {
         let Self { matrix, .. } = self;
-        // println!("matrix:\n{}", matrix);
-        // println!("vector:\n{}", v);
+        debug!("matrix:\n{:?}", matrix);
+        debug!("vector:\n{:?}\n\n", v);
 
-        assert!(matrix.iter().all(|r| r.len() == v.len()));
+        debug_assert!(matrix.iter().all(|r| r.len() == v.len()));
+
         // base case: no columns
         if v.is_empty() {
             // useful if matrix has no rows; useless otherwise
@@ -153,15 +164,22 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
 
     /// whether `ctors` contains all possible constructors wrt `ty`
     fn ctors_are_complete(&self, ctors: &HashSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> bool {
-        ctors == &self.all_ctors(ty)
+        let all_ctors = self.all_ctors_of_ty(ty);
+        if all_ctors.contains(&Ctor::NonExhaustive) {
+            return false;
+        }
+        debug!("{:?} == {:?} = {}", ctors, all_ctors, &all_ctors == ctors);
+        ctors == &all_ctors
     }
 
     /// returns a set of all constructors of `ty`
-    fn all_ctors(&self, ty: Ty<'tcx>) -> HashSet<Ctor<'tcx>> {
+    fn all_ctors_of_ty(&self, ty: Ty<'tcx>) -> HashSet<Ctor<'tcx>> {
         match ty.kind {
             TyKind::Box(..) => hashset! { Ctor::Box },
-            TyKind::Adt(adt, _) =>
+            TyKind::Tuple(..) => hashset! { Ctor::Tuple },
+            TyKind::Adt(adt, _) if adt.is_enum() =>
                 adt.variants.iter().map(|variant| Ctor::Variant(variant.def_id)).collect(),
+            TyKind::Adt(..) => hashset! { Ctor::Struct },
             TyKind::Bool => hashset! {
                 Ctor::Literal(self.mk_const_bool(true)),
                 Ctor::Literal(self.mk_const_bool(false)),
@@ -192,6 +210,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         qfields: &Fields<'p, 'tcx>,
         vector: &PatternVector<'p, 'tcx>,
     ) -> Option<PatternVector<'p, 'tcx>> {
+        debug!("specialize_vector: {:?} {:?} {:?}", qctor, qfields, vector);
         // `row` is `r_1 ... r_a` initially
         let mut row: Vec<Pat> = match &vector.head_pat().kind {
             PatKind::Ctor(ctor, fields) => {
@@ -223,7 +242,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 struct Matrix<'p, 'tcx> {
     rows: Vec<PatternVector<'p, 'tcx>>,
 }
@@ -238,11 +257,11 @@ impl<'p, 'tcx> Matrix<'p, 'tcx> {
     }
 }
 
-impl<'p, 'tcx> Display for Matrix<'p, 'tcx> {
+impl<'p, 'tcx> Debug for Matrix<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "____________________")?;
         for row in &self.rows {
-            writeln!(f, "|{}|", row)?;
+            writeln!(f, "|{:?}|", row)?;
         }
         writeln!(f, "____________________")
     }
@@ -254,7 +273,6 @@ impl<'p, 'tcx> FromIterator<PatternVector<'p, 'tcx>> for Matrix<'p, 'tcx> {
     }
 }
 
-#[derive(Debug)]
 struct PatternVector<'p, 'tcx> {
     /// the elements of the (row) vector
     pats: &'p [Pat<'p, 'tcx>],
@@ -274,9 +292,9 @@ impl<'p, 'tcx> PatternVector<'p, 'tcx> {
     }
 }
 
-impl<'p, 'tcx> Display for PatternVector<'p, 'tcx> {
+impl<'p, 'tcx> Debug for PatternVector<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "({})", util::join2(self.pats, ","))
+        write!(f, "{:?}", self.pats)
     }
 }
 
@@ -298,22 +316,22 @@ impl<'p, 'tcx> Deref for Fields<'p, 'tcx> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Pat<'p, 'tcx> {
     ty: Ty<'tcx>,
     kind: PatKind<'p, 'tcx>,
 }
 
 /// pattern as defined in the paper
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 enum PatKind<'p, 'tcx> {
     Ctor(Ctor<'tcx>, Fields<'p, 'tcx>),
     Wildcard,
 }
 
-impl<'p, 'tcx> Display for Pat<'p, 'tcx> {
+impl<'p, 'tcx> Debug for Pat<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.kind, self.ty)
+        write!(f, "{:?}:{}", self.kind, self.ty)
     }
 }
 
@@ -326,24 +344,24 @@ impl<'p, 'tcx> Pat<'p, 'tcx> {
     }
 }
 
-impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
+impl<'p, 'tcx> Debug for PatKind<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            PatKind::Ctor(ctor, fields) => write!(f, "{}({})", ctor, fields),
+            PatKind::Ctor(ctor, fields) => write!(f, "{:?}({:?})", ctor, fields),
             PatKind::Wildcard => write!(f, "_"),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Fields<'p, 'tcx> {
     pats: &'p [Pat<'p, 'tcx>],
     _pd: std::marker::PhantomData<&'tcx ()>,
 }
 
-impl<'p, 'tcx> Display for Fields<'p, 'tcx> {
+impl<'p, 'tcx> Debug for Fields<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.pats, ","))
+        write!(f, "{:?}", self.pats)
     }
 }
 
@@ -363,15 +381,17 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum Ctor<'tcx> {
     Box,
     Variant(DefId),
     Literal(&'tcx Const<'tcx>),
+    Tuple,
     NonExhaustive,
+    Struct,
 }
 
-impl Display for Ctor<'_> {
+impl Debug for Ctor<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Ctor::Box => write!(f, "box"),
@@ -379,6 +399,8 @@ impl Display for Ctor<'_> {
                 write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
             Ctor::Literal(lit) => write!(f, "{}", lit),
             Ctor::NonExhaustive => write!(f, "nonexhaustive"),
+            Ctor::Tuple => write!(f, "tuple"),
+            Ctor::Struct => write!(f, "struct"),
         }
     }
 }

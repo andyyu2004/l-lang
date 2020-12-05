@@ -238,6 +238,12 @@ pub struct AdtTy {
     pub variants: IndexVec<VariantIdx, VariantTy>,
 }
 
+impl AdtTy {
+    pub fn is_enum(&self) -> bool {
+        self.kind == AdtKind::Enum
+    }
+}
+
 impl PartialEq for AdtTy {
     fn eq(&self, other: &Self) -> bool {
         ptr::eq(self, other)

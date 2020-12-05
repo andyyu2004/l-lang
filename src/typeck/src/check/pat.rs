@@ -76,8 +76,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     ) -> Ty<'tcx> {
         let ty = self.partially_resolve_ty(pat.span, expected);
         let deref_ty = self.deref_ty(pat.span, ty);
-        self.check_pat(inner, deref_ty);
-        let box_ty = self.mk_box_ty(deref_ty);
+        let inner_ty = self.check_pat(inner, deref_ty);
+        let box_ty = self.mk_box_ty(inner_ty);
         self.unify(pat.span, expected, box_ty);
         box_ty
     }
@@ -136,7 +136,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         &mut self,
         pat: &ir::Pattern<'tcx>,
         pats: &[ir::Pattern<'tcx>],
-        ty: Ty<'tcx>,
+        expected: Ty<'tcx>,
     ) -> Ty<'tcx> {
         // create inference variables for each element
         let tys = self.tcx.mk_substs(pats.iter().map(|pat| self.new_infer_var(pat.span)));
@@ -144,8 +144,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             self.check_pat(pat, ty);
         }
         let pat_ty = self.tcx.mk_tup(tys);
-        // we expect `ty` to be a tuple
-        self.unify(pat.span, ty, pat_ty);
+        self.unify(pat.span, expected, pat_ty);
         pat_ty
     }
 }
