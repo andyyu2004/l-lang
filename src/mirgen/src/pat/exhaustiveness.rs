@@ -6,7 +6,7 @@ use super::{MatchCtxt, PatternError};
 use crate::LoweringCtx;
 use ir::DefId;
 use lcore::ty::{tls, Const, Ty, TyKind};
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -51,7 +51,7 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
 
         // match is exhaustive if `!is_useful(matrix, wildcard)`
         let ty = self.tables.node_type(scrut.id);
-        let wildcard = self.arenaref.alloc(Pat { ty, kind: PatKind::Wildcard });
+        let wildcard = self.pat_arena.alloc(Pat { ty, kind: PatKind::Wildcard });
         let v = PatternVector::from_pat(wildcard);
         let ctxt = UsefulnessCtxt { ctx: self, matrix };
         if let Some(witness) = ctxt.find_uncovered_pattern(&v) {
@@ -68,19 +68,19 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
 
     /// tir pattern -> pat
     fn lower_pattern(&self, pat: &tir::Pattern<'tcx>) -> &'p Pat<'p, 'tcx> {
-        self.arenaref.alloc(self.lower_pattern_inner(pat))
+        self.pat_arena.alloc(self.lower_pattern_inner(pat))
     }
 
     fn lower_pattern_inner(&self, pat: &tir::Pattern<'tcx>) -> Pat<'p, 'tcx> {
         let kind = match &pat.kind {
             tir::PatternKind::Box(pat) => {
-                let field = self.arenaref.alloc(self.lower_pattern_inner(pat));
+                let field = self.pat_arena.alloc(self.lower_pattern_inner(pat));
                 let fields = Fields::new(std::slice::from_ref(field));
                 PatKind::Ctor(Ctor::Box, fields)
             }
             tir::PatternKind::Field(fields) => {
                 let fields = self
-                    .arenaref
+                    .pat_arena
                     .alloc_from_iter(fields.iter().map(|f| self.lower_pattern_inner(&f.pat)));
                 let ctor = match pat.ty.kind {
                     TyKind::Tuple(..) => Ctor::Tuple,
@@ -94,7 +94,7 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
             tir::PatternKind::Variant(adt, _, idx, pats) => {
                 let ctor = Ctor::Variant(adt.variants[*idx].def_id);
                 let pats = self
-                    .arenaref
+                    .pat_arena
                     .alloc_from_iter(pats.iter().map(|pat| self.lower_pattern_inner(pat)));
                 let fields = Fields::new(pats);
                 PatKind::Ctor(ctor, fields)
@@ -147,7 +147,9 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
             return if matrix.rows.is_empty() { Some(Witness::default()) } else { None };
         }
 
-        debug_assert_eq!(matrix.width(), v.len());
+        if !matrix.rows.is_empty() {
+            debug_assert_eq!(matrix.width(), v.len());
+        }
 
         // algorithm `I` (page 18)
         let pat = v.head_pat();
@@ -162,24 +164,23 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
             None
         } else {
             let matrix = self.construct_dmatrix(&self.matrix);
-            if !matrix.is_empty() {
-                debug_assert_eq!(matrix.width(), self.matrix.width() - 1);
-            }
             let q = PatternVector::new(&v[1..]);
             let witness = Self { matrix, ..*self }.find_uncovered_pattern(&q)?;
             debug_assert_eq!(witness.pats.len(), q.len());
-            if let Some((&ctor, fields)) = self.matrix.head_ctors().next() {
+            let witness = if let Some((&ctor, fields)) = self.matrix.head_ctors().next() {
                 // remove an arbitrary constructor as a witness
                 // Some(self.apply_ctor(pat, ctor, fields.len(), witness))
-                let wildcards = self.arenaref.alloc_from_iter(
+                let wildcards = self.pat_arena.alloc_from_iter(
                     fields.iter().map(|f| Pat { ty: f.ty, kind: PatKind::Wildcard }),
                 );
                 let pat = Pat { ty: pat.ty, kind: PatKind::Ctor(ctor, Fields::new(wildcards)) };
-                Some(witness.prepend(pat))
+                witness.prepend(pat)
             } else {
                 let wildcard = Pat { ty: pat.ty, kind: PatKind::Wildcard };
-                Some(witness.prepend(wildcard))
-            }
+                witness.prepend(wildcard)
+            };
+            debug_assert_eq!(witness.pats.len(), v.len());
+            Some(witness)
         }
     }
 
@@ -190,13 +191,12 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         arity: usize,
         witness: Witness<'p, 'tcx>,
     ) -> Witness<'p, 'tcx> {
-        let args = self.arenaref.alloc_from_iter(witness.pats[..arity].iter().copied());
+        let args = self.pat_arena.alloc_from_iter(witness.pats[..arity].iter().copied());
         let applied = Pat { kind: PatKind::Ctor(ctor, Fields::new(args)), ty: pat.ty };
         let mut pats = vec![applied];
         pats.extend(witness.pats[arity..].iter().copied());
-        let new_witness = Witness { pats };
-        debug_assert_eq!(new_witness.pats.len() + arity - 1, witness.pats.len());
-        new_witness
+        debug_assert_eq!(pats.len() + arity - 1, witness.pats.len());
+        Witness { pats }
     }
 
     fn find_uncovered_ctor(
@@ -229,9 +229,8 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         match ty.kind {
             TyKind::Box(..) => hashset! { Ctor::Box },
             TyKind::Tuple(..) => hashset! { Ctor::Tuple },
-            TyKind::Adt(adt, _) if adt.is_enum() =>
+            TyKind::Adt(adt, _) =>
                 adt.variants.iter().map(|variant| Ctor::Variant(variant.def_id)).collect(),
-            TyKind::Adt(..) => hashset! { Ctor::Struct },
             TyKind::Bool => hashset! {
                 Ctor::Literal(self.mk_const_bool(true)),
                 Ctor::Literal(self.mk_const_bool(false)),
@@ -249,7 +248,10 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
                 PatKind::Ctor(..) => None,
                 PatKind::Wildcard => Some(PatternVector::new(&row[1..])),
             })
-            .collect();
+            .collect::<Matrix>();
+        if !dmatrix.is_empty() {
+            debug_assert_eq!(dmatrix.width(), matrix.width() - 1);
+        }
         dmatrix
     }
 
@@ -277,7 +279,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         };
         row.extend_from_slice(&vector[1..]);
         debug_assert_eq!(row.len(), vector.len() + qfields.len() - 1);
-        Some(PatternVector::new(self.arenaref.alloc_from_iter(row)))
+        Some(PatternVector::new(self.pat_arena.alloc_from_iter(row)))
     }
 
     /// calculates `S(c, self.matrix)`

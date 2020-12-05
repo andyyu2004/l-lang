@@ -35,7 +35,7 @@ struct PatVisitor<'tcx> {
 
 struct MatchCtxt<'a, 'tcx> {
     visitor: &'a PatVisitor<'tcx>,
-    arenaref: &'a DroplessArena,
+    pat_arena: &'a DroplessArena,
 }
 
 impl<'tcx> PatVisitor<'tcx> {
@@ -44,7 +44,7 @@ impl<'tcx> PatVisitor<'tcx> {
     }
 
     fn with_match_ctxt<R>(&self, f: impl for<'a> FnOnce(MatchCtxt<'a, 'tcx>) -> R) -> R {
-        f(MatchCtxt { visitor: self, arenaref: &self.arena })
+        f(MatchCtxt { visitor: self, pat_arena: &self.arena })
     }
 }
 
