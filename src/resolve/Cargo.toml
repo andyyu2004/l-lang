@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 span = { path = "../span" }
 lex = { path = "../lex" }
-parse = { path = "../parse" }
 ast = { path = "../ast" }
 session = { path = "../session" }
 meta = { path = "../meta" }

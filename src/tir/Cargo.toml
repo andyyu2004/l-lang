@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
-
 [dependencies]
 ir = { path = "../ir" }
 ast = { path = "../ast" }
@@ -12,7 +11,6 @@ span = { path = "../span" }
 index = { path = "../index" }
 util = { path = "../util" }
 lcore = { path = "../lcore" }
-infer = { path = "../infer" }
 smallvec = "1.4.2"
 log = "0.4.11"
 itertools = "0.9"

@@ -10,10 +10,8 @@ ds = { path = "../ds" }
 lcore = { path = "../lcore" }
 ast = { path = "../ast" }
 index = { path = "../index" }
-infer = { path = "../infer" }
 error = { path = "../error" }
 ir = { path = "../ir" }
-tir = { path = "../tir" }
 thiserror = "1"
 rustc-hash = "1"
 smallvec = "1"

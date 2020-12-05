@@ -165,11 +165,9 @@ dependencies = [
  "llvm-sys",
  "log",
  "maplit",
- "mir",
  "rustc-hash",
  "span",
  "thiserror",
- "typeck",
 ]
 
 [[package]]
@@ -265,7 +263,6 @@ version = "0.1.0"
 dependencies = [
  "codespan",
  "codespan-reporting",
- "colour",
  "span",
  "termcolor",
  "util",
@@ -449,7 +446,6 @@ dependencies = [
  "log",
  "macros",
  "rustc-hash",
- "salsa",
  "serde",
  "serde_derive",
  "session",
@@ -630,7 +626,6 @@ dependencies = [
  "ds",
  "error",
  "index",
- "infer",
  "ir",
  "itertools",
  "lcore",
@@ -640,7 +635,6 @@ dependencies = [
  "smallvec",
  "span",
  "thiserror",
- "tir",
 ]
 
 [[package]]
@@ -652,7 +646,6 @@ dependencies = [
  "ds",
  "error",
  "index",
- "infer",
  "ir",
  "itertools",
  "lcore",
@@ -757,7 +750,6 @@ dependencies = [
  "lex",
  "log",
  "rustc-hash",
- "salsa",
  "session",
  "span",
  "thiserror",
@@ -858,7 +850,6 @@ dependencies = [
  "lex",
  "log",
  "meta",
- "parse",
  "rustc-hash",
  "session",
  "span",
@@ -1133,7 +1124,6 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "index",
- "infer",
  "ir",
  "itertools",
  "lcore",
@@ -1170,7 +1160,6 @@ dependencies = [
  "rustc-hash",
  "span",
  "thiserror",
- "tir",
  "util",
 ]
 

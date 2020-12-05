@@ -306,7 +306,7 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Ctor<'tcx> {
     Variant(DefId),
     Literal(&'tcx Const<'tcx>),

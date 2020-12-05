@@ -33,9 +33,10 @@ impl<'a, 'tcx> Typechecker<'a, 'tcx> {
     fn rvalue_ty(&mut self, rvalue: &Rvalue<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx;
         match rvalue {
-            // the unary operators (!,-) at mir level do not change the operands type
-            Rvalue::Unary(_, operand) | Rvalue::Operand(operand) => self.op_ty(operand),
             Rvalue::Box(operand) => tcx.mk_box_ty(self.op_ty(operand)),
+            // the unary operators (!,-) at mir level do not change the operand's type
+            // i.e. `! :: bool -> bool`
+            Rvalue::Unary(_, operand) | Rvalue::Operand(operand) => self.op_ty(operand),
             Rvalue::Ref(lvalue) => tcx.mk_ptr_ty(self.lvalue_ty(lvalue)),
             Rvalue::Discriminant(_) => tcx.types.discr,
             Rvalue::Closure(_, _) => todo!(),

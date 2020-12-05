@@ -8,11 +8,9 @@ edition = "2018"
 ast = { path = "../ast" }
 error = { path = "../error" }
 ir = { path = "../ir" }
-mir = { path = "../mir" }
 span = { path = "../span" }
 index = { path = "../index" }
 lcore = { path = "../lcore" }
-typeck = { path = "../typeck" }
 maplit = "1"
 log = "0.4.11"
 rustc-hash = "1"

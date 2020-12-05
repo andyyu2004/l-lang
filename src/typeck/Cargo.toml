@@ -12,7 +12,6 @@ lcore = { path = "../lcore" }
 ast = { path = "../ast" }
 error = { path = "../error" }
 infer = { path = "../infer" }
-tir = { path = "../tir" }
 util = { path = "../util" }
 rustc-hash = "1"
 thiserror = "1"
