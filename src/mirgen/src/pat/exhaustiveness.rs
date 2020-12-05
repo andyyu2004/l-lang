@@ -6,8 +6,8 @@ use super::{MatchCtxt, PatternError};
 use crate::LoweringCtx;
 use ir::DefId;
 use lcore::ty::{tls, Const, Ty, TyKind};
-use std::collections::HashSet;
-use std::fmt::{self, Debug, Formatter};
+use std::collections::{HashSet, VecDeque};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
 
@@ -19,9 +19,7 @@ impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
         arms: &[ir::Arm<'tcx>],
     ) {
         let pcx = PatCtxt { mcx: self };
-        if !pcx.check_match_exhaustiveness(scrut, arms) {
-            self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch);
-        }
+        pcx.check_match_exhaustiveness(expr, scrut, arms);
     }
 }
 
@@ -42,9 +40,10 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
     /// returns whether the match is exhaustive
     crate fn check_match_exhaustiveness(
         &self,
+        expr: &ir::Expr<'tcx>,
         scrut: &ir::Expr<'tcx>,
         arms: &[ir::Arm<'tcx>],
-    ) -> bool {
+    ) {
         let matrix: Matrix = arms
             .iter()
             .map(|arm| PatternVector::from_pat(self.lower_ir_pattern(arm.pat)))
@@ -54,8 +53,10 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
         let ty = self.tables.node_type(scrut.id);
         let wildcard = self.arenaref.alloc(Pat { ty, kind: PatKind::Wildcard });
         let v = PatternVector::from_pat(wildcard);
-        // if wildcard is useful, then it is not exhaustive
-        !UsefulnessCtxt { ctx: self, matrix }.is_useful(&v)
+        let ctxt = UsefulnessCtxt { ctx: self, matrix };
+        if let Some(witness) = ctxt.find_uncovered_pattern(&v) {
+            self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch(witness));
+        }
     }
 
     /// ir pattern to pat
@@ -103,6 +104,24 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
     }
 }
 
+#[derive(Default, Debug)]
+crate struct Witness<'p, 'tcx> {
+    pats: Vec<Pat<'p, 'tcx>>,
+}
+
+impl<'p, 'tcx> Witness<'p, 'tcx> {
+    fn prepend(mut self, pat: Pat<'p, 'tcx>) -> Self {
+        self.pats.insert(0, pat);
+        self
+    }
+}
+
+impl<'p, 'tcx> Display for Witness<'p, 'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "({})", util::join(&self.pats, ","))
+    }
+}
+
 struct UsefulnessCtxt<'a, 'p, 'tcx> {
     ctx: &'a PatCtxt<'p, 'tcx>,
     matrix: Matrix<'p, 'tcx>,
@@ -117,49 +136,82 @@ impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
 }
 
 impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
-    /// implementation of `U_rec` as defined in the paper
-    fn is_useful(&self, v: &PatternVector<'p, 'tcx>) -> bool {
+    fn find_uncovered_pattern(&self, v: &PatternVector<'p, 'tcx>) -> Option<Witness<'p, 'tcx>> {
         let Self { matrix, .. } = self;
         debug!("matrix:\n{:?}", matrix);
         debug!("vector:\n{:?}\n\n", v);
 
-        debug_assert!(matrix.iter().all(|r| r.len() == v.len()));
-
         // base case: no columns
         if v.is_empty() {
             // useful if matrix has no rows; useless otherwise
-            return matrix.rows.is_empty();
+            return if matrix.rows.is_empty() { Some(Witness::default()) } else { None };
         }
 
-        let pat = v.head_pat();
-        match &pat.kind {
-            PatKind::Ctor(ctor, fields) => self.is_ctor_useful(ctor, fields, v),
-            PatKind::Wildcard => {
-                let ctors =
-                    self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<HashSet<_>>();
+        debug_assert_eq!(matrix.width(), v.len());
 
-                if self.ctors_are_complete(&ctors, pat.ty) {
-                    self.matrix
-                        .head_ctors()
-                        .any(|(ctor, fields)| self.is_ctor_useful(ctor, fields, v))
-                } else {
-                    let matrix = self.construct_dmatrix(&self.matrix);
-                    let v = PatternVector::new(&v[1..]);
-                    Self { matrix, ..*self }.is_useful(&v)
+        // algorithm `I` (page 18)
+        let pat = v.head_pat();
+        let ctors = self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<HashSet<_>>();
+
+        if self.ctors_are_complete(&ctors, pat.ty) {
+            for (ctor, fields) in self.matrix.head_ctors() {
+                if let Some(witness) = self.find_uncovered_ctor(pat, ctor, fields, v) {
+                    return Some(witness);
                 }
+            }
+            None
+        } else {
+            let matrix = self.construct_dmatrix(&self.matrix);
+            if !matrix.is_empty() {
+                debug_assert_eq!(matrix.width(), self.matrix.width() - 1);
+            }
+            let q = PatternVector::new(&v[1..]);
+            let witness = Self { matrix, ..*self }.find_uncovered_pattern(&q)?;
+            debug_assert_eq!(witness.pats.len(), q.len());
+            if let Some((&ctor, fields)) = self.matrix.head_ctors().next() {
+                // remove an arbitrary constructor as a witness
+                // Some(self.apply_ctor(pat, ctor, fields.len(), witness))
+                let wildcards = self.arenaref.alloc_from_iter(
+                    fields.iter().map(|f| Pat { ty: f.ty, kind: PatKind::Wildcard }),
+                );
+                let pat = Pat { ty: pat.ty, kind: PatKind::Ctor(ctor, Fields::new(wildcards)) };
+                Some(witness.prepend(pat))
+            } else {
+                let wildcard = Pat { ty: pat.ty, kind: PatKind::Wildcard };
+                Some(witness.prepend(wildcard))
             }
         }
     }
 
-    fn is_ctor_useful(
+    fn apply_ctor(
         &self,
+        pat: &Pat<'p, 'tcx>,
+        ctor: Ctor<'tcx>,
+        arity: usize,
+        witness: Witness<'p, 'tcx>,
+    ) -> Witness<'p, 'tcx> {
+        let args = self.arenaref.alloc_from_iter(witness.pats[..arity].iter().copied());
+        let applied = Pat { kind: PatKind::Ctor(ctor, Fields::new(args)), ty: pat.ty };
+        let mut pats = vec![applied];
+        pats.extend(witness.pats[arity..].iter().copied());
+        let new_witness = Witness { pats };
+        debug_assert_eq!(new_witness.pats.len() + arity - 1, witness.pats.len());
+        new_witness
+    }
+
+    fn find_uncovered_ctor(
+        &self,
+        pat: &Pat<'p, 'tcx>,
         ctor: &Ctor<'tcx>,
         fields: &Fields<'p, 'tcx>,
         v: &PatternVector<'p, 'tcx>,
-    ) -> bool {
+    ) -> Option<Witness<'p, 'tcx>> {
+        debug_assert_eq!(pat.ty, v[0].ty);
         let matrix = self.specialize_matrix(ctor, fields);
-        let v = self.specialize_vector(ctor, fields, v);
-        v.map(|v| Self { matrix, ..*self }.is_useful(&v)).unwrap_or(false)
+        let v = self.specialize_vector(ctor, fields, v)?;
+        let witness = Self { matrix, ..*self }.find_uncovered_pattern(&v)?;
+        let arity = fields.len();
+        Some(self.apply_ctor(pat, *ctor, arity, witness))
     }
 
     /// whether `ctors` contains all possible constructors wrt `ty`
@@ -248,6 +300,13 @@ struct Matrix<'p, 'tcx> {
 }
 
 impl<'p, 'tcx> Matrix<'p, 'tcx> {
+    // don't call on empty matrix
+    fn width(&self) -> usize {
+        let width = self.rows[0].len();
+        debug_assert!(self.iter().all(|r| r.len() == width));
+        width
+    }
+
     fn head_ctors<'a>(&'a self) -> impl Iterator<Item = (&'a Ctor<'tcx>, &'a Fields<'p, 'tcx>)> {
         self.head_pats().filter_map(|pat| pat.ctor())
     }
@@ -273,7 +332,7 @@ impl<'p, 'tcx> FromIterator<PatternVector<'p, 'tcx>> for Matrix<'p, 'tcx> {
     }
 }
 
-struct PatternVector<'p, 'tcx> {
+crate struct PatternVector<'p, 'tcx> {
     /// the elements of the (row) vector
     pats: &'p [Pat<'p, 'tcx>],
 }
@@ -316,17 +375,23 @@ impl<'p, 'tcx> Deref for Fields<'p, 'tcx> {
     }
 }
 
-#[derive(Clone)]
-struct Pat<'p, 'tcx> {
+#[derive(Clone, Copy)]
+crate struct Pat<'p, 'tcx> {
     ty: Ty<'tcx>,
     kind: PatKind<'p, 'tcx>,
 }
 
 /// pattern as defined in the paper
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 enum PatKind<'p, 'tcx> {
     Ctor(Ctor<'tcx>, Fields<'p, 'tcx>),
     Wildcard,
+}
+
+impl<'p, 'tcx> Display for Pat<'p, 'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.kind)
+    }
 }
 
 impl<'p, 'tcx> Debug for Pat<'p, 'tcx> {
@@ -353,10 +418,32 @@ impl<'p, 'tcx> Debug for PatKind<'p, 'tcx> {
     }
 }
 
-#[derive(Clone)]
+impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            PatKind::Ctor(ctor, fields) => match ctor {
+                Ctor::Box => write!(f, "&{}", fields),
+                Ctor::Variant(def_id) =>
+                    write!(f, "{}({})", tls::with_tcx(|tcx| tcx.defs().ident(*def_id)), fields),
+                Ctor::Literal(c) => write!(f, "{}", c),
+                Ctor::Tuple => write!(f, "({})", fields),
+                Ctor::NonExhaustive | Ctor::Struct => todo!(),
+            },
+            PatKind::Wildcard => write!(f, "_"),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 struct Fields<'p, 'tcx> {
     pats: &'p [Pat<'p, 'tcx>],
     _pd: std::marker::PhantomData<&'tcx ()>,
+}
+
+impl<'p, 'tcx> Display for Fields<'p, 'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", util::join2(self.pats, ", "))
+    }
 }
 
 impl<'p, 'tcx> Debug for Fields<'p, 'tcx> {

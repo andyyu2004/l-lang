@@ -3,6 +3,7 @@ mod exhaustiveness;
 
 use super::*;
 use arena::DroplessArena;
+use exhaustiveness::Witness;
 use ir::Visitor;
 use lcore::queries::Queries;
 use lcore::ty::TypeckTables;
@@ -14,10 +15,9 @@ crate fn provide(queries: &mut Queries) {
 }
 
 #[derive(Debug, Error)]
-pub enum PatternError {
-    #[error("non-exhaustive match expression")]
-    // todo add witness
-    NonexhaustiveMatch,
+enum PatternError<'p, 'tcx> {
+    #[error("non-exhaustive match expression\npattern `{0}` not covered")]
+    NonexhaustiveMatch(Witness<'p, 'tcx>),
 }
 
 /// validate match expressions and patterns in general in the body of `def_id`

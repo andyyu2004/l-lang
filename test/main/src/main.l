@@ -19,12 +19,13 @@ enum Option<T> {
 }
 
 fn run() {
-    let opt = Option::Some(5);
-    let boxed = Option::Some(false);
-    match (opt, boxed) {
-        (Option::Some(x), Option::Some(false)) => x,
-        (Option::Some(x), Option::Some(true)) => x,
-        (Option::None, _) => 0,
+    let p = false;
+    let q = true;
+    match (p, q) {
+        (false, false) => false,
+        (false, true) => true,
+        (true, false) => true,
+        (true, true) => false,
     };
 }
 
