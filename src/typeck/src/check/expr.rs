@@ -273,7 +273,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let f_ty = self.check_expr(f);
         let params = self.check_expr_list(args);
         let ty = self.tcx.mk_fn_ptr(FnSig { params, ret });
-        self.unify(expr.span, f_ty, ty);
+        self.unify(expr.span, ty, f_ty);
         ret
     }
 

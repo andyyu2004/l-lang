@@ -20,9 +20,9 @@ enum Option {
 
 fn run() -> int {
     let opt = Option::None;
-    match false {
-        false => 5,
-        true => 33,
+    match opt {
+        Option::None => 5,
+        Option::Some(x) => 55,
     }
 }
 

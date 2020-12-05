@@ -74,6 +74,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         inner: &ir::Pattern<'tcx>,
         ty: Ty<'tcx>,
     ) -> Ty<'tcx> {
+        let ty = self.partially_resolve_ty(pat.span, ty);
         let deref_ty = self.deref_ty(pat.span, ty);
         self.check_pat(inner, deref_ty);
         ty

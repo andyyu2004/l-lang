@@ -26,8 +26,12 @@ pub fn provide(queries: &mut Queries) {
 fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx TypeckTables<'tcx> {
     let body = tcx.defs().body(def_id);
     InheritedCtx::build(tcx, def_id).enter(|inherited| {
-        let fcx = inherited.check_fn_item(def_id, body);
-        fcx.resolve_inference_variables(body)
+        match tcx.sess.try_run(|| inherited.check_fn_item(def_id, body)) {
+            // don't try and resolve inference variables if errors occured
+            // as it makes a mess of diagnostics currently
+            Ok(fcx) => fcx.resolve_inference_variables(body),
+            Err(fcx) => tcx.alloc(fcx.tables.borrow().clone()),
+        }
     })
 }
 

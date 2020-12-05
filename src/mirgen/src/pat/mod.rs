@@ -56,6 +56,14 @@ impl<'a, 'tcx> Deref for MatchCtxt<'a, 'tcx> {
     }
 }
 
+impl<'tcx> Deref for PatVisitor<'tcx> {
+    type Target = TyCtx<'tcx>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tcx
+    }
+}
+
 impl<'tcx> Visitor<'tcx> for PatVisitor<'tcx> {
     fn visit_expr(&mut self, expr: &'tcx ir::Expr<'tcx>) {
         if let ir::ExprKind::Match(scrut, arms, _src) = &expr.kind {

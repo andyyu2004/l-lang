@@ -17,7 +17,11 @@ ir = { path = "../ir" }
 tir = { path = "../tir" }
 util = { path = "../util" }
 thiserror = "1"
+maplit = "1"
 rustc-hash = "1"
 smallvec = "1"
 itertools = "0.9"
 log = "0.4.11"
+
+[dev-dependencies]
+ldriver = { path = "../ldriver" }

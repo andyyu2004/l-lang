@@ -6,6 +6,7 @@ use super::{MatchCtxt, PatternError};
 use crate::LoweringCtx;
 use ir::DefId;
 use lcore::ty::{tls, Const, Ty, TyKind};
+use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -19,7 +20,7 @@ impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
     ) {
         let pcx = PatCtxt { mcx: self };
         if !pcx.check_match_exhaustiveness(scrut, arms) {
-            // self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch);
+            self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch);
         }
     }
 }
@@ -50,7 +51,8 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
             .collect();
 
         // match is exhaustive if `!is_useful(matrix, wildcard)`
-        let wildcard = self.arenaref.alloc(Pat::Wildcard);
+        let ty = self.tables.node_type(scrut.id);
+        let wildcard = self.arenaref.alloc(Pat { ty, kind: PatKind::Wildcard });
         let v = PatternVector::from_pat(wildcard);
         // if wildcard is useful, then it is not exhaustive
         !UsefulnessCtxt { ctx: self, matrix }.is_useful(&v)
@@ -69,20 +71,21 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
     }
 
     fn lower_pattern_inner(&self, pat: &tir::Pattern<'tcx>) -> Pat<'p, 'tcx> {
-        match &pat.kind {
+        let kind = match &pat.kind {
             tir::PatternKind::Box(..) | tir::PatternKind::Field(..) =>
-                Pat::Ctor(Ctor::Unit, Fields::empty()),
-            tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => Pat::Wildcard,
-            tir::PatternKind::Lit(c) => Pat::Ctor(Ctor::Literal(c), Fields::empty()),
+                PatKind::Ctor(Ctor::Unit, Fields::empty()),
+            tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => PatKind::Wildcard,
+            tir::PatternKind::Lit(c) => PatKind::Ctor(Ctor::Literal(c), Fields::empty()),
             tir::PatternKind::Variant(adt, _, idx, pats) => {
                 let ctor = Ctor::Variant(adt.variants[*idx].def_id);
                 let pats = self
                     .arenaref
                     .alloc_from_iter(pats.iter().map(|pat| self.lower_pattern_inner(pat)));
                 let fields = Fields::new(pats);
-                Pat::Ctor(ctor, fields)
+                PatKind::Ctor(ctor, fields)
             }
-        }
+        };
+        Pat { ty: pat.ty, kind }
     }
 }
 
@@ -100,10 +103,11 @@ impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
 }
 
 impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
+    /// implementation of `U_rec` as defined in the paper
     fn is_useful(&self, v: &PatternVector<'p, 'tcx>) -> bool {
         let Self { matrix, .. } = self;
-        println!("matrix:\n{}", matrix);
-        println!("vector:\n{}", v);
+        // println!("matrix:\n{}", matrix);
+        // println!("vector:\n{}", v);
 
         assert!(matrix.iter().all(|r| r.len() == v.len()));
         // base case: no columns
@@ -112,35 +116,53 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
             return matrix.rows.is_empty();
         }
 
-        match v.head_pat() {
-            Pat::Ctor(ctor, fields) => {
-                let matrix = self.specialize_matrix(ctor, fields);
-                let v = self.specialize_vector(v, ctor, fields);
-                v.map(|v| Self { matrix, ..*self }.is_useful(&v)).unwrap_or(false)
-            }
-            Pat::Wildcard =>
-                if self.is_complete() {
-                    todo!()
+        let pat = v.head_pat();
+        match &pat.kind {
+            PatKind::Ctor(ctor, fields) => self.is_ctor_useful(ctor, fields, v),
+            PatKind::Wildcard => {
+                let ctors =
+                    self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<HashSet<_>>();
+
+                if self.ctors_are_complete(&ctors, pat.ty) {
+                    self.matrix
+                        .head_ctors()
+                        .any(|(ctor, fields)| self.is_ctor_useful(ctor, fields, v))
                 } else {
                     let matrix = self.construct_dmatrix(&self.matrix);
-                    println!("dmatrix:\n{}", matrix);
                     let v = PatternVector::new(&v[1..]);
                     Self { matrix, ..*self }.is_useful(&v)
-                },
+                }
+            }
         }
     }
 
-    /// whether the list of head constructors contains all possible constructors
-    fn is_complete(&self) -> bool {
-        false
+    fn is_ctor_useful(
+        &self,
+        ctor: &Ctor<'tcx>,
+        fields: &Fields<'p, 'tcx>,
+        v: &PatternVector<'p, 'tcx>,
+    ) -> bool {
+        let matrix = self.specialize_matrix(ctor, fields);
+        let v = self.specialize_vector(ctor, fields, v);
+        v.map(|v| Self { matrix, ..*self }.is_useful(&v)).unwrap_or(false)
     }
 
-    fn all_ctors(&self, ty: Ty<'tcx>) -> Vec<Ctor> {
+    /// whether `ctors` contains all possible constructors wrt `ty`
+    fn ctors_are_complete(&self, ctors: &HashSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> bool {
+        ctors == &self.all_ctors(ty)
+    }
+
+    /// returns a set of all constructors of `ty`
+    fn all_ctors(&self, ty: Ty<'tcx>) -> HashSet<Ctor<'tcx>> {
         match ty.kind {
             TyKind::Adt(adt, _) =>
                 adt.variants.iter().map(|variant| Ctor::Variant(variant.def_id)).collect(),
-            TyKind::Bool => todo!(),
-            _ => unimplemented!(),
+            TyKind::Bool => hashset! {
+                Ctor::Literal(self.mk_const_bool(true)),
+                Ctor::Literal(self.mk_const_bool(false)),
+            },
+            TyKind::Int => hashset! { Ctor::NonExhaustive },
+            _ => unimplemented!("`{}`", ty),
         }
     }
 
@@ -148,9 +170,9 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         let dmatrix = matrix
             .rows
             .iter()
-            .filter_map(|row| match row.head_pat() {
-                Pat::Ctor(..) => None,
-                Pat::Wildcard => Some(PatternVector::new(&row[1..])),
+            .filter_map(|row| match row.head_pat().kind {
+                PatKind::Ctor(..) => None,
+                PatKind::Wildcard => Some(PatternVector::new(&row[1..])),
             })
             .collect();
         dmatrix
@@ -159,34 +181,39 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     /// calculates `S(c, q)`
     fn specialize_vector(
         &self,
-        vector: &PatternVector<'p, 'tcx>,
         // ctor of pattern `q`
-        qctor: &Ctor,
+        qctor: &Ctor<'tcx>,
         // fields of pattern `q`
-        qfields: &Fields,
+        qfields: &Fields<'p, 'tcx>,
+        vector: &PatternVector<'p, 'tcx>,
     ) -> Option<PatternVector<'p, 'tcx>> {
         // `row` is `r_1 ... r_a` initially
-        let mut row: Vec<Pat> = match vector.head_pat() {
-            Pat::Ctor(ctor, fields) => {
-                debug_assert_eq!(qfields.len(), fields.len());
+        let mut row: Vec<Pat> = match &vector.head_pat().kind {
+            PatKind::Ctor(ctor, fields) => {
                 if qctor != ctor {
                     return None;
                 }
+                debug_assert_eq!(qfields.len(), fields.len());
                 fields.pats.to_vec()
             }
-            Pat::Wildcard => qfields.into_iter().map(|_| Pat::Wildcard).collect(),
+            PatKind::Wildcard =>
+                qfields.into_iter().map(|pat| Pat { ty: pat.ty, kind: PatKind::Wildcard }).collect(),
         };
         row.extend_from_slice(&vector[1..]);
-        assert_eq!(row.len(), self.matrix.len() + qfields.len() - 1);
+        debug_assert_eq!(row.len(), vector.len() + qfields.len() - 1);
         Some(PatternVector::new(self.arenaref.alloc_from_iter(row)))
     }
 
     /// calculates `S(c, self.matrix)`
-    fn specialize_matrix(&self, qctor: &Ctor, qfields: &Fields) -> Matrix<'p, 'tcx> {
+    fn specialize_matrix(
+        &self,
+        qctor: &Ctor<'tcx>,
+        qfields: &Fields<'p, 'tcx>,
+    ) -> Matrix<'p, 'tcx> {
         self.matrix
             .rows
             .iter()
-            .filter_map(|row| self.specialize_vector(row, qctor, qfields))
+            .filter_map(|row| self.specialize_vector(qctor, qfields, row))
             .collect()
     }
 }
@@ -197,6 +224,10 @@ struct Matrix<'p, 'tcx> {
 }
 
 impl<'p, 'tcx> Matrix<'p, 'tcx> {
+    fn head_ctors<'a>(&'a self) -> impl Iterator<Item = (&'a Ctor<'tcx>, &'a Fields<'p, 'tcx>)> {
+        self.head_pats().filter_map(|pat| pat.ctor())
+    }
+
     fn head_pats<'a>(&'a self) -> impl Iterator<Item = &'a Pat<'p, 'tcx>> {
         self.rows.iter().map(|r| r.head_pat())
     }
@@ -262,18 +293,39 @@ impl<'p, 'tcx> Deref for Fields<'p, 'tcx> {
     }
 }
 
+#[derive(Debug, Clone)]
+struct Pat<'p, 'tcx> {
+    ty: Ty<'tcx>,
+    kind: PatKind<'p, 'tcx>,
+}
+
 /// pattern as defined in the paper
-#[derive(Clone, Debug)]
-enum Pat<'p, 'tcx> {
+#[derive(Debug, Clone)]
+enum PatKind<'p, 'tcx> {
     Ctor(Ctor<'tcx>, Fields<'p, 'tcx>),
     Wildcard,
 }
 
 impl<'p, 'tcx> Display for Pat<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.kind, self.ty)
+    }
+}
+
+impl<'p, 'tcx> Pat<'p, 'tcx> {
+    fn ctor(&self) -> Option<(&Ctor<'tcx>, &Fields<'p, 'tcx>)> {
+        match &self.kind {
+            PatKind::Ctor(ctor, fields) => Some((ctor, fields)),
+            PatKind::Wildcard => None,
+        }
+    }
+}
+
+impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Pat::Ctor(ctor, fields) => write!(f, "{}({})", ctor, fields),
-            Pat::Wildcard => write!(f, "_"),
+            PatKind::Ctor(ctor, fields) => write!(f, "{}({})", ctor, fields),
+            PatKind::Wildcard => write!(f, "_"),
         }
     }
 }
@@ -306,10 +358,11 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 enum Ctor<'tcx> {
     Variant(DefId),
     Literal(&'tcx Const<'tcx>),
+    NonExhaustive,
     /// nullary constructor
     Unit,
 }
@@ -321,6 +374,7 @@ impl Display for Ctor<'_> {
                 write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
             Ctor::Literal(lit) => write!(f, "{}", lit),
             Ctor::Unit => write!(f, "unit"),
+            Ctor::NonExhaustive => write!(f, "nonexhaustive"),
         }
     }
 }

@@ -11,6 +11,12 @@ mod pat;
 mod scope;
 mod stmt;
 
+#[cfg(test)]
+mod tests;
+
+#[macro_use]
+extern crate maplit;
+
 #[macro_use]
 extern crate log;
 
