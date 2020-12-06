@@ -24,7 +24,6 @@ impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
     }
 }
 
-/// context for usefulness check
 struct PatCtxt<'a, 'tcx> {
     mcx: &'a MatchCtxt<'a, 'tcx>,
 }
@@ -50,11 +49,11 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
             .map(|arm| PatternVector::from_pat(self.lower_ir_pattern(arm.pat)))
             .collect();
 
-        // match is exhaustive if `!is_useful(matrix, wildcard)`
+        // match is exhaustive iff `!is_useful(matrix, wildcard)`
         let ty = self.tables.node_type(scrut.id);
-        let wildcard = self.pat_arena.alloc(Pat { ty, kind: PatKind::Wildcard });
+        let wildcard = self.pat_arena.alloc(Pat::new(ty, PatKind::Wildcard));
         let v = PatternVector::from_pat(wildcard);
-        let ctxt = UsefulnessCtxt { ctx: self, matrix };
+        let ctxt = UsefulnessCtxt { pcx: self, matrix };
         if let Some(witness) = ctxt.find_uncovered_pattern(&v) {
             self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch(witness));
         }
@@ -135,7 +134,7 @@ impl<'p, 'tcx> Display for Witness<'p, 'tcx> {
 }
 
 struct UsefulnessCtxt<'a, 'p, 'tcx> {
-    ctx: &'a PatCtxt<'p, 'tcx>,
+    pcx: &'a PatCtxt<'p, 'tcx>,
     matrix: Matrix<'p, 'tcx>,
 }
 
@@ -143,7 +142,7 @@ impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
     type Target = PatCtxt<'p, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.ctx
+        &self.pcx
     }
 }
 
@@ -184,7 +183,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
                 witness.prepend(wildcard)
             } else {
                 // know this witness exists as it is nonexhaustive
-                // remove an arbitrary constructor as a witness
+                // find an arbitrary constructor as an example witness
                 let ctor_witness = self.find_missing_ctor(&ctors, pat.ty).unwrap();
                 let wildcards = self.pat_arena.alloc_from_iter(
                     ctor_witness.field_tys.iter().map(|ty| Pat { ty, kind: PatKind::Wildcard }),
@@ -236,9 +235,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
 
     /// whether `ctors` contains all possible constructors wrt `ty`
     fn ctors_are_complete(&self, ctors: &IndexSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> bool {
-        let all_ctors = self.all_ctors_of_ty(ty);
-        debug!("{:?} == {:?} = {}", ctors, all_ctors, &all_ctors == ctors);
-        all_ctors.difference(ctors).collect::<IndexSet<_>>().is_empty()
+        self.find_missing_ctor(ctors, ty).is_none()
     }
 
     /// returns a set of all constructors of `ty`
