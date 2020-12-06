@@ -15,7 +15,7 @@ mod stmt;
 mod tests;
 
 #[macro_use]
-extern crate maplit;
+extern crate derivative;
 
 #[macro_use]
 extern crate log;

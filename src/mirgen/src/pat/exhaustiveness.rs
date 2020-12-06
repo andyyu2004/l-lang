@@ -4,9 +4,9 @@
 
 use super::{MatchCtxt, PatternError};
 use crate::LoweringCtx;
+use indexmap::{indexset, IndexSet};
 use ir::DefId;
-use lcore::ty::{tls, Const, Ty, TyKind};
-use std::collections::HashSet;
+use lcore::ty::{tls, Const, Substs, SubstsRef, Ty, TyKind};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -76,23 +76,32 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
             tir::PatternKind::Box(pat) => {
                 let field = self.pat_arena.alloc(self.lower_pattern_inner(pat));
                 let fields = Fields::new(std::slice::from_ref(field));
-                PatKind::Ctor(Ctor::Box, fields)
+                let field_tys = self.intern_substs(&[pat.ty]);
+                let ctor = Ctor::new(field_tys, CtorKind::Box);
+                PatKind::Ctor(ctor, fields)
             }
             tir::PatternKind::Field(fields) => {
                 let fields = self
                     .pat_arena
                     .alloc_from_iter(fields.iter().map(|f| self.lower_pattern_inner(&f.pat)));
-                let ctor = match pat.ty.kind {
-                    TyKind::Tuple(..) => Ctor::Tuple,
-                    TyKind::Adt(..) => Ctor::Struct,
+                let ctor_kind = match pat.ty.kind {
+                    TyKind::Tuple(..) => CtorKind::Tuple,
+                    TyKind::Adt(..) => CtorKind::Struct,
                     _ => unreachable!(),
                 };
-                PatKind::Ctor(ctor, Fields::new(fields))
+                let field_tys = self.mk_substs(fields.iter().map(|f| f.ty));
+                PatKind::Ctor(Ctor::new(field_tys, ctor_kind), Fields::new(fields))
             }
             tir::PatternKind::Binding(..) | tir::PatternKind::Wildcard => PatKind::Wildcard,
-            tir::PatternKind::Lit(c) => PatKind::Ctor(Ctor::Literal(c), Fields::empty()),
+            tir::PatternKind::Lit(c) => {
+                let ctor = Ctor::nullary(CtorKind::Literal(c));
+                PatKind::Ctor(ctor, Fields::empty())
+            }
             tir::PatternKind::Variant(adt, _, idx, pats) => {
-                let ctor = Ctor::Variant(adt.variants[*idx].def_id);
+                let variant = &adt.variants[*idx];
+                let ctor_kind = CtorKind::Variant(variant.def_id);
+                let field_tys = self.mk_substs(pats.iter().map(|pat| pat.ty));
+                let ctor = Ctor::new(field_tys, ctor_kind);
                 let pats = self
                     .pat_arena
                     .alloc_from_iter(pats.iter().map(|pat| self.lower_pattern_inner(pat)));
@@ -100,7 +109,7 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
                 PatKind::Ctor(ctor, fields)
             }
         };
-        Pat { ty: pat.ty, kind }
+        Pat::new(pat.ty, kind)
     }
 }
 
@@ -153,7 +162,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
 
         // algorithm `I` (page 18)
         let pat = v.head_pat();
-        let ctors = self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<HashSet<_>>();
+        let ctors = self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<IndexSet<_>>();
 
         if self.ctors_are_complete(&ctors, pat.ty) {
             for (ctor, fields) in self.matrix.head_ctors() {
@@ -167,17 +176,19 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
             let q = PatternVector::new(&v[1..]);
             let witness = Self { matrix, ..*self }.find_uncovered_pattern(&q)?;
             debug_assert_eq!(witness.pats.len(), q.len());
-            let witness = if let Some((&ctor, fields)) = self.matrix.head_ctors().next() {
-                // remove an arbitrary constructor as a witness
-                // Some(self.apply_ctor(pat, ctor, fields.len(), witness))
-                let wildcards = self.pat_arena.alloc_from_iter(
-                    fields.iter().map(|f| Pat { ty: f.ty, kind: PatKind::Wildcard }),
-                );
-                let pat = Pat { ty: pat.ty, kind: PatKind::Ctor(ctor, Fields::new(wildcards)) };
-                witness.prepend(pat)
-            } else {
+            let witness = if ctors.is_empty() {
                 let wildcard = Pat { ty: pat.ty, kind: PatKind::Wildcard };
                 witness.prepend(wildcard)
+            } else {
+                // know this witness exists as it is nonexhaustive
+                // remove an arbitrary constructor as a witness
+                let ctor_witness = self.find_missing_ctor(&ctors, pat.ty).unwrap();
+                let wildcards = self.pat_arena.alloc_from_iter(
+                    ctor_witness.field_tys.iter().map(|ty| Pat { ty, kind: PatKind::Wildcard }),
+                );
+                let pat =
+                    Pat { ty: pat.ty, kind: PatKind::Ctor(ctor_witness, Fields::new(wildcards)) };
+                witness.prepend(pat)
             };
             debug_assert_eq!(witness.pats.len(), v.len());
             Some(witness)
@@ -214,28 +225,39 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         Some(self.apply_ctor(pat, *ctor, arity, witness))
     }
 
-    /// whether `ctors` contains all possible constructors wrt `ty`
-    fn ctors_are_complete(&self, ctors: &HashSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> bool {
+    fn find_missing_ctor(&self, ctors: &IndexSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> Option<Ctor<'tcx>> {
         let all_ctors = self.all_ctors_of_ty(ty);
-        if all_ctors.contains(&Ctor::NonExhaustive) {
-            return false;
-        }
         debug!("{:?} == {:?} = {}", ctors, all_ctors, &all_ctors == ctors);
-        ctors == &all_ctors
+        all_ctors.difference(ctors).collect::<IndexSet<_>>().pop().copied()
+    }
+
+    /// whether `ctors` contains all possible constructors wrt `ty`
+    fn ctors_are_complete(&self, ctors: &IndexSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> bool {
+        let all_ctors = self.all_ctors_of_ty(ty);
+        debug!("{:?} == {:?} = {}", ctors, all_ctors, &all_ctors == ctors);
+        all_ctors.difference(ctors).collect::<IndexSet<_>>().is_empty()
     }
 
     /// returns a set of all constructors of `ty`
-    fn all_ctors_of_ty(&self, ty: Ty<'tcx>) -> HashSet<Ctor<'tcx>> {
+    fn all_ctors_of_ty(&self, ty: Ty<'tcx>) -> IndexSet<Ctor<'tcx>> {
         match ty.kind {
-            TyKind::Box(..) => hashset! { Ctor::Box },
-            TyKind::Tuple(..) => hashset! { Ctor::Tuple },
-            TyKind::Adt(adt, _) =>
-                adt.variants.iter().map(|variant| Ctor::Variant(variant.def_id)).collect(),
-            TyKind::Bool => hashset! {
-                Ctor::Literal(self.mk_const_bool(true)),
-                Ctor::Literal(self.mk_const_bool(false)),
+            TyKind::Box(ty) => indexset! { Ctor::new(self.intern_substs(&[ty]), CtorKind::Box) },
+            TyKind::Tuple(tys) => indexset! { Ctor::new(tys, CtorKind::Tuple) },
+            TyKind::Adt(adt, _) => adt
+                .variants
+                .iter()
+                .map(|variant| {
+                    let field_tys =
+                        self.mk_substs(variant.fields.iter().map(|f| self.type_of(f.def_id)));
+                    let kind = CtorKind::Variant(variant.def_id);
+                    Ctor::new(field_tys, kind)
+                })
+                .collect(),
+            TyKind::Bool => indexset! {
+                Ctor::nullary(CtorKind::Literal(self.mk_const_bool(true))),
+                Ctor::nullary(CtorKind::Literal(self.mk_const_bool(false))),
             },
-            TyKind::Int => hashset! { Ctor::NonExhaustive },
+            TyKind::Int => indexset! { Ctor::nullary(CtorKind::NonExhaustive) },
             _ => unimplemented!("`{}`", ty),
         }
     }
@@ -383,6 +405,18 @@ crate struct Pat<'p, 'tcx> {
     kind: PatKind<'p, 'tcx>,
 }
 
+impl<'p, 'tcx> Pat<'p, 'tcx> {
+    fn new(ty: Ty<'tcx>, kind: PatKind<'p, 'tcx>) -> Self {
+        match kind {
+            PatKind::Ctor(ctor, fields) => {
+                debug_assert_eq!(ctor.field_tys.len(), fields.len());
+            }
+            PatKind::Wildcard => {}
+        }
+        Self { ty, kind }
+    }
+}
+
 /// pattern as defined in the paper
 #[derive(Clone, Copy)]
 enum PatKind<'p, 'tcx> {
@@ -423,13 +457,13 @@ impl<'p, 'tcx> Debug for PatKind<'p, 'tcx> {
 impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            PatKind::Ctor(ctor, fields) => match ctor {
-                Ctor::Box => write!(f, "&{}", fields),
-                Ctor::Variant(def_id) =>
-                    write!(f, "{}({})", tls::with_tcx(|tcx| tcx.defs().ident(*def_id)), fields),
-                Ctor::Literal(c) => write!(f, "{}", c),
-                Ctor::Tuple => write!(f, "({})", fields),
-                Ctor::NonExhaustive | Ctor::Struct => todo!(),
+            PatKind::Ctor(ctor, fields) => match ctor.kind {
+                CtorKind::Box => write!(f, "&{}", fields),
+                CtorKind::Variant(def_id) =>
+                    write!(f, "{}({})", tls::with_tcx(|tcx| tcx.defs().ident(def_id)), fields),
+                CtorKind::Literal(c) => write!(f, "{}", c),
+                CtorKind::Tuple => write!(f, "({})", fields),
+                CtorKind::NonExhaustive | CtorKind::Struct => todo!(),
             },
             PatKind::Wildcard => write!(f, "_"),
         }
@@ -470,8 +504,37 @@ impl<'p, 'tcx> Deref for PatternVector<'p, 'tcx> {
     }
 }
 
+#[derive(Copy, Clone, Eq)]
+struct Ctor<'tcx> {
+    field_tys: SubstsRef<'tcx>,
+    kind: CtorKind<'tcx>,
+}
+
+/// important to ignore the types in comparison and hashing
+impl<'tcx> PartialEq for Ctor<'tcx> {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
+}
+
+impl<'tcx> std::hash::Hash for Ctor<'tcx> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.kind.hash(state)
+    }
+}
+
+impl<'tcx> Ctor<'tcx> {
+    fn new(field_tys: SubstsRef<'tcx>, kind: CtorKind<'tcx>) -> Self {
+        Self { field_tys, kind }
+    }
+
+    fn nullary(kind: CtorKind<'tcx>) -> Self {
+        Self::new(Substs::empty(), kind)
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-enum Ctor<'tcx> {
+enum CtorKind<'tcx> {
     Box,
     Variant(DefId),
     Literal(&'tcx Const<'tcx>),
@@ -482,14 +545,20 @@ enum Ctor<'tcx> {
 
 impl Debug for Ctor<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}({})", self.kind, self.field_tys)
+    }
+}
+
+impl Debug for CtorKind<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Ctor::Box => write!(f, "box"),
-            Ctor::Variant(def_id) =>
+            CtorKind::Box => write!(f, "box"),
+            CtorKind::Variant(def_id) =>
                 write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
-            Ctor::Literal(lit) => write!(f, "{}", lit),
-            Ctor::NonExhaustive => write!(f, "nonexhaustive"),
-            Ctor::Tuple => write!(f, "tuple"),
-            Ctor::Struct => write!(f, "struct"),
+            CtorKind::Literal(lit) => write!(f, "{}", lit),
+            CtorKind::NonExhaustive => write!(f, "nonexhaustive"),
+            CtorKind::Tuple => write!(f, "tuple"),
+            CtorKind::Struct => write!(f, "struct"),
         }
     }
 }

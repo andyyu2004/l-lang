@@ -21,6 +21,10 @@ enum Option<T> {
 fn run() {
     let p = Option::Some(false);
     let q = Option::Some(5);
+    match false {
+        true => false,
+    };
+
     match (p, q) {
         (Option::None, Option::None) => false,
         (Option::None, Option::Some(_)) => true,
