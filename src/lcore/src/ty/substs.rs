@@ -41,8 +41,8 @@ impl<'tcx> TypeFolder<'tcx> for SubstsFolder<'tcx> {
 /// a substitution is simply a slice of `Ty`s, where the index of the Ty is the TyVid of the
 /// inference variable.
 /// this is compared for equality by pointer equality
-/// i.e. the type for `InferTy::TyVid(i)` is `Substitutions[i]`
-/// this is also used to represent a slice of `Ty`s
+/// i.e. the type for `InferTy::TyVid(i)` is `substs[i]`
+/// this is also often used to represent a slice/list of `Ty`s
 pub type SubstsRef<'tcx> = &'tcx Substs<'tcx>;
 
 // we require this indirection allow impl blocks

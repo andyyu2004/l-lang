@@ -8,6 +8,7 @@ use indexmap::{indexset, IndexSet};
 use ir::DefId;
 use lcore::ty::{tls, Const, Substs, SubstsRef, Ty, TyKind};
 use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::ops::Deref;
 
@@ -127,7 +128,9 @@ impl<'p, 'tcx> Witness<'p, 'tcx> {
 
 impl<'p, 'tcx> Display for Witness<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "({})", util::join(&self.pats, ","))
+        // should this always be true?
+        assert_eq!(self.pats.len(), 1);
+        write!(f, "{}", util::join(&self.pats, ","))
     }
 }
 
@@ -199,9 +202,9 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         &self,
         pat: &Pat<'p, 'tcx>,
         ctor: Ctor<'tcx>,
-        arity: usize,
         witness: Witness<'p, 'tcx>,
     ) -> Witness<'p, 'tcx> {
+        let arity = ctor.arity();
         let args = self.pat_arena.alloc_from_iter(witness.pats[..arity].iter().copied());
         let applied = Pat { kind: PatKind::Ctor(ctor, Fields::new(args)), ty: pat.ty };
         let mut pats = vec![applied];
@@ -218,11 +221,11 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         v: &PatternVector<'p, 'tcx>,
     ) -> Option<Witness<'p, 'tcx>> {
         debug_assert_eq!(pat.ty, v[0].ty);
+        debug_assert_eq!(ctor.arity(), fields.len());
         let matrix = self.specialize_matrix(ctor, fields);
         let v = self.specialize_vector(ctor, fields, v)?;
         let witness = Self { matrix, ..*self }.find_uncovered_pattern(&v)?;
-        let arity = fields.len();
-        Some(self.apply_ctor(pat, *ctor, arity, witness))
+        Some(self.apply_ctor(pat, *ctor, witness))
     }
 
     fn find_missing_ctor(&self, ctors: &IndexSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> Option<Ctor<'tcx>> {
@@ -517,8 +520,8 @@ impl<'tcx> PartialEq for Ctor<'tcx> {
     }
 }
 
-impl<'tcx> std::hash::Hash for Ctor<'tcx> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl<'tcx> Hash for Ctor<'tcx> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.kind.hash(state)
     }
 }
@@ -530,6 +533,10 @@ impl<'tcx> Ctor<'tcx> {
 
     fn nullary(kind: CtorKind<'tcx>) -> Self {
         Self::new(Substs::empty(), kind)
+    }
+
+    fn arity(&self) -> usize {
+        self.field_tys.len()
     }
 }
 

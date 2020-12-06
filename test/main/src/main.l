@@ -28,7 +28,7 @@ fn run() {
     match (p, q) {
         (Option::None, Option::None) => false,
         (Option::None, Option::Some(_)) => true,
-        (Option::Some(_), Option::None) => true,
+        // (Option::Some(_), Option::None) => true,
         // (Option::Some(_), Option::Some(_)) => false,
     };
 
