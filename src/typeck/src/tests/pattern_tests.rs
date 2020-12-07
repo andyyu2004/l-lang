@@ -24,6 +24,26 @@ fn typeck_struct_pattern_field_bound_more_than_once() {
 }
 
 #[test]
+fn typeck_tuple_box_pattern() {
+    let src = r#"
+    enum Option<T> { Some(T), None }
+    fn main() -> int {
+        let p = Option::Some(false);
+        let q = box Option::Some(5);
+        match (p, q) {
+            (Option::None, &Option::None) => false,
+            (Option::None, &Option::Some(_)) => true,
+            (Option::Some(_), &Option::None) => true,
+            (Option::Some(_), &Option::Some(_)) => false,
+        };
+        0
+    }
+    "#;
+
+    typeck!(src);
+}
+
+#[test]
 fn typeck_invalid_struct_pattern_unknown_field() {
     let src = r#"
     struct S {}

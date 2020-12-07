@@ -765,6 +765,7 @@ dependencies = [
  "lex",
  "log",
  "rustc-hash",
+ "salsa",
  "session",
  "span",
  "thiserror",

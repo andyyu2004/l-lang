@@ -43,8 +43,19 @@ fn run() {
         (true, true) => false,
     };
 
-    // let p = Option::Some(false);
-    // let q = box Option::Some(5);
+    let p = Option::Some(false);
+    let q = box Option::Some(5);
+    match q {
+        &Option::None => false,
+        &Option::Some(_) => false,
+    };
+    match (p, q) {
+        (Option::None, &Option::None) => false,
+        (Option::None, &Option::Some(_)) => true,
+        (Option::Some(_), &Option::None) => true,
+        (Option::Some(_), &Option::Some(_)) => false,
+    };
+
     // match (p, q) {
     //     (Option::None, &Option::None) => false,
     //     (Option::None, &Option::Some(_)) => true,
