@@ -1,6 +1,6 @@
 use std::fs;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn main() -> io::Result<()> {
     let ctx = TestCtx {};
@@ -40,6 +40,24 @@ impl TestCtx {
         // let driver = ldriver::Driver::new(&dir_path);
         // Command::new("cargo rj");
         // dbg!(driver.llvm_exec()).unwrap();
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::io;
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    #[test]
+    fn run_compiler_test_suite() -> io::Result<()> {
+        // path is relative to `runner`
+        let tests_root = PathBuf::from("../ltests").canonicalize()?;
+        dbg!(tests_root.display());
+        let handle = Command::new("l").arg("../ltests").spawn()?;
+        let output = handle.wait_with_output()?;
+        assert!(output.status.success());
         Ok(())
     }
 }

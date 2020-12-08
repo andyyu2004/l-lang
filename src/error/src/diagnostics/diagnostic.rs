@@ -1,20 +1,24 @@
 use crate::{Emitter, LError, LResult, TextEmitter};
+use codespan_reporting::diagnostic::Severity;
 use span::Span;
+use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::fmt::{self, Debug, Formatter};
-use std::ops::Deref;
-use std::{
-    cell::{Cell, RefCell}, ops::DerefMut
-};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Default)]
 pub struct Diagnostics {
-    err_count: Cell<usize>,
+    error_count: Cell<usize>,
+    warning_count: Cell<usize>,
 }
 
 impl Diagnostics {
     crate fn inc_err_count(&self) {
-        self.err_count.set(1 + self.err_count.get());
+        self.error_count.set(1 + self.error_count.get());
+    }
+
+    crate fn inc_warning_count(&self) {
+        self.warning_count.set(1 + self.warning_count.get());
     }
 
     pub fn try_run<R>(&self, f: impl FnOnce() -> R) -> Result<R, R> {
@@ -24,12 +28,16 @@ impl Diagnostics {
         if self.err_count() == old { Ok(ret) } else { Err(ret) }
     }
 
+    pub fn warning_count(&self) -> usize {
+        self.warning_count.get()
+    }
+
     pub fn err_count(&self) -> usize {
-        self.err_count.get()
+        self.error_count.get()
     }
 
     pub fn has_errors(&self) -> bool {
-        self.err_count.get() > 0
+        self.error_count.get() > 0
     }
 
     pub fn check_for_errors(&self) -> LResult<()> {
@@ -41,7 +49,11 @@ impl Diagnostics {
         span: impl Into<MultiSpan>,
         err: impl Error,
     ) -> DiagnosticBuilder<'_> {
-        DiagnosticBuilder::new(self, span, err)
+        DiagnosticBuilder::new(self, Severity::Error, span, err)
+    }
+
+    pub fn emit_warning(&self, span: impl Into<MultiSpan>, err: impl Error) {
+        DiagnosticBuilder::new(self, Severity::Warning, span, err).emit()
     }
 
     pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> LError {
@@ -53,8 +65,9 @@ impl Diagnostics {
 /// a single diagnostic error message
 #[derive(Debug)]
 pub struct Diagnostic {
-    /// the main error of the diagnostic
-    crate error: String,
+    /// the primary message of the diagnostic
+    crate severity: Severity,
+    crate msg: String,
     crate spans: Vec<Span>,
     crate labelled_spans: Vec<(Span, String)>,
     crate notes: Vec<String>,
@@ -78,12 +91,13 @@ impl From<Span> for MultiSpan {
 }
 
 impl Diagnostic {
-    pub fn from_err(spans: impl Into<MultiSpan>, error: impl Error) -> Self {
+    pub fn from_err(severity: Severity, spans: impl Into<MultiSpan>, error: impl Error) -> Self {
         let multispan = spans.into();
         Self {
+            severity,
             labelled_spans: Default::default(),
             notes: Default::default(),
-            error: error.to_string(),
+            msg: error.to_string(),
             spans: multispan.spans,
         }
     }
@@ -142,16 +156,21 @@ impl<'a> DiagnosticBuilder<'a> {
     }
 
     pub fn emit(&self) {
-        self.diagnostics.inc_err_count();
+        match self.diagnostic.severity {
+            Severity::Error => self.diagnostics.inc_err_count(),
+            Severity::Warning => self.diagnostics.inc_warning_count(),
+            _ => {}
+        }
         self.emitter.borrow_mut().emit(self)
     }
 
     crate fn new(
         diagnostics: &'a Diagnostics,
+        severity: Severity,
         span: impl Into<MultiSpan>,
         err: impl Error,
     ) -> Self {
-        let diagnostic = Diagnostic::from_err(span, err);
+        let diagnostic = Diagnostic::from_err(severity, span, err);
         Self { diagnostics, diagnostic, emitter: Self::default_emitter() }
     }
 }

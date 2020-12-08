@@ -8,3 +8,6 @@ default-run = "l"
 
 [dependencies]
 ldriver = { path = "../ldriver" }
+
+[dev-dependencies]
+compiletest_rs = "*"

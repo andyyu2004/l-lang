@@ -68,6 +68,7 @@ pub fn main() -> ! {
             // nothing gets printed if we construct this stream in lazy_static!
             let mut writer = BufferedStandardStream::stderr(ColorChoice::Auto);
             term::emit(&mut writer, &term::Config::default(), &*SIMPLE_FILES, &diag).unwrap();
+            std::process::exit(1);
         }
     });
 
@@ -95,18 +96,6 @@ pub fn main() -> ! {
         Ok(i) => std::process::exit(i),
         Err(..) => std::process::exit(1),
     }
-
-    // if let Some(path) = matches.value_of("INPUT") {
-    //     let src = std::fs::read_to_string(path).unwrap();
-    //     if emit_mir {
-    //         driver.dump_mir(&src).ok().unwrap_or_else(|| std::process::exit(1));
-    //     } else if emit_tir {
-    //         libl::dump_tir(&src).ok().unwrap_or_else(|| std::process::exit(1));
-    //     } else if check {
-    //         libl::check(&src).ok().unwrap_or_else(|| std::process::exit(1));
-    //     } else {
-    //         println!("{}", libl::llvm_exec(&src).unwrap_or_else(|_| std::process::exit(1)));
-    //     };
 }
 
 pub struct Driver<'tcx> {
@@ -124,6 +113,8 @@ pub struct Driver<'tcx> {
 macro check_errors($self:expr, $ret:expr) {{
     if $self.sess.has_errors() {
         let errc = $self.sess.err_count();
+        let warnings = $self.sess.warning_count();
+        e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
         e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
         Err(LError::ErrorReported)
     } else {

@@ -18,6 +18,8 @@ crate fn provide(queries: &mut Queries) {
 enum PatternError<'p, 'tcx> {
     #[error("non-exhaustive match expression\npattern `{0}` not covered")]
     NonexhaustiveMatch(Witness<'p, 'tcx>),
+    #[error("redundant pattern")]
+    RedundantPattern,
 }
 
 /// validate match expressions and patterns in general in the body of `def_id`

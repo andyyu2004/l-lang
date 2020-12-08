@@ -28,12 +28,14 @@ pub fn provide(queries: &mut Queries) {
 /// if no errors are caught during this, then the code should be correct
 /// and safe to codegen
 fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
-    PassRunner { tcx }.run_passes(&mut [
-        &mut ItemTypeCollectionPass { tcx },
-        &mut ItemTypeValidationPass { tcx },
-        &mut TypecheckPass { tcx },
-        &mut PatternCheckPass { tcx },
-    ]);
+    tcx.sess.prof.time("analysis", || {
+        PassRunner { tcx }.run_passes(&mut [
+            &mut ItemTypeCollectionPass { tcx },
+            &mut ItemTypeValidationPass { tcx },
+            &mut TypecheckPass { tcx },
+            &mut PatternCheckPass { tcx },
+        ])
+    })
 }
 
 struct PassRunner<'tcx> {

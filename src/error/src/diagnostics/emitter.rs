@@ -28,8 +28,8 @@ impl Emitter for TextEmitter {
             .chain(diagnostic.spans.iter().map(|&span| span.into()))
             .collect();
 
-        let diag = DiagnosticInner::error()
-            .with_message(&diagnostic.error)
+        let diag = DiagnosticInner::new(diagnostic.severity)
+            .with_message(&diagnostic.msg)
             .with_labels(labels)
             .with_notes(diagnostic.notes.clone());
 

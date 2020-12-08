@@ -1,5 +1,5 @@
 //! checks match expressions for usefulness and exhaustiveness
-//! http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
+//! "http://moscova.inria.fr/~maranget/papers/warn/warn.pdf"
 #![allow(dead_code)]
 
 use super::{MatchCtxt, PatternError};
@@ -10,7 +10,7 @@ use lcore::ty::{tls, Const, Substs, SubstsRef, Ty, TyKind};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut, Index, Range};
 
 impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
     crate fn check_match(
@@ -44,17 +44,22 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
         scrut: &ir::Expr<'tcx>,
         arms: &[ir::Arm<'tcx>],
     ) {
-        let matrix: Matrix = arms
-            .iter()
-            .map(|arm| PatternVector::from_pat(self.lower_ir_pattern(arm.pat)))
-            .collect();
+        let matrix = Matrix::default();
+        let mut ucx = UsefulnessCtxt { pcx: self, matrix };
+        for arm in arms {
+            // check usefulness of each arm
+            let v = PatternVector::from_pat(self.lower_ir_pattern(arm.pat));
+            if ucx.find_uncovered_pattern(&v).is_none() {
+                self.tcx.sess.emit_warning(arm.span, PatternError::RedundantPattern);
+            }
+            ucx.matrix.push(v);
+        }
 
         // match is exhaustive iff `!is_useful(matrix, wildcard)`
         let ty = self.tables.node_type(scrut.id);
         let wildcard = self.pat_arena.alloc(Pat::new(ty, PatKind::Wildcard));
         let v = PatternVector::from_pat(wildcard);
-        let ctxt = UsefulnessCtxt { pcx: self, matrix };
-        if let Some(witness) = ctxt.find_uncovered_pattern(&v) {
+        if let Some(witness) = ucx.find_uncovered_pattern(&v) {
             self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch(witness));
         }
     }
@@ -149,8 +154,6 @@ impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
 impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     fn find_uncovered_pattern(&self, v: &PatternVector<'p, 'tcx>) -> Option<Witness<'p, 'tcx>> {
         let Self { matrix, .. } = self;
-        debug!("matrix:\n{:?}", matrix);
-        debug!("vector:\n{:?}\n\n", v);
 
         // base case: no columns
         if v.is_empty() {
@@ -286,7 +289,6 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         qfields: &Fields<'p, 'tcx>,
         vector: &PatternVector<'p, 'tcx>,
     ) -> Option<PatternVector<'p, 'tcx>> {
-        debug!("specialize_vector: {:?} {:?} {:?}", qctor, qfields, vector);
         // `row` is `r_1 ... r_a` initially
         let mut row: Vec<Pat> = match &vector.head_pat().kind {
             PatKind::Ctor(ctor, fields) => {
@@ -324,7 +326,7 @@ struct Matrix<'p, 'tcx> {
 }
 
 impl<'p, 'tcx> Matrix<'p, 'tcx> {
-    // don't call on empty matrix
+    // don't call on empty matrix (will panic)
     fn width(&self) -> usize {
         let width = self.rows[0].len();
         debug_assert!(self.iter().all(|r| r.len() == width));
@@ -493,6 +495,12 @@ impl<'p, 'tcx> Deref for Matrix<'p, 'tcx> {
 
     fn deref(&self) -> &Self::Target {
         &self.rows
+    }
+}
+
+impl<'p, 'tcx> DerefMut for Matrix<'p, 'tcx> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.rows
     }
 }
 
