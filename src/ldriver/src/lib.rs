@@ -114,7 +114,9 @@ macro check_errors($self:expr, $ret:expr) {{
     if $self.sess.has_errors() {
         let errc = $self.sess.err_count();
         let warnings = $self.sess.warning_count();
-        e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
+        if warnings > 0 {
+            e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
+        }
         e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
         Err(LError::ErrorReported)
     } else {

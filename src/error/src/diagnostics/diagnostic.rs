@@ -8,6 +8,8 @@ use std::ops::{Deref, DerefMut};
 
 #[derive(Default)]
 pub struct Diagnostics {
+    // maybe not worth generalizing to a hashmap as we only care about these two counts
+    // and not the other levels of severity
     error_count: Cell<usize>,
     warning_count: Cell<usize>,
 }
