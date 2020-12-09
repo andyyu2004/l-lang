@@ -24,7 +24,9 @@ fn run() {
     let q = Option::Some(5);
     match false {
         true => false,
+        true => true,
         false => true,
+        false => false,
     };
 
 

@@ -49,7 +49,7 @@ use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::lazy::OnceCell;
-use std::path::Path;
+use std::path::PathBuf;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
 lazy_static::lazy_static! {
@@ -61,35 +61,38 @@ lazy_static::lazy_static! {
 pub struct RunCfg {
     // TODO take optimization level as parameter
     #[clap(default_value = ".")]
-    input: String,
+    root_dir_path: PathBuf,
 }
 
-pub fn run_compiler(runcfg: RunCfg) -> ! {
+pub fn run_compiler(cfg: RunCfg) -> ! {
     // our error handling in here is basically just using panic!()
     // this makes the output look nicer and consistent with the compiler errors
-    std::panic::set_hook(box |info| {
+    std::panic::set_hook(box move |info| {
         if let Some(msg) = info.message() {
             let mut buf = String::new();
             std::fmt::write(&mut buf, *msg).unwrap();
             let diag = Diagnostic::error().with_message(buf);
             // nothing gets printed if we construct this stream in lazy_static!
-            let mut writer = BufferedStandardStream::stderr(ColorChoice::Auto);
+            let mut writer = BufferedStandardStream::stdout(ColorChoice::Auto);
             term::emit(&mut writer, &term::Config::default(), &*SIMPLE_FILES, &diag).unwrap();
+            writer.flush().unwrap();
             std::process::exit(1);
         }
     });
 
-    let _ = std::fs::remove_file("log.txt");
+    let _ = std::fs::remove_file("l-log.txt");
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
-    simple_logging::log_to_file("log.txt", level_filter).unwrap();
+    simple_logging::log_to_file("l-log.txt", level_filter).unwrap();
 
-    let path = Path::new(&runcfg.input);
-
-    let lconfig = config::load_config(path).unwrap_or_else(|err| panic!("{}", err));
+    let lconfig = config::load_config(&cfg.root_dir_path).unwrap_or_else(|err| panic!("{}", err));
 
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
 
+    self::compile(lconfig)
+}
+
+pub fn compile(lconfig: LConfig) -> ! {
     let driver = Driver::new(lconfig);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),

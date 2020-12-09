@@ -19,19 +19,26 @@ pub struct LConfig {
 crate fn load_config(path: &Path) -> io::Result<LConfig> {
     let path =
         path.canonicalize().unwrap_or_else(|_| panic!("path `{}` does not exist", path.display()));
-    let toml_path = match load_toml(&path)? {
-        Some(toml) => toml,
-        None => panic!("`L.toml` not found in `{}`", path.display()),
+
+    // if `path` is a directory we search it for a `L.toml` file and load the config using that
+    let config = if path.is_dir() {
+        let toml_path = match load_toml(&path)? {
+            Some(toml) => toml,
+            None => panic!("`L.toml` not found in `{}`", path.display()),
+        };
+        // the given path could be either `path/to/pkg/L.toml` or `path/to/pkg`
+        let content = fs::read_to_string(&toml_path)?;
+        // dbg!(toml::de::from_str::<toml::Value>(&content).unwrap());
+        let toml = toml::de::from_str(&content)?;
+        let mut main_path = toml_path.clone();
+        main_path.pop();
+
+        LConfig { toml, root_path: toml_path.parent().unwrap().to_path_buf() }
+    } else {
+        // if `path` is a file, we just run that file
+        LConfig::from_main_path(path.to_path_buf())
     };
 
-    // the given path could be either `path/to/pkg/L.toml` or `path/to/pkg`
-    let content = fs::read_to_string(&toml_path)?;
-    // dbg!(toml::de::from_str::<toml::Value>(&content).unwrap());
-    let toml = toml::de::from_str(&content)?;
-    let mut main_path = toml_path.clone();
-    main_path.pop();
-
-    let config = LConfig { toml, root_path: toml_path.parent().unwrap().to_path_buf() };
     config.validate()?;
     Ok(config)
 }
@@ -49,7 +56,7 @@ impl LConfig {
                     if let Some(path) = &info.path {
                         let dep_path = Path::new(&path);
                         let joined_path = self.root_path.join(dep_path);
-                        load_config(&joined_path)?;
+                        self::load_config(&joined_path)?;
                     },
             }
         }
