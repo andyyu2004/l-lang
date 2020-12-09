@@ -10,6 +10,8 @@ use std::path::{Path, PathBuf};
 /// deserialized representation of `L.toml`
 #[derive(Debug, Deserialize)]
 pub struct LConfig {
+    /// root path of the project itself
+    /// i.e. the parent of the `L.toml`
     crate root_path: PathBuf,
     crate toml: TomlConfig,
 }

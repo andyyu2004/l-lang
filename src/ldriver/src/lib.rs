@@ -24,7 +24,7 @@ extern crate log;
 
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
-use clap::App;
+use clap::{App, Clap};
 use codegen::CodegenCtx;
 use codespan_reporting::diagnostic::Diagnostic;
 use codespan_reporting::files::SimpleFiles;
@@ -57,7 +57,14 @@ lazy_static::lazy_static! {
     static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
 }
 
-pub fn main() -> ! {
+#[derive(Debug, Clap)]
+pub struct RunCfg {
+    // TODO take optimization level as parameter
+    #[clap(default_value = ".")]
+    input: String,
+}
+
+pub fn run_compiler(runcfg: RunCfg) -> ! {
     // our error handling in here is basically just using panic!()
     // this makes the output look nicer and consistent with the compiler errors
     std::panic::set_hook(box |info| {
@@ -76,22 +83,14 @@ pub fn main() -> ! {
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
     simple_logging::log_to_file("log.txt", level_filter).unwrap();
 
-    let yaml = clap::load_yaml!("cli.yaml");
-    let matches = App::from(yaml).get_matches();
-    let _check = matches.is_present("check");
-    let _emit_tir = matches.is_present("tir");
-    let _emit_mir = matches.is_present("emit-mir");
-    // TODO take optimization level as parameter
+    let path = Path::new(&runcfg.input);
 
-    let path_str = matches.value_of("INPUT").unwrap();
-    let path = Path::new(path_str);
-
-    let config = config::load_config(path).unwrap_or_else(|err| panic!("{}", err));
+    let lconfig = config::load_config(path).unwrap_or_else(|err| panic!("{}", err));
 
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
 
-    let driver = Driver::new(config);
+    let driver = Driver::new(lconfig);
     match driver.llvm_exec() {
         Ok(i) => std::process::exit(i),
         Err(..) => std::process::exit(1),

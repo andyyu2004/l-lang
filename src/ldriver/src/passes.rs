@@ -33,7 +33,6 @@ fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
             &mut ItemTypeCollectionPass { tcx },
             &mut ItemTypeValidationPass { tcx },
             &mut TypecheckPass { tcx },
-            &mut PatternCheckPass { tcx },
         ])
     })
 }
@@ -101,7 +100,6 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
 }
 
 impl_body_check_pass!(TypecheckPass, tcx, "type check pass", typeck, true);
-impl_body_check_pass!(PatternCheckPass, tcx, "pattern check pass", check_patterns, false);
 
 macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident, $halt_on_failure:expr) {
     struct $type<'tcx> {
