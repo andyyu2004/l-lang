@@ -1,3 +1,5 @@
 /target
+l-log.txt
 log.txt
 *.ll
+*.log

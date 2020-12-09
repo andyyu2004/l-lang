@@ -80,9 +80,9 @@ pub fn run_compiler(cfg: RunCfg) -> ! {
         }
     });
 
-    let _ = std::fs::remove_file("l-log.txt");
+    let _ = std::fs::remove_file("l.log");
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
-    simple_logging::log_to_file("l-log.txt", level_filter).unwrap();
+    simple_logging::log_to_file("l.log", level_filter).unwrap();
 
     let lconfig = config::load_config(&cfg.root_dir_path).unwrap_or_else(|err| panic!("{}", err));
 
