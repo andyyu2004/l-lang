@@ -39,7 +39,7 @@ impl<'a, 'tcx> Typechecker<'a, 'tcx> {
             Rvalue::Unary(_, operand) | Rvalue::Operand(operand) => self.op_ty(operand),
             Rvalue::Ref(lvalue) => tcx.mk_ptr_ty(self.lvalue_ty(lvalue)),
             Rvalue::Discriminant(_) => tcx.types.discr,
-            Rvalue::Closure(_, _) => todo!(),
+            Rvalue::Closure(ty) => ty,
             Rvalue::Bin(op, l, r) => {
                 let lty = self.op_ty(l);
                 let rty = self.op_ty(r);

@@ -1,29 +1,46 @@
+#![feature(crate_visibility_modifier)]
+#![feature(once_cell)]
+
+mod errors;
+
+use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 #[derive(Copy, Clone)]
 enum TestKind {
     Ui,
+    CompileFail,
 }
 
 fn main() -> io::Result<()> {
     let ctx = TestCtx {};
-    // path is relative to `runner`
+    // assume path is relative to `runner`
+    // this will be the case when invoked from a #[test]
     let tests_root = PathBuf::from("../ltests").canonicalize()?;
     dbg!(tests_root.display());
-    let handle = Command::new("l").arg("../ltests").spawn()?;
-    let output = handle.wait_with_output()?;
-    assert!(output.status.success());
-    // ctx.run_recursive(&Path::new(""))?;
+    // this cds to the root `l` directory
+    env::set_current_dir("../../")?;
+    // install a release build of the compiler locally
+    let status = Command::new("cargo").args(&["install", "--path", "src/l"]).status()?;
+    assert!(status.success());
+    ctx.run_recursive("tests/ltests/compile-fail", TestKind::CompileFail)?;
     Ok(())
 }
 
 struct TestCtx {}
 
+#[derive(Debug)]
+struct Output {
+    status: ExitStatus,
+    stdout: String,
+    stderr: String,
+}
+
 impl TestCtx {
-    pub fn run_recursive(&self, path: &impl AsRef<Path>, kind: TestKind) -> io::Result<()> {
+    pub fn run_recursive(&self, path: impl AsRef<Path>, kind: TestKind) -> io::Result<()> {
         let dir = fs::read_dir(path)?;
         for entry in dir {
             let entry = entry?;
@@ -43,12 +60,30 @@ impl TestCtx {
         }
     }
 
-    fn run_test(&self, path: &Path, kind: TestKind) -> io::Result<()> {
-        // let dir_path = path.parent().unwrap();
-        // let driver = ldriver::Driver::new(&dir_path);
-        // Command::new("cargo rj");
-        // dbg!(driver.llvm_exec()).unwrap();
+    fn run_compile_fail_test(&self, path: &Path) -> io::Result<()> {
+        let expected_errors = errors::parse(path);
+        dbg!(expected_errors);
+        let output = self.run(path)?;
+        dbg!(&output);
+        assert!(!output.status.success());
         Ok(())
+    }
+
+    fn run(&self, path: &Path) -> io::Result<Output> {
+        let mut cmd = Command::new("l");
+        cmd.arg("run").arg(path);
+        let output = cmd.output()?;
+        let status = output.status;
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        Ok(Output { status, stdout, stderr })
+    }
+
+    fn run_test(&self, path: &Path, kind: TestKind) -> io::Result<()> {
+        match kind {
+            TestKind::Ui => todo!(),
+            TestKind::CompileFail => self.run_compile_fail_test(path),
+        }
     }
 }
 

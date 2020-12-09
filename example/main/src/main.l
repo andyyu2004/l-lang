@@ -19,14 +19,16 @@ enum Option<T> {
     None,
 }
 
+fn f(b: bool) -> int {
+    match b {
+        true  => 1,
+    }
+}
 fn run() {
     let p = Option::Some(false);
     let q = Option::Some(5);
     match false {
         true => false,
-        true => true,
-        false => true,
-        false => false,
     };
 
 

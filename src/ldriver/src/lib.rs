@@ -1,4 +1,5 @@
 #![feature(crate_visibility_modifier)]
+#![feature(process_exitcode_placeholder)]
 #![feature(box_syntax)]
 #![feature(never_type)]
 #![feature(panic_info_message)]
@@ -24,7 +25,6 @@ extern crate log;
 
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
-use clap::{App, Clap};
 use codegen::CodegenCtx;
 use codespan_reporting::diagnostic::Diagnostic;
 use codespan_reporting::files::SimpleFiles;
@@ -42,14 +42,14 @@ use log::LevelFilter;
 use meta::PkgMetadata;
 use parse::Parser;
 use resolve::{Resolver, ResolverArenas};
-use session::Session;
+pub use session::{CompilerOptions, Session};
 use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io::Write;
+use std::io::{self, Write};
 use std::lazy::OnceCell;
-use std::path::PathBuf;
+use std::process::ExitCode;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
 lazy_static::lazy_static! {
@@ -57,14 +57,7 @@ lazy_static::lazy_static! {
     static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
 }
 
-#[derive(Debug, Clap)]
-pub struct RunCfg {
-    // TODO take optimization level as parameter
-    #[clap(default_value = ".")]
-    root_dir_path: PathBuf,
-}
-
-pub fn run_compiler(cfg: RunCfg) -> ! {
+pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
     // our error handling in here is basically just using panic!()
     // this makes the output look nicer and consistent with the compiler errors
     std::panic::set_hook(box move |info| {
@@ -84,7 +77,7 @@ pub fn run_compiler(cfg: RunCfg) -> ! {
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
     simple_logging::log_to_file("l.log", level_filter).unwrap();
 
-    let lconfig = config::load_config(&cfg.root_dir_path).unwrap_or_else(|err| panic!("{}", err));
+    let lconfig = config::load_config(opts).unwrap_or_else(|err| panic!("{}", err));
 
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
@@ -151,11 +144,11 @@ impl<'tcx> Driver<'tcx> {
         Self {
             dependencies,
             llvm_ctx: LLVMCtx::create(),
+            sess: Session::create(config.opts),
             resolver_arenas: Default::default(),
             core_arenas: Default::default(),
             ir_arena: Default::default(),
             global_ctx: Default::default(),
-            sess: Default::default(),
         }
     }
 

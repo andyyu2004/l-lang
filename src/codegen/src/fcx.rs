@@ -205,7 +205,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> ValueRef<'tcx> {
         match rvalue {
-            mir::Rvalue::Closure(_ty, _body) => {
+            mir::Rvalue::Closure(..) => {
                 todo!();
                 // let name = "<closure>";
                 // let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);

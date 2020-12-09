@@ -25,7 +25,7 @@ pub fn provide(queries: &mut Queries) {
 }
 
 /// runs all phases of analyses using the api that the query system provides
-/// if no errors are caught during this, then the code should be correct
+/// if no errors are caught during these analyses, then the code should be correct
 /// and safe to codegen
 fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
     tcx.sess.prof.time("analysis", || {
@@ -33,6 +33,7 @@ fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
             &mut ItemTypeCollectionPass { tcx },
             &mut ItemTypeValidationPass { tcx },
             &mut TypecheckPass { tcx },
+            &mut MirLoweringPass { tcx },
         ])
     })
 }
@@ -100,6 +101,7 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
 }
 
 impl_body_check_pass!(TypecheckPass, tcx, "type check pass", typeck, true);
+impl_body_check_pass!(MirLoweringPass, tcx, "mir lowering pass", mir_of, true);
 
 macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident, $halt_on_failure:expr) {
     struct $type<'tcx> {
@@ -119,7 +121,7 @@ macro impl_body_check_pass($type:ident, $tcx:ident, $name:literal, $fn:ident, $h
 
     impl<'tcx> FnVisitor<'tcx> for $type<'tcx> {
         fn visit_fn(&mut self, def_id: ir::DefId) {
-            let _ = self.$tcx.$fn(def_id);
+            self.$tcx.$fn(def_id);
         }
     }
 }

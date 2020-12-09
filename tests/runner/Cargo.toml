@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 ldriver = { path = "../../src/ldriver" }
+regex = "1"
 

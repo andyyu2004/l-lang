@@ -1,5 +1,6 @@
 use semver::Version;
 use serde::de::{self, Deserialize};
+use session::CompilerOptions;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs;
@@ -14,11 +15,14 @@ pub struct LConfig {
     /// i.e. the parent of the `L.toml`
     crate root_path: PathBuf,
     crate toml: TomlConfig,
+    crate opts: CompilerOptions,
 }
 
-crate fn load_config(path: &Path) -> io::Result<LConfig> {
-    let path =
-        path.canonicalize().unwrap_or_else(|_| panic!("path `{}` does not exist", path.display()));
+crate fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
+    let path = opts
+        .input_path
+        .canonicalize()
+        .unwrap_or_else(|_| panic!("path `{}` does not exist", opts.input_path.display()));
 
     // if `path` is a directory we search it for a `L.toml` file and load the config using that
     let config = if path.is_dir() {
@@ -33,7 +37,7 @@ crate fn load_config(path: &Path) -> io::Result<LConfig> {
         let mut main_path = toml_path.clone();
         main_path.pop();
 
-        LConfig { toml, root_path: toml_path.parent().unwrap().to_path_buf() }
+        LConfig { opts, toml, root_path: toml_path.parent().unwrap().to_path_buf() }
     } else {
         // if `path` is a file, we just run that file
         LConfig::from_main_path(path.to_path_buf())
@@ -56,7 +60,10 @@ impl LConfig {
                     if let Some(path) = &info.path {
                         let dep_path = Path::new(&path);
                         let joined_path = self.root_path.join(dep_path);
-                        self::load_config(&joined_path)?;
+                        self::load_config(CompilerOptions {
+                            input_path: joined_path,
+                            ..self.opts
+                        })?;
                     },
             }
         }
@@ -82,7 +89,11 @@ impl LConfig {
     /// create a config with the main set to the given parameter
     /// used to run the driver on a test source file
     pub fn from_main_path(main_path: PathBuf) -> Self {
-        let mut lcfg = Self { root_path: Default::default(), toml: TomlConfig::default() };
+        let mut lcfg = Self {
+            opts: CompilerOptions::new(main_path.clone()),
+            root_path: Default::default(),
+            toml: TomlConfig::default(),
+        };
         lcfg.bin.main_path = main_path;
         lcfg
     }

@@ -191,7 +191,8 @@ pub enum Rvalue<'tcx> {
     Ref(Lvalue<'tcx>),
     /// reads the discriminant of an enum
     Discriminant(Lvalue<'tcx>),
-    Closure(Ty<'tcx>, mir::Mir<'tcx>),
+    /// TODO temporary representation, incomplete
+    Closure(Ty<'tcx>),
     Adt {
         adt: &'tcx AdtTy,
         variant_idx: VariantIdx,
