@@ -10,6 +10,7 @@ extern  {
 
 fn main() -> int {
     methods::run();
+    run();
     return 0;
 }
 

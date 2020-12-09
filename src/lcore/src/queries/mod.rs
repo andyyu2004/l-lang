@@ -88,7 +88,6 @@ define_query_context! {
         ([adt_ty] [DefId] [&'tcx AdtTy])
         ([generics_of] [DefId] [&'tcx Generics<'tcx>])
         ([validate_item_type] [DefId] [()])
-        ([check_patterns] [DefId] [()])
         ([inherent_impls] [()] [&'tcx InherentImpls])
         ([inherent_impls_of] [DefId] [&'tcx [DefId]])
 

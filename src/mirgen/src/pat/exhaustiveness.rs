@@ -3,52 +3,32 @@
 #![allow(dead_code)]
 
 use super::{MatchCtxt, PatternError};
-use crate::LoweringCtx;
 use indexmap::{indexset, IndexSet};
 use ir::DefId;
 use lcore::ty::{tls, Const, Substs, SubstsRef, Ty, TyKind};
+use span::Span;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut, Index, Range};
+use std::ops::{Deref, DerefMut};
 
-impl<'a, 'tcx> MatchCtxt<'a, 'tcx> {
-    crate fn check_match(
-        &self,
-        expr: &ir::Expr<'tcx>,
-        scrut: &ir::Expr<'tcx>,
-        arms: &[ir::Arm<'tcx>],
-    ) {
-        let pcx = PatCtxt { mcx: self };
-        pcx.check_match_exhaustiveness(expr, scrut, arms);
+impl<'p, 'tcx> MatchCtxt<'p, 'tcx> {
+    crate fn check_match(&self, span: Span, scrut: &tir::Expr<'tcx>, arms: &[tir::Arm<'tcx>]) {
+        self.check_match_exhaustiveness(span, scrut, arms);
     }
-}
 
-struct PatCtxt<'a, 'tcx> {
-    mcx: &'a MatchCtxt<'a, 'tcx>,
-}
-
-impl<'a, 'tcx> Deref for PatCtxt<'a, 'tcx> {
-    type Target = MatchCtxt<'a, 'tcx>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.mcx
-    }
-}
-
-impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
     /// returns whether the match is exhaustive
     crate fn check_match_exhaustiveness(
         &self,
-        expr: &ir::Expr<'tcx>,
-        scrut: &ir::Expr<'tcx>,
-        arms: &[ir::Arm<'tcx>],
+        span: Span,
+        scrut: &tir::Expr<'tcx>,
+        arms: &[tir::Arm<'tcx>],
     ) {
         let matrix = Matrix::default();
         let mut ucx = UsefulnessCtxt { pcx: self, matrix };
         for arm in arms {
             // check usefulness of each arm
-            let v = PatternVector::from_pat(self.lower_ir_pattern(arm.pat));
+            let v = PatternVector::from_pat(self.lower_pattern(&arm.pat));
             if ucx.find_uncovered_pattern(&v).is_none() {
                 self.tcx.sess.emit_warning(arm.span, PatternError::RedundantPattern);
             }
@@ -56,30 +36,22 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
         }
 
         // match is exhaustive iff `!is_useful(matrix, wildcard)`
-        let ty = self.tables.node_type(scrut.id);
-        let wildcard = self.pat_arena.alloc(Pat::new(ty, PatKind::Wildcard));
+        let wildcard = self.arena.alloc(Pat::new(scrut.ty, PatKind::Wildcard));
         let v = PatternVector::from_pat(wildcard);
         if let Some(witness) = ucx.find_uncovered_pattern(&v) {
-            self.tcx.sess.emit_error(expr.span, PatternError::NonexhaustiveMatch(witness));
+            self.tcx.sess.emit_error(span, PatternError::NonexhaustiveMatch(witness));
         }
-    }
-
-    /// ir pattern to pat
-    fn lower_ir_pattern(&self, pat: &ir::Pattern<'tcx>) -> &'p Pat<'p, 'tcx> {
-        let mut lctx = LoweringCtx::new(self.tcx, self.tables);
-        let tir_pat = lctx.lower_pattern_tir(pat);
-        self.lower_pattern(&tir_pat)
     }
 
     /// tir pattern -> pat
     fn lower_pattern(&self, pat: &tir::Pattern<'tcx>) -> &'p Pat<'p, 'tcx> {
-        self.pat_arena.alloc(self.lower_pattern_inner(pat))
+        self.lcx.arena.alloc(self.lower_pattern_inner(pat))
     }
 
     fn lower_pattern_inner(&self, pat: &tir::Pattern<'tcx>) -> Pat<'p, 'tcx> {
         let kind = match &pat.kind {
             tir::PatternKind::Box(pat) => {
-                let field = self.pat_arena.alloc(self.lower_pattern_inner(pat));
+                let field = self.lcx.arena.alloc(self.lower_pattern_inner(pat));
                 let fields = Fields::new(std::slice::from_ref(field));
                 let field_tys = self.intern_substs(&[pat.ty]);
                 let ctor = Ctor::new(field_tys, CtorKind::Box);
@@ -87,7 +59,8 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
             }
             tir::PatternKind::Field(fields) => {
                 let fields = self
-                    .pat_arena
+                    .lcx
+                    .arena
                     .alloc_from_iter(fields.iter().map(|f| self.lower_pattern_inner(&f.pat)));
                 let ctor_kind = match pat.ty.kind {
                     TyKind::Tuple(..) => CtorKind::Tuple,
@@ -108,7 +81,8 @@ impl<'p, 'tcx> PatCtxt<'p, 'tcx> {
                 let field_tys = self.mk_substs(pats.iter().map(|pat| pat.ty));
                 let ctor = Ctor::new(field_tys, ctor_kind);
                 let pats = self
-                    .pat_arena
+                    .lcx
+                    .arena
                     .alloc_from_iter(pats.iter().map(|pat| self.lower_pattern_inner(pat)));
                 let fields = Fields::new(pats);
                 PatKind::Ctor(ctor, fields)
@@ -139,12 +113,12 @@ impl<'p, 'tcx> Display for Witness<'p, 'tcx> {
 }
 
 struct UsefulnessCtxt<'a, 'p, 'tcx> {
-    pcx: &'a PatCtxt<'p, 'tcx>,
+    pcx: &'a MatchCtxt<'p, 'tcx>,
     matrix: Matrix<'p, 'tcx>,
 }
 
 impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
-    type Target = PatCtxt<'p, 'tcx>;
+    type Target = MatchCtxt<'p, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
         &self.pcx
@@ -188,7 +162,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
                 // know this witness exists as it is nonexhaustive
                 // find an arbitrary constructor as an example witness
                 let ctor_witness = self.find_missing_ctor(&ctors, pat.ty).unwrap();
-                let wildcards = self.pat_arena.alloc_from_iter(
+                let wildcards = self.lcx.arena.alloc_from_iter(
                     ctor_witness.field_tys.iter().map(|ty| Pat { ty, kind: PatKind::Wildcard }),
                 );
                 let pat =
@@ -207,7 +181,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         witness: Witness<'p, 'tcx>,
     ) -> Witness<'p, 'tcx> {
         let arity = ctor.arity();
-        let args = self.pat_arena.alloc_from_iter(witness.pats[..arity].iter().copied());
+        let args = self.lcx.arena.alloc_from_iter(witness.pats[..arity].iter().copied());
         let applied = Pat { kind: PatKind::Ctor(ctor, Fields::new(args)), ty: pat.ty };
         let mut pats = vec![applied];
         pats.extend(witness.pats[arity..].iter().copied());
@@ -303,7 +277,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         };
         row.extend_from_slice(&vector[1..]);
         debug_assert_eq!(row.len(), vector.len() + qfields.len() - 1);
-        Some(PatternVector::new(self.pat_arena.alloc_from_iter(row)))
+        Some(PatternVector::new(self.lcx.arena.alloc_from_iter(row)))
     }
 
     /// calculates `S(c, self.matrix)`

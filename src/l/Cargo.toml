@@ -7,7 +7,5 @@ edition = "2018"
 default-run = "l"
 
 [dependencies]
-ldriver = { path = "../ldriver" }
+cli = { path = "../cli" }
 
-[dev-dependencies]
-compiletest_rs = "*"

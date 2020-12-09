@@ -1,3 +1,3 @@
-fn main() -> ! {
-    ldriver::main()
+fn main() -> std::io::Result<()> {
+    cli::main()
 }

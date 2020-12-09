@@ -1,5 +1,7 @@
 //! context for lowering from ir to tir/mir
 
+use crate::pat::MatchCtxt;
+use arena::DroplessArena;
 use ast::{Lit, UnaryOp};
 use index::Idx;
 use ir::{self, CtorKind, DefId, DefKind, FieldIdx, Res, VariantIdx};
@@ -13,7 +15,10 @@ use std::ops::Deref;
 /// ir -> tir -> mir
 pub struct LoweringCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
-    tables: &'tcx TypeckTables<'tcx>,
+    crate tables: &'tcx TypeckTables<'tcx>,
+    // currently used for allocating temporary patterns
+    // for exhaustiveness and usefulness checks
+    crate arena: DroplessArena,
 }
 
 impl<'tcx> Deref for LoweringCtx<'tcx> {
@@ -26,7 +31,7 @@ impl<'tcx> Deref for LoweringCtx<'tcx> {
 
 impl<'tcx> LoweringCtx<'tcx> {
     pub fn new(tcx: TyCtx<'tcx>, tables: &'tcx TypeckTables<'tcx>) -> Self {
-        Self { tcx, tables }
+        Self { tcx, tables, arena: Default::default() }
     }
 
     /// ir -> tir
@@ -390,6 +395,18 @@ impl<'tcx> Tir<'tcx> for ir::Expr<'tcx> {
 }
 
 impl<'tcx> LoweringCtx<'tcx> {
+    fn lower_match(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        scrut: &ir::Expr<'tcx>,
+        arms: &[ir::Arm<'tcx>],
+    ) -> tir::ExprKind<'tcx> {
+        let scrut = box scrut.to_tir(self);
+        let arms = arms.to_tir(self);
+        MatchCtxt { lcx: self }.check_match(expr.span, &scrut, &arms);
+        tir::ExprKind::Match(scrut, arms)
+    }
+
     fn lower_expr(&mut self, expr: &ir::Expr<'tcx>) -> tir::Expr<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_ty(expr.id);
@@ -409,8 +426,7 @@ impl<'tcx> LoweringCtx<'tcx> {
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(box f.to_tir(self), args.to_tir(self)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir(self)),
-            ir::ExprKind::Match(expr, arms, _) =>
-                tir::ExprKind::Match(box expr.to_tir(self), arms.to_tir(self)),
+            ir::ExprKind::Match(scrut, arms, _) => self.lower_match(expr, scrut, arms),
             ir::ExprKind::Struct(_path, fields) => match ty.kind {
                 TyKind::Adt(adt, substs) => match adt.kind {
                     AdtKind::Struct => tir::ExprKind::Adt {
