@@ -6,5 +6,7 @@ edition = "2018"
 
 [dependencies]
 ldriver = { path = "../../src/ldriver" }
+error = { path = "../../src/error" }
 regex = "1"
+serde_json = "1"
 

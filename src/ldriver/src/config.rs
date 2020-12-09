@@ -62,7 +62,7 @@ impl LConfig {
                         let joined_path = self.root_path.join(dep_path);
                         self::load_config(CompilerOptions {
                             input_path: joined_path,
-                            ..self.opts
+                            ..self.opts.clone()
                         })?;
                     },
             }
@@ -90,7 +90,7 @@ impl LConfig {
     /// used to run the driver on a test source file
     pub fn from_main_path(main_path: PathBuf) -> Self {
         let mut lcfg = Self {
-            opts: CompilerOptions::new(main_path.clone()),
+            opts: CompilerOptions::with_input_path(main_path.clone()),
             root_path: Default::default(),
             toml: TomlConfig::default(),
         };

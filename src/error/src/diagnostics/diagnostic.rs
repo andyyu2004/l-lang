@@ -1,13 +1,14 @@
-use crate::{Emitter, LError, LResult, TextEmitter};
+use crate::{Emitter, ErrorFormat, JsonEmitter, LError, LResult, TextEmitter};
 use codespan_reporting::diagnostic::Severity;
+use serde::Serialize;
 use span::Span;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
 use std::fmt::{self, Debug, Formatter};
 use std::ops::{Deref, DerefMut};
 
-#[derive(Default)]
 pub struct Diagnostics {
+    emitter: RefCell<Box<dyn Emitter>>,
     // maybe not worth generalizing to a hashmap as we only care about these two counts
     // and not the other levels of severity
     error_count: Cell<usize>,
@@ -15,6 +16,19 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
+    pub fn with_error_format(error_format: ErrorFormat) -> Self {
+        let emitter: Box<dyn Emitter> = match error_format {
+            ErrorFormat::Text => box TextEmitter::default(),
+            ErrorFormat::Json => box JsonEmitter::default(),
+        };
+
+        Self {
+            emitter: RefCell::new(emitter),
+            error_count: Default::default(),
+            warning_count: Default::default(),
+        }
+    }
+
     crate fn inc_err_count(&self) {
         self.error_count.set(1 + self.error_count.get());
     }
@@ -112,7 +126,6 @@ impl Diagnostic {
 pub struct DiagnosticBuilder<'a> {
     diagnostics: &'a Diagnostics,
     diagnostic: Diagnostic,
-    emitter: RefCell<Box<dyn Emitter>>,
 }
 
 // builder methods
@@ -153,17 +166,13 @@ impl<'a> DerefMut for DiagnosticBuilder<'a> {
 }
 
 impl<'a> DiagnosticBuilder<'a> {
-    fn default_emitter() -> RefCell<Box<dyn Emitter>> {
-        RefCell::new(box TextEmitter::default())
-    }
-
     pub fn emit(&self) {
         match self.diagnostic.severity {
             Severity::Error => self.diagnostics.inc_err_count(),
             Severity::Warning => self.diagnostics.inc_warning_count(),
             _ => {}
         }
-        self.emitter.borrow_mut().emit(self)
+        self.diagnostics.emitter.borrow_mut().emit(self)
     }
 
     crate fn new(
@@ -173,6 +182,6 @@ impl<'a> DiagnosticBuilder<'a> {
         err: impl Error,
     ) -> Self {
         let diagnostic = Diagnostic::from_err(severity, span, err);
-        Self { diagnostics, diagnostic, emitter: Self::default_emitter() }
+        Self { diagnostics, diagnostic }
     }
 }

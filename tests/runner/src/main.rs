@@ -3,7 +3,9 @@
 
 mod errors;
 
+use std::cell::Cell;
 use std::env;
+use std::error::Error;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -16,7 +18,7 @@ enum TestKind {
 }
 
 fn main() -> io::Result<()> {
-    let ctx = TestCtx {};
+    let ctx = TestCtx::default();
     // assume path is relative to `runner`
     // this will be the case when invoked from a #[test]
     let tests_root = PathBuf::from("../ltests").canonicalize()?;
@@ -27,10 +29,17 @@ fn main() -> io::Result<()> {
     let status = Command::new("cargo").args(&["install", "--path", "src/l"]).status()?;
     assert!(status.success());
     ctx.run_recursive("tests/ltests/compile-fail", TestKind::CompileFail)?;
+
+    if ctx.errc.get() > 0 {
+        panic!("errors occured during testing")
+    }
     Ok(())
 }
 
-struct TestCtx {}
+#[derive(Default)]
+struct TestCtx {
+    errc: Cell<usize>,
+}
 
 #[derive(Debug)]
 struct Output {
@@ -53,6 +62,11 @@ impl TestCtx {
         Ok(())
     }
 
+    crate fn report_error(&self, error: impl Error) {
+        self.errc.set(1 + self.errc.get());
+        eprintln!("{}", error)
+    }
+
     fn check_test(&self, path: &Path, kind: TestKind) -> io::Result<()> {
         match path.extension() {
             Some(ext) if ext.to_str() == Some("l") => self.run_test(&path, kind),
@@ -62,10 +76,9 @@ impl TestCtx {
 
     fn run_compile_fail_test(&self, path: &Path) -> io::Result<()> {
         let expected_errors = errors::parse(path);
-        dbg!(expected_errors);
         let output = self.run(path)?;
-        dbg!(&output);
         assert!(!output.status.success());
+        self.compare_expected_errors(&expected_errors, &output);
         Ok(())
     }
 

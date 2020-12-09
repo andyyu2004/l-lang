@@ -18,7 +18,11 @@ pub struct Session {
 
 impl Session {
     pub fn create(opts: CompilerOptions) -> Self {
-        Self { opts, prof: Default::default(), diagnostics: Default::default() }
+        Self {
+            diagnostics: Diagnostics::with_error_format(opts.error_format),
+            opts,
+            prof: Default::default(),
+        }
     }
 }
 

@@ -65,16 +65,16 @@ impl SourceMap {
         self.path_of(file).parent().unwrap()
     }
 
-    pub fn path_of(&self, file: FileIdx) -> &Path {
-        &self.modules[file].file.path
+    pub fn path_of(&self, idx: FileIdx) -> &Path {
+        &self.get(idx).file.path
     }
 
-    pub fn get_opt(&self, file: FileIdx) -> Option<&SourceFile> {
-        self.modules.get(file)
+    pub fn get_opt(&self, idx: FileIdx) -> Option<&SourceFile> {
+        self.modules.get(idx)
     }
 
-    pub fn get(&self, file: FileIdx) -> &SourceFile {
-        &self.modules[file]
+    pub fn get(&self, idx: FileIdx) -> &SourceFile {
+        &self.modules[idx]
     }
 }
 

@@ -1,19 +1,22 @@
 use clap::Clap;
+use error::ErrorFormat;
 use serde::Deserialize;
 use std::path::PathBuf;
 
-#[derive(Debug, Clap, Deserialize)]
+#[derive(Clone, Debug, Default, Clap, Deserialize)]
 pub struct CompilerOptions {
     /// the path of either the directory holding `L.toml`
     /// or the path of the main `.l` file
     /// default to the current directory
     #[clap(default_value = ".")]
     pub input_path: PathBuf,
-    // TODO take optimization level as parameter
+    #[clap(long("error-format"), default_value = "text")]
+    pub error_format: ErrorFormat,
+    // TODO take optimization level as parameter (or debug/release)
 }
 
 impl CompilerOptions {
-    pub fn new(input_path: PathBuf) -> Self {
-        Self { input_path }
+    pub fn with_input_path(input_path: PathBuf) -> Self {
+        Self { input_path, ..Self::default() }
     }
 }

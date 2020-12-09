@@ -24,6 +24,7 @@ fn f(b: bool) -> int {
         true  => 1,
     }
 }
+
 fn run() {
     let p = Option::Some(false);
     let q = Option::Some(5);
