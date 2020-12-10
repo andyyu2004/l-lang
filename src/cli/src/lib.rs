@@ -18,6 +18,7 @@ struct Opts {
 #[derive(Debug, Clap)]
 enum SubCommand {
     Run(CompilerOptions),
+    Check(CompilerOptions),
     New(NewCmd),
     Test(TestCmd),
 }
@@ -35,6 +36,7 @@ pub fn main() -> io::Result<ExitCode> {
     match opts.subcmd {
         SubCommand::New(ncfg) => subcommands::new(ncfg),
         SubCommand::Run(rcfg) => ldriver::run_compiler(rcfg),
+        SubCommand::Check(cfg) => ldriver::run_compiler(cfg),
         SubCommand::Test(_) => todo!(),
     }
 }

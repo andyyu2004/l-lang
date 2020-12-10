@@ -5,7 +5,7 @@ use codespan_reporting::diagnostic::{Label, Severity};
 use codespan_reporting::files::Files;
 use codespan_reporting::term::{emit, Config};
 use serde::{Deserialize, Serialize};
-use span::{FileIdx, Span};
+use span::FileIdx;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
 /// trait for an object that formats diagnostics

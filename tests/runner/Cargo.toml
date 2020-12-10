@@ -11,4 +11,4 @@ util = { path = "../../src/util" }
 regex = "1"
 thiserror = "1"
 serde_json = "1"
-
+strip-ansi-escapes = "0.1"

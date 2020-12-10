@@ -1,0 +1,7 @@
+error: unresolved type `T`
+  ┌─ undeclared_type_parameter.l:2:8
+  │
+2 │     t: T
+  │        ^
+
+1 error emitted

@@ -28,40 +28,8 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
         .collect()
 }
 
-macro_rules! test_assert_eq {
-    ($left:expr, $right:expr $(,)?) => ({
-        match (&$left, &$right) {
-            (left_val, right_val) => {
-                if !(*left_val == *right_val) {
-                    // The reborrows below are intentional. Without them, the stack slot for the
-                    // borrow is initialized even before the values are compared, leading to a
-                    // noticeable slow down.
-                    panic!(r#"assertion failed: `(left == right)`
-  left: `{:?}`,
- right: `{:?}`"#, &*left_val, &*right_val)
-                }
-            }
-        }
-    });
-    ($left:expr, $right:expr, $($arg:tt)+) => ({
-        match (&($left), &($right)) {
-            (left_val, right_val) => {
-                if !(*left_val == *right_val) {
-                    // The reborrows below are intentional. Without them, the stack slot for the
-                    // borrow is initialized even before the values are compared, leading to a
-                    // noticeable slow down.
-                    panic!(r#"assertion failed: `(left == right)`
-  left: `{:?}`,
- right: `{:?}`: {}"#, &*left_val, &*right_val,
-                           $crate::format_args!($($arg)+))
-                }
-            }
-        }
-    });
-}
-
 impl TestCtx {
-    crate fn compare_expected_errors(&self, expected: &[Error], output: &Output) {
+    crate fn compare_expected_errors(&mut self, expected: &[Error], output: &Output) {
         let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
         if errors.len() != expected.len() {
             return self
@@ -71,10 +39,10 @@ impl TestCtx {
         errors.sort_unstable_by_key(|err| err.line);
 
         for (actual, expected) in errors.iter().zip(expected) {
-            test_assert_eq!(actual.line, expected.line_number);
-            test_assert_eq!(actual.severity, expected.severity);
+            self.compare(actual.line, expected.line_number);
+            self.compare(actual.severity, expected.severity);
             // we just compare the first line of the actual message in this test
-            test_assert_eq!(actual.msg.lines().next().unwrap(), expected.msg);
+            self.compare(actual.msg.lines().next().unwrap(), &expected.msg);
         }
     }
 }
