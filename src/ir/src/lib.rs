@@ -61,9 +61,9 @@ impl<'ir> ExprOrPat<'ir> for ir::Pattern<'ir> {
 pub struct Ir<'ir> {
     /// DefId of the entry/main function
     pub entry_id: Option<DefId>,
-    pub items: BTreeMap<DefId, ir::Item<'ir>>,
-    pub impl_items: BTreeMap<ImplItemId, ir::ImplItem<'ir>>,
-    pub trait_items: BTreeMap<TraitItemId, ir::TraitItem<'ir>>,
+    pub items: BTreeMap<DefId, &'ir ir::Item<'ir>>,
+    pub impl_items: BTreeMap<ImplItemId, &'ir ir::ImplItem<'ir>>,
+    pub trait_items: BTreeMap<TraitItemId, &'ir ir::TraitItem<'ir>>,
 }
 
 index::newtype_index!(

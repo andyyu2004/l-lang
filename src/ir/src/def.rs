@@ -185,8 +185,8 @@ impl<Id> Res<Id> {
 
 #[derive(Clone, Copy, Debug)]
 pub enum DefNode<'ir> {
-    Item(ir::Item<'ir>),
-    ImplItem(ir::ImplItem<'ir>),
+    Item(&'ir ir::Item<'ir>),
+    ImplItem(&'ir ir::ImplItem<'ir>),
     ForeignItem(&'ir ir::ForeignItem<'ir>),
     /// the node is considered a ctor iff it is a tuple variant
     Ctor(&'ir ir::Variant<'ir>),
@@ -209,7 +209,7 @@ impl<'ir> DefNode<'ir> {
     }
 }
 
-impl<'ir> Into<DefNode<'ir>> for ir::Item<'ir> {
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::Item<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::Item(self)
     }
@@ -227,7 +227,7 @@ impl<'ir> Into<DefNode<'ir>> for &'ir ir::TyParam<'ir> {
     }
 }
 
-impl<'ir> Into<DefNode<'ir>> for ir::ImplItem<'ir> {
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::ImplItem<'ir> {
     fn into(self) -> DefNode<'ir> {
         DefNode::ImplItem(self)
     }

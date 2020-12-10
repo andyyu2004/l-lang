@@ -49,7 +49,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
                 ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
             };
-            let item = ir::Item { span, id, vis, ident, kind };
+            let item = lctx.alloc(ir::Item { span, id, vis, ident, kind });
             lctx.def_node(id.def, item);
             lctx.items.insert(id.def, item);
         });
@@ -119,7 +119,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         })
     }
 
-    fn lower_impl_item(&mut self, impl_item: &AssocItem) -> ir::ImplItem<'ir> {
+    fn lower_impl_item(&mut self, impl_item: &AssocItem) -> &'ir ir::ImplItem<'ir> {
         let &AssocItem { span, id, vis, ident, ref kind } = impl_item;
         let id = self.lower_node_id(id);
         let (generics, kind) = match kind {
@@ -132,7 +132,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         };
 
         let impl_def_id = self.parent_def_id(id);
-        let impl_item = ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind };
+        let impl_item =
+            self.alloc(ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind });
         self.def_node(id.def, impl_item);
         impl_item
     }
@@ -146,17 +147,17 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     }
 
     fn lower_variant(&mut self, idx: usize, variant: &Variant) -> ir::Variant<'ir> {
-        let adt_def = self.curr_owner();
+        let adt_def_id = self.curr_owner();
         self.with_def_id(variant.id, |lctx| {
             let id = lctx.lower_node_id(variant.id);
             let kind = lctx.lower_variant_kind(&variant.kind);
             ir::Variant {
-                adt_def_id: adt_def,
                 id,
                 kind,
-                idx: VariantIdx::new(idx),
+                adt_def_id,
                 ident: variant.ident,
                 span: variant.span,
+                idx: VariantIdx::new(idx),
             }
         })
     }

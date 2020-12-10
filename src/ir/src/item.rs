@@ -2,7 +2,7 @@ use crate::{self as ir, DefId, DefKind};
 use ast::{Ident, Visibility};
 use span::Span;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Item<'ir> {
     pub id: ir::Id,
     pub span: Span,
@@ -33,7 +33,7 @@ impl<'ir> Item<'ir> {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum ItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Generics<'ir>, &'ir ir::Body<'ir>),
     Use(&'ir ir::Path<'ir>),
@@ -75,7 +75,7 @@ pub struct TraitItem<'ir> {
     pub generics: &'ir ir::Generics<'ir>,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct ImplItem<'ir> {
     pub id: ir::Id,
     pub impl_def_id: DefId,
@@ -86,7 +86,7 @@ pub struct ImplItem<'ir> {
     pub kind: ImplItemKind<'ir>,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum ImplItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
 }

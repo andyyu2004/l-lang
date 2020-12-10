@@ -43,9 +43,9 @@ pub struct AstLoweringCtx<'a, 'ir> {
     resolver: &'a mut Resolver<'ir>,
     node_id_to_id: FxHashMap<NodeId, ir::Id>,
     owner_stack: Vec<(DefId, usize)>,
-    items: BTreeMap<DefId, ir::Item<'ir>>,
-    impl_items: BTreeMap<ir::ImplItemId, ir::ImplItem<'ir>>,
-    trait_items: BTreeMap<ir::TraitItemId, ir::TraitItem<'ir>>,
+    items: BTreeMap<DefId, &'ir ir::Item<'ir>>,
+    impl_items: BTreeMap<ir::ImplItemId, &'ir ir::ImplItem<'ir>>,
+    trait_items: BTreeMap<ir::TraitItemId, &'ir ir::TraitItem<'ir>>,
     /// `DefId` of the entry function `main`
     entry_id: Option<DefId>,
     /// this counter counts backwards as to be sure not to not
