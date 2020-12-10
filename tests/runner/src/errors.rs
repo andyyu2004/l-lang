@@ -24,7 +24,7 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
         .lines()
         .enumerate()
         // +1 as line count starts from one in error messages
-        .filter_map(|(i, line)| self::parse_line(i + 1, &line.unwrap()))
+        .filter_map(|(i, line)| self::parse_line(1 + i, &line.unwrap()))
         .collect()
 }
 
@@ -62,7 +62,6 @@ macro_rules! test_assert_eq {
 
 impl TestCtx {
     crate fn compare_expected_errors(&self, expected: &[Error], output: &Output) {
-        dbg!(&output.stderr);
         let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
         if errors.len() != expected.len() {
             return self
@@ -74,7 +73,8 @@ impl TestCtx {
         for (actual, expected) in errors.iter().zip(expected) {
             test_assert_eq!(actual.line, expected.line_number);
             test_assert_eq!(actual.severity, expected.severity);
-            test_assert_eq!(actual.msg, expected.msg);
+            // we just compare the first line of the actual message in this test
+            test_assert_eq!(actual.msg.lines().next().unwrap(), expected.msg);
         }
     }
 }

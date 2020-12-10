@@ -11,14 +11,13 @@ mod undo;
 
 use at::At;
 use equate::Equate;
-use error::{DiagnosticBuilder, MultiSpan};
+use error::{DiagnosticBuilder, LError, MultiSpan};
 use index::Idx;
 use ir::{DefId, FieldIdx, Res};
 use lcore::ty::*;
 use snapshot::*;
 use span::Span;
 use std::cell::{Cell, RefCell};
-use std::error::Error;
 use std::ops::Deref;
 use type_variables::*;
 use undo::*;
@@ -100,7 +99,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
         }
     }
 
-    pub fn emit_ty_err(&self, span: impl Into<MultiSpan>, err: impl Error) -> Ty<'tcx> {
+    pub fn emit_ty_err(&self, span: impl Into<MultiSpan>, err: impl LError) -> Ty<'tcx> {
         let diag = self.tcx.sess.build_error(span, err);
         self.emit_err(diag)
     }

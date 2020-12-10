@@ -53,21 +53,31 @@ pub struct JsonDiagnostic {
 
 /// emitter for text/tty based interface
 #[derive(Default)]
-pub struct JsonEmitter {}
+pub struct JsonEmitter {
+    // we accumulate the errors and emit them all at once at the end
+    // so we can format them properly as a json array
+    errors: Vec<JsonDiagnostic>,
+}
 
 impl Emitter for JsonEmitter {
     fn emit(&mut self, diagnostic: &Diagnostic) {
         span::with_source_map(|files| {
             let span = diagnostic.get_first_span();
             let file = files.path_of(span.file).to_owned();
-            let line = files.line_index(span.file, span.start().to_usize()).unwrap();
-            let json = JsonDiagnostic {
+            let line = 1 + files.line_index(span.file, span.start().to_usize()).unwrap();
+            self.errors.push(JsonDiagnostic {
                 file,
                 line,
                 severity: diagnostic.severity,
                 msg: diagnostic.msg.to_owned(),
-            };
-            eprintln!("{}", serde_json::to_string_pretty(&json).unwrap());
+            });
         });
+    }
+}
+
+impl Drop for JsonEmitter {
+    fn drop(&mut self) {
+        eprintln!("{}", serde_json::to_string_pretty(&self.errors).unwrap());
+        drop(&mut self.errors)
     }
 }

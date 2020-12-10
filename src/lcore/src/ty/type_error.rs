@@ -1,5 +1,6 @@
 use crate::ty::{Ty, TyVid};
 use ast::Ident;
+use error::LError;
 use ir::{self, Res};
 use thiserror::Error;
 
@@ -35,4 +36,15 @@ pub enum TypeError<'tcx> {
     RequireUnsafeCtx,
     #[error("type annotations required")]
     InferenceFailure,
+}
+
+impl<'tcx> LError for TypeError<'tcx> {
+    fn title(&self) -> &str {
+        match self {
+            TypeError::TupleSizeMismatch(..) | TypeError::Mismatch(..) => "type mismatch",
+            TypeError::InferenceFailure => "inference failure",
+            TypeError::RequireUnsafeCtx => "",
+            _ => "type error",
+        }
+    }
 }

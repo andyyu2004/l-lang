@@ -78,19 +78,22 @@ pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
     simple_logging::log_to_file("l.log", level_filter).unwrap();
 
     let lconfig = config::load_config(opts).unwrap_or_else(|err| panic!("{}", err));
-    dbg!(&lconfig.opts);
 
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
 
-    self::compile(lconfig)
+    // note: this is written in this way so the driver gets dropped
+    // this is important as some types the driver holds have important drop impls
+    // std::process::exit doesn't call drop impls
+    let exit_code = self::compile(lconfig);
+    std::process::exit(exit_code)
 }
 
-pub fn compile(lconfig: LConfig) -> ! {
+pub fn compile(lconfig: LConfig) -> i32 {
     let driver = Driver::new(lconfig);
     match driver.llvm_exec() {
-        Ok(i) => std::process::exit(i),
-        Err(..) => std::process::exit(1),
+        Ok(i) => i,
+        Err(..) => 1,
     }
 }
 

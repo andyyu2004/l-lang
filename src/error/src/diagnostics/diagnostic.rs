@@ -110,10 +110,10 @@ impl Diagnostic {
         let multispan = spans.into();
         Self {
             severity,
-            labelled_spans: Default::default(),
-            notes: Default::default(),
             msg: error.to_string(),
             spans: multispan.spans,
+            labelled_spans: Default::default(),
+            notes: Default::default(),
         }
     }
 
