@@ -144,6 +144,8 @@ impl<'a> Parse<'a> for ExternParser {
     type Output = P<Item>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let abi = parser.expect_str()?;
+        dbg!(abi);
         parser.expect(TokenType::OpenBrace)?;
         let mut foreign_items = vec![];
         let close_brace = loop {

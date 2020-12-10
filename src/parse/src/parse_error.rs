@@ -19,6 +19,14 @@ pub enum ParseError {
     InvalidForeignItem(ItemKind),
     #[error("unresolved module `{0}`\ncreate file at either `{0}/{1}.l` or `{0}/{1}/{1}.l`")]
     UnresolvedModule(PathBuf, Ident),
+    #[error("modules declared as a file cannot have submodules")]
+    FileModuleWithSubmodules(Ident),
+    #[error("expected uppercase identifier, found `{0}`")]
+    ExpectUppercaseIdentifier(Symbol),
+    #[error("expected lowercase identifier, found `{0}`")]
+    ExpectLowercaseIdentifier(Symbol),
+    #[error("expected literal, found `{0}`")]
+    ExpectedLiteral(TokenType),
     #[error("unexpected <eof>")]
     Eof,
     #[error("function signature requires explicit type annotations")]
@@ -35,10 +43,6 @@ pub enum ParseError {
     AmbiguousGenericArgsInExprPath,
     #[error("elided type annotation not allowed here")]
     ElidedTypeNotAllowedInThisContext,
-    #[error("modules declared as a file cannot have submodules")]
-    FileModuleWithSubmodules(Ident),
-    #[error("expected uppercase identifier, found `{0}`")]
-    ExpectUppercaseIdentifier(Symbol),
-    #[error("expected lowercase identifier, found `{0}`")]
-    ExpectLowercaseIdentifier(Symbol),
+    #[error("unterminated string literal")]
+    UnterminatedStringLiteral,
 }

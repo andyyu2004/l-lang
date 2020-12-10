@@ -227,7 +227,6 @@ pub enum TokenType {
     Lifetime {
         starts_with_number: bool,
     },
-
     // One-char tokens:
     /// ";"
     Semi,

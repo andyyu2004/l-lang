@@ -296,13 +296,17 @@ impl<'a> Parser<'a> {
     }
 
     crate fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
-        let Tok { span, ttype } = self.safe_peek().ok()?;
+        self.expect_literal().ok()
+    }
+
+    crate fn expect_literal(&mut self) -> ParseResult<'a, (LiteralKind, Span)> {
+        let Tok { span, ttype } = self.safe_peek()?;
         match ttype {
             TokenType::Literal { kind, .. } => {
                 self.idx += 1;
-                Some((kind, span))
+                Ok((kind, span))
             }
-            _ => None,
+            _ => Err(self.build_err(span, ParseError::ExpectedLiteral(ttype))),
         }
     }
 
@@ -353,6 +357,20 @@ impl<'a> Parser<'a> {
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
         ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
+    }
+
+    crate fn expect_str(&mut self) -> ParseResult<'a, Symbol> {
+        let (kind, span) = self.expect_literal()?;
+        match kind {
+            LiteralKind::Str { terminated } => {
+                if !terminated {
+                    return Err(self.build_err(span, ParseError::UnterminatedStringLiteral));
+                }
+                // the span includes the surrounding quotes, so we just chop them off
+                Ok(span.with_slice(|slice| Symbol::intern_str(&slice[1..slice.len() - 1])))
+            }
+            _ => todo!(),
+        }
     }
 
     crate fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Tok> {

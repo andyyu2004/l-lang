@@ -34,7 +34,7 @@ pub enum ItemKind {
     Enum(Generics, Vec<Variant>),
     /// struct S {}
     Struct(Generics, VariantKind),
-    /// extern "abi" {}
+    /// extern "<abi>" {}
     Extern(Vec<P<ForeignItem>>),
     /// type T = S;
     TypeAlias(Generics, P<Ty>),

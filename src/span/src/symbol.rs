@@ -53,7 +53,7 @@ impl Symbol {
         with_interner(|interner| interner.intern(string))
     }
 
-    pub fn intern(disp: impl Display) -> Self {
+    pub fn intern<D: Display + ?Sized>(disp: &D) -> Self {
         Self::intern_str(&disp.to_string())
     }
 }

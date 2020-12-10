@@ -81,6 +81,10 @@ impl Span {
         with_source_map(|map| with_interner(|interner| interner.intern(map.span_to_slice(self))))
     }
 
+    pub fn with_slice<R>(self, f: impl FnOnce(&str) -> R) -> R {
+        with_source_map(|map| f(map.span_to_slice(self)))
+    }
+
     pub fn is_empty(&self) -> bool {
         self.start() == self.end()
     }

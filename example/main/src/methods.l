@@ -3,7 +3,7 @@ struct S<T, U> {
     u: U,
 }
 
-extern {
+extern "l-intrinsic" {
     fn print(i: int);
 }
 
