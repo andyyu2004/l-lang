@@ -1,0 +1,4 @@
+empty_item_single_line = false
+imports_layout = "Horizontal"
+single_line_if_else_max_width = 100
+width_heuristics = "Max"

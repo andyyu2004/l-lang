@@ -1,6 +1,5 @@
 //! checks match expressions for usefulness and exhaustiveness
 //! "http://moscova.inria.fr/~maranget/papers/warn/warn.pdf"
-#![allow(dead_code)]
 
 use super::{MatchCtxt, PatternError};
 use indexmap::{indexset, IndexSet};
@@ -30,7 +29,9 @@ impl<'p, 'tcx> MatchCtxt<'p, 'tcx> {
             // check usefulness of each arm
             let v = PatternVector::from_pat(self.lower_pattern(&arm.pat));
             if ucx.find_uncovered_pattern(&v).is_none() {
-                self.tcx.sess.emit_warning(arm.span, PatternError::RedundantPattern);
+                self.tcx
+                    .sess
+                    .emit_warning(arm.span, PatternError::RedundantPattern);
             }
             ucx.matrix.push(v);
         }
@@ -39,7 +40,9 @@ impl<'p, 'tcx> MatchCtxt<'p, 'tcx> {
         let wildcard = self.arena.alloc(Pat::new(scrut.ty, PatKind::Wildcard));
         let v = PatternVector::from_pat(wildcard);
         if let Some(witness) = ucx.find_uncovered_pattern(&v) {
-            self.tcx.sess.emit_error(span, PatternError::NonexhaustiveMatch(witness));
+            self.tcx
+                .sess
+                .emit_error(span, PatternError::NonexhaustiveMatch(witness));
         }
     }
 
@@ -132,7 +135,11 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         // base case: no columns
         if v.is_empty() {
             // useful if matrix has no rows; useless otherwise
-            return if matrix.rows.is_empty() { Some(Witness::default()) } else { None };
+            return if matrix.rows.is_empty() {
+                Some(Witness::default())
+            } else {
+                None
+            };
         }
 
         if !matrix.rows.is_empty() {
@@ -141,7 +148,12 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
 
         // algorithm `I` (page 18)
         let pat = v.head_pat();
-        let ctors = self.matrix.head_ctors().map(|(c, _)| c).copied().collect::<IndexSet<_>>();
+        let ctors = self
+            .matrix
+            .head_ctors()
+            .map(|(c, _)| c)
+            .copied()
+            .collect::<IndexSet<_>>();
 
         if self.ctors_are_complete(&ctors, pat.ty) {
             for (ctor, fields) in self.matrix.head_ctors() {
@@ -156,17 +168,26 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
             let witness = Self { matrix, ..*self }.find_uncovered_pattern(&q)?;
             debug_assert_eq!(witness.pats.len(), q.len());
             let witness = if ctors.is_empty() {
-                let wildcard = Pat { ty: pat.ty, kind: PatKind::Wildcard };
+                let wildcard = Pat {
+                    ty: pat.ty,
+                    kind: PatKind::Wildcard,
+                };
                 witness.prepend(wildcard)
             } else {
                 // know this witness exists as it is nonexhaustive
                 // find an arbitrary constructor as an example witness
                 let ctor_witness = self.find_missing_ctor(&ctors, pat.ty).unwrap();
-                let wildcards = self.lcx.arena.alloc_from_iter(
-                    ctor_witness.field_tys.iter().map(|ty| Pat { ty, kind: PatKind::Wildcard }),
-                );
-                let pat =
-                    Pat { ty: pat.ty, kind: PatKind::Ctor(ctor_witness, Fields::new(wildcards)) };
+                let wildcards = self
+                    .lcx
+                    .arena
+                    .alloc_from_iter(ctor_witness.field_tys.iter().map(|ty| Pat {
+                        ty,
+                        kind: PatKind::Wildcard,
+                    }));
+                let pat = Pat {
+                    ty: pat.ty,
+                    kind: PatKind::Ctor(ctor_witness, Fields::new(wildcards)),
+                };
                 witness.prepend(pat)
             };
             debug_assert_eq!(witness.pats.len(), v.len());
@@ -181,8 +202,14 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
         witness: Witness<'p, 'tcx>,
     ) -> Witness<'p, 'tcx> {
         let arity = ctor.arity();
-        let args = self.lcx.arena.alloc_from_iter(witness.pats[..arity].iter().copied());
-        let applied = Pat { kind: PatKind::Ctor(ctor, Fields::new(args)), ty: pat.ty };
+        let args = self
+            .lcx
+            .arena
+            .alloc_from_iter(witness.pats[..arity].iter().copied());
+        let applied = Pat {
+            kind: PatKind::Ctor(ctor, Fields::new(args)),
+            ty: pat.ty,
+        };
         let mut pats = vec![applied];
         pats.extend(witness.pats[arity..].iter().copied());
         debug_assert_eq!(pats.len() + arity - 1, witness.pats.len());
@@ -207,7 +234,11 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     fn find_missing_ctor(&self, ctors: &IndexSet<Ctor<'tcx>>, ty: Ty<'tcx>) -> Option<Ctor<'tcx>> {
         let all_ctors = self.all_ctors_of_ty(ty);
         debug!("{:?} == {:?} = {}", ctors, all_ctors, &all_ctors == ctors);
-        all_ctors.difference(ctors).collect::<IndexSet<_>>().pop().copied()
+        all_ctors
+            .difference(ctors)
+            .collect::<IndexSet<_>>()
+            .pop()
+            .copied()
     }
 
     /// whether `ctors` contains all possible constructors wrt `ty`
@@ -272,8 +303,13 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
                 debug_assert_eq!(qfields.len(), fields.len());
                 fields.pats.to_vec()
             }
-            PatKind::Wildcard =>
-                qfields.into_iter().map(|pat| Pat { ty: pat.ty, kind: PatKind::Wildcard }).collect(),
+            PatKind::Wildcard => qfields
+                .into_iter()
+            .map(|pat| Pat {
+                    ty: pat.ty,
+                    kind: PatKind::Wildcard,
+                })
+                .collect(),
         };
         row.extend_from_slice(&vector[1..]);
         debug_assert_eq!(row.len(), vector.len() + qfields.len() - 1);
@@ -328,7 +364,9 @@ impl<'p, 'tcx> Debug for Matrix<'p, 'tcx> {
 
 impl<'p, 'tcx> FromIterator<PatternVector<'p, 'tcx>> for Matrix<'p, 'tcx> {
     fn from_iter<T: IntoIterator<Item = PatternVector<'p, 'tcx>>>(iter: T) -> Self {
-        Self { rows: iter.into_iter().collect() }
+        Self {
+            rows: iter.into_iter().collect(),
+        }
     }
 }
 
@@ -359,7 +397,7 @@ impl<'p, 'tcx> Debug for PatternVector<'p, 'tcx> {
 
 impl<'p, 'tcx> Fields<'p, 'tcx> {
     pub fn new(pats: &'p [Pat<'p, 'tcx>]) -> Self {
-        Self { pats, _pd: std::marker::PhantomData }
+        Self { pats }
     }
 
     fn empty() -> Self {
@@ -435,8 +473,12 @@ impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
         match self {
             PatKind::Ctor(ctor, fields) => match ctor.kind {
                 CtorKind::Box => write!(f, "&{}", fields),
-                CtorKind::Variant(def_id) =>
-                    write!(f, "{}({})", tls::with_tcx(|tcx| tcx.defs().ident(def_id)), fields),
+                CtorKind::Variant(def_id) => write!(
+                    f,
+                    "{}({})",
+                    tls::with_tcx(|tcx| tcx.defs().ident(def_id)),
+                    fields
+                ),
                 CtorKind::Literal(c) => write!(f, "{}", c),
                 CtorKind::Tuple => write!(f, "({})", fields),
                 CtorKind::NonExhaustive | CtorKind::Struct => todo!(),
@@ -449,7 +491,6 @@ impl<'p, 'tcx> Display for PatKind<'p, 'tcx> {
 #[derive(Clone, Copy)]
 struct Fields<'p, 'tcx> {
     pats: &'p [Pat<'p, 'tcx>],
-    _pd: std::marker::PhantomData<&'tcx ()>,
 }
 
 impl<'p, 'tcx> Display for Fields<'p, 'tcx> {
@@ -539,8 +580,9 @@ impl Debug for CtorKind<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             CtorKind::Box => write!(f, "box"),
-            CtorKind::Variant(def_id) =>
-                write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id))),
+            CtorKind::Variant(def_id) => {
+                write!(f, "{}", tls::with_tcx(|tcx| tcx.defs().ident(*def_id)))
+            }
             CtorKind::Literal(lit) => write!(f, "{}", lit),
             CtorKind::NonExhaustive => write!(f, "nonexhaustive"),
             CtorKind::Tuple => write!(f, "tuple"),
