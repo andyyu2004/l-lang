@@ -29,7 +29,7 @@ pub use ctor::build_variant_ctor;
 pub use lowering_ctx::LoweringCtx;
 
 use ast::Mutability;
-use error::{LError, LResult};
+use error::{ErrorReported, LResult};
 use index::{Idx, IndexVec};
 use ir::{DefId, DefNode, FnVisitor, ItemVisitor};
 use lcore::queries::Queries;
@@ -47,7 +47,7 @@ pub fn provide(queries: &mut Queries) {
 
 macro halt_on_error($tcx:expr) {{
     if $tcx.sess.has_errors() {
-        return Err(LError::ErrorReported);
+        return Err(ErrorReported);
     }
 }}
 

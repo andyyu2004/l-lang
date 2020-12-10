@@ -7,7 +7,7 @@ pub use emitter::*;
 use serde::Deserialize;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 pub enum ErrorFormat {
     Text,
     Json,
@@ -26,7 +26,7 @@ impl FromStr for ErrorFormat {
         match s {
             "text" => Ok(Self::Text),
             "json" => Ok(Self::Json),
-            _ => Err(format!("invalid error format `{}`", s)),
+            _ => Err(format!("invalid error format `{}` (available options are [text, json])", s)),
         }
     }
 }

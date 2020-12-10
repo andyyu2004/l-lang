@@ -1,6 +1,5 @@
-use crate::{Emitter, ErrorFormat, JsonEmitter, LError, LResult, TextEmitter};
+use crate::{Emitter, ErrorFormat, ErrorReported, JsonEmitter, LResult, TextEmitter};
 use codespan_reporting::diagnostic::Severity;
-use serde::Serialize;
 use span::Span;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
@@ -57,7 +56,7 @@ impl Diagnostics {
     }
 
     pub fn check_for_errors(&self) -> LResult<()> {
-        if self.has_errors() { Err(LError::ErrorReported) } else { Ok(()) }
+        if self.has_errors() { Err(ErrorReported) } else { Ok(()) }
     }
 
     pub fn build_error(
@@ -72,9 +71,9 @@ impl Diagnostics {
         DiagnosticBuilder::new(self, Severity::Warning, span, err).emit()
     }
 
-    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> LError {
+    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> ErrorReported {
         self.build_error(span, err).emit();
-        LError::ErrorReported
+        ErrorReported
     }
 }
 

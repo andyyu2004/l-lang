@@ -1,4 +1,4 @@
-//! conversion of `ir::Ty` to `lcore::ty::Ty`
+//! conversion/lowering from `ir::Ty` to `lcore::ty::Ty`
 
 use ir::{DefId, DefKind, QPath, Res};
 use lcore::ty::{FnSig, Generics, Subst, Substs, Ty, TyCtx, TyParam, TypeError};

@@ -30,7 +30,7 @@ use codespan_reporting::diagnostic::Diagnostic;
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
 use config::LConfig;
-use error::{LError, LResult};
+use error::{ErrorFormat, ErrorReported, LResult};
 use index::IndexVec;
 use inkwell::context::Context as LLVMCtx;
 use inkwell::values::FunctionValue;
@@ -78,6 +78,7 @@ pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
     simple_logging::log_to_file("l.log", level_filter).unwrap();
 
     let lconfig = config::load_config(opts).unwrap_or_else(|err| panic!("{}", err));
+    dbg!(&lconfig.opts);
 
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
@@ -107,13 +108,16 @@ pub struct Driver<'tcx> {
 /// exits if any errors have been reported
 macro check_errors($self:expr, $ret:expr) {{
     if $self.sess.has_errors() {
-        let errc = $self.sess.err_count();
-        let warnings = $self.sess.warning_count();
-        if warnings > 0 {
-            e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
+        // don't print out this info for other formats as parsing the error output will become hard
+        if $self.sess.opts.error_format == ErrorFormat::Text {
+            let errc = $self.sess.err_count();
+            let warnings = $self.sess.warning_count();
+            if warnings > 0 {
+                e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
+            }
+            e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
         }
-        e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
-        Err(LError::ErrorReported)
+        Err(ErrorReported)
     } else {
         Ok($ret)
     }

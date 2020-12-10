@@ -3,6 +3,13 @@ use error::{JsonDiagnostic, Severity};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum TestFailure {
+    #[error("expected `{0}` errors, but found `{1}`")]
+    UnexpectedNumberOfErrors(usize, usize),
+}
 
 #[derive(Debug)]
 pub struct Error {
@@ -21,12 +28,54 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
         .collect()
 }
 
+macro_rules! test_assert_eq {
+    ($left:expr, $right:expr $(,)?) => ({
+        match (&$left, &$right) {
+            (left_val, right_val) => {
+                if !(*left_val == *right_val) {
+                    // The reborrows below are intentional. Without them, the stack slot for the
+                    // borrow is initialized even before the values are compared, leading to a
+                    // noticeable slow down.
+                    panic!(r#"assertion failed: `(left == right)`
+  left: `{:?}`,
+ right: `{:?}`"#, &*left_val, &*right_val)
+                }
+            }
+        }
+    });
+    ($left:expr, $right:expr, $($arg:tt)+) => ({
+        match (&($left), &($right)) {
+            (left_val, right_val) => {
+                if !(*left_val == *right_val) {
+                    // The reborrows below are intentional. Without them, the stack slot for the
+                    // borrow is initialized even before the values are compared, leading to a
+                    // noticeable slow down.
+                    panic!(r#"assertion failed: `(left == right)`
+  left: `{:?}`,
+ right: `{:?}`: {}"#, &*left_val, &*right_val,
+                           $crate::format_args!($($arg)+))
+                }
+            }
+        }
+    });
+}
+
 impl TestCtx {
     crate fn compare_expected_errors(&self, expected: &[Error], output: &Output) {
-        let errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
-        dbg!(expected);
-        dbg!(errors);
-        todo!()
+        dbg!(&output.stderr);
+        let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
+        if errors.len() != expected.len() {
+            return self
+                .report_error(TestFailure::UnexpectedNumberOfErrors(expected.len(), errors.len()));
+        }
+
+        errors.sort_unstable_by_key(|err| err.line);
+
+        for (actual, expected) in errors.iter().zip(expected) {
+            test_assert_eq!(actual.line, expected.line_number);
+            test_assert_eq!(actual.severity, expected.severity);
+            test_assert_eq!(actual.msg, expected.msg);
+        }
     }
 }
 

@@ -25,7 +25,7 @@ crate fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
         .unwrap_or_else(|_| panic!("path `{}` does not exist", opts.input_path.display()));
 
     // if `path` is a directory we search it for a `L.toml` file and load the config using that
-    let config = if path.is_dir() {
+    let mut config = if path.is_dir() {
         let toml_path = match load_toml(&path)? {
             Some(toml) => toml,
             None => panic!("`L.toml` not found in `{}`", path.display()),
@@ -37,12 +37,17 @@ crate fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
         let mut main_path = toml_path.clone();
         main_path.pop();
 
-        LConfig { opts, toml, root_path: toml_path.parent().unwrap().to_path_buf() }
+        LConfig {
+            toml,
+            root_path: toml_path.parent().unwrap().to_path_buf(),
+            opts: CompilerOptions::default(),
+        }
     } else {
         // if `path` is a file, we just run that file
         LConfig::from_main_path(path.to_path_buf())
     };
 
+    config.opts = opts;
     config.validate()?;
     Ok(config)
 }
@@ -91,15 +96,15 @@ impl LConfig {
     pub fn from_main_path(main_path: PathBuf) -> Self {
         let mut lcfg = Self {
             opts: CompilerOptions::with_input_path(main_path.clone()),
-            root_path: Default::default(),
             toml: TomlConfig::default(),
+            root_path: PathBuf::default(),
         };
         lcfg.bin.main_path = main_path;
         lcfg
     }
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Default, Deserialize)]
 pub struct TomlConfig {
     pub package: PkgConfig,
     #[serde(default = "Dependencies::default")]
