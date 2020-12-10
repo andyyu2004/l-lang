@@ -28,11 +28,12 @@ fn resolve_instance<'tcx>(
 pub type Instances<'tcx> = FxHashSet<Instance<'tcx>>;
 
 /// a generic definition along with its concrete substitutions
-/// used for monomorphization
+/// represents an `instance` of monomorphization
+/// i.e. a generic function maybe monomorphized/instantiated into multiple instances
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Instance<'tcx> {
-    pub substs: SubstsRef<'tcx>,
     pub def_id: DefId,
+    pub substs: SubstsRef<'tcx>,
     pub kind: InstanceKind,
 }
 

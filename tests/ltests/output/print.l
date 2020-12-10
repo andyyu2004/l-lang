@@ -1,4 +1,4 @@
-extern {
+extern "l-intrinsic" {
     fn print(i: int);
 }
 
