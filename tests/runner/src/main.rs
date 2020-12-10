@@ -122,6 +122,11 @@ impl TestCtx {
     }
 
     fn run_output_test(&mut self, path: &Path) -> io::Result<()> {
+        let output = self.run(path, ErrorFormat::Text)?;
+        let mut stdout_path = path.to_path_buf();
+        assert!(stdout_path.set_extension("stdout"));
+        let expected_stdout = fs::read_to_string(stdout_path).ok().unwrap();
+        self.compare(&output.stdout, &expected_stdout);
         Ok(())
     }
 
@@ -132,7 +137,7 @@ impl TestCtx {
         let mut stderr_path = path.to_path_buf();
         assert!(stderr_path.set_extension("stderr"));
 
-        // if no file, it means there should be not output
+        // if no file, it means there should be no output
         let expected_stdout = fs::read_to_string(stdout_path).ok().unwrap_or_else(String::new);
         let expected_stderr = fs::read_to_string(stderr_path).ok().unwrap_or_else(String::new);
 
