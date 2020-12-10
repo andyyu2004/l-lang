@@ -359,7 +359,23 @@ impl<'a> Parser<'a> {
         ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
     }
 
-    crate fn expect_str(&mut self) -> ParseResult<'a, Symbol> {
+    crate fn parse_abi(&mut self) -> ParseResult<'a, Abi> {
+        let symbol = self.accept_str();
+        let symbol = match symbol {
+            Some(symbol) => symbol,
+            None => return Ok(Abi::L),
+        };
+        match symbol.as_str() {
+            "l-intrinsic" => Ok(Abi::Intrinsic),
+            abi => Err(self.build_err(symbol.span, ParseError::InvalidAbi(abi.to_owned()))),
+        }
+    }
+
+    crate fn accept_str(&mut self) -> Option<Ident> {
+        self.expect_str().ok()
+    }
+
+    crate fn expect_str(&mut self) -> ParseResult<'a, Ident> {
         let (kind, span) = self.expect_literal()?;
         match kind {
             LiteralKind::Str { terminated } => {
@@ -367,7 +383,9 @@ impl<'a> Parser<'a> {
                     return Err(self.build_err(span, ParseError::UnterminatedStringLiteral));
                 }
                 // the span includes the surrounding quotes, so we just chop them off
-                Ok(span.with_slice(|slice| Symbol::intern_str(&slice[1..slice.len() - 1])))
+                let symbol =
+                    span.with_slice(|slice| Symbol::intern_str(&slice[1..slice.len() - 1]));
+                Ok(Ident::new(span, symbol))
             }
             _ => todo!(),
         }

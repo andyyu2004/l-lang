@@ -205,7 +205,8 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
             v.visit_generics(generics);
             v.visit_variant_kind(kind);
         }
-        ir::ItemKind::Extern(items) => items.iter().for_each(|item| v.visit_foreign_item(item)),
+        ir::ItemKind::Extern(_abi, items) =>
+            items.iter().for_each(|item| v.visit_foreign_item(item)),
         // currently, the top level `walk_ir` just walks through the items, impl_items, and
         // trait_items map
         // this doesn't visit things in proper nested order but maybe it is fine?

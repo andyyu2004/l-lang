@@ -117,7 +117,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
                 let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), box body.to_tir(ctx));
                 tir::Item { kind, span, id, ident, vis }
             }
-            ir::ItemKind::Extern(_) => todo!(),
+            ir::ItemKind::Extern(..) => todo!(),
             ir::ItemKind::Use(..)
             | ir::ItemKind::Enum(..)
             | ir::ItemKind::Mod(..)

@@ -1,5 +1,6 @@
 use crate::queries::Queries;
 use crate::ty::{Subst, Substs, SubstsRef, Ty, TyCtx};
+use ast::Abi;
 use ir::DefId;
 use rustc_hash::FxHashSet;
 use std::fmt::{self, Display, Formatter};
@@ -16,7 +17,9 @@ fn resolve_instance<'tcx>(
         // can just treat constructors as normal items
         ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
             Instance::item(def_id, substs),
-        ir::DefNode::ForeignItem(..) => Instance::intrinsic(def_id, substs),
+        ir::DefNode::ForeignItem(item) if item.abi == Abi::Intrinsic =>
+            Instance::intrinsic(def_id, substs),
+        ir::DefNode::ForeignItem(_) => todo!(),
         ir::DefNode::Field(..) | ir::DefNode::Variant(..) | ir::DefNode::TyParam(..) =>
             unreachable!(),
     }

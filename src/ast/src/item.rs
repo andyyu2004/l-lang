@@ -35,7 +35,7 @@ pub enum ItemKind {
     /// struct S {}
     Struct(Generics, VariantKind),
     /// extern "<abi>" {}
-    Extern(Vec<P<ForeignItem>>),
+    Extern(Abi, Vec<P<ForeignItem>>),
     /// type T = S;
     TypeAlias(Generics, P<Ty>),
     /// mod foo;
@@ -131,10 +131,10 @@ impl Display for Item {
                 write!(f, "{} type {}<{}> = {}", self.vis.node, self.ident, generics, ty),
             ItemKind::Enum(_generics, _variants) => todo!(),
             ItemKind::Struct(_generics, _variant_kind) => todo!(),
-            ItemKind::Impl { .. } => todo!(),
-            ItemKind::Extern(_) => todo!(),
+            ItemKind::Extern(..) => todo!(),
             ItemKind::Use(path) => write!(f, "use {}", path),
             ItemKind::Mod(..) => todo!(),
+            ItemKind::Impl { .. } => todo!(),
         }
     }
 }

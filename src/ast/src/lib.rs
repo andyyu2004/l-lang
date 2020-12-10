@@ -81,6 +81,12 @@ pub struct FieldDecl {
     pub ty: P<Ty>,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum Abi {
+    L,
+    Intrinsic,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariantKind {
     Struct(Vec<FieldDecl>),

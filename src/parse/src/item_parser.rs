@@ -144,8 +144,7 @@ impl<'a> Parse<'a> for ExternParser {
     type Output = P<Item>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let abi = parser.expect_str()?;
-        dbg!(abi);
+        let abi = parser.parse_abi()?;
         parser.expect(TokenType::OpenBrace)?;
         let mut foreign_items = vec![];
         let close_brace = loop {
@@ -161,7 +160,7 @@ impl<'a> Parse<'a> for ExternParser {
 
         let span = self.vis.span.merge(close_brace.span);
 
-        let kind = ItemKind::Extern(foreign_items);
+        let kind = ItemKind::Extern(abi, foreign_items);
         Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
     }
 }

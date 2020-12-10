@@ -1,6 +1,6 @@
 use crate::{self as ir, DefId, DefKind};
-use ast::{Ident, Visibility};
-use span::Span;
+use ast::{Abi, Ident, Visibility};
+use span::{Span, Symbol};
 
 #[derive(Debug, Clone)]
 pub struct Item<'ir> {
@@ -40,7 +40,7 @@ pub enum ItemKind<'ir> {
     TypeAlias(&'ir ir::Generics<'ir>, &'ir ir::Ty<'ir>),
     Struct(&'ir ir::Generics<'ir>, ir::VariantKind<'ir>),
     Enum(&'ir ir::Generics<'ir>, &'ir [ir::Variant<'ir>]),
-    Extern(&'ir [ir::ForeignItem<'ir>]),
+    Extern(Abi, &'ir [ir::ForeignItem<'ir>]),
     Mod(ir::Mod<'ir>),
     Impl {
         generics: &'ir ir::Generics<'ir>,
@@ -59,6 +59,7 @@ pub struct Mod<'ir> {
 #[derive(Debug, Clone)]
 pub struct ForeignItem<'ir> {
     pub id: ir::Id,
+    pub abi: Abi,
     pub ident: Ident,
     pub span: Span,
     pub vis: Visibility,

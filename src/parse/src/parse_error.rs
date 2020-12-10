@@ -11,6 +11,8 @@ pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
 pub enum ParseError {
     #[error("expected `{0:?}` found `{}`", .1.ttype)]
     Expected(TokenType, Tok),
+    #[error("invalid abi `{0}`\nvalid abi's include \"l\", \"l-instrinsic")]
+    InvalidAbi(String),
     #[error("expected one of `{0:?}` found `{}`", .1.ttype)]
     ExpectedOneOf(Vec<TokenType>, Tok),
     #[error("invalid impl item kind: {}", .0.descr())]

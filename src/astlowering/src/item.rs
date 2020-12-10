@@ -38,7 +38,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     let kind = lctx.lower_variant_kind(variant_kind);
                     ir::ItemKind::Struct(generics, kind)
                 }
-                ItemKind::Extern(items) => lctx.lower_foreign_mod(items),
+                ItemKind::Extern(abi, items) => lctx.lower_foreign_mod(*abi, items),
                 ItemKind::TypeAlias(generics, ty) => {
                     let generics = lctx.lower_generics(generics);
                     let ty = lctx.lower_ty(ty);
@@ -72,17 +72,21 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.resolver.def_node(def_id, node.into());
     }
 
-    fn lower_foreign_mod(&mut self, items: &[P<ForeignItem>]) -> ir::ItemKind<'ir> {
-        let foreign_items = self.lower_foreign_items(items);
+    fn lower_foreign_mod(&mut self, abi: Abi, items: &[P<ForeignItem>]) -> ir::ItemKind<'ir> {
+        let foreign_items = self.lower_foreign_items(abi, items);
         foreign_items.iter().for_each(|item| self.def_node(item.id.def, item));
-        ir::ItemKind::Extern(foreign_items)
+        ir::ItemKind::Extern(abi, foreign_items)
     }
 
-    fn lower_foreign_items(&mut self, items: &[P<ForeignItem>]) -> &'ir [ir::ForeignItem<'ir>] {
-        self.arena.alloc_from_iter(items.iter().map(|item| self.lower_foreign_item(item)))
+    fn lower_foreign_items(
+        &mut self,
+        abi: Abi,
+        items: &[P<ForeignItem>],
+    ) -> &'ir [ir::ForeignItem<'ir>] {
+        self.arena.alloc_from_iter(items.iter().map(|item| self.lower_foreign_item(abi, item)))
     }
 
-    fn lower_foreign_item(&mut self, item: &ForeignItem) -> ir::ForeignItem<'ir> {
+    fn lower_foreign_item(&mut self, abi: Abi, item: &ForeignItem) -> ir::ForeignItem<'ir> {
         let &ForeignItem { span, id, vis, ident, ref kind } = item;
         self.with_def_id(id, |lctx| {
             let id = lctx.lower_node_id(id);
@@ -90,7 +94,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ForeignItemKind::Fn(sig, generics) =>
                     ir::ForeignItemKind::Fn(lctx.lower_fn_sig(sig), lctx.lower_generics(generics)),
             };
-            ir::ForeignItem { id, ident, span, vis, kind }
+            ir::ForeignItem { id, abi, ident, span, vis, kind }
         })
     }
 
