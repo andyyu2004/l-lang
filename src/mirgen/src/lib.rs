@@ -69,6 +69,7 @@ fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx Mir<'tcx> {
         DefNode::ImplItem(item) => match item.kind {
             ir::ImplItemKind::Fn(_, body) => self::build_mir(tcx, def_id, body),
         },
+        DefNode::TraitItem(_) => todo!(),
         DefNode::Field(..)
         | DefNode::ForeignItem(..)
         | DefNode::Variant(..)
@@ -110,8 +111,10 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
             // note that no tir is generated for enum constructors
             // the constructor code is generated at mir level only
             ir::ItemKind::TypeAlias(..) | ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => {}
-            ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Impl { .. } =>
-                unreachable!(),
+            ir::ItemKind::Mod(..)
+            | ir::ItemKind::Use(..)
+            | ir::ItemKind::Trait { .. }
+            | ir::ItemKind::Impl { .. } => unreachable!(),
         }
     }
     halt_on_error!(tcx);

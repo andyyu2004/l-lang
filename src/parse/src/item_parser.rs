@@ -184,7 +184,7 @@ impl<'a> Parse<'a> for TraitParser {
             .into_iter()
             .filter_map(|item| {
                 let Item { span, id, vis, ident, .. } = *item;
-                match TraitItemKind::try_from(item.kind) {
+                match AssocItemKind::try_from(item.kind) {
                     Ok(kind) => Some(box Item { span, id, vis, ident, kind }),
                     Err(kind) => {
                         parser.build_err(span, ParseError::InvalidTraitItem(kind)).emit();

@@ -106,11 +106,28 @@ pub trait Visitor<'ir>: Sized {
     fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
         walk_impl_item(self, impl_item);
     }
+
+    fn visit_trait_item(&mut self, trait_item: &'ir ir::TraitItem<'ir>) {
+        walk_trait_item(self, trait_item);
+    }
 }
 
 pub fn walk_ir<'ir>(v: &mut impl Visitor<'ir>, ir: &'ir ir::Ir<'ir>) {
     ir.items.values().for_each(|item| v.visit_item(item));
     ir.impl_items.values().for_each(|impl_item| v.visit_impl_item(impl_item));
+    ir.trait_items.values().for_each(|trait_item| v.visit_trait_item(trait_item));
+}
+
+pub fn walk_trait_item<'ir>(v: &mut impl Visitor<'ir>, trait_item: &'ir ir::TraitItem<'ir>) {
+    v.visit_id(trait_item.id);
+    v.visit_ident(trait_item.ident);
+    v.visit_vis(trait_item.vis);
+    match trait_item.kind {
+        ir::TraitItemKind::Fn(sig, body) => {
+            v.visit_fn_sig(sig);
+            body.iter().for_each(|body| v.visit_body(body));
+        }
+    }
 }
 
 pub fn walk_impl_item<'ir>(v: &mut impl Visitor<'ir>, impl_item: &'ir ir::ImplItem<'ir>) {
@@ -210,12 +227,13 @@ pub fn walk_item<'ir, V: Visitor<'ir>>(v: &mut V, item: &'ir ir::Item<'ir>) {
         // currently, the top level `walk_ir` just walks through the items, impl_items, and
         // trait_items map
         // this doesn't visit things in proper nested order but maybe it is fine?
-        // this is why modules and impls don't recursively walk
+        // this is why modules, traits, and impls don't need to recursively walk
         ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs: _ } => {
             v.visit_generics(generics);
             trait_path.iter().for_each(|path| v.visit_path(path));
             v.visit_ty(self_ty);
         }
+        ir::ItemKind::Trait { generics, trait_item_refs: _ } => v.visit_generics(generics),
         ir::ItemKind::Mod(..) => {}
     }
 }

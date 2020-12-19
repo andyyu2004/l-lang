@@ -1,4 +1,3 @@
-//! conversion/lowering from `ir::Ty` to `lcore::ty::Ty`
 //! each conversion is parameterized by an instance of `TyConv`
 //! there are two primary lowering contexts `TyCtx` and `InferCtx`
 //! `InferCtx` allows inference variables, one does not
@@ -22,7 +21,6 @@ pub trait TyConv<'tcx> {
     fn ir_ty_to_ty(&self, ir_ty: &ir::Ty<'tcx>) -> Ty<'tcx> {
         let tcx = self.tcx();
         match &ir_ty.kind {
-            ir::TyKind::Err => tcx.mk_ty_err(),
             ir::TyKind::Box(ty) => tcx.mk_box_ty(self.ir_ty_to_ty(ty)),
             ir::TyKind::Fn(params, ret) => tcx.mk_fn_ptr(FnSig {
                 params: tcx.mk_substs(params.iter().map(|ty| self.ir_ty_to_ty(ty))),
@@ -36,6 +34,7 @@ pub trait TyConv<'tcx> {
                 todo!();
             }
             ir::TyKind::Infer => self.infer_ty(ir_ty.span),
+            ir::TyKind::Err => tcx.mk_ty_err(),
         }
     }
 

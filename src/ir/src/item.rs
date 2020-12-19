@@ -23,11 +23,12 @@ impl<'ir> Item<'ir> {
 impl<'ir> Item<'ir> {
     pub fn generics(&self) -> Option<&'ir ir::Generics<'ir>> {
         match self.kind {
-            ItemKind::Impl { generics: g, .. }
-            | ItemKind::Fn(_, g, _)
-            | ItemKind::Struct(g, _)
-            | ItemKind::TypeAlias(g, _)
-            | ItemKind::Enum(g, _) => Some(g),
+            ItemKind::Impl { generics, .. }
+            | ItemKind::Trait { generics, .. }
+            | ItemKind::Fn(_, generics, _)
+            | ItemKind::Struct(generics, _)
+            | ItemKind::TypeAlias(generics, _)
+            | ItemKind::Enum(generics, _) => Some(generics),
             ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) => None,
         }
     }
@@ -42,6 +43,10 @@ pub enum ItemKind<'ir> {
     Enum(&'ir ir::Generics<'ir>, &'ir [ir::Variant<'ir>]),
     Extern(Abi, &'ir [ir::ForeignItem<'ir>]),
     Mod(ir::Mod<'ir>),
+    Trait {
+        generics: &'ir ir::Generics<'ir>,
+        trait_item_refs: &'ir [ir::TraitItemRef],
+    },
     Impl {
         generics: &'ir ir::Generics<'ir>,
         trait_path: Option<&'ir ir::Path<'ir>>,
@@ -73,7 +78,12 @@ pub enum ForeignItemKind<'ir> {
 
 #[derive(Debug)]
 pub struct TraitItem<'ir> {
+    pub id: ir::Id,
+    pub ident: Ident,
+    pub span: Span,
+    pub vis: Visibility,
     pub generics: &'ir ir::Generics<'ir>,
+    pub kind: TraitItemKind<'ir>,
 }
 
 #[derive(Debug, Clone)]
@@ -100,8 +110,14 @@ impl<'ir> ImplItemKind<'ir> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum TraitItemKind<'ir> {
     Fn(&'ir ir::FnSig<'ir>, Option<&'ir ir::Body<'ir>>),
+}
+
+#[derive(Debug, Clone)]
+pub struct TraitItemRef {
+    pub id: ir::TraitItemId,
 }
 
 #[derive(Debug, Clone)]

@@ -17,6 +17,7 @@ fn resolve_instance<'tcx>(
         // can just treat constructors as normal items
         ir::DefNode::Item(..) | ir::DefNode::ImplItem(..) | ir::DefNode::Ctor(..) =>
             Instance::item(def_id, substs),
+        ir::DefNode::TraitItem(..) => todo!(),
         ir::DefNode::ForeignItem(item) if item.abi == Abi::Intrinsic =>
             Instance::intrinsic(def_id, substs),
         ir::DefNode::ForeignItem(_) => todo!(),

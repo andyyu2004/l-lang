@@ -123,6 +123,7 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
             | ir::ItemKind::Mod(..)
             | ir::ItemKind::Struct(..)
             | ir::ItemKind::TypeAlias(..)
+            | ir::ItemKind::Trait { .. }
             | ir::ItemKind::Impl { .. } => unreachable!(),
         }
     }

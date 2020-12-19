@@ -5,7 +5,7 @@ pub struct Validator<'ir> {
     curr_def_id: Option<DefId>,
 }
 
-// refer to `resolve/src/def_collector.rs` to see what creates a new def_id
+// refer to `resolve/src/def_collector.rs` to see what creates a new `def_id`
 impl<'ir> Validator<'ir> {
     pub fn new() -> Self {
         Self { curr_def_id: None, pd: std::marker::PhantomData }
@@ -27,6 +27,10 @@ impl<'ir> Visitor<'ir> for Validator<'ir> {
 
     fn visit_impl_item(&mut self, impl_item: &'ir ir::ImplItem<'ir>) {
         self.with_def_id(impl_item.id.def, |this| ir::walk_impl_item(this, impl_item))
+    }
+
+    fn visit_trait_item(&mut self, trait_item: &'ir ir::TraitItem<'ir>) {
+        self.with_def_id(trait_item.id.def, |this| ir::walk_trait_item(this, trait_item))
     }
 
     fn visit_foreign_item(&mut self, foreign_item: &'ir ir::ForeignItem<'ir>) {

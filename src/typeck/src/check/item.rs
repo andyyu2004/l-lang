@@ -16,13 +16,15 @@ fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
             ir::ItemKind::Impl { .. } => {}
             ir::ItemKind::TypeAlias(..) => {}
             ir::ItemKind::Mod(..) => {}
+            ir::ItemKind::Trait { .. } => {}
         },
-        ir::DefNode::ImplItem(_) => {}
-        ir::DefNode::ForeignItem(_) => {}
-        ir::DefNode::Ctor(_) => {}
-        ir::DefNode::Field(_) => {}
-        ir::DefNode::Variant(_) => {}
-        ir::DefNode::TyParam(_) => {}
+        ir::DefNode::ImplItem(..) => {}
+        ir::DefNode::TraitItem(..) => {}
+        ir::DefNode::ForeignItem(..) => {}
+        ir::DefNode::Ctor(..) => {}
+        ir::DefNode::Field(..) => {}
+        ir::DefNode::Variant(..) => {}
+        ir::DefNode::TyParam(..) => {}
     }
 }
 

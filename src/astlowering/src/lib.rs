@@ -105,7 +105,9 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     fn lower_generics(&mut self, generics: &Generics) -> &'ir ir::Generics<'ir> {
         let &Generics { span, ref params } = generics;
         let params = self.arena.alloc_from_iter(params.iter().map(|p| self.lower_ty_param(p)));
-        params.iter().for_each(|ty_param| self.resolver.def_node(ty_param.id.def, ty_param.into()));
+        params
+            .iter()
+            .for_each(|ty_param| self.resolver.mk_def_node(ty_param.id.def, ty_param.into()));
         self.arena.alloc(ir::Generics { span, params })
     }
 

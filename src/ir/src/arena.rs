@@ -26,6 +26,7 @@ macro_rules! arena_types {
             [] path_segments: ir::PathSegment<$tcx>,
             [] stmts: ir::Stmt<$tcx>,
             [] trait_item: ir::TraitItem<$tcx>,
+            [] trait_item_refs: ir::TraitItemRef,
             [] ty_param: ir::TyParam<$tcx>,
             [] tys: ir::Ty<$tcx>,
             [] variants: ir::Variant<$tcx>,

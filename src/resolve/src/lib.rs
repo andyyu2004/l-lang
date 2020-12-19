@@ -115,8 +115,8 @@ impl<'a> Resolver<'a> {
         def_id
     }
 
-    pub fn def_node(&mut self, def_id: DefId, node: ir::DefNode<'a>) {
-        self.defs.def_node(def_id, node)
+    pub fn mk_def_node(&mut self, def_id: DefId, node: ir::DefNode<'a>) {
+        self.defs.mk_def_node(def_id, node)
     }
 
     pub fn build_error(&self, span: Span, err: impl Error) -> DiagnosticBuilder<'a> {

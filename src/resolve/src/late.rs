@@ -90,16 +90,18 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Fn(_, g, _) | ItemKind::TypeAlias(g, _) =>
                 self.with_generics(g, |r| ast::walk_item(r, item)),
             ItemKind::Enum(g, _) | ItemKind::Struct(g, _) => self.resolve_adt(g, item),
-            ItemKind::Impl { generics, trait_path, self_ty, items } =>
-                self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Extern(..) => ast::walk_item(self, item),
             ItemKind::Mod(module) =>
                 self.with_module(item.ident, |this| ast::walk_module(this, module)),
             ItemKind::Use(..) => {}
+            ItemKind::Impl { generics, trait_path, self_ty, items } =>
+                self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Trait { generics, items } => self.with_generics(generics, |r| {
-                for item in items {
-                    ast::walk_trait_item(r, item);
-                }
+                r.with_self(item.id, |r| {
+                    for item in items {
+                        ast::walk_assoc_item(r, item);
+                    }
+                })
             }),
         }
     }
@@ -111,6 +113,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
+    /// introduces `Self` in both type and value namespace
     fn with_self<R>(&mut self, impl_id: NodeId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.with_self_ty(impl_id, |this| this.with_self_val(impl_id, f))
     }

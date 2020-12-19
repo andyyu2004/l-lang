@@ -10,9 +10,11 @@ use std::fmt::{self, Display, Formatter};
 pub enum Res<Id = ir::Id> {
     Err,
     Def(DefId, DefKind),
+
     // type namespace
     PrimTy(ir::PrimTy),
     SelfTy { impl_def: DefId },
+
     // value namespace
     Local(Id),
     SelfVal { impl_def: DefId },
@@ -190,6 +192,7 @@ impl<Id> Res<Id> {
 pub enum DefNode<'ir> {
     Item(&'ir ir::Item<'ir>),
     ImplItem(&'ir ir::ImplItem<'ir>),
+    TraitItem(&'ir ir::TraitItem<'ir>),
     ForeignItem(&'ir ir::ForeignItem<'ir>),
     /// the node is considered a ctor iff it is a tuple variant
     Ctor(&'ir ir::Variant<'ir>),
@@ -203,6 +206,7 @@ impl<'ir> DefNode<'ir> {
         match self {
             DefNode::Item(..) => "item",
             DefNode::ImplItem(..) => "impl item",
+            DefNode::TraitItem(..) => "trait item",
             DefNode::ForeignItem(..) => "foreign item",
             DefNode::Ctor(..) => "constructor",
             DefNode::Variant(..) => "variant",
@@ -212,42 +216,23 @@ impl<'ir> DefNode<'ir> {
     }
 }
 
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::Item<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        DefNode::Item(self)
-    }
+macro_rules! into_def_node {
+    ($variant:ident,$ty:ty) => {
+        impl<'ir> Into<DefNode<'ir>> for $ty {
+            fn into(self) -> DefNode<'ir> {
+                DefNode::$variant(self)
+            }
+        }
+    };
 }
 
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::FieldDecl<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        DefNode::Field(self)
-    }
-}
-
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::TyParam<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        DefNode::TyParam(self)
-    }
-}
-
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::ImplItem<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        DefNode::ImplItem(self)
-    }
-}
-
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::ForeignItem<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        DefNode::ForeignItem(self)
-    }
-}
-
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::Variant<'ir> {
-    fn into(self) -> DefNode<'ir> {
-        // the variant can either become a constructor or a variant node depending on its kind
-        if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
-    }
-}
+into_def_node!(Item, &'ir ir::Item<'ir>);
+into_def_node!(ImplItem, &'ir ir::ImplItem<'ir>);
+into_def_node!(TraitItem, &'ir ir::TraitItem<'ir>);
+into_def_node!(ForeignItem, &'ir ir::ForeignItem<'ir>);
+into_def_node!(Field, &'ir ir::FieldDecl<'ir>);
+into_def_node!(TyParam, &'ir ir::TyParam<'ir>);
+into_def_node!(Variant, &'ir ir::Variant<'ir>);
 
 #[derive(Default, Debug)]
 pub struct Definitions<'a> {
@@ -260,7 +245,7 @@ pub struct Definitions<'a> {
 
 impl<'a> Definitions<'a> {
     /// adds def mapping from `def_id` to `node`
-    pub fn def_node(&mut self, def_id: DefId, node: DefNode<'a>) {
+    pub fn mk_def_node(&mut self, def_id: DefId, node: DefNode<'a>) {
         assert!(self.def_map.insert(def_id, node).is_none());
     }
 

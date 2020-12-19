@@ -64,7 +64,7 @@ impl<'ast, 'r> Visitor<'ast> for DefCollector<'ast, 'r> {
 
     fn visit_assoc_item(&mut self, item: &'ast AssocItem) {
         // we allocate a `DefId` for these items,
-        // but we do not insert them into the module as are accessed
+        // but we do not insert them into the module as these are accessed
         // in a type relative path
         self.resolver.define(item.id);
         ast::walk_assoc_item(self, item);

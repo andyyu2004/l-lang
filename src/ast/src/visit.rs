@@ -53,10 +53,6 @@ pub trait Visitor<'ast>: Sized {
         walk_let(self, l);
     }
 
-    fn visit_trait_item(&mut self, item: &'ast TraitItem) {
-        walk_trait_item(self, item);
-    }
-
     fn visit_expr(&mut self, expr: &'ast Expr) {
         walk_expr(self, expr)
     }
@@ -131,12 +127,15 @@ pub fn walk_fn_sig<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig) {
     sig.ret_ty.iter().for_each(|ty| visitor.visit_ty(ty));
 }
 
-pub fn walk_trait_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast TraitItem) {
-    match &item.kind {
-        TraitItemKind::Fn(sig, generics, body) => {
-            visitor.visit_fn_sig(sig);
+pub fn walk_assoc_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast AssocItem) {
+    let Item { vis, ident, kind, id, .. } = &item;
+    visitor.visit_id(*id);
+    visitor.visit_vis(vis);
+    visitor.visit_ident(*ident);
+    match kind {
+        AssocItemKind::Fn(sig, generics, body) => {
             visitor.visit_generics(generics);
-            body.iter().for_each(|body| visitor.visit_expr(body));
+            visitor.visit_fn(sig, body.as_deref());
         }
     }
 }
@@ -338,19 +337,6 @@ pub fn walk_variant_kind<'ast>(visitor: &mut impl Visitor<'ast>, kind: &'ast Var
     }
 }
 
-pub fn walk_assoc_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast AssocItem) {
-    let Item { vis, ident, kind, id, .. } = &item;
-    visitor.visit_id(*id);
-    visitor.visit_vis(vis);
-    visitor.visit_ident(*ident);
-    match kind {
-        AssocItemKind::Fn(sig, generics, body) => {
-            visitor.visit_generics(generics);
-            visitor.visit_fn(sig, body.as_deref());
-        }
-    }
-}
-
 pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
     let Item { vis, ident, kind, id, .. } = &item;
     visitor.visit_id(*id);
@@ -373,19 +359,19 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             visitor.visit_variant_kind(variant_kind);
         }
-        ItemKind::Impl { generics, trait_path, self_ty, items } => {
-            visitor.visit_generics(generics);
-            trait_path.iter().for_each(|path| visitor.visit_path(path));
-            visitor.visit_ty(self_ty);
-            items.iter().for_each(|item| visitor.visit_assoc_item(item));
-        }
         ItemKind::Extern(_abi, items) =>
             items.iter().for_each(|item| visitor.visit_foreign_item(item)),
         ItemKind::Use(path) => visitor.visit_path(path),
         ItemKind::Mod(module) => visitor.visit_module(module),
         ItemKind::Trait { generics, items } => {
             visitor.visit_generics(generics);
-            items.iter().for_each(|item| visitor.visit_trait_item(item));
+            items.iter().for_each(|item| visitor.visit_assoc_item(item));
+        }
+        ItemKind::Impl { generics, trait_path, self_ty, items } => {
+            visitor.visit_generics(generics);
+            trait_path.iter().for_each(|path| visitor.visit_path(path));
+            visitor.visit_ty(self_ty);
+            items.iter().for_each(|item| visitor.visit_assoc_item(item));
         }
     }
 }

@@ -31,7 +31,8 @@ impl<'tcx> DefMap<'tcx> {
     pub fn span(&self, def_id: DefId) -> Span {
         match self.get(def_id) {
             DefNode::Item(item) => item.span,
-            DefNode::ImplItem(_) => todo!(),
+            DefNode::ImplItem(item) => item.span,
+            DefNode::TraitItem(item) => item.span,
             DefNode::ForeignItem(item) => item.span,
             DefNode::Ctor(variant) | DefNode::Variant(variant) => variant.span,
             DefNode::TyParam(param) => param.span,
@@ -47,6 +48,9 @@ impl<'tcx> DefMap<'tcx> {
             },
             DefNode::ImplItem(impl_item) => match impl_item.kind {
                 ir::ImplItemKind::Fn(_, body) => body,
+            },
+            DefNode::TraitItem(trait_item) => match trait_item.kind {
+                ir::TraitItemKind::Fn(_, body) => body.unwrap(),
             },
             DefNode::ForeignItem(..)
             | DefNode::Ctor(..)
@@ -64,16 +68,18 @@ impl<'tcx> DefMap<'tcx> {
                 | ir::ItemKind::Enum(generics, _)
                 | ir::ItemKind::TypeAlias(generics, _)
                 | ir::ItemKind::Struct(generics, _)
+                | ir::ItemKind::Trait { generics, .. }
                 | ir::ItemKind::Impl { generics, .. } => generics,
                 ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Extern(..) =>
                     panic!(),
             },
+            DefNode::ImplItem(impl_item) => impl_item.generics,
+            DefNode::TraitItem(trait_item) => trait_item.generics,
             DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
                 ir::ForeignItemKind::Fn(_, generics) => generics,
             },
             // these inherit the generics of their parents
             DefNode::Ctor(variant) | DefNode::Variant(variant) => self.generics(variant.adt_def_id),
-            DefNode::ImplItem(impl_item) => impl_item.generics,
             DefNode::Field(..) | DefNode::TyParam(..) =>
                 panic!("def node has no generics: {}", node.descr()),
         }
@@ -84,6 +90,7 @@ impl<'tcx> DefMap<'tcx> {
             DefNode::TyParam(param) => param.ident,
             DefNode::Item(item) => item.ident,
             DefNode::ImplItem(impl_item) => impl_item.ident,
+            DefNode::TraitItem(trait_item) => trait_item.ident,
             DefNode::ForeignItem(foreign_item) => foreign_item.ident,
             DefNode::Ctor(variant) | DefNode::Variant(variant) => {
                 let adt_ident = self.ident(variant.adt_def_id);

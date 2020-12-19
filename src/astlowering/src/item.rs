@@ -48,10 +48,15 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
                 ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
-                ItemKind::Trait { generics, items } => todo!(),
+                ItemKind::Trait { generics, items } => ir::ItemKind::Trait {
+                    generics: lctx.lower_generics(generics),
+                    trait_item_refs: lctx
+                        .arena
+                        .alloc_from_iter(items.iter().map(|item| lctx.lower_trait_item_ref(item))),
+                },
             };
             let item = lctx.alloc(ir::Item { span, id, vis, ident, kind });
-            lctx.def_node(id.def, item);
+            lctx.mk_def_node(id.def, item);
             lctx.items.insert(id.def, item);
         });
     }
@@ -66,16 +71,16 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     /// inserts DefId -> DefNode mapping into the `DefMap`
     /// returns the same T for convenience
-    crate fn def_node<T>(&mut self, def_id: DefId, node: T)
+    crate fn mk_def_node<T>(&mut self, def_id: DefId, node: T)
     where
         T: Into<DefNode<'ir>>,
     {
-        self.resolver.def_node(def_id, node.into());
+        self.resolver.mk_def_node(def_id, node.into());
     }
 
     fn lower_foreign_mod(&mut self, abi: Abi, items: &[P<ForeignItem>]) -> ir::ItemKind<'ir> {
         let foreign_items = self.lower_foreign_items(abi, items);
-        foreign_items.iter().for_each(|item| self.def_node(item.id.def, item));
+        foreign_items.iter().for_each(|item| self.mk_def_node(item.id.def, item));
         ir::ItemKind::Extern(abi, foreign_items)
     }
 
@@ -115,6 +120,33 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         ir::ItemKind::Impl { generics, trait_path, self_ty, impl_item_refs }
     }
 
+    fn lower_trait_item_ref(&mut self, trait_item: &TraitItem) -> ir::TraitItemRef {
+        self.with_def_id(trait_item.id, |lctx| {
+            let item = lctx.lower_trait_item(trait_item);
+            let id = ir::TraitItemId(item.id.def);
+            lctx.trait_items.insert(id, item);
+            ir::TraitItemRef { id }
+        })
+    }
+
+    fn lower_trait_item(&mut self, trait_item: &TraitItem) -> &'ir ir::TraitItem<'ir> {
+        let &TraitItem { id, ident, vis, span, ref kind } = trait_item;
+        let id = self.lower_node_id(id);
+        let (generics, kind) = match kind {
+            AssocItemKind::Fn(sig, generics, body) => (
+                generics,
+                ir::TraitItemKind::Fn(
+                    self.lower_fn_sig(sig),
+                    body.as_ref().map(|body| self.lower_body(sig, body)),
+                ),
+            ),
+        };
+        let generics = self.lower_generics(generics);
+        let trait_item = self.alloc(ir::TraitItem { id, ident, vis, span, generics, kind });
+        self.mk_def_node(id.def, trait_item);
+        trait_item
+    }
+
     fn lower_impl_item_ref(&mut self, impl_item: &AssocItem) -> ir::ImplItemRef {
         self.with_def_id(impl_item.id, |lctx| {
             let item = lctx.lower_impl_item(impl_item);
@@ -139,7 +171,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let impl_def_id = self.parent_def_id(id);
         let impl_item =
             self.alloc(ir::ImplItem { id, impl_def_id, ident, span, vis, generics, kind });
-        self.def_node(id.def, impl_item);
+        self.mk_def_node(id.def, impl_item);
         impl_item
     }
 
@@ -147,7 +179,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         let variants = self
             .arena
             .alloc_from_iter(variants.iter().enumerate().map(|(i, v)| self.lower_variant(i, v)));
-        variants.iter().for_each(|variant| self.def_node(variant.id.def, variant));
+        variants.iter().for_each(|variant| self.mk_def_node(variant.id.def, variant));
         variants
     }
 
@@ -170,7 +202,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
     fn lower_field_decls(&mut self, fields: &[FieldDecl]) -> &'ir [ir::FieldDecl<'ir>] {
         let fields =
             self.arena.alloc_from_iter(fields.iter().enumerate().map(|f| self.lower_field_decl(f)));
-        fields.iter().for_each(|field| self.def_node(field.id.def, field));
+        fields.iter().for_each(|field| self.mk_def_node(field.id.def, field));
         fields
     }
 

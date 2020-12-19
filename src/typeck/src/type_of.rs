@@ -16,12 +16,16 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
             ir::ItemKind::TypeAlias(_, ty) => tcx.ir_ty_to_ty(ty),
+            ir::ItemKind::Trait { generics, trait_item_refs } => todo!(),
             ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Extern(..) => panic!(),
         },
         ir::DefNode::Ctor(variant) | ir::DefNode::Variant(variant) =>
             self::type_of_variant(tcx, variant),
         ir::DefNode::ImplItem(item) => match item.kind {
             ir::ImplItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),
+        },
+        ir::DefNode::TraitItem(item) => match item.kind {
+            ir::TraitItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),
         },
         ir::DefNode::ForeignItem(item) => match item.kind {
             ir::ForeignItemKind::Fn(..) => tcx.mk_fn_ptr(tcx.fn_sig(def_id)),

@@ -85,29 +85,6 @@ impl ItemKind {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum TraitItemKind {
-    Fn(FnSig, Generics, Option<P<Expr>>),
-}
-
-impl TryFrom<ItemKind> for TraitItemKind {
-    type Error = ItemKind;
-
-    fn try_from(kind: ItemKind) -> Result<Self, Self::Error> {
-        match kind {
-            ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
-            ItemKind::TypeAlias(..) => todo!("associated types"),
-            ItemKind::Use(..)
-            | ItemKind::Mod(..)
-            | ItemKind::Extern(..)
-            | ItemKind::Enum(..)
-            | ItemKind::Struct(..)
-            | ItemKind::Trait { .. }
-            | ItemKind::Impl { .. } => Err(kind),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub enum AssocItemKind {
     Fn(FnSig, Generics, Option<P<Expr>>),
 }
@@ -131,7 +108,10 @@ impl TryFrom<ItemKind> for AssocItemKind {
 }
 
 pub type AssocItem = Item<AssocItemKind>;
-pub type TraitItem = Item<TraitItemKind>;
+// we can use identical representation for trait item currently
+// as the valid impl items kinds are the same as trait items
+// associated types, constants, and functions
+pub type TraitItem = AssocItem;
 pub type ForeignItem = Item<ForeignItemKind>;
 
 #[derive(Debug, PartialEq, Clone)]

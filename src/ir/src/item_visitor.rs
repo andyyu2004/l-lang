@@ -13,6 +13,23 @@ pub trait ItemVisitor<'ir> {
     }
 }
 
+impl<'ir, V> Visitor<'ir> for V
+where
+    V: ItemVisitor<'ir>,
+{
+    fn visit_item(&mut self, item: &'ir Item<'ir>) {
+        ItemVisitor::visit_item(self, item)
+    }
+
+    fn visit_impl_item(&mut self, impl_item: &'ir ImplItem<'ir>) {
+        ItemVisitor::visit_impl_item(self, impl_item)
+    }
+
+    fn visit_trait_item(&mut self, trait_item: &'ir TraitItem<'ir>) {
+        ItemVisitor::visit_trait_item(self, trait_item)
+    }
+}
+
 /// visits the DefId of all (non-foreign) function items
 /// this includes all the things that have the following properties:
 /// - has corresponding mir/body
@@ -34,7 +51,8 @@ where
             | ir::ItemKind::Enum(..)
             | ir::ItemKind::Mod(..)
             | ir::ItemKind::Struct(..)
-            | ir::ItemKind::Impl { .. } => {}
+            | ir::ItemKind::Trait { .. }
+            | ir::ItemKind::Impl { .. } => ir::walk_item(self, item),
         }
     }
 
@@ -44,7 +62,11 @@ where
         }
     }
 
-    fn visit_trait_item(&mut self, _trait_item: &'ir ir::TraitItem<'ir>) {
-        todo!()
+    fn visit_trait_item(&mut self, trait_item: &'ir ir::TraitItem<'ir>) {
+        match trait_item.kind {
+            // only visit as a function if it has a body
+            ir::TraitItemKind::Fn(_, Some(_)) => self.visit_fn(trait_item.id.def),
+            ir::TraitItemKind::Fn(_, None) => {}
+        }
     }
 }
