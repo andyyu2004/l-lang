@@ -35,6 +35,10 @@ pub trait Parse<'a>: Sized {
     type Output;
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output>;
 
+    fn many(self) -> ManyParser<Self> {
+        ManyParser { inner: self }
+    }
+
     fn or<P>(self, other: P) -> OrParser<Self, P>
     where
         P: Parse<'a, Output = Self::Output>,
@@ -48,6 +52,22 @@ pub trait Parse<'a>: Sized {
 
     fn spanned(self, include_prev: bool) -> SpannedParser<Self> {
         SpannedParser { inner: self, include_prev }
+    }
+}
+
+pub struct ManyParser<P> {
+    inner: P,
+}
+
+impl<'a, P: Parse<'a>> Parse<'a> for ManyParser<P> {
+    type Output = Vec<P::Output>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let mut vec = vec![];
+        while let Ok(x) = self.inner.parse(parser) {
+            vec.push(x);
+        }
+        Ok(vec)
     }
 }
 

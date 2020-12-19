@@ -88,6 +88,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                 | DefKind::TypeAlias
                 | DefKind::AssocFn
                 | DefKind::Enum
+                | DefKind::Trait
                 | DefKind::Struct => {}
             }
         };

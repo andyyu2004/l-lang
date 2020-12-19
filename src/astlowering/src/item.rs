@@ -48,6 +48,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
                 ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
+                ItemKind::Trait { generics, items } => todo!(),
             };
             let item = lctx.alloc(ir::Item { span, id, vis, ident, kind });
             lctx.def_node(id.def, item);

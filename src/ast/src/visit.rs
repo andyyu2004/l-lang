@@ -53,6 +53,10 @@ pub trait Visitor<'ast>: Sized {
         walk_let(self, l);
     }
 
+    fn visit_trait_item(&mut self, item: &'ast TraitItem) {
+        walk_trait_item(self, item);
+    }
+
     fn visit_expr(&mut self, expr: &'ast Expr) {
         walk_expr(self, expr)
     }
@@ -125,6 +129,16 @@ pub fn walk_ast<'ast>(visitor: &mut impl Visitor<'ast>, ast: &'ast Ast) {
 pub fn walk_fn_sig<'ast>(visitor: &mut impl Visitor<'ast>, sig: &'ast FnSig) {
     sig.params.iter().for_each(|param| visitor.visit_param(param));
     sig.ret_ty.iter().for_each(|ty| visitor.visit_ty(ty));
+}
+
+pub fn walk_trait_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast TraitItem) {
+    match &item.kind {
+        TraitItemKind::Fn(sig, generics, body) => {
+            visitor.visit_fn_sig(sig);
+            visitor.visit_generics(generics);
+            body.iter().for_each(|body| visitor.visit_expr(body));
+        }
+    }
 }
 
 pub fn walk_foreign_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast ForeignItem) {
@@ -369,5 +383,9 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             items.iter().for_each(|item| visitor.visit_foreign_item(item)),
         ItemKind::Use(path) => visitor.visit_path(path),
         ItemKind::Mod(module) => visitor.visit_module(module),
+        ItemKind::Trait { generics, items } => {
+            visitor.visit_generics(generics);
+            items.iter().for_each(|item| visitor.visit_trait_item(item));
+        }
     }
 }

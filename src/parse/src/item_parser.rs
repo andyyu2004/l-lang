@@ -4,7 +4,7 @@ use lex::TokenType;
 use span::{with_source_map, ModuleKind};
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 9] = [
+const ITEM_KEYWORDS: [TokenType; 10] = [
     TokenType::Fn,
     TokenType::Struct,
     TokenType::Enum,
@@ -14,6 +14,7 @@ const ITEM_KEYWORDS: [TokenType; 9] = [
     TokenType::Type,
     TokenType::Use,
     TokenType::Mod,
+    TokenType::Trait,
 ];
 
 pub struct ItemParser;
@@ -47,6 +48,7 @@ impl<'a> Parse<'a> for ItemParser {
                 TokenType::Struct => StructDeclParser.parse(parser),
                 TokenType::Enum => EnumParser.parse(parser),
                 TokenType::Type => TypeAliasParser.parse(parser),
+                TokenType::Trait => TraitParser.parse(parser),
                 _ => unreachable!(),
             },
             false,
@@ -165,6 +167,36 @@ impl<'a> Parse<'a> for ExternParser {
     }
 }
 
+/// <vis> trait <ident><generics>? {
+///     <trait-item>
+/// }
+pub struct TraitParser;
+
+impl<'a> Parse<'a> for TraitParser {
+    type Output = ItemKind;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        parser.expect(TokenType::OpenBrace)?;
+        let generics = parser.parse_generics()?;
+        let items = ItemParser
+            .many()
+            .parse(parser)?
+            .into_iter()
+            .filter_map(|item| {
+                let Item { span, id, vis, ident, .. } = *item;
+                match TraitItemKind::try_from(item.kind) {
+                    Ok(kind) => Some(box Item { span, id, vis, ident, kind }),
+                    Err(kind) => {
+                        parser.build_err(span, ParseError::InvalidTraitItem(kind)).emit();
+                        None
+                    }
+                }
+            })
+            .collect();
+        parser.expect(TokenType::CloseBrace)?;
+        Ok(ItemKind::Trait { generics, items })
+    }
+}
 pub struct ImplParser {
     vis: Visibility,
 }

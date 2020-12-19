@@ -88,6 +88,7 @@ impl HasDefKind for ast::ItemKind {
             ast::ItemKind::Use(..) => DefKind::Use,
             ast::ItemKind::Mod(..) => DefKind::Mod,
             ast::ItemKind::Impl { .. } => DefKind::Impl,
+            ast::ItemKind::Trait { .. } => DefKind::Trait,
         }
     }
 }
@@ -135,6 +136,7 @@ pub enum DefKind {
     Impl,
     Use,
     Mod,
+    Trait,
     /// extern block
     Extern,
     /// constructor of enum variant
@@ -166,6 +168,7 @@ impl Display for DefKind {
             DefKind::TypeAlias => write!(f, "type alias"),
             DefKind::Use => write!(f, "use import"),
             DefKind::Mod => write!(f, "module"),
+            DefKind::Trait => write!(f, "trait"),
         }
     }
 }
