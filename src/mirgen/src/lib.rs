@@ -69,7 +69,9 @@ fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx Mir<'tcx> {
         DefNode::ImplItem(item) => match item.kind {
             ir::ImplItemKind::Fn(_, body) => self::build_mir(tcx, def_id, body),
         },
-        DefNode::TraitItem(_) => todo!(),
+        DefNode::TraitItem(trait_item) => match trait_item.kind {
+            ir::TraitItemKind::Fn(_, body) => self::build_mir(tcx, def_id, body.unwrap()),
+        },
         DefNode::Field(..)
         | DefNode::ForeignItem(..)
         | DefNode::Variant(..)

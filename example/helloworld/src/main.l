@@ -18,4 +18,10 @@ trait Default {
     fn default() -> Self;
 }
 
+trait Int {
+    fn mk_int() -> int {
+        8
+    }
+}
+
 

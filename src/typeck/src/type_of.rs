@@ -45,6 +45,9 @@ fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
         DefNode::ImplItem(impl_item) => match impl_item.kind {
             ir::ImplItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
         },
+        DefNode::TraitItem(trait_item) => match trait_item.kind {
+            ir::TraitItemKind::Fn(sig, _) => tcx.lower_fn_sig(sig),
+        },
         DefNode::ForeignItem(foreign_item) => match foreign_item.kind {
             ir::ForeignItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
         },
@@ -58,7 +61,7 @@ fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
                 _ => panic!("not a constructor function"),
             }
         }
-        _ => panic!(),
+        node => panic!("defnode `{}` has no fn sig", node.descr()),
     }
 }
 
