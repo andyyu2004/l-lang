@@ -1,4 +1,7 @@
 //! conversion/lowering from `ir::Ty` to `lcore::ty::Ty`
+//! each conversion is parameterized by an instance of `TyConv`
+//! there are two primary lowering contexts `TyCtx` and `InferCtx`
+//! `InferCtx` allows inference variables, one does not
 
 use ir::{DefId, DefKind, QPath, Res};
 use lcore::ty::{FnSig, Generics, Subst, Substs, Ty, TyCtx, TyParam, TypeError};

@@ -19,6 +19,12 @@ enum Option<T> {
     None,
 }
 
+pub trait Default {
+
+}
+
+
+
 
 // fn run() {
 //     let p = Option::Some(false);
