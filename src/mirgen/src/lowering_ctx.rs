@@ -362,6 +362,7 @@ impl<'tcx> LoweringCtx<'tcx> {
                 DefKind::Extern => todo!(),
                 DefKind::Impl => todo!(),
                 DefKind::Enum => todo!(),
+                DefKind::Trait => todo!(),
                 DefKind::TyParam(..) | DefKind::TypeAlias | DefKind::Use | DefKind::Mod => panic!(),
             },
             Res::SelfTy { .. } => todo!(),

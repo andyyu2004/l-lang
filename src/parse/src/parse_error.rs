@@ -17,6 +17,8 @@ pub enum ParseError {
     ExpectedOneOf(Vec<TokenType>, Tok),
     #[error("invalid impl item kind: {}", .0.descr())]
     InvalidImplItem(ItemKind),
+    #[error("invalid trait item kind: {}", .0.descr())]
+    InvalidTraitItem(ItemKind),
     #[error("invalid foreign item kind: {}", .0.descr())]
     InvalidForeignItem(ItemKind),
     #[error("unresolved module `{0}`\ncreate file at either `{0}/{1}.l` or `{0}/{1}/{1}.l`")]

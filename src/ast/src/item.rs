@@ -16,11 +16,12 @@ pub struct Item<K = ItemKind> {
 impl Item {
     pub fn generics(&self) -> Option<&Generics> {
         match &self.kind {
-            ItemKind::Impl { generics: g, .. }
-            | ItemKind::Fn(_, g, _)
-            | ItemKind::Struct(g, _)
-            | ItemKind::TypeAlias(g, _)
-            | ItemKind::Enum(g, _) => Some(g),
+            ItemKind::Impl { generics, .. }
+            | ItemKind::Fn(_, generics, _)
+            | ItemKind::Struct(generics, _)
+            | ItemKind::TypeAlias(generics, _)
+            | ItemKind::Trait { generics, .. }
+            | ItemKind::Enum(generics, _) => Some(generics),
             ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) => None,
         }
     }
@@ -42,9 +43,18 @@ pub enum ItemKind {
     Mod(Module),
     /// use some::path;
     Use(Path),
+    Trait {
+        generics: Generics,
+        items: Vec<P<TraitItem>>,
+    },
     /// impl Trait for Type {}
     /// impl Type {}
-    Impl { generics: Generics, trait_path: Option<Path>, self_ty: P<Ty>, items: Vec<P<AssocItem>> },
+    Impl {
+        generics: Generics,
+        trait_path: Option<Path>,
+        self_ty: P<Ty>,
+        items: Vec<P<AssocItem>>,
+    },
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -69,6 +79,30 @@ impl ItemKind {
             ItemKind::TypeAlias(..) => "type alias",
             ItemKind::Use(..) => "use import",
             ItemKind::Mod(..) => "module",
+            ItemKind::Trait { .. } => "trait",
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TraitItemKind {
+    Fn(FnSig, Generics, Option<P<Expr>>),
+}
+
+impl TryFrom<ItemKind> for TraitItemKind {
+    type Error = ItemKind;
+
+    fn try_from(kind: ItemKind) -> Result<Self, Self::Error> {
+        match kind {
+            ItemKind::Fn(sig, generics, expr) => Ok(Self::Fn(sig, generics, expr)),
+            ItemKind::TypeAlias(..) => todo!("associated types"),
+            ItemKind::Use(..)
+            | ItemKind::Mod(..)
+            | ItemKind::Extern(..)
+            | ItemKind::Enum(..)
+            | ItemKind::Struct(..)
+            | ItemKind::Trait { .. }
+            | ItemKind::Impl { .. } => Err(kind),
         }
     }
 }
@@ -90,13 +124,14 @@ impl TryFrom<ItemKind> for AssocItemKind {
             | ItemKind::Extern(..)
             | ItemKind::Enum(..)
             | ItemKind::Struct(..)
+            | ItemKind::Trait { .. }
             | ItemKind::Impl { .. } => Err(kind),
         }
     }
 }
 
 pub type AssocItem = Item<AssocItemKind>;
-
+pub type TraitItem = Item<TraitItemKind>;
 pub type ForeignItem = Item<ForeignItemKind>;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -135,6 +170,7 @@ impl Display for Item {
             ItemKind::Use(path) => write!(f, "use {}", path),
             ItemKind::Mod(..) => todo!(),
             ItemKind::Impl { .. } => todo!(),
+            ItemKind::Trait { .. } => todo!(),
         }
     }
 }

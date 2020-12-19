@@ -96,6 +96,11 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Mod(module) =>
                 self.with_module(item.ident, |this| ast::walk_module(this, module)),
             ItemKind::Use(..) => {}
+            ItemKind::Trait { generics, items } => self.with_generics(generics, |r| {
+                for item in items {
+                    ast::walk_trait_item(r, item);
+                }
+            }),
         }
     }
 

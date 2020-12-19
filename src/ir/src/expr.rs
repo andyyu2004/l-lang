@@ -1,4 +1,4 @@
-use crate::{self as ir, DefKind, QPath, Res};
+use crate::{self as ir, QPath, Res};
 use ast::{self, Ident, UnaryOp};
 use span::Span;
 

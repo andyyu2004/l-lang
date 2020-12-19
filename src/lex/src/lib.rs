@@ -14,6 +14,7 @@ lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
         "fn" => TokenType::Fn,
         "box" => TokenType::Box,
+        "trait" => TokenType::Trait,
         "break" => TokenType::Break,
         "continue" => TokenType::Continue,
         "match" => TokenType::Match,
@@ -175,6 +176,7 @@ impl Display for TokenType {
 pub enum TokenType {
     Ident(Symbol),
     Break,
+    Trait,
     Continue,
     While,
     Internal,

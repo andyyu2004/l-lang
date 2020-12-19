@@ -104,6 +104,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::Enum
             | DefKind::TypeAlias
             | DefKind::Struct => self.instantiate(xpat, def_id),
+            DefKind::Trait => todo!(),
             DefKind::TyParam(..)
             | DefKind::Impl
             | DefKind::Use
