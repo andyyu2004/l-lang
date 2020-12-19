@@ -8,8 +8,17 @@ extern "l-intrinsic" {
     fn print(i: int);
 }
 
+enum Option<T> {
+    Some(T),
+    None
+}
+
 fn main() -> int {
     methods::run();
+    match Option::Some(3) {
+        Option::Some(x) => x,
+        Option::None => 5,
+    };
     // run();
     return 0;
 }
@@ -17,11 +26,4 @@ fn main() -> int {
 trait Default {
     fn default() -> Self;
 }
-
-trait Int {
-    fn mk_int() -> int {
-        8
-    }
-}
-
 

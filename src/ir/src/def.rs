@@ -232,7 +232,13 @@ into_def_node!(TraitItem, &'ir ir::TraitItem<'ir>);
 into_def_node!(ForeignItem, &'ir ir::ForeignItem<'ir>);
 into_def_node!(Field, &'ir ir::FieldDecl<'ir>);
 into_def_node!(TyParam, &'ir ir::TyParam<'ir>);
-into_def_node!(Variant, &'ir ir::Variant<'ir>);
+
+impl<'ir> Into<DefNode<'ir>> for &'ir ir::Variant<'ir> {
+    fn into(self) -> DefNode<'ir> {
+        // the variant can either become a constructor or a variant node depending on its kind
+        if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
+    }
+}
 
 #[derive(Default, Debug)]
 pub struct Definitions<'a> {
