@@ -9,7 +9,7 @@ use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, ExitStatus};
 
 use error::ErrorFormat;
@@ -70,10 +70,11 @@ impl TestCtx {
         self.run_recursive("tests/ltests/ui", TestKind::Ui)?;
         self.run_recursive("tests/ltests/output", TestKind::Output)?;
 
-        if self.errc.get() > 0 {
-            panic!("{} errors occured", self.errc.get())
+        let errc = self.errc.get();
+        if errc > 0 {
+            panic!("{} error{} occured", util::pluralize!(errc), errc)
         } else {
-            eprintln!("passed {}/{} tests", self.testc, self.testc)
+            eprintln!("passed {} tests", self.testc)
         }
         Ok(())
     }

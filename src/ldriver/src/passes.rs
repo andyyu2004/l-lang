@@ -96,6 +96,8 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
         for item in self.tcx.ir.items.values() {
             self.tcx.validate_item_type(item.id.def);
         }
+        // TODO currently required to run some validation on impls, maybe can move elsewhere
+        self.tcx.inherent_impls(());
         false
     }
 }

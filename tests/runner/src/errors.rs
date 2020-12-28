@@ -7,8 +7,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestFailure {
-    #[error("expected `{0}` errors, but found `{1}`")]
-    UnexpectedNumberOfErrors(usize, usize),
+    #[error("expected {0} errors, but found {}\n {:?}", .1.len(), .1)]
+    UnexpectedNumberOfErrors(usize, Vec<JsonDiagnostic>),
 }
 
 #[derive(Debug)]
@@ -30,10 +30,11 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
 
 impl TestCtx {
     crate fn compare_expected_errors(&mut self, expected: &[Error], output: &Output) {
+        println!("{}", output.stderr);
         let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
         if errors.len() != expected.len() {
             return self
-                .report_error(TestFailure::UnexpectedNumberOfErrors(expected.len(), errors.len()));
+                .report_error(TestFailure::UnexpectedNumberOfErrors(expected.len(), errors));
         }
 
         errors.sort_unstable_by_key(|err| err.line);

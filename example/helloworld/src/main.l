@@ -27,3 +27,10 @@ trait Default {
     fn default() -> Self;
 }
 
+impl Option {
+
+}
+
+impl Default for Option {
+
+}

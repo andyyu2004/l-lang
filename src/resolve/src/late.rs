@@ -94,8 +94,6 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             ItemKind::Mod(module) =>
                 self.with_module(item.ident, |this| ast::walk_module(this, module)),
             ItemKind::Use(..) => {}
-            ItemKind::Impl { generics, trait_path, self_ty, items } =>
-                self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
             ItemKind::Trait { generics, items } => self.with_generics(generics, |r| {
                 r.with_self(item.id, |r| {
                     for item in items {
@@ -103,6 +101,8 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                     }
                 })
             }),
+            ItemKind::Impl { generics, trait_path, self_ty, items } =>
+                self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
         }
     }
 
@@ -147,9 +147,6 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                 this.resolve_path(path, NS::Type);
             }
             this.visit_ty(self_ty);
-            if trait_path.is_some() {
-                todo!()
-            }
             this.with_self(item.id, |this| {
                 for item in assoc_items {
                     this.resolve_assoc_item(item);

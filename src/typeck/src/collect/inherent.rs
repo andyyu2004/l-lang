@@ -7,8 +7,6 @@ use lcore::ty::{self, InherentImpls, TyCtx};
 use rustc_hash::FxHashMap;
 
 crate fn provide(queries: &mut Queries) {
-    // adding a unit parameter to make the parameterless function fit with the query structure
-    // where they all have exactly one parameter
     *queries =
         Queries { inherent_impls: |tcx, ()| inherent_impls(tcx), inherent_impls_of, ..*queries }
 }
@@ -32,30 +30,29 @@ struct InherentCollector<'tcx> {
 
 impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
     fn visit_item(&mut self, item: &'tcx ir::Item<'tcx>) {
+        let tcx = self.tcx;
         let self_ty = match item.kind {
             // only visit inherent impls (i.e. there is no trait_path)
-            ir::ItemKind::Impl { self_ty, trait_path: None, .. } => self_ty,
+            ir::ItemKind::Impl { self_ty, trait_path: None, .. } => tcx.ir_ty_to_ty(self_ty),
             _ => return,
         };
-        let tcx = self.tcx;
-        let self_ty = tcx.ir_ty_to_ty(self_ty);
-        let ty = tcx.type_of(item.id.def);
 
         // sanity check that these types are consistent
-        assert_eq!(self_ty, ty);
+        debug_assert_eq!(self_ty, tcx.type_of(item.id.def));
 
         match self_ty.kind {
+            ty::Box(..) => todo!(),
             ty::Array(..) => todo!(),
             ty::FnPtr(..) => todo!(),
             ty::Tuple(..) => todo!(),
             ty::Infer(..) => todo!(),
             ty::Ptr(..) => todo!(),
             ty::Param(..) => todo!(),
-            ty::Box(..) => todo!(),
             ty::Opaque(..) => todo!(),
-            ty::Bool | ty::Discr | ty::Char | ty::Float | ty::Int => todo!(),
-            ty::Error | ty::Never => todo!(),
             ty::Adt(adt, _) => self.visit_def(adt.def_id, item.id.def),
+            ty::Bool | ty::Discr | ty::Char | ty::Float | ty::Int => todo!(),
+            ty::Never => todo!(),
+            ty::Error => return,
         }
     }
 }

@@ -13,10 +13,10 @@ fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => self::validate_adt(tcx, def_id),
             ir::ItemKind::Use(..) => {}
             ir::ItemKind::Extern(..) => {}
-            ir::ItemKind::Impl { .. } => {}
             ir::ItemKind::TypeAlias(..) => {}
             ir::ItemKind::Mod(..) => {}
             ir::ItemKind::Trait { .. } => {}
+            ir::ItemKind::Impl { .. } => {}
         },
         ir::DefNode::ImplItem(..) => {}
         ir::DefNode::TraitItem(..) => {}

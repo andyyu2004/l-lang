@@ -26,7 +26,7 @@ pub enum StmtKind {
     Semi(P<Expr>),
 }
 
-/// let <pat>:<ty> = <init>;
+/// let rec? <pat>:<ty> = <init>;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Let {
     pub id: NodeId,
