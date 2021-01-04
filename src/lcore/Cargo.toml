@@ -14,7 +14,7 @@ index = { path = "../index" }
 session = { path = "../session" }
 error = { path = "../error" }
 macros = { path = "../macros" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 smallvec = "1.4.2"
 log = "0.4.11"
 itertools = "0.9"

@@ -190,7 +190,7 @@ pub struct Generics {
 
 impl Display for Generics {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join(&self.params, ","))
+        write!(f, "{}", lutil::join(&self.params, ","))
     }
 }
 
@@ -216,7 +216,7 @@ pub struct FnSig {
 
 impl Display for FnSig {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "fn {} -> {:?}", util::join(&self.params, ", "), self.ret_ty)
+        write!(f, "fn {} -> {:?}", lutil::join(&self.params, ", "), self.ret_ty)
     }
 }
 
@@ -288,7 +288,7 @@ impl Default for Path {
 
 impl Display for Path {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join(&self.segments, "::"))
+        write!(f, "{}", lutil::join(&self.segments, "::"))
     }
 }
 

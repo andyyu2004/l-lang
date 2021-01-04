@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 span = { path = "../span" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 codespan = "0.9.5"
 codespan-reporting = "0.9.5"
 termcolor = "1.1.0"

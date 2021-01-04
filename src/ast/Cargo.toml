@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 index = { path = "../index" }
 span = { path = "../span" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 lex = { path = "../lex" }
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"

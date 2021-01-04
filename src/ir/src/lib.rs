@@ -332,7 +332,7 @@ impl<'ir> Path<'ir> {
 
 impl<'ir> Display for Path<'ir> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.segments, "::"))
+        write!(f, "{}", lutil::join2(self.segments, "::"))
     }
 }
 

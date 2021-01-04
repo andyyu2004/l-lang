@@ -12,7 +12,7 @@ lcore = { path = "../lcore" }
 ast = { path = "../ast" }
 error = { path = "../error" }
 infer = { path = "../infer" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 rustc-hash = "1"
 thiserror = "1"
 itertools = "0.9"

@@ -194,7 +194,7 @@ pub struct FnSig<'tcx> {
 
 impl<'tcx> Display for FnSig<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "fn({})->{}", util::join2(self.params.into_iter(), ","), self.ret)
+        write!(f, "fn({})->{}", lutil::join2(self.params.into_iter(), ","), self.ret)
     }
 }
 
@@ -419,7 +419,7 @@ impl<'tcx> Display for TyParam<'tcx> {
 
 impl<'tcx> Display for Generics<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.params.iter(), ","))
+        write!(f, "{}", lutil::join2(self.params.iter(), ","))
     }
 }
 

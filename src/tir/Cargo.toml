@@ -9,7 +9,7 @@ ir = { path = "../ir" }
 ast = { path = "../ast" }
 span = { path = "../span" }
 index = { path = "../index" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 lcore = { path = "../lcore" }
 smallvec = "1.4.2"
 log = "0.4.11"

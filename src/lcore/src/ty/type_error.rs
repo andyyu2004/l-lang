@@ -20,7 +20,7 @@ pub enum TypeError<'tcx> {
     BadFieldAccess(Ty<'tcx>),
     #[error("attempted to index `.{0}` into a {1}-tuple")]
     TupleOutOfBounds(usize, usize),
-    #[error("expected {0} generic parameter{} but received {1}", util::pluralize!({*.0}))]
+    #[error("expected {0} generic parameter{} but received {1}", lutil::pluralize!({*.0}))]
     GenericArgCount(usize, usize),
     #[error("{0}")]
     Msg(String),

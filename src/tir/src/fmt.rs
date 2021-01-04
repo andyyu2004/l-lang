@@ -71,7 +71,7 @@ where
                     item.vis.node,
                     item.ident,
                     // generics,
-                    util::join2(params, ", "),
+                    lutil::join2(params, ", "),
                     body
                 )
             }
@@ -95,7 +95,7 @@ where
             tir::ExprKind::Block(block) => self.fmt_block(block),
             tir::ExprKind::VarRef(_id) => indent!(self, "{}", expr.span.to_string()),
             tir::ExprKind::Field(base, field_idx) => indent!(self, "{}->{:?}", base, field_idx),
-            tir::ExprKind::Tuple(xs) => indent!(self, "({})", util::join2(xs.iter(), ",")),
+            tir::ExprKind::Tuple(xs) => indent!(self, "({})", lutil::join2(xs.iter(), ",")),
             tir::ExprKind::Ref(expr) => indent!(self, "(&{})", expr),
             tir::ExprKind::Deref(expr) => indent!(self, "(*{})", expr),
             tir::ExprKind::Ret(expr) => match expr {
@@ -104,7 +104,7 @@ where
             },
             tir::ExprKind::Match(expr, arms) => self.fmt_match(expr, arms),
             tir::ExprKind::Closure { upvars: _, body } =>
-                indent!(self, "(λ({}) {})", util::join2(body.params.iter(), ","), body),
+                indent!(self, "(λ({}) {})", lutil::join2(body.params.iter(), ","), body),
             tir::ExprKind::Call(f, args) => self.fmt_call(f, args),
             tir::ExprKind::Assign(l, r) => indent!(self, "({} = {})", l, r),
             tir::ExprKind::ItemRef(_def_id, substs) =>
@@ -132,7 +132,7 @@ where
     fn fmt_call(&mut self, f: &tir::Expr, args: &[tir::Expr]) -> fmt::Result {
         match args.len() {
             0 => indent!(self, "({})", f),
-            _ => indent!(self, "({} {})", f, util::join2(args.iter(), " ")),
+            _ => indent!(self, "({} {})", f, lutil::join2(args.iter(), " ")),
         }
     }
 

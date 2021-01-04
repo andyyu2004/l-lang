@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestFailure {
-    #[error("expected {0} errors, but found {}\n {:?}", .1.len(), .1)]
+    #[error("expected {0} error{}, but found {}\n {:?}", lutil::pluralize!(*.0), .1.len(), .1)]
     UnexpectedNumberOfErrors(usize, Vec<JsonDiagnostic>),
 }
 
@@ -30,7 +30,6 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
 
 impl TestCtx {
     crate fn compare_expected_errors(&mut self, expected: &[Error], output: &Output) {
-        println!("{}", output.stderr);
         let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
         if errors.len() != expected.len() {
             return self

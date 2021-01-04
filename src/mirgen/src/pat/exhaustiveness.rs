@@ -111,7 +111,7 @@ impl<'p, 'tcx> Display for Witness<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         // should this always be true?
         assert_eq!(self.pats.len(), 1);
-        write!(f, "{}", util::join(&self.pats, ","))
+        write!(f, "{}", lutil::join(&self.pats, ","))
     }
 }
 
@@ -495,7 +495,7 @@ struct Fields<'p, 'tcx> {
 
 impl<'p, 'tcx> Display for Fields<'p, 'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", util::join2(self.pats, ", "))
+        write!(f, "{}", lutil::join2(self.pats, ", "))
     }
 }
 

@@ -10,6 +10,6 @@ edition = "2018"
 index = { path = "../index" }
 ast = { path = "../ast" }
 span = { path = "../span" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 rustc-hash = "1"
 serde = { version = "1", features = ["derive"] }

@@ -50,7 +50,7 @@ impl<'tcx> Display for Pattern<'tcx> {
             // in particular ExprKind::VarRef does not have access to the symbol only the `ir::Id`
             PatternKind::Box(pat) => write!(f, "&{}", pat),
             PatternKind::Binding(m, ident, _) => write!(f, "{}{}", m, ident),
-            PatternKind::Field(fields) => write!(f, "({})", util::join2(fields.iter(), ",")),
+            PatternKind::Field(fields) => write!(f, "({})", lutil::join2(fields.iter(), ",")),
             PatternKind::Lit(expr) => {
                 // don't double print the type as expr will already do so
                 assert_eq!(expr.ty, self.ty);
@@ -63,7 +63,7 @@ impl<'tcx> Display for Pattern<'tcx> {
                 adt_ty.ident,
                 adt_ty.variants[*variant_idx].ident,
                 substs,
-                util::join2(pats.iter(), ","),
+                lutil::join2(pats.iter(), ","),
             ),
         }?;
         write!(f, ":{}", self.ty)

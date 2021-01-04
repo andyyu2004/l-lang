@@ -116,9 +116,9 @@ macro check_errors($self:expr, $ret:expr) {{
             let errc = $self.sess.err_count();
             let warnings = $self.sess.warning_count();
             if warnings > 0 {
-                e_yellow_ln!("{} warning{} emitted", warnings, util::pluralize!(warnings));
+                e_yellow_ln!("{} warning{} emitted", warnings, lutil::pluralize!(warnings));
             }
-            e_red_ln!("{} error{} emitted", errc, util::pluralize!(errc));
+            e_red_ln!("{} error{} emitted", errc, lutil::pluralize!(errc));
         }
         Err(ErrorReported)
     } else {

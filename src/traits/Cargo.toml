@@ -1,0 +1,12 @@
+[package]
+name = "traits"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+typeck = { path = "../typeck" }
+lcore = { path = "../lcore" }
+# logic-ir = { git = "ssh://git@gitlab.com/andyyu2004/logic.git" }
+logic-ir = { path = "../../../logic/logic-ir" }
+

@@ -15,7 +15,7 @@ error = { path = "../error" }
 mir = { path = "../mir" }
 ir = { path = "../ir" }
 tir = { path = "../tir" }
-util = { path = "../util" }
+lutil = { path = "../lutil" }
 thiserror = "1"
 maplit = "1"
 rustc-hash = "1"
