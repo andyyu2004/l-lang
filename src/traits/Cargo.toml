@@ -10,3 +10,5 @@ lcore = { path = "../lcore" }
 # logic-ir = { git = "ssh://git@gitlab.com/andyyu2004/logic.git" }
 logic-ir = { path = "../../../logic/logic-ir" }
 
+[dev-dependencies]
+ldriver = { path = "../ldriver" }

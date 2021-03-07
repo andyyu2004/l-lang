@@ -32,7 +32,6 @@ use span::Span;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ptr;
-use util;
 
 crate fn provide(queries: &mut Queries) {
     instance::provide(queries);

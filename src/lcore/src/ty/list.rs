@@ -9,7 +9,6 @@ use std::mem;
 use std::ops::Deref;
 use std::ptr;
 use std::slice;
-use util;
 
 // from rustc
 

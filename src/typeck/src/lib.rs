@@ -7,7 +7,7 @@
 extern crate log;
 
 #[macro_use]
-extern crate util;
+extern crate lutil;
 
 #[cfg(test)]
 mod tests;

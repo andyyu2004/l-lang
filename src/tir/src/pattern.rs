@@ -4,7 +4,6 @@ use ir::{self, FieldIdx, VariantIdx};
 use lcore::ty::{AdtTy, Const, SubstsRef, Ty};
 use span::Span;
 use std::fmt::{self, Display, Formatter};
-use util;
 
 #[derive(Debug)]
 pub struct FieldPat<'tcx> {

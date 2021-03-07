@@ -434,6 +434,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "indexed_vec"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd5390d1640d64a30efbbe9cd15cb9f472388b4d5693677c693a7bc9310c0d08"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -715,6 +724,8 @@ dependencies = [
 name = "logic-ir"
 version = "0.1.0"
 dependencies = [
+ "ena",
+ "indexed_vec",
  "logic-parse",
  "util",
 ]
@@ -1467,6 +1478,7 @@ name = "traits"
 version = "0.1.0"
 dependencies = [
  "lcore",
+ "ldriver",
  "logic-ir",
  "typeck",
 ]

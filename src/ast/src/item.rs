@@ -2,7 +2,6 @@ use super::*;
 use span::Span;
 use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
-use util;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Item<K = ItemKind> {
