@@ -1,5 +1,5 @@
 use crate::ty::*;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 pub trait TyEncoder<'tcx>: Serializer {
     fn tcx() -> TyCtx<'tcx>;
@@ -14,7 +14,7 @@ pub trait TyDecodable<'tcx, D: TyDecoder<'tcx>>: Sized {
 }
 
 impl<'tcx, D: TyDecoder<'tcx>> TyDecodable<'tcx, D> for TyKind<'tcx> {
-    fn decode(d: &mut D) -> Result<Self, D::Error> {
+    fn decode(_d: &mut D) -> Result<Self, D::Error> {
         todo!()
     }
 }
@@ -27,7 +27,7 @@ impl<'tcx, D: TyDecoder<'tcx>> TyDecodable<'tcx, D> for SubstsRef<'tcx> {
 }
 
 impl<'tcx, D: TyDecoder<'tcx>> TyDecodable<'tcx, D> for Ty<'tcx> {
-    fn decode(d: &mut D) -> Result<Self, D::Error> {
+    fn decode(_d: &mut D) -> Result<Self, D::Error> {
         todo!()
     }
 }

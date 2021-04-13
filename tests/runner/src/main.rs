@@ -9,7 +9,7 @@ use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::process::{Command, ExitStatus};
 
 use error::ErrorFormat;

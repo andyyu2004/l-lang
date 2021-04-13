@@ -1,5 +1,5 @@
 use crate::Arena;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use std::alloc::Layout;
 use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
