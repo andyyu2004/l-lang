@@ -54,7 +54,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         // self.build_print_str(&builder, "rc_release_count\n");
 
-        let (cast, rc_ptr) = self.builder_get_box_pointers(&builder, lvalue, alloca_ptr);
+        let (_cast, rc_ptr) = self.builder_get_box_pointers(&builder, lvalue, alloca_ptr);
         let refcount = builder.build_load(rc_ptr, "load_rc").into_int_value();
 
         let dec = builder.build_int_sub(refcount, self.vals.one32, "decrement");

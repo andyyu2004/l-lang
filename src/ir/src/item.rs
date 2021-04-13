@@ -1,6 +1,6 @@
 use crate::{self as ir, DefId, DefKind};
 use ast::{Abi, Ident, Visibility};
-use span::{Span, Symbol};
+use span::{Span};
 
 #[derive(Debug, Clone)]
 pub struct Item<'ir> {

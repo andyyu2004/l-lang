@@ -8,7 +8,7 @@ pub fn early_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
     self::remove_dead_blocks(mir);
 }
 
-pub fn late_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
+pub fn late_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, _mir: &'a mut Mir<'tcx>) {
 }
 
 #[cfg(test)]

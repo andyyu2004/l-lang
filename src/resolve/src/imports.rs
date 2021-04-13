@@ -28,7 +28,7 @@ impl<'a, 'r> ImportResolver<'a, 'r> {
         Ok(module)
     }
 
-    fn resolve_extern_module(&mut self, path: &Path) -> ResResult<'a, ModuleId> {
+    fn resolve_extern_module(&mut self, _path: &Path) -> ResResult<'a, ModuleId> {
         todo!()
     }
 

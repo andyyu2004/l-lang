@@ -1,6 +1,6 @@
 use crate::*;
 use ena::snapshot_vec as sv;
-use ena::undo_log::{Snapshots, UndoLogs};
+use ena::undo_log::{UndoLogs};
 use ena::unify as ut;
 use lcore::ty;
 
