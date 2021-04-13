@@ -1,4 +1,3 @@
-#![feature(array_value_iter)]
 #![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
