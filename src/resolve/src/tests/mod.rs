@@ -1,4 +1,5 @@
 mod generics;
+mod impls;
 mod pattern;
 
 /// just runs the compiler up to and including the ir lowering stage which includes resolution
