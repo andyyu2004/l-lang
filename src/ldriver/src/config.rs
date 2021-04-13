@@ -171,8 +171,8 @@ impl<'de> de::Deserialize<'de> for Dependency {
     }
 }
 
-#[serde(rename_all = "kebab-case")]
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct DependencyInfo {
     path: Option<String>,
 }

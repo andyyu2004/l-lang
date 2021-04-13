@@ -1,6 +1,5 @@
 #![feature(decl_macro)]
 #![feature(crate_visibility_modifier)]
-#![feature(array_value_iter)]
 
 #[macro_use]
 extern crate log;
