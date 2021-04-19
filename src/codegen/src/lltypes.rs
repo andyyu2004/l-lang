@@ -4,6 +4,44 @@ use inkwell::AddressSpace;
 use itertools::Itertools;
 use lcore::ty::*;
 
+#[macro_export]
+macro_rules! llvm_ty {
+    ($ctx:expr, i64) => {
+        $ctx.llctx.i64_type()
+    };
+    ($ctx:expr, i32) => {
+        $ctx.llctx.i32_type()
+    };
+    ($ctx:expr, i16) => {
+        $ctx.llctx.i16_type()
+    };
+    ($ctx:expr, bool) => {
+        $ctx.llctx.bool_type()
+    };
+    ($ctx:expr, void) => {
+        $ctx.llctx.void_type()
+    };
+    ($ctx:expr, fn($($ty:tt),*)) => {
+        $ctx.llctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
+    };
+    // we use the bad idea of using dyn to mean varargs coz it looks cool
+    ($ctx:expr, dyn fn($($ty:tt),*)) => {
+         $ctx.llctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
+    };
+    ($ctx:expr, fn($($ty:tt),*) -> $($ret:tt)+) => {
+        llvm_ty!($ctx, $($ret)*).fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
+    };
+    ($ctx:expr, dyn fn($($ty:tt),*) -> $($ret:tt)+) => {
+        llvm_ty!($ctx, $($ret)*).fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
+    };
+    ($ctx:expr, packed {$($ty:tt),*}) => {
+        $ctx.llctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
+    };
+    ($ctx:expr, {$($ty:tt),*}) => {
+        $ctx.llctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
+    };
+}
+
 impl<'tcx> CodegenCtx<'tcx> {
     pub fn llvm_fn_ty_from_ty(&self, ty: Ty<'tcx>) -> FunctionType<'tcx> {
         let sig = ty.expect_fn_ptr();

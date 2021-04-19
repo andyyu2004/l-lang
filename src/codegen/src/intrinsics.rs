@@ -1,4 +1,4 @@
-use crate::CodegenCtx;
+use crate::{llvm_ty, CodegenCtx};
 use inkwell::types::BasicType;
 use inkwell::values::FunctionValue;
 use inkwell::AddressSpace;
@@ -25,7 +25,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let name = format!("{}<{}>", ident, instance.substs);
         let t = instance.substs[0];
         let llty = self.llvm_ty(t);
-        // `addr<T>: fn(&T) -> int` where the returned int is the address as a u64
+        // `addr<T>: fn(&T) -> int` where the returned int is the address as a i64
         let addr_fn_ty =
             self.types.int.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
         let llfn = self.module.add_function(&name, addr_fn_ty, None);

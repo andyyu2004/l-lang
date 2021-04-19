@@ -10,6 +10,7 @@ mod intrinsics;
 mod layout;
 mod lltypes;
 mod llvm_error;
+mod llvm_intrinsics;
 mod monomorphize;
 mod native;
 mod rc;
