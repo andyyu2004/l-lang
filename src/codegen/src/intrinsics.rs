@@ -27,14 +27,14 @@ impl<'tcx> CodegenCtx<'tcx> {
         let llty = self.llvm_ty(t);
         // `addr<T>: fn(&T) -> int` where the returned int is the address as a i64
         let addr_fn_ty =
-            self.types.int.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
+            self.types.i64.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
         let llfn = self.module.add_function(&name, addr_fn_ty, None);
         let block = self.llctx.append_basic_block(llfn, "addr_entry");
 
         self.position_at_end(block);
         let ptr = llfn.get_first_param().unwrap().into_pointer_value();
 
-        let int = self.build_ptr_to_int(ptr, self.types.int, "ptr_to_int");
+        let int = self.build_ptr_to_int(ptr, self.types.i64, "ptr_to_int");
         self.build_return(Some(&int));
         llfn
     }
@@ -47,7 +47,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         let llty = self.llvm_ty(t);
         // `rc<T>: fn(&T) -> int`
         let rc_fn_ty =
-            self.types.int.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
+            self.types.i64.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
         let llfn = self.module.add_function(&name, rc_fn_ty, None);
         let block = self.llctx.append_basic_block(llfn, "rc_entry");
 
@@ -62,7 +62,7 @@ impl<'tcx> CodegenCtx<'tcx> {
         );
         let refcount_ptr = self.build_struct_gep(cast, 1, "rc_gep").unwrap();
         let refcount = self.build_load(refcount_ptr, "load_refcount").into_int_value();
-        let i64_rc = self.build_int_cast(refcount, self.types.int, "rc->i64");
+        let i64_rc = self.build_int_cast(refcount, self.types.i64, "rc->i64");
         self.build_return(Some(&i64_rc));
         llfn
     }

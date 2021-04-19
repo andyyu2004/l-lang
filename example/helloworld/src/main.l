@@ -27,10 +27,10 @@ trait Default {
     fn default() -> Self;
 }
 
-impl Option {
 
+enum Enum<T> {
 }
 
-impl Default for Option {
+trait SomeTrait {}
 
-}
+impl SomeTrait for Enum {} //~ ERROR expected 1 generic parameter but received 0

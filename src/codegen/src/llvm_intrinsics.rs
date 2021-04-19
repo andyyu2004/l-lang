@@ -1,11 +1,22 @@
-use crate::{llvm_ty, CodegenCtx};
+use crate::llvm_ty;
+use inkwell::context::Context;
+use inkwell::module::Module;
+use inkwell::values::FunctionValue;
 
-impl<'tcx> CodegenCtx<'tcx> {
-    pub fn stackmap(&self) {
-        self.module.add_function(
-            "llvm.experimental.gc.statepoint",
-            llvm_ty!(self, dyn fn(i64, i32)),
+// it is important to only each of these intrinsics exactly once
+// each new invocation will create a new copy with a suffix integer
+pub struct LLVMIntrinsics<'tcx> {
+    pub stackmap: FunctionValue<'tcx>,
+}
+
+impl<'tcx> LLVMIntrinsics<'tcx> {
+    pub fn new(llctx: &'tcx Context, module: &Module<'tcx>) -> Self {
+        let stackmap = module.add_function(
+            "llvm.experimental.stackmap",
+            llvm_ty!(llctx, dyn fn(i64, i32)),
             None,
         );
+
+        Self { stackmap }
     }
 }

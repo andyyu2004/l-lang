@@ -4,29 +4,38 @@ use inkwell::AddressSpace;
 use itertools::Itertools;
 use lcore::ty::*;
 
+// for use with $ctx being a CodegenCtx
+#[macro_export]
+macro_rules! llty {
+    ($ctx:expr, $(ty:tt)+) => {
+        llvm_ty!($ctx.llctx, ($ty)+)
+    };
+}
+
+// for use with a [inkwell::context::Context](inkwell::context::Context)
 #[macro_export]
 macro_rules! llvm_ty {
     ($ctx:expr, i64) => {
-        $ctx.llctx.i64_type()
+        $ctx.i64_type()
     };
     ($ctx:expr, i32) => {
-        $ctx.llctx.i32_type()
+        $ctx.i32_type()
     };
     ($ctx:expr, i16) => {
-        $ctx.llctx.i16_type()
+        $ctx.i16_type()
     };
     ($ctx:expr, bool) => {
-        $ctx.llctx.bool_type()
+        $ctx.bool_type()
     };
     ($ctx:expr, void) => {
-        $ctx.llctx.void_type()
+        $ctx.void_type()
     };
     ($ctx:expr, fn($($ty:tt),*)) => {
-        $ctx.llctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
+        $ctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
     };
     // we use the bad idea of using dyn to mean varargs coz it looks cool
     ($ctx:expr, dyn fn($($ty:tt),*)) => {
-         $ctx.llctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
+         $ctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
     };
     ($ctx:expr, fn($($ty:tt),*) -> $($ret:tt)+) => {
         llvm_ty!($ctx, $($ret)*).fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
@@ -35,10 +44,10 @@ macro_rules! llvm_ty {
         llvm_ty!($ctx, $($ret)*).fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
     };
     ($ctx:expr, packed {$($ty:tt),*}) => {
-        $ctx.llctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
+        $ctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], true)
     };
     ($ctx:expr, {$($ty:tt),*}) => {
-        $ctx.llctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
+        $ctx.struct_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
     };
 }
 
@@ -58,7 +67,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     /// to allows for easier geps)
     pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
         let llty = self.llvm_ty(ty);
-        self.llctx.struct_type(&[llty, self.types.int32.into()], false)
+        self.llctx.struct_type(&[llty, self.types.i32.into()], false)
     }
 
     /// converts a L type into a llvm representation
@@ -67,8 +76,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             return llty;
         }
         let llty = match ty.kind {
-            TyKind::Bool => self.types.boolean.into(),
-            TyKind::Int => self.types.int.into(),
+            TyKind::Bool => self.types.bool.into(),
+            TyKind::Int => self.types.i64.into(),
             TyKind::Discr => self.types.discr.into(),
             TyKind::Float => self.types.float.into(),
             TyKind::Char => todo!(),

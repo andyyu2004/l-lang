@@ -72,7 +72,7 @@ impl TestCtx {
 
         let errc = self.errc.get();
         if errc > 0 {
-            panic!("{} error{} occured", lutil::pluralize!(errc), errc)
+            panic!("{} error{} occured", errc, lutil::pluralize!(errc))
         } else {
             eprintln!("passed {} tests", self.testc)
         }

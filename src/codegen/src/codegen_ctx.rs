@@ -20,6 +20,7 @@ pub struct CodegenCtx<'tcx> {
     pub types: CommonTypes<'tcx>,
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
+    pub llvm_intrinsics: LLVMIntrinsics<'tcx>,
     pub intrinsics: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
@@ -37,12 +38,12 @@ pub struct CommonValues<'tcx> {
 }
 
 pub struct CommonTypes<'tcx> {
-    pub int: IntType<'tcx>,
-    pub int32: IntType<'tcx>,
+    pub i32: IntType<'tcx>,
+    pub i64: IntType<'tcx>,
     pub unit: StructType<'tcx>,
     pub byte: IntType<'tcx>,
     pub float: FloatType<'tcx>,
-    pub boolean: IntType<'tcx>,
+    pub bool: IntType<'tcx>,
     pub i8ptr: PointerType<'tcx>,
     pub i32ptr: PointerType<'tcx>,
     pub i64ptr: PointerType<'tcx>,
@@ -66,11 +67,11 @@ impl<'tcx> CodegenCtx<'tcx> {
 
         let types = CommonTypes {
             unit: llctx.struct_type(&[], false),
-            int: llctx.i64_type(),
-            int32: llctx.i32_type(),
+            i64: llctx.i64_type(),
+            i32: llctx.i32_type(),
             float: llctx.f64_type(),
             byte: llctx.i8_type(),
-            boolean: llctx.bool_type(),
+            bool: llctx.bool_type(),
             i8ptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
             i32ptr: llctx.i32_type().ptr_type(AddressSpace::Generic),
             i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
@@ -78,16 +79,17 @@ impl<'tcx> CodegenCtx<'tcx> {
         };
 
         let vals = CommonValues {
-            zero: types.int.const_zero(),
-            one: types.int.const_int(1, false),
-            neg_one: types.int.const_all_ones(),
-            zero32: types.int32.const_zero(),
-            one32: types.int32.const_int(1, false),
-            neg_one32: types.int32.const_all_ones(),
+            zero: types.i64.const_zero(),
+            one: types.i64.const_int(1, false),
+            neg_one: types.i64.const_all_ones(),
+            zero32: types.i32.const_zero(),
+            one32: types.i32.const_int(1, false),
+            neg_one32: types.i32.const_all_ones(),
             unit: types.unit.get_undef(),
         };
 
         let native_functions = NativeFunctionsBuilder::new(llctx, &module).build();
+        let llvm_intrinsics = LLVMIntrinsics::new(llctx, &module);
 
         Self {
             tcx,
@@ -96,6 +98,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             fpm,
             vals,
             types,
+            llvm_intrinsics,
             native_functions,
             builder: llctx.create_builder(),
             intrinsics: Default::default(),
