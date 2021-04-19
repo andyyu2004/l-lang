@@ -525,3 +525,8 @@ impl<'tcx> Display for Const<'tcx> {
 pub struct InherentImpls {
     pub inherent_impls: FxHashMap<DefId, Vec<DefId>>,
 }
+
+#[derive(Clone, Debug, Default)]
+pub struct TraitImpls {
+    pub trait_impls: FxHashMap<DefId, Vec<DefId>>,
+}

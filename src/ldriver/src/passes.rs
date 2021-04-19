@@ -98,6 +98,7 @@ impl<'tcx> AnalysisPass<'tcx> for ItemTypeValidationPass<'tcx> {
         }
         // TODO currently required to run some validation on impls, maybe can move elsewhere
         self.tcx.inherent_impls(());
+        self.tcx.trait_impls(());
         false
     }
 }

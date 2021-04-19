@@ -7,6 +7,7 @@ mod general_tests;
 mod parametric_tests;
 mod pattern_tests;
 mod struct_tests;
+mod generics_tests;
 
 use itertools::Itertools;
 

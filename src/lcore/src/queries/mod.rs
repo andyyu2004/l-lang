@@ -90,6 +90,8 @@ define_query_context! {
         ([validate_item_type] [DefId] [()])
         ([inherent_impls] [()] [&'tcx InherentImpls])
         ([inherent_impls_of] [DefId] [&'tcx [DefId]])
+        ([trait_impls] [()] [&'tcx TraitImpls])
+        ([trait_impls_of] [DefId] [&'tcx [DefId]])
 
         // mir
         ([mir_of] [DefId] [&'tcx Mir<'tcx>])

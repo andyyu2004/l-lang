@@ -12,6 +12,7 @@ macro_rules! arena_types {
             [] inherent_impls: InherentImpls,
             [] instances: Instances<$tcx>,
             [] mir: Mir<$tcx>,
+            [] trait_impls: TraitImpls,
             [] typeck_tables: TypeckTables<$tcx>,
             [] typarams: TyParam<'tcx>,
             [] types: Type<$tcx>,
