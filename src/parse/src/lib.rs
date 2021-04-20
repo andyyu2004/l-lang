@@ -1,5 +1,4 @@
 #![feature(box_syntax, box_patterns)]
-#![feature(option_unwrap_none)]
 #![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
