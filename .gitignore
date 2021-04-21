@@ -3,3 +3,5 @@ l-log.txt
 log.txt
 *.ll
 *.log
+*.bc
+*.out

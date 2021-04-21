@@ -7,7 +7,6 @@ use std::path::PathBuf;
 pub struct CompilerOptions {
     /// the path of either the directory holding `L.toml`
     /// or the path of the main `.l` file
-    /// default to the current directory
     #[clap(default_value = ".")]
     pub input_path: PathBuf,
     #[clap(long("error-format"), default_value = "text")]
