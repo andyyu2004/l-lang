@@ -11,7 +11,7 @@ mod ptr_tests;
 mod struct_tests;
 
 pub macro llvm_exec_inner($src:expr) {
-    ldriver::Driver::from_src($src).llvm_exec()
+    ldriver::Driver::from_src($src).llvm_jit()
 }
 pub macro llvm_exec($src:expr) {
     llvm_exec_inner!($src).unwrap()

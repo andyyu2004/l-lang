@@ -43,14 +43,13 @@ use meta::PkgMetadata;
 use parse::Parser;
 use resolve::{Resolver, ResolverArenas};
 pub use session::{CompilerOptions, Session};
-use span::{SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
+use span::{sym, SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::{self, Write};
 use std::lazy::OnceCell;
 use std::path::PathBuf;
-use std::process::ExitCode;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
 lazy_static::lazy_static! {
@@ -58,7 +57,10 @@ lazy_static::lazy_static! {
     static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
 }
 
-pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
+pub fn run_compiler<R>(
+    opts: CompilerOptions,
+    f: impl for<'tcx> FnOnce(&'tcx Driver<'tcx>) -> R,
+) -> R {
     // our error handling in here is basically just using panic!()
     // this makes the output look nicer and consistent with the compiler errors
     std::panic::set_hook(box move |info| {
@@ -83,16 +85,12 @@ pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
     // we unregister our panic hook above as the "panic error handling" section is over
     let _ = std::panic::take_hook();
 
-    // note: this is written in this way so the driver gets dropped
-    // this is important as some types the driver holds have important drop impls
-    // std::process::exit doesn't call drop impls
-    let exit_code = self::compile(lconfig);
-    std::process::exit(exit_code)
+    f(&Driver::new(lconfig))
 }
 
 pub fn compile(lconfig: LConfig) -> i32 {
     let driver = Driver::new(lconfig);
-    match driver.llvm_compile() {
+    match driver.llvm_jit() {
         Ok(_) => 0,
         Err(..) => 1,
     }
@@ -111,22 +109,25 @@ pub struct Driver<'tcx> {
 }
 
 /// exits if any errors have been reported
-macro check_errors($self:expr, $ret:expr) {{
-    if $self.sess.has_errors() {
-        // don't print out this info for other formats as parsing the error output will become hard
-        if $self.sess.opts.error_format == ErrorFormat::Text {
-            let errc = $self.sess.err_count();
-            let warnings = $self.sess.warning_count();
-            if warnings > 0 {
-                e_yellow_ln!("{} warning{} emitted", warnings, lutil::pluralize!(warnings));
+macro_rules! check_errors {
+    ($self:expr) => {{ check_errors!($self, ())? }};
+    ($self:expr, $ret:expr) => {{
+        if $self.sess.has_errors() {
+            // don't print out this info for other formats as parsing the error output will become hard
+            if $self.sess.opts.error_format == ErrorFormat::Text {
+                let errc = $self.sess.err_count();
+                let warnings = $self.sess.warning_count();
+                if warnings > 0 {
+                    e_yellow_ln!("{} warning{} emitted", warnings, lutil::pluralize!(warnings));
+                }
+                e_red_ln!("{} error{} emitted", errc, lutil::pluralize!(errc));
             }
-            e_red_ln!("{} error{} emitted", errc, lutil::pluralize!(errc));
+            Err(ErrorReported)
+        } else {
+            Ok($ret)
         }
-        Err(ErrorReported)
-    } else {
-        Ok($ret)
-    }
-}}
+    }}
+}
 
 impl<'tcx> Driver<'tcx> {
     /// creates a temporary file and proceeds as usual
@@ -194,14 +195,19 @@ impl<'tcx> Driver<'tcx> {
         self.with_tcx(|tcx| tcx.analyze(()))
     }
 
-    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx> {
+    pub fn create_codegen_ctx(&'tcx self) -> LResult<CodegenCtx<'tcx>> {
         self.with_tcx(|tcx| CodegenCtx::new(tcx, &self.llvm_ctx))
     }
 
-    pub fn llvm_compile(&'tcx self) -> LResult<PathBuf> {
+    pub fn build(&'tcx self) -> LResult<()> {
+        self.llvm_compile()?;
+        Ok(())
+    }
+
+    pub fn llvm_compile(&'tcx self) -> LResult<CodegenCtx<'tcx>> {
         let mut cctx = self.create_codegen_ctx()?;
-        let main_fn = cctx.codegen();
-        let f = check_errors!(self, main_fn.unwrap())?;
+        cctx.codegen()?;
+        check_errors!(self);
         let path = self.root_path.join("build.bc");
         assert!(cctx.module.write_bitcode_to_path(&path));
         std::process::Command::new("clang")
@@ -212,15 +218,16 @@ impl<'tcx> Driver<'tcx> {
             .stderr(std::process::Stdio::null())
             .spawn()
             .expect("failed to link using clang");
-        Ok(path)
+        Ok(cctx)
     }
 
-    // pub fn llvm_exec(&'tcx self) -> LResult<i32> {
-    //     let (cctx, main_fn) = self.llvm_compile()?;
-    //     let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    //     let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
-    //     Ok(val)
-    // }
+    pub fn llvm_jit(&'tcx self) -> LResult<i32> {
+        let cctx = self.llvm_compile()?;
+        let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        let main = cctx.module.get_function(sym::main.as_str()).unwrap();
+        let val = unsafe { jit.run_function_as_main(main, &[]) };
+        Ok(val)
+    }
 
     pub fn has_errors(&self) -> bool {
         self.sess.has_errors()

@@ -1,5 +1,6 @@
 use super::*;
 use context::Context;
+use error::{ErrorReported, LResult};
 use inkwell::passes::PassManager;
 use inkwell::types::*;
 use inkwell::values::*;
@@ -160,20 +161,20 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     /// returns the main function
-    pub fn codegen(&mut self) -> Option<FunctionValue<'tcx>> {
+    pub fn codegen(&mut self) -> LResult<()> {
         let instances = self.tcx.monomorphization_instances(());
         if self.tcx.sess.has_errors() {
-            return None;
+            return Err(ErrorReported);
         }
         self.declare_instances(instances);
         self.codegen_instances();
         // self.module.print_to_stderr();
         self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
-        if self.main_fn.is_none() {
+        if self.module.get_function(sym::main.as_str()).is_none() {
             self.tcx.sess.build_error(Span::default(), LLVMError::MissingMain).emit();
         }
-        self.main_fn
+        Ok(())
     }
 }
 

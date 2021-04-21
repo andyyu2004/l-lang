@@ -32,14 +32,23 @@ struct NewCmd {
 #[derive(Debug, Clap)]
 struct TestCmd {}
 
-pub fn main() -> io::Result<ExitCode> {
+pub fn main() -> io::Result<()> {
     let opts = Opts::parse();
     match opts.subcmd {
         SubCommand::New(ncfg) => subcommands::new(ncfg),
-        // TODO actually run the built executable
-        SubCommand::Run(rcfg) => ldriver::run_compiler(rcfg),
-        SubCommand::Build(bcfg) => ldriver::run_compiler(bcfg),
-        SubCommand::Check(cfg) => ldriver::run_compiler(cfg),
+        // TODO the interface needs some work
+        SubCommand::Run(rcfg) => {
+            let _ = ldriver::run_compiler(rcfg, |compiler| compiler.llvm_jit());
+            Ok(())
+        }
+        SubCommand::Build(bcfg) => {
+            let _ = ldriver::run_compiler(bcfg, |compiler| compiler.build());
+            Ok(())
+        }
+        SubCommand::Check(cfg) => {
+            let _ = ldriver::run_compiler(cfg, |compiler| compiler.check());
+            Ok(())
+        }
         SubCommand::Test(_) => todo!(),
     }
 }

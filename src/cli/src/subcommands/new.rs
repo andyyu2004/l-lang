@@ -4,7 +4,7 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::process::ExitCode;
 
-crate fn new(config: NewCmd) -> io::Result<ExitCode> {
+crate fn new(config: NewCmd) -> io::Result<()> {
     let path = &config.path;
     let name = path.file_name().unwrap().to_str().unwrap();
     fs::create_dir_all(path)?;
@@ -29,5 +29,5 @@ version = "0.1.0"
     let mut file = File::create("main.l")?;
     file.write(r#"fn main() -> int { 0 }"#.as_bytes())?;
 
-    Ok(ExitCode::SUCCESS)
+    Ok(())
 }
