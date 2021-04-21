@@ -7,6 +7,7 @@ use inkwell::values::FunctionValue;
 // each new invocation will create a new copy with a suffix integer
 pub struct LLVMIntrinsics<'tcx> {
     pub stackmap: FunctionValue<'tcx>,
+    pub gcalloc: FunctionValue<'tcx>,
 }
 
 impl<'tcx> LLVMIntrinsics<'tcx> {
@@ -17,6 +18,9 @@ impl<'tcx> LLVMIntrinsics<'tcx> {
             None,
         );
 
-        Self { stackmap }
+        // let gcalloc = module.add_function("GC_malloc", llvm_ty!(llctx, fn(i64) -> *i8), None);
+        let gcalloc = module.add_function("GC_gcollect", llvm_ty!(llctx, fn()), None);
+
+        Self { stackmap, gcalloc }
     }
 }

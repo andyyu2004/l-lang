@@ -128,6 +128,8 @@ impl<'tcx> CodegenCtx<'tcx> {
                         let span = self.tcx.defs().span(def_id);
                         self.tcx.sess.emit_error(span, LLVMError::InvalidMainType(ty));
                     }
+                    // `clang bitcode.bc` expects `main` symbol
+                    // ld itself expects `_start`
                     ident.to_string()
                 } else {
                     format!("{}<{}>", ident, substs)

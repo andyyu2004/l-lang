@@ -49,6 +49,7 @@ use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::{self, Write};
 use std::lazy::OnceCell;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
@@ -91,14 +92,15 @@ pub fn run_compiler(opts: CompilerOptions) -> io::Result<ExitCode> {
 
 pub fn compile(lconfig: LConfig) -> i32 {
     let driver = Driver::new(lconfig);
-    match driver.llvm_exec() {
-        Ok(i) => i,
+    match driver.llvm_compile() {
+        Ok(_) => 0,
         Err(..) => 1,
     }
 }
 
 pub struct Driver<'tcx> {
     sess: Session,
+    root_path: PathBuf,
     /// metadata of the dependencies specified in `L.toml`
     dependencies: IndexVec<PkgId, PkgMetadata>,
     core_arenas: lcore::Arena<'tcx>,
@@ -151,6 +153,7 @@ impl<'tcx> Driver<'tcx> {
         Self {
             dependencies,
             llvm_ctx: LLVMCtx::create(),
+            root_path: config.root_path,
             sess: Session::create(config.opts),
             resolver_arenas: Default::default(),
             core_arenas: Default::default(),
@@ -195,18 +198,29 @@ impl<'tcx> Driver<'tcx> {
         self.with_tcx(|tcx| CodegenCtx::new(tcx, &self.llvm_ctx))
     }
 
-    pub fn llvm_compile(&'tcx self) -> LResult<(CodegenCtx, FunctionValue<'tcx>)> {
+    pub fn llvm_compile(&'tcx self) -> LResult<PathBuf> {
         let mut cctx = self.create_codegen_ctx()?;
         let main_fn = cctx.codegen();
-        check_errors!(self, (cctx, main_fn.unwrap()))
+        let f = check_errors!(self, main_fn.unwrap())?;
+        let path = self.root_path.join("build.bc");
+        assert!(cctx.module.write_bitcode_to_path(&path));
+        std::process::Command::new("clang")
+            .arg(&path)
+            .args(&["-o", "l.out"])
+            .arg("-lgc")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .expect("failed to link using clang");
+        Ok(path)
     }
 
-    pub fn llvm_exec(&'tcx self) -> LResult<i32> {
-        let (cctx, main_fn) = self.llvm_compile()?;
-        let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-        let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
-        Ok(val)
-    }
+    // pub fn llvm_exec(&'tcx self) -> LResult<i32> {
+    //     let (cctx, main_fn) = self.llvm_compile()?;
+    //     let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    //     let val = unsafe { jit.run_function_as_main(main_fn, &[]) };
+    //     Ok(val)
+    // }
 
     pub fn has_errors(&self) -> bool {
         self.sess.has_errors()

@@ -24,11 +24,17 @@ macro_rules! llvm_ty {
     ($ctx:expr, i16) => {
         $ctx.i16_type()
     };
+    ($ctx:expr, i8) => {
+        $ctx.i8_type()
+    };
     ($ctx:expr, bool) => {
         $ctx.bool_type()
     };
     ($ctx:expr, void) => {
         $ctx.void_type()
+    };
+    ($ctx:expr, *$($ty:tt)+) => {
+        llvm_ty!($ctx, $($ty)*).ptr_type(inkwell::AddressSpace::Generic)
     };
     ($ctx:expr, fn($($ty:tt),*)) => {
         $ctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)

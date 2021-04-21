@@ -27,6 +27,7 @@ pub struct FnCtx<'a, 'tcx> {
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     pub fn new(cctx: &'a CodegenCtx<'tcx>, instance: Instance<'tcx>) -> Self {
         let llfn = cctx.instances.borrow()[&instance];
+        // llfn.set_gc("statepoint-example");
         let mir = cctx.tcx.instance_mir(instance);
 
         let blocks = mir
@@ -89,11 +90,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_basic_block(&mut self, id: BlockId) -> BasicBlock<'tcx> {
         let block = self.set_block(id);
         // call!(self, );
-        self.build_call(
-            self.llvm_intrinsics.stackmap,
-            &[self.types.i64.const_zero().into(), self.types.i32.const_zero().into()],
-            "wer",
-        );
+        // self.build_call(
+        //     self.llvm_intrinsics.stackmap,
+        //     &[self.types.i64.const_zero().into(), self.types.i32.const_zero().into()],
+        //     "wer",
+        // );
+        // self.build_call(self.llvm_intrinsics.gcalloc, &[], "wer");
         // let string = self.build_global_string_ptr("string\n", "somestr").as_pointer_value();
         // let printf = self.native_functions.printf;
         // self.build_call(printf, &[string.into()], "printfcall");

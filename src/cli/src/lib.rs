@@ -18,6 +18,7 @@ struct Opts {
 #[derive(Debug, Clap)]
 enum SubCommand {
     Run(CompilerOptions),
+    Build(CompilerOptions),
     Check(CompilerOptions),
     New(NewCmd),
     Test(TestCmd),
@@ -35,7 +36,9 @@ pub fn main() -> io::Result<ExitCode> {
     let opts = Opts::parse();
     match opts.subcmd {
         SubCommand::New(ncfg) => subcommands::new(ncfg),
+        // TODO actually run the built executable
         SubCommand::Run(rcfg) => ldriver::run_compiler(rcfg),
+        SubCommand::Build(bcfg) => ldriver::run_compiler(bcfg),
         SubCommand::Check(cfg) => ldriver::run_compiler(cfg),
         SubCommand::Test(_) => todo!(),
     }

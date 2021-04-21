@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "src/l",
+    "src/gc",
     "src/cli",
     "src/queries",
     "src/traits",
