@@ -2,7 +2,7 @@ use crate::NewCmd;
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::process::ExitCode;
+
 
 crate fn new(config: NewCmd) -> io::Result<()> {
     let path = &config.path;

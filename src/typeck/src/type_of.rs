@@ -15,7 +15,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
             ir::ItemKind::Enum(..) | ir::ItemKind::Struct(..) => self::type_of_adt(tcx, def_id),
             ir::ItemKind::TypeAlias(_, ty) => tcx.ir_ty_to_ty(ty),
             ir::ItemKind::Mod(..) | ir::ItemKind::Use(..) | ir::ItemKind::Extern(..) => panic!(),
-            ir::ItemKind::Trait { generics, trait_item_refs } => todo!(),
+            ir::ItemKind::Trait { generics: _, trait_item_refs: _ } => todo!(),
             ir::ItemKind::Impl { generics: _, trait_path: _, self_ty, impl_item_refs: _ } =>
                 tcx.ir_ty_to_ty(self_ty),
         },

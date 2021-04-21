@@ -1,4 +1,3 @@
-#![feature(debug_non_exhaustive)]
 #![feature(min_specialization)]
 #![feature(type_ascription)]
 #![feature(const_panic)]

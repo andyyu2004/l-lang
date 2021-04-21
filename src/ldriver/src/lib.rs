@@ -33,7 +33,7 @@ use config::LConfig;
 use error::{ErrorFormat, ErrorReported, LResult};
 use index::IndexVec;
 use inkwell::context::Context as LLVMCtx;
-use inkwell::values::FunctionValue;
+
 use inkwell::OptimizationLevel;
 use ir::{PkgId, Resolutions};
 use lcore::{GlobalCtx, TyCtx};
@@ -47,7 +47,7 @@ use span::{sym, SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io::{self, Write};
+use std::io::{Write};
 use std::lazy::OnceCell;
 use std::path::PathBuf;
 use termcolor::{BufferedStandardStream, ColorChoice};

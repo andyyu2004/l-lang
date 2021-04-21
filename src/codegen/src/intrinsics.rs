@@ -1,4 +1,4 @@
-use crate::{llvm_ty, CodegenCtx};
+use crate::{CodegenCtx};
 use inkwell::types::BasicType;
 use inkwell::values::FunctionValue;
 use inkwell::AddressSpace;
