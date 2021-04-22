@@ -39,7 +39,7 @@ extern "l-intrinsic" {
     fn addr<T>(t: &T) -> int;
 }
 
-fn main() -> int {
+fn run_rc() -> int {
     /* let tail = box List::Null; */
     /* let head = box List::Next(4, tail); */
 

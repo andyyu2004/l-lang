@@ -126,12 +126,15 @@ impl<'tcx> CodegenCtx<'tcx> {
                 // we need a special case with main, as the name actually matters
                 // for lli etc
                 let name = if ident.symbol == sym::main {
+                    let span = self.tcx.defs().span(def_id);
+                    if self.module.get_function(sym::main.as_str()).is_some() {
+                        self.tcx.sess.emit_error(span, LLVMError::DuplicateMain);
+                    }
                     if ty != self.tcx.types.main {
-                        let span = self.tcx.defs().span(def_id);
                         self.tcx.sess.emit_error(span, LLVMError::InvalidMainType(ty));
                     }
                     // `clang bitcode.bc` expects `main` symbol
-                    // ld itself expects `_start`
+                    // `ld` itself expects `_start`
                     ident.to_string()
                 } else {
                     format!("{}<{}>", ident, substs)

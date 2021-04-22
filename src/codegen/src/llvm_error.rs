@@ -7,4 +7,6 @@ pub enum LLVMError<'tcx> {
     MissingMain,
     #[error("main function must have type `fn() -> int`, found {0}")]
     InvalidMainType(Ty<'tcx>),
+    #[error("function `main` defined twice")]
+    DuplicateMain,
 }
