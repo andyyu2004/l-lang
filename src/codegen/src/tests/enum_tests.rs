@@ -14,7 +14,7 @@ fn llvm_match_simple_enum() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 555);
+    assert_eq!(llvm_jit!(src), 555);
 
     let src = r#"
     enum E {
@@ -28,7 +28,7 @@ fn llvm_match_simple_enum() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 999);
+    assert_eq!(llvm_jit!(src), 999);
 }
 
 #[test]
@@ -53,5 +53,5 @@ fn llvm_construct_enums() {
     }"#;
 
     // if it doesn't crash its a pass :)
-    llvm_exec!(src);
+    llvm_jit!(src);
 }

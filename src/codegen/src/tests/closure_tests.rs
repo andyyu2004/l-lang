@@ -9,5 +9,5 @@ fn llvm_simple_closure() {
         return f();
     }"#;
 
-    llvm_exec!(src);
+    llvm_jit!(src);
 }

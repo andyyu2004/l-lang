@@ -14,7 +14,7 @@ fn associated_fn() {
     }
     "#;
 
-    assert_eq!(llvm_exec!(src), 5);
+    assert_eq!(llvm_jit!(src), 5);
 }
 
 #[test]
@@ -37,5 +37,5 @@ fn generic_impl() {
     }
     "#;
 
-    assert_eq!(llvm_exec!(src), 5);
+    assert_eq!(llvm_jit!(src), 5);
 }

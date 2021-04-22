@@ -10,7 +10,7 @@ fn llvm_immediate_loop_break() {
         0
     }"#;
 
-    assert_eq!(llvm_exec!(src), 0);
+    assert_eq!(llvm_jit!(src), 0);
 }
 
 #[test]
@@ -27,5 +27,5 @@ fn llvm_loop_break() {
         x
     }"#;
 
-    assert_eq!(llvm_exec!(src), 6);
+    assert_eq!(llvm_jit!(src), 6);
 }

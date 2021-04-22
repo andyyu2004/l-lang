@@ -95,9 +95,9 @@ impl LConfig {
     /// used to run the driver on a test source file
     pub fn from_main_path(main_path: PathBuf) -> Self {
         let mut lcfg = Self {
+            root_path: main_path.parent().unwrap().to_path_buf(),
             opts: CompilerOptions::with_input_path(main_path.clone()),
             toml: TomlConfig::default(),
-            root_path: PathBuf::default(),
         };
         lcfg.bin.main_path = main_path;
         lcfg

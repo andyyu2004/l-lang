@@ -131,17 +131,16 @@ macro_rules! check_errors {
 
 impl<'tcx> Driver<'tcx> {
     /// creates a temporary file and proceeds as usual
+    // this can't be made #[cfg(test)] for some reason
+    // as some test code complains this doesn't exist
     pub fn from_src(src: &str) -> Self {
-        let mut path = temp_dir();
-        let mut hasher = std::collections::hash_map::DefaultHasher::default();
-        src.hash(&mut hasher);
-        // an attempt at making the file name sufficiently unique
-        // to avoid the parallel tests overwriting each other's files and becoming a mess
-        let hash = hasher.finish();
-        path.push(format!("tmp{}.l", hash));
-        let mut file = File::create(&path).unwrap();
+        let tempdir = tempfile::tempdir().unwrap();
+        // into_place ensure the tempdir is *not* dropped
+        // we need it later in the `run` stage
+        let main_path = tempdir.into_path().join("main.l");
+        let mut file = File::create(&main_path).unwrap();
         file.write(src.as_bytes()).unwrap();
-        Self::new(LConfig::from_main_path(path))
+        Self::new(LConfig::from_main_path(main_path))
     }
 
     pub fn new(config: LConfig) -> Self {
@@ -208,19 +207,31 @@ impl<'tcx> Driver<'tcx> {
         let cctx = self.create_codegen_ctx()?;
         cctx.codegen()?;
         check_errors!(self);
-        let path = self.root_path.join("build.bc");
-        assert!(cctx.module.write_bitcode_to_path(&path));
+        let ir_path = self.root_path.join("llvm-ir.ll");
+        cctx.module.print_to_file(&ir_path).unwrap_or_else(|err| panic!("{}", err));
+        let bitcode_path = self.root_path.join("build.bc");
+        assert!(cctx.module.write_bitcode_to_path(&bitcode_path));
+        let output_path = self.root_path.join("l.out");
         std::process::Command::new("clang")
-            .arg(&path)
-            .args(&["-o", "l.out"])
+            .arg(&bitcode_path)
+            .arg("-o")
+            .arg(output_path)
             .arg("-lgc")
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
-            .spawn()
+            .status()
             .expect("failed to link using clang (is `clang` on your path?)");
         Ok(cctx)
     }
 
+    pub fn run(&'tcx self) -> LResult<Option<i32>> {
+        self.build()?;
+        let path = self.root_path.join("l.out");
+        assert!(path.exists());
+        Ok(std::process::Command::new(path).status().expect("io error").code())
+    }
+
+    // TODO does not link to libgc so will segfault if run with anything that uses `box`
     pub fn llvm_jit(&'tcx self) -> LResult<i32> {
         let cctx = self.llvm_compile()?;
         let jit = cctx.module.create_jit_execution_engine(OptimizationLevel::None).unwrap();

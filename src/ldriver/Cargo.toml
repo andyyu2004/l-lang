@@ -35,3 +35,5 @@ log = "0.4.11"
 lazy_static = "1"
 semver = { version = "0.11.0", features=["serde"] }
 simple-logging = "2.0.2"
+
+tempfile = "3"

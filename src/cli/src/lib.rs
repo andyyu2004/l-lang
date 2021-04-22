@@ -42,9 +42,8 @@ pub fn main() -> io::Result<()> {
             Ok(())
         }
         SubCommand::Run(rcfg) => {
-            todo!();
-            // let _ = ldriver::run_compiler(rcfg, |compiler| compiler.llvm_jit());
-            // Ok(())
+            let _ = ldriver::run_compiler(rcfg, |compiler| compiler.run());
+            Ok(())
         }
         SubCommand::Build(bcfg) => {
             let _ = ldriver::run_compiler(bcfg, |compiler| compiler.build());

@@ -22,7 +22,7 @@ fn llvm_struct_pattern_test() {
     }
     "#;
 
-    assert_eq!(llvm_exec!(src), 2);
+    assert_eq!(llvm_jit!(src), 2);
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn llvm_unpack_tuple_in_let() {
         (30, true)
     }
     "#;
-    assert_eq!(llvm_exec!(src), 30)
+    assert_eq!(llvm_jit!(src), 30)
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn llvm_unpack_nested_tuples_in_let() {
     }
     "#;
 
-    assert_eq!(llvm_exec!(src), 30)
+    assert_eq!(llvm_jit!(src), 30)
 }
 
 #[test]
@@ -72,5 +72,5 @@ fn llvm_unpack_tuple_in_parameter() {
     }
     "#;
 
-    assert_eq!(llvm_exec!(src), 185)
+    assert_eq!(llvm_jit!(src), 185)
 }

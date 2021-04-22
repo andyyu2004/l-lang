@@ -10,13 +10,27 @@ mod pattern_tests;
 mod ptr_tests;
 mod struct_tests;
 
-pub macro llvm_exec_inner($src:expr) {
+pub macro llvm_jit_inner($src:expr) {
     ldriver::Driver::from_src($src).llvm_jit()
 }
+
+pub macro llvm_jit($src:expr) {
+    llvm_jit_inner!($src).unwrap()
+}
+
+pub macro llvm_jit_expect_error($src:expr) {
+    llvm_jit_inner!($src).unwrap_err()
+}
+
+pub macro llvm_exec_inner($src:expr) {
+    ldriver::Driver::from_src($src).run().expect("process was interrupted before terminating")
+}
+
+/// exec *must* be called instead of jit when using a box
 pub macro llvm_exec($src:expr) {
     llvm_exec_inner!($src).unwrap()
 }
 
-pub macro llvm_expect_error($src:expr) {
+pub macro llvm_exec_expect_error($src:expr) {
     llvm_exec_inner!($src).unwrap_err()
 }

@@ -167,8 +167,6 @@ impl<'tcx> CodegenCtx<'tcx> {
         }
         self.declare_instances(instances);
         self.codegen_instances();
-        // self.module.print_to_stderr();
-        self.module.print_to_file("ir.ll").unwrap();
         self.module.verify().unwrap();
         if self.module.get_function(sym::main.as_str()).is_none() {
             self.tcx.sess.build_error(Span::default(), LLVMError::MissingMain).emit();

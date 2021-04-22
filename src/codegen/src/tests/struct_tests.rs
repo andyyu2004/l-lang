@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn llvm_tuple_field_access() {
-    let out = llvm_exec!("fn main() -> int { (1,8).1 }");
+    let out = llvm_jit!("fn main() -> int { (1,8).1 }");
     assert_eq!(out, 8);
 }
 
@@ -15,7 +15,7 @@ fn llvm_singleton_struct_construction() {
         S { x: 5 }.x
     }
     "#;
-    assert_eq!(llvm_exec!(src), 5)
+    assert_eq!(llvm_jit!(src), 5)
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn llvm_tuple_in_struct() {
         S { x: 5, y: (4, false, 9) }.y.2
     }
     "#;
-    assert_eq!(llvm_exec!(src), 9)
+    assert_eq!(llvm_jit!(src), 9)
 }
 
 #[test]
@@ -54,13 +54,13 @@ fn llvm_nested_struct() {
         t.s.y.2
     }
     "#;
-    assert_eq!(llvm_exec!(src), 3)
+    assert_eq!(llvm_jit!(src), 3)
 }
 
 #[test]
 fn llvm_multi_nested_tuples() {
     let src = "fn main() -> int { (1, (2, (3, (4, 5)))).1.1.1.1 }";
-    assert_eq!(llvm_exec!(src), 5)
+    assert_eq!(llvm_jit!(src), 5)
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn llvm_struct_field_assign() {
         s.x = 9;
         s.x
     }"#;
-    assert_eq!(llvm_exec!(src), 9)
+    assert_eq!(llvm_jit!(src), 9)
 }
 
 #[test]

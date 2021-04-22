@@ -3,10 +3,10 @@ use super::*;
 #[test]
 fn simple_conditionals() {
     let src = "fn main() -> int { if true { 20 } else { 30 } }";
-    assert_eq!(llvm_exec!(src), 20);
+    assert_eq!(llvm_jit!(src), 20);
 
     let src = "fn main() -> int { if false { 20 } else { 30 } }";
-    assert_eq!(llvm_exec!(src), 30);
+    assert_eq!(llvm_jit!(src), 30);
 }
 
 #[test]
@@ -25,7 +25,7 @@ fn simple_enum_match() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 9);
+    assert_eq!(llvm_jit!(src), 9);
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn simple_literal_match() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 50);
+    assert_eq!(llvm_jit!(src), 50);
 
     let src = r#"
     fn main() -> int {
@@ -48,7 +48,7 @@ fn simple_literal_match() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 34);
+    assert_eq!(llvm_jit!(src), 34);
 }
 
 #[test]
@@ -102,5 +102,5 @@ fn nested_match() {
         }
     }"#;
 
-    assert_eq!(llvm_exec!(src), 88);
+    assert_eq!(llvm_jit!(src), 88);
 }
