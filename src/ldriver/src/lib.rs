@@ -47,7 +47,7 @@ use span::{sym, SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use std::env::temp_dir;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io::{Write};
+use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::PathBuf;
 use termcolor::{BufferedStandardStream, ColorChoice};
@@ -205,7 +205,7 @@ impl<'tcx> Driver<'tcx> {
     }
 
     pub fn llvm_compile(&'tcx self) -> LResult<CodegenCtx<'tcx>> {
-        let mut cctx = self.create_codegen_ctx()?;
+        let cctx = self.create_codegen_ctx()?;
         cctx.codegen()?;
         check_errors!(self);
         let path = self.root_path.join("build.bc");
@@ -217,7 +217,7 @@ impl<'tcx> Driver<'tcx> {
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn()
-            .expect("failed to link using clang");
+            .expect("failed to link using clang (is `clang` on your path?)");
         Ok(cctx)
     }
 

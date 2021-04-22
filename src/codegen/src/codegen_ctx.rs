@@ -7,6 +7,7 @@ use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
 use lcore::ty::*;
+use llvm_sys::target::LLVMStoreSizeOfType;
 use rustc_hash::FxHashMap;
 use span::{sym, Span};
 use std::cell::RefCell;
@@ -22,10 +23,10 @@ pub struct CodegenCtx<'tcx> {
     pub builder: Builder<'tcx>,
     pub native_functions: NativeFunctions<'tcx>,
     pub llvm_intrinsics: LLVMIntrinsics<'tcx>,
+    pub gc_functions: GCFunctions<'tcx>,
     pub intrinsics: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub instances: RefCell<FxHashMap<Instance<'tcx>, FunctionValue<'tcx>>>,
     pub lltypes: RefCell<FxHashMap<Ty<'tcx>, BasicTypeEnum<'tcx>>>,
-    main_fn: Option<FunctionValue<'tcx>>,
 }
 
 pub struct CommonValues<'tcx> {
@@ -91,6 +92,7 @@ impl<'tcx> CodegenCtx<'tcx> {
 
         let native_functions = NativeFunctionsBuilder::new(llctx, &module).build();
         let llvm_intrinsics = LLVMIntrinsics::new(llctx, &module);
+        let gc = GCFunctions::new(llctx, &module);
 
         Self {
             tcx,
@@ -101,22 +103,22 @@ impl<'tcx> CodegenCtx<'tcx> {
             types,
             llvm_intrinsics,
             native_functions,
+            gc_functions: gc,
             builder: llctx.create_builder(),
             intrinsics: Default::default(),
             instances: Default::default(),
             lltypes: Default::default(),
-            main_fn: None,
         }
     }
 
-    pub fn declare_instances<I>(&mut self, instances: &I)
+    pub fn declare_instances<I>(&self, instances: &I)
     where
         for<'a> &'a I: IntoIterator<Item = &'a Instance<'tcx>>,
     {
         instances.into_iter().for_each(|&instance| self.declare_instance(instance));
     }
 
-    fn declare_instance(&mut self, instance: Instance<'tcx>) {
+    fn declare_instance(&self, instance: Instance<'tcx>) {
         match instance.kind {
             InstanceKind::Item => {
                 let Instance { def_id, substs, .. } = instance;
@@ -137,9 +139,6 @@ impl<'tcx> CodegenCtx<'tcx> {
                 };
                 let llty = self.llvm_fn_ty_from_ty(ty.subst(self.tcx, substs));
                 let llfn = self.module.add_function(&name, llty, None);
-                if Some(def_id) == self.tcx.ir.entry_id {
-                    self.main_fn = Some(llfn);
-                }
                 self.instances
                     .borrow_mut()
                     .insert(Instance::resolve(self.tcx, def_id, substs), llfn);
@@ -161,7 +160,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     }
 
     /// returns the main function
-    pub fn codegen(&mut self) -> LResult<()> {
+    pub fn codegen(&self) -> LResult<()> {
         let instances = self.tcx.monomorphization_instances(());
         if self.tcx.sess.has_errors() {
             return Err(ErrorReported);

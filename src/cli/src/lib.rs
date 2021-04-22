@@ -8,7 +8,6 @@ use ldriver::CompilerOptions;
 use std::io;
 use std::path::PathBuf;
 
-
 #[derive(Debug, Clap)]
 struct Opts {
     #[clap(subcommand)]
@@ -17,8 +16,9 @@ struct Opts {
 
 #[derive(Debug, Clap)]
 enum SubCommand {
-    Run(CompilerOptions),
+    Jit(CompilerOptions),
     Build(CompilerOptions),
+    Run(CompilerOptions),
     Check(CompilerOptions),
     New(NewCmd),
     Test(TestCmd),
@@ -37,9 +37,14 @@ pub fn main() -> io::Result<()> {
     match opts.subcmd {
         SubCommand::New(ncfg) => subcommands::new(ncfg),
         // TODO the interface needs some work
-        SubCommand::Run(rcfg) => {
+        SubCommand::Jit(rcfg) => {
             let _ = ldriver::run_compiler(rcfg, |compiler| compiler.llvm_jit());
             Ok(())
+        }
+        SubCommand::Run(rcfg) => {
+            todo!();
+            // let _ = ldriver::run_compiler(rcfg, |compiler| compiler.llvm_jit());
+            // Ok(())
         }
         SubCommand::Build(bcfg) => {
             let _ = ldriver::run_compiler(bcfg, |compiler| compiler.build());

@@ -1,6 +1,5 @@
 //! typed ir
 
-#![feature(split_inclusive)]
 #![feature(box_syntax, box_patterns)]
 
 #[macro_use]

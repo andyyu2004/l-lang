@@ -6,6 +6,7 @@ extern crate log;
 
 mod codegen_ctx;
 mod fcx;
+mod gc;
 mod intrinsics;
 mod layout;
 mod lltypes;
@@ -20,11 +21,13 @@ mod tests;
 
 pub use codegen_ctx::CodegenCtx;
 pub use fcx::FnCtx;
-use llvm_intrinsics::LLVMIntrinsics;
+
+use gc::GCFunctions;
 use inkwell::values::{BasicValueEnum, FunctionValue, PointerValue};
 use lcore::queries::Queries;
 use lcore::ty::Ty;
 use llvm_error::LLVMError;
+use llvm_intrinsics::LLVMIntrinsics;
 use monomorphize::Monomorphize;
 use native::{NativeFunctions, NativeFunctionsBuilder};
 

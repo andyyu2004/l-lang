@@ -69,11 +69,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             .fn_type(&sig.params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
     }
 
-    /// wraps a `Ty` with refcount info (place the refcount in the second field instead of the first
-    /// to allows for easier geps)
-    pub fn llvm_boxed_ty(&self, ty: Ty<'tcx>) -> StructType<'tcx> {
-        let llty = self.llvm_ty(ty);
-        self.llctx.struct_type(&[llty, self.types.i32.into()], false)
+    pub fn llvm_ptr_ty(&self, ty: Ty<'tcx>) -> PointerType<'tcx> {
+        self.llvm_ty(ty).into_pointer_type()
     }
 
     /// converts a L type into a llvm representation

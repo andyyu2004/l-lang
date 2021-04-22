@@ -14,6 +14,14 @@ enum Option<T> {
 }
 
 fn main() -> int {
+    let mut i = 0;
+    loop {
+        // if i > 500000 { break }
+        print(0);
+        i = i + 1;
+        let boxed = box i;
+        print(*boxed);
+    }
     methods::run();
     match Option::Some(3) {
         Option::Some(x) => x,

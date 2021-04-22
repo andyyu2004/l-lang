@@ -108,10 +108,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
             mir::StmtKind::Retain(var) => {
-                let lvalue_ref = self.vars[var];
-                assert!(lvalue_ref.ty.is_box());
-                let rc_retain = self.build_rc_retain(lvalue_ref);
-                self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
+                // let lvalue_ref = self.vars[var];
+                // assert!(lvalue_ref.ty.is_box());
+                // let rc_retain = self.build_rc_retain(lvalue_ref);
+                // self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
             }
             mir::StmtKind::Release(_var) => {
                 // let lvalue_ref = self.vars[var];
@@ -224,22 +224,26 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
                 let operand_ty = operand.ty(self.tcx, self.mir);
+                let llty = self.llvm_ty(operand_ty);
                 let operand = self.codegen_operand(operand);
-                // important the refcount itself is boxed so it is shared
-                let boxed_ty = self.llvm_boxed_ty(operand_ty);
-                let ptr = self.build_malloc(boxed_ty, "box").unwrap();
+                // let ptr = self.build_malloc(llty, "malloc").unwrap();
 
-                // the refcount is at index `1` in the implicit struct
-                let rc_ptr = self.build_struct_gep(ptr, 1, "rc_gep").unwrap();
-                self.build_store(rc_ptr, self.vals.zero32);
-                // gep the returned pointer to point to the content only and return that
-                let content_ptr = self.build_struct_gep(ptr, 0, "box_gep").unwrap();
-                self.build_store(content_ptr, operand.val);
-
+                let gc_ptr = self
+                    .build_call(
+                        self.gc_functions.gc_malloc,
+                        &[llty.size_of().expect("allocating unsized type").into()],
+                        "gc_malloc",
+                    )
+                    .as_any_value_enum()
+                    .into_pointer_value();
                 let ty = self.tcx.mk_box_ty(operand_ty);
+                let ptr =
+                    self.build_pointer_cast(gc_ptr, self.llvm_ptr_ty(ty), "gc_malloc_ptr_cast");
+
+                self.build_store(ptr, operand.val);
                 #[cfg(debug_assertions)]
-                self.mallocs.insert(LvalueRef { ty, ptr: content_ptr });
-                ValueRef { ty, val: content_ptr.into() }
+                self.mallocs.insert(LvalueRef { ty, ptr });
+                ValueRef { ty, val: ptr.into() }
             }
             mir::Rvalue::Ref(lvalue) => {
                 let lvalue_ref = self.codegen_lvalue(*lvalue);
