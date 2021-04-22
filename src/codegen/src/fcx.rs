@@ -107,18 +107,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     fn codegen_stmt(&mut self, stmt: &'tcx mir::Stmt<'tcx>) {
         match stmt.kind {
             mir::StmtKind::Assign(lvalue, ref rvalue) => self.codegen_assignment(lvalue, rvalue),
-            mir::StmtKind::Retain(var) => {
-                // let lvalue_ref = self.vars[var];
-                // assert!(lvalue_ref.ty.is_box());
-                // let rc_retain = self.build_rc_retain(lvalue_ref);
-                // self.build_call(rc_retain, &[lvalue_ref.ptr.into()], "rc_retain");
-            }
-            mir::StmtKind::Release(_var) => {
-                // let lvalue_ref = self.vars[var];
-                // assert!(lvalue_ref.ty.is_box());
-                // let rc_release = self.build_rc_release(lvalue_ref);
-                // self.build_call(rc_release, &[lvalue_ref.ptr.into()], "rc_release");
-            }
             mir::StmtKind::Nop => {}
         }
     }

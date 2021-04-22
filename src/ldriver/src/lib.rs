@@ -209,11 +209,11 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self);
         let ir_path = self.root_path.join("llvm-ir.ll");
         cctx.module.print_to_file(&ir_path).unwrap_or_else(|err| panic!("{}", err));
-        let bitcode_path = self.root_path.join("build.bc");
-        assert!(cctx.module.write_bitcode_to_path(&bitcode_path));
+        // let bitcode_path = self.root_path.join("build.bc");
+        // assert!(cctx.module.write_bitcode_to_path(&bitcode_path));
         let output_path = self.root_path.join("l.out");
         std::process::Command::new("clang")
-            .arg(&bitcode_path)
+            .arg(&ir_path)
             .arg("-o")
             .arg(output_path)
             .arg("-lgc")

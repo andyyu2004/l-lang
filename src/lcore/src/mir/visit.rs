@@ -32,8 +32,6 @@ pub trait MirVisitor<'tcx> {
     fn walk_stmt(&mut self, stmt: &Stmt<'tcx>) {
         match &stmt.kind {
             StmtKind::Assign(lvalue, rvalue) => self.visit_assignment(stmt.info, lvalue, rvalue),
-            StmtKind::Retain(_) => {}
-            StmtKind::Release(_) => {}
             StmtKind::Nop => {}
         }
     }

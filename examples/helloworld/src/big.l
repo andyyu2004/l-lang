@@ -24,8 +24,6 @@ enum Either {
     Right(int),
 }
 
-
-
 enum Expr {
     Int(int),
     Add(&Expr, &Expr)
@@ -37,7 +35,6 @@ enum List {
 }
 
 extern {
-    fn rc<T>(t: &T) -> int;
     fn print(t: int);
     fn addr<T>(t: &T) -> int;
 }

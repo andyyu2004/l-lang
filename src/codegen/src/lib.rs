@@ -14,7 +14,6 @@ mod llvm_error;
 mod llvm_intrinsics;
 mod monomorphize;
 mod native;
-mod rc;
 
 #[cfg(test)]
 mod tests;

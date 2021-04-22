@@ -62,8 +62,6 @@ impl<'a, 'tcx> MirVisitor<'tcx> for MirAnalysisCtxt<'a, 'tcx> {
                 }
                 self.initialized.set(lvalue.id);
             }
-            StmtKind::Retain(..) => return,
-            StmtKind::Release(..) => return,
             StmtKind::Nop => {}
         }
 

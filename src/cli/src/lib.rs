@@ -3,12 +3,13 @@
 
 mod subcommands;
 
-use clap::Clap;
+use clap::{AppSettings, Clap};
 use ldriver::CompilerOptions;
 use std::io;
 use std::path::PathBuf;
 
 #[derive(Debug, Clap)]
+#[clap(setting(AppSettings::InferSubcommands))]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,

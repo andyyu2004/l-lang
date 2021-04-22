@@ -3,4 +3,4 @@ name = "test"
 version = "0.1.0"
 
 [dependencies]
-maths = { path = "../maths" }
+# maths = { path = "../maths" }

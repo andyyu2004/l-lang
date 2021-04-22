@@ -24,10 +24,9 @@
 // }
 //
 
-
 enum Expr {
     Int(int),
-    Add(&Expr, &Expr)
+    Add(&Expr, &Expr),
 }
 
 enum List {
@@ -35,15 +34,12 @@ enum List {
     Null,
 }
 
-extern {
-    fn rc<T>(t: &T) -> int;
+extern "l-intrinsic" {
     fn print(t: int);
     fn addr<T>(t: &T) -> int;
 }
 
-
 fn main() -> int {
-
     /* let tail = box List::Null; */
     /* let head = box List::Next(4, tail); */
 
@@ -79,21 +75,20 @@ fn main() -> int {
     8
 }
 
-
 // fn take_box(i: &int) {
 //     print(rc(i));
 //
 // }
 
-fn last2(list: &List) -> &List {
-    match list {
-	&List::Next(i, l) => {
-	    print(addr(l));
-	    last2(l)
-	},
-	&List::Null => list,
-    }
-}
+// fn last2(list: &List) -> &List {
+//     match list {
+//         &List::Next(i, l) => {
+//             print(addr(l));
+//             last2(l)
+//         }
+//         &List::Null => list,
+//     }
+// }
 
 // fn last(node: &Node) -> int {
 //     /* print(rc(node)); */
@@ -106,13 +101,11 @@ fn last2(list: &List) -> &List {
 fn eval(expr: &Expr) -> int {
     /* print(rc(expr)); */
     match expr {
-	&Expr::Int(i) => i,
-	&Expr::Add(l, r) => {
-	    print(addr(l));
-	    print(addr(r));
-	    eval(l) + eval(r)
-	}
+        &Expr::Int(i) => i,
+        &Expr::Add(l, r) => {
+            print(addr(l));
+            print(addr(r));
+            eval(l) + eval(r)
+        }
     }
 }
-
-

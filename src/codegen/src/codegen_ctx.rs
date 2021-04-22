@@ -7,7 +7,6 @@ use inkwell::values::*;
 use inkwell::*;
 use inkwell::{builder::Builder, module::Module};
 use lcore::ty::*;
-use llvm_sys::target::LLVMStoreSizeOfType;
 use rustc_hash::FxHashMap;
 use span::{sym, Span};
 use std::cell::RefCell;

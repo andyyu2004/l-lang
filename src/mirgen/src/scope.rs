@@ -62,16 +62,7 @@ crate enum BreakType {
 }
 
 impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
-    pub fn schedule_release(&mut self, info: SpanInfo, var: VarId) {
-        let scope = self.scopes.peek_mut();
-        scope.releases.push(ReleaseInfo { var, info });
-    }
-
-    fn exit_scope(&mut self, _info: SpanInfo, block: BlockId) {
-        let scope = self.scopes.pop_scope();
-        for release in scope.releases.into_iter().rev() {
-            self.push_release(block, release);
-        }
+    fn exit_scope(&mut self, _info: SpanInfo, _block: BlockId) {
     }
 
     pub fn break_scope(&mut self, info: SpanInfo, block: BlockId, kind: BreakType) -> BlockAnd<()> {

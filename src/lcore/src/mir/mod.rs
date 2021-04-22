@@ -87,8 +87,6 @@ pub struct Stmt<'tcx> {
 #[derive(Clone, Debug, PartialEq)]
 pub enum StmtKind<'tcx> {
     Assign(Lvalue<'tcx>, Rvalue<'tcx>),
-    Retain(VarId),
-    Release(VarId),
     Nop,
 }
 
