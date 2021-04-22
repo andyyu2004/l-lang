@@ -17,7 +17,6 @@ fn main() -> int {
     let mut i = 0;
     loop {
         // if i > 500000 { break }
-        print(0);
         i = i + 1;
         let boxed = box i;
         print(*boxed);

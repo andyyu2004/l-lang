@@ -226,7 +226,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 let operand_ty = operand.ty(self.tcx, self.mir);
                 let llty = self.llvm_ty(operand_ty);
                 let operand = self.codegen_operand(operand);
-                // let ptr = self.build_malloc(llty, "malloc").unwrap();
 
                 let gc_ptr = self
                     .build_call(
@@ -236,6 +235,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     )
                     .as_any_value_enum()
                     .into_pointer_value();
+
                 let ty = self.tcx.mk_box_ty(operand_ty);
                 let ptr =
                     self.build_pointer_cast(gc_ptr, self.llvm_ptr_ty(ty), "gc_malloc_ptr_cast");

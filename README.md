@@ -10,10 +10,9 @@ the trait system.
 
 # Getting Started
 
-Requires LLVM to be installed on your system.
+Requires `LLVM11`, `clang`, and `libgc` to be installed on your system.
 
 Simply build and run with cargo.
-
 
 Currently has a (path) dependency on [logic](https://github.com/andyyu2004/logic), and so
 `logic` needs to be in the same folder as `l`. Note that `logic` could
