@@ -49,6 +49,8 @@ pub enum ExprKind<'ir> {
     Closure(&'ir ir::FnSig<'ir>, &'ir ir::Body<'ir>),
     Assign(&'ir ir::Expr<'ir>, &'ir ir::Expr<'ir>),
     Call(&'ir ir::Expr<'ir>, &'ir [ir::Expr<'ir>]),
+    /// the receiver is now stored as the first element of the arguments
+    MethodCall(ir::PathSegment<'ir>, &'ir [ir::Expr<'ir>]),
     Match(&'ir ir::Expr<'ir>, &'ir [ir::Arm<'ir>], ir::MatchSource),
     Struct(&'ir QPath<'ir>, &'ir [ir::Field<'ir>]),
     /// named field access `foo.x` or `tuple.1`

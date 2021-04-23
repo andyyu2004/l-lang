@@ -143,6 +143,25 @@ impl<'a> Parser<'a> {
         StmtParser.parse(self)
     }
 
+    pub fn parse_expr_segment(&mut self) -> ParseResult<'a, PathSegment> {
+        self.parse_segment(PathKind::Expr)
+    }
+
+    pub fn parse_expr_tuple(&mut self) -> ParseResult<'a, (Span, Vec<P<Expr>>)> {
+        self.parse_tuple(ExprParser)
+    }
+
+    pub fn parse_tuple<P: Parse<'a>>(
+        &mut self,
+        inner: P,
+    ) -> ParseResult<'a, (Span, Vec<P::Output>)> {
+        TupleParser { inner }.spanned(true).parse(self)
+    }
+
+    pub fn parse_segment(&mut self, kind: PathKind) -> ParseResult<'a, PathSegment> {
+        PathSegmentParser { kind }.parse(self)
+    }
+
     pub fn parse_item(&mut self) -> ParseResult<'a, P<Item>> {
         ItemParser.parse(self)
     }

@@ -3,6 +3,7 @@
 /* mod test; */
 // mod expr;
 mod gc;
+mod closures;
 mod methods;
 
 extern "l-intrinsic" {
@@ -15,19 +16,13 @@ enum Option<T> {
 }
 
 fn main() -> int {
-    let mut i = 0;
-    loop {
-        if i > 50000 { break }
-        i = i + 1;
-        let boxed = box i;
-        print(*boxed);
-    }
     methods::run();
-    gc::run();
-    match Option::Some(3) {
-        Option::Some(x) => x,
-        Option::None => 5,
-    };
+    // gc::run();
+    // closures::run();
+    // match Option::Some(3) {
+    //     Option::Some(x) => x,
+    //     Option::None => 5,
+    // };
     // run();
     return 0;
 }

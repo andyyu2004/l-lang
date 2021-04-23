@@ -49,4 +49,6 @@ pub enum ParseError {
     ElidedTypeNotAllowedInThisContext,
     #[error("unterminated string literal")]
     UnterminatedStringLiteral,
+    #[error("invalid field access token")]
+    InvalidFieldAccessToken,
 }

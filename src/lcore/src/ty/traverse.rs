@@ -50,6 +50,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     {
         let kind = match self.kind {
             TyKind::Box(ty) => TyKind::Box(ty.fold_with(folder)),
+            TyKind::Closure(closure_ty) => TyKind::Closure(closure_ty.fold_with(folder)),
             TyKind::FnPtr(fn_ty) => TyKind::FnPtr(fn_ty.fold_with(folder)),
             TyKind::Ptr(ty) => TyKind::Ptr(ty.fold_with(folder)),
             TyKind::Array(ty, n) => TyKind::Array(ty.fold_with(folder), n),
@@ -85,6 +86,7 @@ impl<'tcx> TypeFoldable<'tcx> for Ty<'tcx> {
     {
         match self.kind {
             TyKind::FnPtr(sig) => sig.visit_with(visitor),
+            TyKind::Closure(sig) => sig.visit_with(visitor),
             TyKind::Ptr(ty) | TyKind::Box(ty) | TyKind::Array(ty, _) => ty.visit_with(visitor),
             TyKind::Tuple(tys) => tys.visit_with(visitor),
             TyKind::Opaque(_, substs) => substs.visit_with(visitor),

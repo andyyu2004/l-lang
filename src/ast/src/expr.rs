@@ -39,6 +39,7 @@ impl Expr {
             | ExprKind::Call(..)
             | ExprKind::Struct(..)
             | ExprKind::Field(..)
+            | ExprKind::MethodCall(..)
             | ExprKind::Err
             | ExprKind::Break
             | ExprKind::Continue => false,
@@ -82,6 +83,8 @@ pub enum ExprKind {
     If(P<Expr>, P<Block>, Option<P<Expr>>),
     Struct(Path, Vec<Field>),
     Field(P<Expr>, Ident),
+    // <receiver>.<method>(<args>...)
+    MethodCall(P<Expr>, PathSegment, Vec<P<Expr>>),
     Match(P<Expr>, Vec<Arm>),
     Break,
     Continue,
@@ -103,6 +106,8 @@ impl Display for ExprKind {
             Self::Call(f, args) => write!(fmt, "({} {})", f, lutil::join(args, " ")),
             Self::Struct(_path, _fields) => todo!(),
             Self::Field(expr, ident) => write!(fmt, "{}.{}", expr, ident),
+            Self::MethodCall(receiver, method, args) =>
+                write!(fmt, "{}.{}({})", receiver, method, lutil::join(args, ",")),
             Self::While(expr, block) => write!(fmt, "while {} {}", expr, block),
             Self::Loop(block) => write!(fmt, "loop {}", block),
             Self::Closure(name, sig, body) => match name {

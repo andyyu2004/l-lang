@@ -190,7 +190,7 @@ pub enum Rvalue<'tcx> {
     /// reads the discriminant of an enum
     Discriminant(Lvalue<'tcx>),
     /// TODO temporary representation, incomplete
-    Closure(Ty<'tcx>),
+    Closure { ty: Ty<'tcx>, upvars: Vec<Operand<'tcx>> },
     Adt {
         adt: &'tcx AdtTy,
         variant_idx: VariantIdx,

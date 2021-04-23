@@ -116,7 +116,20 @@ impl<'a> Parse<'a> for PostfixExprParser {
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
                     expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
-                TokenType::Dot => expr = FieldAccessParser { expr }.parse(parser)?,
+                TokenType::Dot =>
+                    expr = {
+                        let mut method_call_parser = MethodCallParser { receiver: expr };
+                        if let Some(expr) = method_call_parser.try_parse(parser) {
+                            expr
+                        } else {
+                            // its ok to take the expr for the other parser as if it was already taken
+                            // then it would have succeeded
+                            FieldAccessParser {
+                                expr: std::mem::take(&mut method_call_parser.receiver),
+                            }
+                            .parse(parser)?
+                        }
+                    },
                 TokenType::OpenSqBracket => todo!(),
                 _ => unreachable!(),
             }

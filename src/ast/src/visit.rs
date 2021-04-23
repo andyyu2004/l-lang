@@ -251,6 +251,11 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(expr);
             visitor.visit_block(block);
         }
+        ExprKind::MethodCall(receiver, segment, args) => {
+            visitor.visit_expr(receiver);
+            visitor.visit_path_segment(segment);
+            args.iter().for_each(|arg| visitor.visit_expr(arg));
+        }
     }
 }
 

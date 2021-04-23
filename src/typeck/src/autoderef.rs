@@ -30,7 +30,7 @@ impl<'tcx> Adjuster<'tcx> for Autoderef<'_, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Iterator for &mut Autoderef<'a, 'tcx> {
+impl<'a, 'tcx> Iterator for Autoderef<'a, 'tcx> {
     type Item = Ty<'tcx>;
 
     fn next(&mut self) -> Option<Self::Item> {

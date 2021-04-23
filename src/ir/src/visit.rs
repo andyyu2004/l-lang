@@ -271,6 +271,10 @@ pub fn walk_expr<'ir, V: Visitor<'ir>>(v: &mut V, expr: &'ir ir::Expr<'ir>) {
             v.visit_expr(f);
             args.iter().for_each(|arg| v.visit_expr(arg));
         }
+        ir::ExprKind::MethodCall(segment, args) => {
+            v.visit_path_segment(segment);
+            args.iter().for_each(|arg| v.visit_expr(arg));
+        }
         ir::ExprKind::Bin(_, l, r) => {
             v.visit_expr(l);
             v.visit_expr(r);

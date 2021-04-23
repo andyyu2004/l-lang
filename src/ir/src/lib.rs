@@ -31,12 +31,13 @@ pub use ty::*;
 pub use visit::*;
 
 /// certain things such as qpaths generalize over both expressions and patterns
-pub trait ExprOrPat<'ir> {
+// very obscure name but its less painful than `ExprOrPat`
+pub trait XP<'ir> {
     fn span(&self) -> Span;
     fn id(&self) -> ir::Id;
 }
 
-impl<'ir> ExprOrPat<'ir> for ir::Expr<'ir> {
+impl<'ir> XP<'ir> for ir::Expr<'ir> {
     fn span(&self) -> Span {
         self.span
     }
@@ -46,7 +47,7 @@ impl<'ir> ExprOrPat<'ir> for ir::Expr<'ir> {
     }
 }
 
-impl<'ir> ExprOrPat<'ir> for ir::Pattern<'ir> {
+impl<'ir> XP<'ir> for ir::Pattern<'ir> {
     fn span(&self) -> Span {
         self.span
     }

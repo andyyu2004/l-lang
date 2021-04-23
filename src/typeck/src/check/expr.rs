@@ -25,6 +25,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             ir::ExprKind::Field(base, ident) => self.check_expr_field(expr, base, *ident),
             ir::ExprKind::Break | ir::ExprKind::Continue => self.tcx.types.never,
             ir::ExprKind::Err => self.set_ty_err(),
+            ir::ExprKind::MethodCall(segment, args) =>
+                self.check_method_call_expr(expr, segment, args),
         };
         self.record_ty(expr.id, ty)
     }
@@ -119,7 +121,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
         }
 
-        // TODO search for methods
+        // TODO search for methods and either report and error (for missing the ())
+        // or create a closure with the first argument bound to self
         (autoderef, self.emit_ty_err(expr.span, TypeError::BadFieldAccess(base_ty)))
     }
 
@@ -275,6 +278,18 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let ty = self.tcx.mk_fn_ptr(FnSig { params, ret });
         self.unify(expr.span, ty, f_ty);
         ret
+    }
+
+    fn check_method_call_expr(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        segment: &ir::PathSegment<'tcx>,
+        args: &[ir::Expr<'tcx>],
+    ) -> Ty<'tcx> {
+        let (receiver, args) = args.split_first().unwrap();
+        let receiver_ty = self.check_expr(receiver);
+        let res = self.resolve_method(expr, receiver_ty, segment);
+        todo!()
     }
 
     fn check_closure_expr(

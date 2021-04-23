@@ -45,6 +45,7 @@ impl<'tcx> ir::Visitor<'tcx> for TraitImplCollector<'tcx> {
             ty::Box(..) => todo!(),
             ty::Array(..) => todo!(),
             ty::FnPtr(..) => todo!(),
+            ty::Closure(..) => todo!(),
             ty::Tuple(..) => todo!(),
             ty::Infer(..) => todo!(),
             ty::Ptr(..) => todo!(),

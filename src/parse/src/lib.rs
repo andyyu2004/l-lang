@@ -114,6 +114,26 @@ where
         }
     }
 }
+
+// parses everything after the `.` in a method call
+pub struct MethodCallParser {
+    pub receiver: P<Expr>,
+}
+
+impl<'a> Parse<'a> for MethodCallParser {
+    type Output = P<Expr>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let segment = parser.parse_expr_segment()?;
+        parser.expect(TokenType::OpenParen)?;
+        let (span, args) = parser.parse_expr_tuple()?;
+        Ok(parser.mk_expr(
+            self.receiver.span.merge(span),
+            ExprKind::MethodCall(std::mem::take(&mut self.receiver), segment, args),
+        ))
+    }
+}
+
 /// parses an ident for a field access
 pub struct FieldAccessParser {
     pub expr: P<Expr>,
@@ -144,7 +164,7 @@ impl<'a> Parse<'a> for FieldAccessParser {
                 _ => panic!("bad field access literal"),
             }
         } else {
-            panic!("expected literal or identifier for field access")
+            return Err(parser.build_err(self.expr.span, ParseError::InvalidFieldAccessToken));
         };
         Ok(parser.mk_expr(
             self.expr.span.merge(ident.span),
@@ -344,7 +364,6 @@ pub struct TupleParser<P> {
 impl<'a, P> Parse<'a> for TupleParser<P>
 where
     P: Parse<'a>,
-    P::Output: std::fmt::Debug,
 {
     type Output = Vec<P::Output>;
 

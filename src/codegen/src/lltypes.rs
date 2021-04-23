@@ -87,6 +87,7 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Array(_ty, _n) => todo!(),
             TyKind::FnPtr(sig) => self.llvm_fn_ty(sig).ptr_type(AddressSpace::Generic).into(),
+            TyKind::Closure(sig) => todo!(),
             TyKind::Tuple(tys) => {
                 // tuples are represented as anonymous structs
                 let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();

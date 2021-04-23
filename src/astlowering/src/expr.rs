@@ -47,6 +47,12 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
                 self.lower_arms(arms),
                 ir::MatchSource::Match,
             ),
+            ExprKind::MethodCall(receiver, segment, args) => {
+                let mut args = args.to_vec();
+                // arg list is so short we just O(n) insert at the front
+                args.insert(0, receiver.clone());
+                ir::ExprKind::MethodCall(self.lower_path_segment(segment), self.lower_exprs(&args))
+            }
             ExprKind::Continue => ir::ExprKind::Continue,
             ExprKind::Break => ir::ExprKind::Break,
             ExprKind::Err => ir::ExprKind::Err,

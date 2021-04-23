@@ -65,7 +65,7 @@ pub trait MirVisitor<'tcx> {
                 self.visit_operand(info, r);
             }
             Rvalue::Ref(lvalue) | Rvalue::Discriminant(lvalue) => self.visit_lvalue(info, lvalue),
-            Rvalue::Closure(..) => {}
+            Rvalue::Closure { .. } => {}
             Rvalue::Adt { adt, variant_idx, substs, fields } => {
                 let (..) = (adt, variant_idx, substs);
                 fields.iter().for_each(|field| self.visit_operand(info, field));

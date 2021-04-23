@@ -117,6 +117,22 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // llvm doesn't like recursively building these values (with temporaries)
         // instead, we use geps to set the fields directly
         match rvalue {
+            mir::Rvalue::Closure { ty, upvars } => {
+                return;
+                // closures are essentially a struct with the fields being its upvars
+                // for (i, upvar) in upvars.iter().enumerate() {
+                //     let upvar = self.codegen_operand(upvar);
+                //     let upvar_ptr =
+                //         self.build_struct_gep(lvalue_ref.ptr, i as u32, "upvar_gep").unwrap();
+                //     self.build_store(upvar_ptr, upvar.val);
+                // }
+                // todo!();
+                // let name = "<closure>";
+                // let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
+                // self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
+                // let val = f.as_llvm_ptr().into();
+                // ValueRef { val, ty }
+            }
             mir::Rvalue::Adt { adt, fields, variant_idx, .. } => {
                 match adt.kind {
                     // basically identical code to tuple but has potential substs to deal with
@@ -163,52 +179,8 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    /// returns a pointer to where the lvalue points to
-    fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LvalueRef<'tcx> {
-        self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
-    }
-
-    fn codegen_lvalue_inner(
-        &mut self,
-        var_id: VarId,
-        projs: &[Projection<'tcx>],
-    ) -> LvalueRef<'tcx> {
-        match projs {
-            [] => self.vars[var_id],
-            [projs @ .., proj] => {
-                // recursively process all the projections to the left
-                let var = self.codegen_lvalue_inner(var_id, projs);
-                match proj {
-                    Projection::Field(f, ty) => {
-                        let index = f.index() as u32;
-                        let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
-                        LvalueRef { ptr, ty }
-                    }
-                    Projection::Deref => {
-                        let ptr = self.build_load(var.ptr, "load_deref").into_pointer_value();
-                        let ty = var.ty.deref_ty();
-                        LvalueRef { ptr, ty }
-                    }
-                    Projection::PointerCast(ty) => {
-                        let llty = self.llvm_ty(ty).ptr_type(AddressSpace::Generic);
-                        let ptr = self.build_pointer_cast(var.ptr, llty, "lvalue_pointer_cast");
-                        LvalueRef { ptr, ty }
-                    }
-                }
-            }
-        }
-    }
-
     fn codegen_rvalue(&mut self, rvalue: &'tcx mir::Rvalue<'tcx>) -> ValueRef<'tcx> {
         match rvalue {
-            mir::Rvalue::Closure(..) => {
-                todo!();
-                // let name = "<closure>";
-                // let f = self.cctx.module.add_function(name, self.llvm_fn_ty_from_ty(ty), None);
-                // self.with_new_insertion_point(|ctx| ctx.codegen_body(name, body));
-                // let val = f.as_llvm_ptr().into();
-                // ValueRef { val, ty }
-            }
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
                 let operand_ty = operand.ty(self.tcx, self.mir);
@@ -257,6 +229,43 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::Rvalue::Unary(_, _) => todo!(),
             // handle these cases in `codegen_assignment`
             mir::Rvalue::Adt { .. } => unreachable!(),
+            mir::Rvalue::Closure { .. } => unreachable!(),
+        }
+    }
+
+    /// returns a pointer to where the lvalue points to
+    fn codegen_lvalue(&mut self, lvalue: mir::Lvalue<'tcx>) -> LvalueRef<'tcx> {
+        self.codegen_lvalue_inner(lvalue.id, lvalue.projs.as_ref())
+    }
+
+    fn codegen_lvalue_inner(
+        &mut self,
+        var_id: VarId,
+        projs: &[Projection<'tcx>],
+    ) -> LvalueRef<'tcx> {
+        match projs {
+            [] => self.vars[var_id],
+            [projs @ .., proj] => {
+                // recursively process all the projections to the left
+                let var = self.codegen_lvalue_inner(var_id, projs);
+                match proj {
+                    Projection::Field(f, ty) => {
+                        let index = f.index() as u32;
+                        let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
+                        LvalueRef { ptr, ty }
+                    }
+                    Projection::Deref => {
+                        let ptr = self.build_load(var.ptr, "load_deref").into_pointer_value();
+                        let ty = var.ty.deref_ty();
+                        LvalueRef { ptr, ty }
+                    }
+                    Projection::PointerCast(ty) => {
+                        let llty = self.llvm_ty(ty).ptr_type(AddressSpace::Generic);
+                        let ptr = self.build_pointer_cast(var.ptr, llty, "lvalue_pointer_cast");
+                        LvalueRef { ptr, ty }
+                    }
+                }
+            }
         }
     }
 

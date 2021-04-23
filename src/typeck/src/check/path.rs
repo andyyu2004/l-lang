@@ -5,7 +5,7 @@ use lcore::ty::*;
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     crate fn check_struct_path(
         &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::XP<'tcx>,
         qpath: &ir::QPath<'tcx>,
     ) -> Option<(&'tcx VariantTy, Ty<'tcx>)> {
         let (res, ty) = self.resolve_qpath(xpat, qpath);
@@ -34,18 +34,14 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         })
     }
 
-    crate fn check_qpath(
-        &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
-        qpath: &QPath<'tcx>,
-    ) -> Ty<'tcx> {
+    crate fn check_qpath(&mut self, xpat: &dyn ir::XP<'tcx>, qpath: &QPath<'tcx>) -> Ty<'tcx> {
         let (_res, ty) = self.resolve_qpath(xpat, qpath);
         ty
     }
 
     crate fn resolve_qpath(
         &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::XP<'tcx>,
         qpath: &QPath<'tcx>,
     ) -> (Res, Ty<'tcx>) {
         match qpath {
@@ -57,7 +53,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     crate fn check_type_relative_path(
         &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::XP<'tcx>,
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> (Res, Ty<'tcx>) {
@@ -71,15 +67,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         (res, ty)
     }
 
-    crate fn check_expr_path(
-        &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
-        path: &ir::Path,
-    ) -> Ty<'tcx> {
+    crate fn check_expr_path(&mut self, xpat: &dyn ir::XP<'tcx>, path: &ir::Path) -> Ty<'tcx> {
         self.check_res(xpat, path.res)
     }
 
-    fn check_res(&mut self, xpat: &dyn ir::ExprOrPat<'tcx>, res: Res) -> Ty<'tcx> {
+    fn check_res(&mut self, xpat: &dyn ir::XP<'tcx>, res: Res) -> Ty<'tcx> {
         match res {
             Res::Local(id) => self.local_ty(id).ty,
             Res::Def(def_id, def_kind) => self.check_res_def(xpat, def_id, def_kind),
@@ -92,7 +84,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
     fn check_res_def(
         &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::XP<'tcx>,
         def_id: DefId,
         def_kind: DefKind,
     ) -> Ty<'tcx> {

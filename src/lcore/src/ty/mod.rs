@@ -171,6 +171,7 @@ pub enum TyKind<'tcx> {
     Box(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
     FnPtr(FnSig<'tcx>),
+    Closure(FnSig<'tcx>),
     /// [<ty>; n]
     Array(Ty<'tcx>, usize),
     /// (T, U, V, ...)
@@ -193,7 +194,7 @@ pub struct FnSig<'tcx> {
 
 impl<'tcx> Display for FnSig<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "fn({})->{}", lutil::join2(self.params.into_iter(), ","), self.ret)
+        write!(f, "({})->{}", lutil::join2(self.params.into_iter(), ","), self.ret)
     }
 }
 
@@ -364,7 +365,7 @@ impl<'tcx> HasTyFlags for SubstsRef<'tcx> {
 impl<'tcx> TyFlag for TyKind<'tcx> {
     fn ty_flags(&self) -> TyFlags {
         match self {
-            TyKind::FnPtr(sig) => sig.ty_flags(),
+            TyKind::FnPtr(sig) | TyKind::Closure(sig) => sig.ty_flags(),
             TyKind::Opaque(_, tys) | TyKind::Tuple(tys) => tys.ty_flags(),
             TyKind::Infer(..) => TyFlags::HAS_INFER,
             TyKind::Param(..) => TyFlags::HAS_PARAM,
@@ -392,7 +393,8 @@ impl<'tcx> Display for TyKind<'tcx> {
         match self {
             TyKind::Box(ty) => write!(f, "&{}", ty),
             TyKind::Ptr(ty) => write!(f, "*{}", ty),
-            TyKind::FnPtr(sig) => write!(f, "{}", sig),
+            TyKind::FnPtr(sig) => write!(f, "fn{}", sig),
+            TyKind::Closure(sig) => write!(f, "Fn{}", sig),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
             TyKind::Array(ty, n) => write!(f, "[{};{}]", ty, n),
             TyKind::Tuple(tys) => write!(f, "({})", tys),

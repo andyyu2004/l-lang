@@ -1,7 +1,6 @@
 use crate::FnCtx;
-use ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
-use lcore::ty::{self, Subst, Ty};
+use lcore::ty::{self, FnSig, Subst, SubstsRef, Ty};
 use std::ops::Deref;
 use thiserror::Error;
 
@@ -27,19 +26,40 @@ pub enum MethodError<'tcx> {
 //     Type,
 // }
 
+pub struct Method<'tcx> {
+    pub def_id: DefId,
+    pub substs: SubstsRef<'tcx>,
+    pub sig: FnSig<'tcx>,
+}
+
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
+    crate fn resolve_method(
+        &mut self,
+        expr: &ir::Expr<'tcx>,
+        self_ty: Ty<'tcx>,
+        segment: &ir::PathSegment<'tcx>,
+    ) -> Method<'tcx> {
+        todo!()
+        // MethodResolutionCtx::new(self, expr, self_ty, segment, Mode::Method)
+        //     .resolve()
+        //     .unwrap_or_else(|err| {
+        //         self.sess.emit_error(expr.span, err);
+        //         Res::Err
+        //     })
+    }
+
     crate fn resolve_type_relative_path(
         &mut self,
-        xpat: &dyn ir::ExprOrPat<'tcx>,
+        xpat: &dyn ir::XP<'tcx>,
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Res {
-        // TODO maybe require the generic args in `segment` later?
-        let rcx = MethodResolutionCtx::new(self, xpat, self_ty, segment.ident);
-        rcx.resolve().unwrap_or_else(|err| {
-            self.sess.emit_error(xpat.span(), err);
-            Res::Err
-        })
+        MethodResolutionCtx::new(self, xpat, self_ty, segment, Mode::Assoc)
+            .resolve()
+            .unwrap_or_else(|err| {
+                self.sess.emit_error(xpat.span(), err);
+                Res::Err
+            })
     }
 }
 
@@ -56,12 +76,21 @@ impl<'tcx> Candidate<'tcx> {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+enum Mode {
+    /// `T::function`
+    Assoc,
+    /// `receiver.method(..)`
+    Method,
+}
+
 crate struct MethodResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
     // the expression or pattern that we are resolving
-    xpat: &'a dyn ir::ExprOrPat<'tcx>,
+    xpat: &'a dyn ir::XP<'tcx>,
+    mode: Mode,
     self_ty: Ty<'tcx>,
-    ident: Ident,
+    segment: &'a ir::PathSegment<'tcx>,
     inherent_candidates: Vec<Candidate<'tcx>>,
 }
 
@@ -72,11 +101,12 @@ trait InherentCandidates<'tcx> {
 impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
     fn new(
         fcx: &'a FnCtx<'a, 'tcx>,
-        xpat: &'a dyn ir::ExprOrPat<'tcx>,
+        xpat: &'a dyn ir::XP<'tcx>,
         self_ty: Ty<'tcx>,
-        ident: Ident,
+        segment: &'a ir::PathSegment<'tcx>,
+        mode: Mode,
     ) -> Self {
-        Self { fcx, self_ty, xpat, ident, inherent_candidates: Default::default() }
+        Self { fcx, self_ty, xpat, segment, mode, inherent_candidates: Default::default() }
     }
 
     fn collect_inherent_candidates(&mut self) {
@@ -149,7 +179,7 @@ where
 impl<'tcx> InherentCandidates<'tcx> for ImplItemRef {
     fn inherent_candidates(&self, rcx: &mut MethodResolutionCtx) {
         let impl_item = rcx.ir.impl_items[&self.id];
-        if impl_item.ident != rcx.ident {
+        if impl_item.ident != rcx.segment.ident {
             return;
         }
         let def_kind = impl_item.kind.def_kind();

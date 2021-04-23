@@ -69,7 +69,7 @@ impl<'tcx> LoweringCtx<'tcx> {
         self.tables.node_type(id)
     }
 
-    fn resolve_qpath(&self, xpat: &dyn ir::ExprOrPat<'tcx>, qpath: &ir::QPath<'tcx>) -> Res {
+    fn resolve_qpath(&self, xpat: &dyn ir::XP<'tcx>, qpath: &ir::QPath<'tcx>) -> Res {
         match qpath {
             ir::QPath::Resolved(path) => path.res,
             ir::QPath::TypeRelative(..) => self.tables.type_relative_res(xpat),
@@ -233,11 +233,11 @@ impl<'tcx> LoweringCtx<'tcx> {
 
     /// manually constructs a (mutable?) borrow expression to an upvar
     fn capture_upvar(&mut self, closure: &ir::Expr, upvar: UpvarId) -> tir::Expr<'tcx> {
-        let id = upvar.var_id;
+        let var_id = upvar.var_id;
         let span = closure.span;
-        let ty = self.node_ty(id);
+        let ty = self.node_ty(var_id);
         // rebuild the `VarRef` expressions that the upvar refers to
-        let captured = box tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) };
+        let captured = box tir::Expr { span, ty, kind: tir::ExprKind::VarRef(var_id) };
         // construct a mutable pointer expression to the captured upvar
         let borrow_expr =
             tir::Expr { span, ty: self.mk_ptr_ty(ty), kind: tir::ExprKind::Ref(captured) };
@@ -425,6 +425,7 @@ impl<'tcx> LoweringCtx<'tcx> {
             ir::ExprKind::Path(qpath) => self.lower_qpath(expr, qpath),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(self)),
             ir::ExprKind::Closure(_sig, body) => self.lower_closure(expr, body),
+            ir::ExprKind::MethodCall(_, _) => todo!(),
             ir::ExprKind::Call(f, args) =>
                 tir::ExprKind::Call(box f.to_tir(self), args.to_tir(self)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir(self)),

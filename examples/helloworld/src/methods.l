@@ -10,8 +10,10 @@ extern "l-intrinsic" {
 pub fn run() {
     let s = S { t: 4, u: false };
     let s1 = S::new(false, 8);
+    foo::s.f();
     print(s.t);
     print(s1.u);
+    print(s.fst());
 }
 
 // impl<T, U> S<T, U> {
@@ -23,8 +25,6 @@ pub fn run() {
 //         self.t
 //     }
 // }
-
-
 
 impl S<bool, int> {
     fn new(t: bool, u: int) -> Self {
