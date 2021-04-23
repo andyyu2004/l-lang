@@ -23,6 +23,7 @@ fn main() -> int {
         print(*boxed);
     }
     methods::run();
+    gc::run();
     match Option::Some(3) {
         Option::Some(x) => x,
         Option::None => 5,
