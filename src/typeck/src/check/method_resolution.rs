@@ -39,6 +39,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self_ty: Ty<'tcx>,
         segment: &ir::PathSegment<'tcx>,
     ) -> Method<'tcx> {
+        println!("hello");
         todo!()
         // MethodResolutionCtx::new(self, expr, self_ty, segment, Mode::Method)
         //     .resolve()

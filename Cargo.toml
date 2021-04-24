@@ -31,3 +31,6 @@ members = [
     "tests/runner",
 ]
 
+[profile.dev]
+opt-level = 0
+debug = true

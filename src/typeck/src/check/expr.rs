@@ -266,32 +266,6 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         expected_ty
     }
 
-    fn check_call_expr(
-        &mut self,
-        expr: &ir::Expr<'tcx>,
-        f: &ir::Expr<'tcx>,
-        args: &[ir::Expr<'tcx>],
-    ) -> Ty<'tcx> {
-        let ret = self.new_infer_var(expr.span);
-        let f_ty = self.check_expr(f);
-        let params = self.check_expr_list(args);
-        let ty = self.tcx.mk_fn_ptr(FnSig { params, ret });
-        self.unify(expr.span, ty, f_ty);
-        ret
-    }
-
-    fn check_method_call_expr(
-        &mut self,
-        expr: &ir::Expr<'tcx>,
-        segment: &ir::PathSegment<'tcx>,
-        args: &[ir::Expr<'tcx>],
-    ) -> Ty<'tcx> {
-        let (receiver, args) = args.split_first().unwrap();
-        let receiver_ty = self.check_expr(receiver);
-        let res = self.resolve_method(expr, receiver_ty, segment);
-        todo!()
-    }
-
     fn check_closure_expr(
         &mut self,
         closure: &ir::Expr<'tcx>,
@@ -301,7 +275,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         // the resolver resolved the closure name to the id of the entire closure expr
         // so we define an immutable local variable for it with the closure's type
         let sig = self.lower_fn_sig(sig);
-        let ty = self.mk_fn_ptr(sig);
+        let ty = self.mk_closure(sig);
         self.record_upvars(closure, body);
         self.def_local(closure.id, Mutability::Imm, ty);
         let _fcx = self.check_fn(sig, body);
@@ -323,7 +297,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         self.record_ty(body.id(), self.sig.ret);
     }
 
-    fn check_expr_list(&mut self, xs: &[ir::Expr<'tcx>]) -> SubstsRef<'tcx> {
+    pub(super) fn check_expr_list(&mut self, xs: &[ir::Expr<'tcx>]) -> SubstsRef<'tcx> {
         self.tcx.mk_substs(xs.iter().map(|expr| self.check_expr(expr)))
     }
 

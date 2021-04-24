@@ -103,6 +103,10 @@ impl<'tcx> TyCtx<'tcx> {
         self.mk_ty(TyKind::FnPtr(fn_sig))
     }
 
+    pub fn mk_closure(self, fn_sig: FnSig<'tcx>) -> Ty<'tcx> {
+        self.mk_ty(TyKind::Closure(fn_sig))
+    }
+
     pub fn mk_ptr_ty(self, ty: Ty<'tcx>) -> Ty<'tcx> {
         self.mk_ty(TyKind::Ptr(ty))
     }

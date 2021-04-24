@@ -33,7 +33,7 @@ struct NewCmd {
 #[derive(Debug, Clap)]
 struct TestCmd {}
 
-pub fn main() -> io::Result<()> {
+pub fn run() -> io::Result<()> {
     let opts = Opts::parse();
     match opts.subcmd {
         SubCommand::New(ncfg) => subcommands::new(ncfg),

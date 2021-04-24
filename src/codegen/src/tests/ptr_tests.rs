@@ -8,17 +8,18 @@ fn test_box_alloc() {
         x;
         5
     }"#;
-    llvm_exec!(src);
+    assert_eq!(llvm_exec!(src), 5);
 }
 
 #[test]
 fn test_box_deref() {
+    ldriver::Driver::from_src("fn main() -> i32 { }");
     let src = r#"
     fn main() -> int {
         let x = box 5;
         *x
     }"#;
-    llvm_exec!(src);
+    assert_eq!(llvm_exec!(src), 5);
 }
 
 #[test]

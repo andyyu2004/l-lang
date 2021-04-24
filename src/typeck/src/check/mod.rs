@@ -1,3 +1,4 @@
+mod call;
 mod coerce;
 mod expr;
 mod item;

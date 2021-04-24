@@ -8,6 +8,8 @@ pub type TypeResult<'tcx, T> = Result<T, TypeError<'tcx>>;
 
 #[derive(Debug, Error)]
 pub enum TypeError<'tcx> {
+    #[error("calling non-function of type `{0}`")]
+    NonFunctionCall(Ty<'tcx>),
     #[error("failed to unify type `{0}` with `{1}`")]
     UnificationFailure(Ty<'tcx>, Ty<'tcx>),
     #[error("expected type `{0}`, found `{1}`")]
