@@ -16,16 +16,18 @@ mod parser;
 mod pattern_parser;
 mod prog_parser;
 mod stmt_parser;
+mod token_tree_parser;
 mod ty_parser;
 mod validate;
+
+pub use parser::Parser;
 
 use ast::*;
 use expr_parser::*;
 use item_parser::*;
-use lex::{Base, LiteralKind, Token, TokenType};
+use lex::{Base, LiteralKind, Token, TokenKind, TokenTree, TokenTreeGroup};
 use macro_parser::*;
 use parse_error::{ParseError, ParseResult};
-pub use parser::Parser;
 use pattern_parser::*;
 use prog_parser::AstParser;
 use span::{kw, Span};
@@ -72,15 +74,35 @@ impl<'a, P: Parse<'a>> Parse<'a> for ManyParser<P> {
     }
 }
 
-// implement Parser for all `parser-like` functions
-impl<'a, F, R> Parse<'a> for F
+impl<'a, 'p, P> Parse<'a> for &'p mut P
+where
+    P: Parse<'a>,
+{
+    type Output = P::Output;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        self.parse(parser)
+    }
+}
+
+pub fn parse_fn<'a, R>(
+    f: impl FnMut(&mut Parser<'a>) -> ParseResult<'a, R>,
+) -> impl Parse<'a, Output = R> {
+    ParseFn { f }
+}
+
+pub struct ParseFn<F> {
+    f: F,
+}
+
+impl<'a, F, R> Parse<'a> for ParseFn<F>
 where
     F: FnMut(&mut Parser<'a>) -> ParseResult<'a, R>,
 {
     type Output = R;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        self(parser)
+        (self.f)(parser)
     }
 }
 
@@ -181,10 +203,10 @@ impl<'a> Parse<'a> for FnSigParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let require_type_annotations = self.require_type_annotations;
-        parser.expect(TokenType::OpenParen)?;
+        parser.expect(TokenKind::OpenParen)?;
         let params = ParamsParser { require_type_annotations }.parse(parser)?;
-        parser.expect(TokenType::CloseParen)?;
-        let mut output = parser.accept(TokenType::RArrow).map(|_arrow| parser.parse_ty(false));
+        parser.expect(TokenKind::CloseParen)?;
+        let mut output = parser.accept(TokenKind::RArrow).map(|_arrow| parser.parse_ty(false));
 
         if output.is_none() && !require_type_annotations {
             output = Some(parser.mk_infer_ty())
@@ -206,7 +228,7 @@ impl<'a> Parse<'a> for ParamsParser {
         let self_param = SelfParser.parse(parser)?;
         let mut params = PunctuatedParser {
             inner: ParamParser { require_type_annotations },
-            separator: TokenType::Comma,
+            separator: TokenKind::Comma,
         }
         .parse(parser)?;
         if let Some(self_param) = self_param {
@@ -222,12 +244,12 @@ impl<'a> Parse<'a> for SelfParser {
     type Output = Option<Param>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let boxed = parser.accept(TokenType::And);
-        let self_tok = match parser.accept(TokenType::LSelf) {
+        let boxed = parser.accept(TokenKind::And);
+        let self_tok = match parser.accept(TokenKind::LSelf) {
             Some(self_param) => self_param,
             None => return Ok(None),
         };
-        let ty = if parser.accept(TokenType::Colon).is_some() {
+        let ty = if parser.accept(TokenKind::Colon).is_some() {
             parser.parse_ty(false)
         } else {
             if let Some(amp) = boxed {
@@ -260,7 +282,7 @@ impl<'a> Parse<'a> for ParamParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pattern = PatParser.parse(parser)?;
-        let ty = if let Some(_colon) = parser.accept(TokenType::Colon) {
+        let ty = if let Some(_colon) = parser.accept(TokenKind::Colon) {
             parser.parse_ty(!self.require_type_annotations)
         } else if self.require_type_annotations {
             let err = parser.build_err(pattern.span, ParseError::RequireTypeAnnotations);
@@ -279,9 +301,9 @@ impl<'a> Parse<'a> for VisibilityParser {
     type Output = Visibility;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(pub_kw) = parser.accept(TokenType::Pub) {
+        if let Some(pub_kw) = parser.accept(TokenKind::Pub) {
             Ok(Visibility { span: pub_kw.span, node: VisibilityKind::Public })
-        } else if let Some(internal_kw) = parser.accept(TokenType::Internal) {
+        } else if let Some(internal_kw) = parser.accept(TokenKind::Internal) {
             Ok(Visibility { span: internal_kw.span, node: VisibilityKind::Public })
         } else {
             Ok(Visibility { span: parser.empty_span(), node: VisibilityKind::Private })
@@ -289,8 +311,8 @@ impl<'a> Parse<'a> for VisibilityParser {
     }
 }
 
-/// implement Parser for TokenType to be used as a separator
-impl<'a> Parse<'a> for TokenType {
+/// implement Parser for TokenKind to be used as a separator
+impl<'a> Parse<'a> for TokenKind {
     type Output = Token;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
@@ -353,14 +375,14 @@ where
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut vec = vec![];
 
-        if parser.accept(TokenType::CloseParen).is_some() {
+        if parser.accept(TokenKind::CloseParen).is_some() {
             return Ok(vec);
         }
 
-        while parser.accept(TokenType::CloseParen).is_none() {
+        while parser.accept(TokenKind::CloseParen).is_none() {
             vec.push(self.inner.parse(parser)?);
-            if parser.accept(TokenType::Comma).is_none() {
-                parser.expect(TokenType::CloseParen)?;
+            if parser.accept(TokenKind::Comma).is_none() {
+                parser.expect(TokenKind::CloseParen)?;
                 break;
             }
         }
@@ -369,7 +391,6 @@ where
 }
 
 /// similar to `PunctuatedParser` except parses one or more occurences of `inner`
-/// does not accept trailing separator
 pub struct Punctuated1Parser<P, S> {
     pub inner: P,
     pub separator: S,
@@ -387,6 +408,9 @@ where
         while self.separator.try_parse(parser).is_some() {
             vec.push(self.inner.parse(parser)?);
         }
+
+        // parse the trailing separator if there is one
+        let _ = self.separator.parse(parser);
         Ok(vec)
     }
 }
@@ -404,7 +428,7 @@ where
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let p = self.inner.parse(parser)?;
-        parser.expect(TokenType::CloseParen)?;
+        parser.expect(TokenKind::CloseParen)?;
         Ok(p)
     }
 }
@@ -417,35 +441,42 @@ impl<'a> Parse<'a> for StructExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let field_parser = |parser: &mut Parser<'a>| {
-            // we intentionally only expect an `ident` instead of an `lident` here
-            // this is due to the ambiguity between struct expressions and blocks
-            // which causes some annoyances with error messages
-            // this won't cause any issues down the line as when we declare structs
-            // we check all its fields are lowercase identifiers
-            // this will just result in a unknown field error during typechecking instead
-            // of an immediate parse error
-            let ident = parser.expect_ident()?;
-            let expr = if parser.accept(TokenType::Colon).is_some() {
-                parser.parse_expr()
-            } else {
-                let span = parser.empty_span();
-                // construct a Path node which the a single segment with ident `ident`
-                // this is the implementation of the struct shorthand
-                // S { t } -> S { t: t }
-                let segment = PathSegment { id: parser.mk_id(), ident, args: None };
-                let path = parser.mk_path(span, vec![segment]);
-                parser.mk_expr(span, ExprKind::Path(path))
-            };
-            let span = ident.span.merge(expr.span);
-            Ok(Field { ident, expr, span, id: parser.mk_id() })
-        };
-        let (span, fields) = PunctuatedParser { inner: field_parser, separator: TokenType::Comma }
+        let (span, fields) = PunctuatedParser { inner: FieldParser, separator: TokenKind::Comma }
             .spanned(true)
             .parse(parser)?;
-        parser.expect(TokenType::CloseBrace)?;
+        parser.expect(TokenKind::CloseBrace)?;
         let path = std::mem::take(&mut self.path);
         Ok(parser.mk_expr(span, ExprKind::Struct(path, fields)))
+    }
+}
+
+pub struct FieldParser;
+
+impl<'a> Parse<'a> for FieldParser {
+    type Output = Field;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        // we intentionally only expect an `ident` instead of an `lident` here
+        // this is due to the ambiguity between struct expressions and blocks
+        // which causes some annoyances with error messages
+        // this won't cause any issues down the line as when we declare structs
+        // we check all its fields are lowercase identifiers
+        // this will just result in a unknown field error during typechecking instead
+        // of an immediate parse error
+        let ident = parser.expect_ident()?;
+        let expr = if parser.accept(TokenKind::Colon).is_some() {
+            parser.parse_expr()
+        } else {
+            let span = parser.empty_span();
+            // construct a Path node which the a single segment with ident `ident`
+            // this is the implementation of the struct shorthand
+            // S { t } -> S { t: t }
+            let segment = PathSegment { id: parser.mk_id(), ident, args: None };
+            let path = parser.mk_path(span, vec![segment]);
+            parser.mk_expr(span, ExprKind::Path(path))
+        };
+        let span = ident.span.merge(expr.span);
+        Ok(Field { ident, expr, span, id: parser.mk_id() })
     }
 }
 
@@ -463,7 +494,7 @@ impl<'a> Parse<'a> for PathExprParser {
         //    y: bool,
         // }
         // however, it could also be an identifier followed by a block
-        if let Some(_) = parser.accept(TokenType::OpenBrace) {
+        if let Some(_) = parser.accept(TokenKind::OpenBrace) {
             let mut struct_parser = StructExprParser { path };
             match struct_parser.try_parse(parser) {
                 Some(struct_expr) => Ok(struct_expr),
@@ -503,7 +534,7 @@ impl<'a> Parse<'a> for PathParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let (span, segments) = Punctuated1Parser {
             inner: PathSegmentParser { kind: self.kind },
-            separator: TokenType::Dcolon,
+            separator: TokenKind::Dcolon,
         }
         .spanned(false)
         .parse(parser)?;
@@ -542,7 +573,7 @@ impl<'a> Parse<'a> for GenericArgsParser {
     type Output = Option<GenericArgs>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let lt = match parser.accept(TokenType::Lt) {
+        let lt = match parser.accept(TokenKind::Lt) {
             Some(lt) => match self.kind {
                 PathKind::Expr => {
                     parser.backtrack(1);
@@ -555,9 +586,9 @@ impl<'a> Parse<'a> for GenericArgsParser {
             None => return Ok(None),
         };
         let args =
-            PunctuatedParser { inner: TyParser { allow_infer: true }, separator: TokenType::Comma }
+            PunctuatedParser { inner: TyParser { allow_infer: true }, separator: TokenKind::Comma }
                 .parse(parser)?;
-        let gt = parser.expect(TokenType::Gt)?;
+        let gt = parser.expect(TokenKind::Gt)?;
         let span = lt.span.merge(gt.span);
         // if there are no arguments just treat it the same as if there was nothing there at all
         // i.e. a::b::<>::c <=> a::b::c
@@ -576,7 +607,7 @@ impl<'a> Parse<'a> for BlockParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut stmts = vec![];
         let close_brace = loop {
-            if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
+            if let Some(close_brace) = parser.accept(TokenKind::CloseBrace) {
                 break close_brace;
             }
             match parser.parse_stmt() {
@@ -587,10 +618,10 @@ impl<'a> Parse<'a> for BlockParser {
                     err.emit();
                     loop {
                         match parser.peek().kind {
-                            TokenType::Eof =>
+                            TokenKind::Eof =>
                                 return Err(parser.build_err(parser.empty_span(), ParseError::Eof)),
-                            TokenType::CloseBrace => break,
-                            TokenType::Semi => {
+                            TokenKind::CloseBrace => break,
+                            TokenKind::Semi => {
                                 parser.bump();
                                 break;
                             }
@@ -634,11 +665,11 @@ impl<'a> Parse<'a> for ClosureParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let name = parser.accept_lident();
         let sig = FnSigParser { require_type_annotations: false }.parse(parser)?;
-        let body = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+        let body = if let Some(open_brace) = parser.accept(TokenKind::OpenBrace) {
             let block = parser.parse_block(open_brace)?;
             parser.mk_expr(block.span, ExprKind::Block(block))
         } else {
-            parser.expect(TokenType::RFArrow)?;
+            parser.expect(TokenKind::RFArrow)?;
             parser.parse_expr()
         };
         let span = self.fn_kw.span.merge(body.span);
@@ -678,8 +709,8 @@ impl<'a> Parse<'a> for ArmParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let pat = parser.parse_pattern()?;
-        let guard = parser.accept(TokenType::If).map(|_| parser.parse_expr());
-        parser.expect(TokenType::RFArrow)?;
+        let guard = parser.accept(TokenKind::If).map(|_| parser.parse_expr());
+        parser.expect(TokenKind::RFArrow)?;
         let body = parser.parse_expr();
         let span = pat.span.merge(body.span);
         Ok(Arm { id: parser.mk_id(), span, pat, body, guard })
@@ -695,10 +726,10 @@ impl<'a> Parse<'a> for MatchParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let scrutinee = parser.parse_expr();
-        parser.expect(TokenType::OpenBrace)?;
+        parser.expect(TokenKind::OpenBrace)?;
         let arms =
-            PunctuatedParser { inner: ArmParser, separator: TokenType::Comma }.parse(parser)?;
-        let brace = parser.expect(TokenType::CloseBrace)?;
+            PunctuatedParser { inner: ArmParser, separator: TokenKind::Comma }.parse(parser)?;
+        let brace = parser.expect(TokenKind::CloseBrace)?;
         Ok(parser.mk_expr(self.match_kw.span.merge(brace.span), ExprKind::Match(scrutinee, arms)))
     }
 }
@@ -712,9 +743,9 @@ impl<'a> Parse<'a> for IfParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let cond = ExprParser.parse(parser)?;
-        let open_brace = parser.expect(TokenType::OpenBrace)?;
+        let open_brace = parser.expect(TokenKind::OpenBrace)?;
         let thn = parser.parse_block(open_brace)?;
-        let els = if let Some(else_kw) = parser.accept(TokenType::Else) {
+        let els = if let Some(else_kw) = parser.accept(TokenKind::Else) {
             Some(ElseParser { else_kw }.parse(parser)?)
         } else {
             None
@@ -732,9 +763,9 @@ impl<'a> Parse<'a> for ElseParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(if_kw) = parser.accept(TokenType::If) {
+        if let Some(if_kw) = parser.accept(TokenKind::If) {
             IfParser { if_kw }.parse(parser)
-        } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+        } else if let Some(open_brace) = parser.accept(TokenKind::OpenBrace) {
             let (span, block) =
                 BlockParser { open_brace, is_unsafe: false }.spanned(true).parse(parser)?;
             Ok(parser.mk_expr(span, ExprKind::Block(block)))
@@ -751,10 +782,10 @@ impl<'a> Parse<'a> for GenericsParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut span = parser.empty_span();
-        let params = if parser.accept(TokenType::Lt).is_some() {
-            let params = PunctuatedParser { inner: TyParamParser, separator: TokenType::Comma }
+        let params = if parser.accept(TokenKind::Lt).is_some() {
+            let params = PunctuatedParser { inner: TyParamParser, separator: TokenKind::Comma }
                 .parse(parser)?;
-            let gt = parser.expect(TokenType::Gt)?;
+            let gt = parser.expect(TokenKind::Gt)?;
             span = span.merge(gt.span);
             params
         } else {
@@ -771,7 +802,7 @@ impl<'a> Parse<'a> for TyParamParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let ident = parser.expect_ident()?;
-        let default = parser.accept(TokenType::Eq).map(|_| parser.parse_ty(false));
+        let default = parser.accept(TokenKind::Eq).map(|_| parser.parse_ty(false));
         // eventually parse bounds here
         Ok(TyParam { span: ident.span, id: parser.mk_id(), ident, default })
     }

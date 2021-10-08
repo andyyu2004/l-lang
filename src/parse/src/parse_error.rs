@@ -1,6 +1,6 @@
 use ast::{Ident, ItemKind};
 use error::DiagnosticBuilder;
-use lex::{Token, TokenType};
+use lex::{Token, TokenKind};
 use span::Symbol;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -10,11 +10,11 @@ pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
 #[derive(Debug, Error)]
 pub enum ParseError {
     #[error("expected `{0:?}` found `{}`", .1.kind)]
-    Expected(TokenType, Token),
+    Expected(TokenKind, Token),
     #[error("invalid abi `{0}`\nvalid abi's include \"l\", \"l-instrinsic")]
     InvalidAbi(String),
     #[error("expected one of `{0:?}` found `{}`", .1.kind)]
-    ExpectedOneOf(Vec<TokenType>, Token),
+    ExpectedOneOf(Vec<TokenKind>, Token),
     #[error("invalid impl item kind: {}", .0.descr())]
     InvalidImplItem(ItemKind),
     #[error("invalid trait item kind: {}", .0.descr())]
@@ -30,7 +30,7 @@ pub enum ParseError {
     #[error("expected lowercase identifier, found `{0}`")]
     ExpectLowercaseIdentifier(Symbol),
     #[error("expected literal, found `{0}`")]
-    ExpectedLiteral(TokenType),
+    ExpectedLiteral(TokenKind),
     #[error("unexpected <eof>")]
     Eof,
     #[error("function signature requires explicit type annotations")]

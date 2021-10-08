@@ -73,17 +73,24 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_mutability(&mut self) -> Mutability {
-        match self.accept(TokenType::Mut) {
+        match self.accept(TokenKind::Mut) {
             Some(_) => Mutability::Mut,
             None => Mutability::Imm,
         }
+    }
+
+    crate fn in_braces<R>(&mut self, mut parser: impl Parse<'a, Output = R>) -> ParseResult<'a, R> {
+        self.expect(TokenKind::OpenBrace)?;
+        let r = parser.parse(self)?;
+        self.expect(TokenKind::CloseBrace)?;
+        Ok(r)
     }
 
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
     crate fn with_span<R>(
         &mut self,
-        parser: &mut impl Parse<'a, Output = R>,
+        mut parser: impl Parse<'a, Output = R>,
         include_prev: bool,
     ) -> ParseResult<'a, (Span, R)> {
         let lo = if include_prev {
@@ -99,7 +106,7 @@ impl<'a> Parser<'a> {
     /// similar to `accept_ident` except the token stream is not advanced
     pub fn is_ident(&self) -> ParseResult<'a, Option<Ident>> {
         let tok = self.safe_peek()?;
-        Ok(if let TokenType::Ident(symbol) = tok.kind {
+        Ok(if let TokenKind::Ident(symbol) = tok.kind {
             Some(Ident::new(tok.span, symbol))
         } else {
             None
@@ -114,7 +121,7 @@ impl<'a> Parser<'a> {
         let span = token.span;
 
         let s = match token.kind {
-            TokenType::Literal { kind: LiteralKind::Float { .. }, suffix_start: _ } =>
+            TokenKind::Literal { kind: LiteralKind::Float { .. }, suffix_start: _ } =>
                 span.to_string(),
             _ => unreachable!(),
         };
@@ -282,7 +289,7 @@ impl<'a> Parser<'a> {
     }
 
     crate fn reached_eof(&self) -> bool {
-        self.tokens[self.idx].kind == TokenType::Eof
+        self.tokens[self.idx].kind == TokenKind::Eof
     }
 
     crate fn safe_peek(&self) -> ParseResult<'a, Token> {
@@ -308,7 +315,7 @@ impl<'a> Parser<'a> {
     crate fn expect_literal(&mut self) -> ParseResult<'a, (LiteralKind, Span)> {
         let Token { span, kind: ttype } = self.safe_peek()?;
         match ttype {
-            TokenType::Literal { kind, .. } => {
+            TokenKind::Literal { kind, .. } => {
                 self.idx += 1;
                 Ok((kind, span))
             }
@@ -341,12 +348,12 @@ impl<'a> Parser<'a> {
         let token = self.safe_peek()?;
         let Token { span, kind: ttype } = token;
         match ttype {
-            TokenType::Ident(symbol) => {
+            TokenKind::Ident(symbol) => {
                 self.idx += 1;
                 Ok(Ident { span, symbol })
             }
             _ => Err(self
-                .build_err(token.span, ParseError::Expected(TokenType::Ident(kw::Empty), token))),
+                .build_err(token.span, ParseError::Expected(TokenKind::Ident(kw::Empty), token))),
         }
     }
 
@@ -354,13 +361,13 @@ impl<'a> Parser<'a> {
         self.expect_lident().ok()
     }
 
-    crate fn accept(&mut self, ttype: TokenType) -> Option<Token> {
+    crate fn accept(&mut self, ttype: TokenKind) -> Option<Token> {
         self.expect(ttype).ok()
     }
 
     crate fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Token>
     where
-        &'i I: IntoIterator<Item = &'i TokenType>,
+        &'i I: IntoIterator<Item = &'i TokenKind>,
     {
         ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
     }
@@ -397,7 +404,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Token> {
+    crate fn expect(&mut self, ttype: TokenKind) -> ParseResult<'a, Token> {
         let t = self.safe_peek()?;
         if t.kind == ttype {
             self.idx += 1;
@@ -409,7 +416,7 @@ impl<'a> Parser<'a> {
 
     crate fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Token>
     where
-        &'i I: IntoIterator<Item = &'i TokenType>,
+        &'i I: IntoIterator<Item = &'i TokenKind>,
     {
         self.accept_one_of(ttypes).ok_or_else(|| {
             let tok = self.peek();

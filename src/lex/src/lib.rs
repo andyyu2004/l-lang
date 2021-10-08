@@ -1,9 +1,12 @@
 mod lexing;
+mod token_tree;
+
+pub use lexing::{Base, LiteralKind};
+pub use token_tree::{TokenStream, TokenTree, TokenTreeGroup};
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use lexing::RawTokenKind;
-pub use lexing::{Base, LiteralKind};
 use maplit::hashmap;
 use span::{self, with_interner, with_source_map, FileIdx, Span, Symbol};
 use std::collections::HashMap;
@@ -11,43 +14,43 @@ use std::fmt::{self, Display, Formatter};
 use std::ops::Range;
 
 lazy_static! {
-    static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
-        "fn" => TokenType::Fn,
-        "macro" => TokenType::Macro,
-        "box" => TokenType::Box,
-        "trait" => TokenType::Trait,
-        "break" => TokenType::Break,
-        "continue" => TokenType::Continue,
-        "match" => TokenType::Match,
-        "internal" => TokenType::Internal,
-        "mod" => TokenType::Mod,
-        "false" => TokenType::False,
-        "true" => TokenType::True,
-        "pub" => TokenType::Pub,
-        "enum" => TokenType::Enum,
-        "struct" => TokenType::Struct,
-        "let" => TokenType::Let,
-        "if" => TokenType::If,
-        "else" => TokenType::Else,
-        "return" => TokenType::Return,
-        "mut" => TokenType::Mut,
-        "use" => TokenType::Use,
-        "type" => TokenType::Type,
-        "unsafe" => TokenType::Unsafe,
-        "const" => TokenType::Const,
-        "impl" => TokenType::Impl,
-        "extern" => TokenType::Extern,
-        "for" => TokenType::For,
-        "loop" => TokenType::Loop,
-        "while" => TokenType::While,
-        "self" => TokenType::LSelf,
+    static ref KEYWORDS: HashMap<&'static str, TokenKind> = hashmap! {
+        "fn" => TokenKind::Fn,
+        "macro" => TokenKind::Macro,
+        "box" => TokenKind::Box,
+        "trait" => TokenKind::Trait,
+        "break" => TokenKind::Break,
+        "continue" => TokenKind::Continue,
+        "match" => TokenKind::Match,
+        "internal" => TokenKind::Internal,
+        "mod" => TokenKind::Mod,
+        "false" => TokenKind::False,
+        "true" => TokenKind::True,
+        "pub" => TokenKind::Pub,
+        "enum" => TokenKind::Enum,
+        "struct" => TokenKind::Struct,
+        "let" => TokenKind::Let,
+        "if" => TokenKind::If,
+        "else" => TokenKind::Else,
+        "return" => TokenKind::Return,
+        "mut" => TokenKind::Mut,
+        "use" => TokenKind::Use,
+        "type" => TokenKind::Type,
+        "unsafe" => TokenKind::Unsafe,
+        "const" => TokenKind::Const,
+        "impl" => TokenKind::Impl,
+        "extern" => TokenKind::Extern,
+        "for" => TokenKind::For,
+        "loop" => TokenKind::Loop,
+        "while" => TokenKind::While,
+        "self" => TokenKind::LSelf,
     };
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Token {
     pub span: Span,
-    pub kind: TokenType,
+    pub kind: TokenKind,
 }
 
 pub struct Lexer {}
@@ -82,25 +85,25 @@ impl Lexer {
                             if tokens[i].kind == RawTokenKind::Gt {
                                 i += 1;
                                 span_index += 1;
-                                TokenType::RFArrow
+                                TokenKind::RFArrow
                             } else {
-                                TokenType::Eq
+                                TokenKind::Eq
                             },
                         RawTokenKind::Colon =>
                             if tokens[i].kind == RawTokenKind::Colon {
                                 i += 1;
                                 span_index += 1;
-                                TokenType::Dcolon
+                                TokenKind::Dcolon
                             } else {
-                                TokenType::Colon
+                                TokenKind::Colon
                             },
                         RawTokenKind::Minus =>
                             if tokens[i].kind == RawTokenKind::Gt {
                                 i += 1;
                                 span_index += 1;
-                                TokenType::RArrow
+                                TokenKind::RArrow
                             } else {
-                                TokenType::Minus
+                                TokenKind::Minus
                             },
 
                         RawTokenKind::LineComment => continue,
@@ -114,42 +117,42 @@ impl Lexer {
                             if let Some(&keyword) = KEYWORDS.get(slice) {
                                 keyword
                             } else if slice == "_" {
-                                TokenType::Underscore
+                                TokenKind::Underscore
                             } else {
                                 let symbol = with_interner(|interner| interner.intern(slice));
-                                TokenType::Ident(symbol)
+                                TokenKind::Ident(symbol)
                             },
                         RawTokenKind::RawIdent => todo!(),
                         RawTokenKind::Literal { kind, suffix_start } =>
-                            TokenType::Literal { kind, suffix_start },
+                            TokenKind::Literal { kind, suffix_start },
                         RawTokenKind::Lifetime { .. } =>
                             todo!("maybe use lifetime syntax as generic parameter (like ocaml)"),
-                        RawTokenKind::Semi => TokenType::Semi,
-                        RawTokenKind::Underscore => TokenType::Underscore,
-                        RawTokenKind::Comma => TokenType::Comma,
-                        RawTokenKind::Dot => TokenType::Dot,
-                        RawTokenKind::OpenParen => TokenType::OpenParen,
-                        RawTokenKind::CloseParen => TokenType::CloseParen,
-                        RawTokenKind::OpenBrace => TokenType::OpenBrace,
-                        RawTokenKind::CloseBrace => TokenType::CloseBrace,
-                        RawTokenKind::OpenBracket => TokenType::OpenSqBracket,
-                        RawTokenKind::CloseBracket => TokenType::CloseSqBracket,
-                        RawTokenKind::At => TokenType::At,
-                        RawTokenKind::Pound => TokenType::Pound,
-                        RawTokenKind::Tilde => TokenType::Tilde,
-                        RawTokenKind::Question => TokenType::Question,
-                        RawTokenKind::Dollar => TokenType::Dollar,
-                        RawTokenKind::Not => TokenType::Not,
-                        RawTokenKind::Lt => TokenType::Lt,
-                        RawTokenKind::Gt => TokenType::Gt,
-                        RawTokenKind::And => TokenType::And,
-                        RawTokenKind::Or => TokenType::Or,
-                        RawTokenKind::Plus => TokenType::Plus,
-                        RawTokenKind::Star => TokenType::Star,
-                        RawTokenKind::Slash => TokenType::Slash,
-                        RawTokenKind::Caret => TokenType::Caret,
-                        RawTokenKind::Percent => TokenType::Percent,
-                        RawTokenKind::Unknown => TokenType::Unknown,
+                        RawTokenKind::Semi => TokenKind::Semi,
+                        RawTokenKind::Underscore => TokenKind::Underscore,
+                        RawTokenKind::Comma => TokenKind::Comma,
+                        RawTokenKind::Dot => TokenKind::Dot,
+                        RawTokenKind::OpenParen => TokenKind::OpenParen,
+                        RawTokenKind::CloseParen => TokenKind::CloseParen,
+                        RawTokenKind::OpenBrace => TokenKind::OpenBrace,
+                        RawTokenKind::CloseBrace => TokenKind::CloseBrace,
+                        RawTokenKind::OpenBracket => TokenKind::OpenSqBracket,
+                        RawTokenKind::CloseBracket => TokenKind::CloseSqBracket,
+                        RawTokenKind::At => TokenKind::At,
+                        RawTokenKind::Pound => TokenKind::Pound,
+                        RawTokenKind::Tilde => TokenKind::Tilde,
+                        RawTokenKind::Question => TokenKind::Question,
+                        RawTokenKind::Dollar => TokenKind::Dollar,
+                        RawTokenKind::Not => TokenKind::Not,
+                        RawTokenKind::Lt => TokenKind::Lt,
+                        RawTokenKind::Gt => TokenKind::Gt,
+                        RawTokenKind::And => TokenKind::And,
+                        RawTokenKind::Or => TokenKind::Or,
+                        RawTokenKind::Plus => TokenKind::Plus,
+                        RawTokenKind::Star => TokenKind::Star,
+                        RawTokenKind::Slash => TokenKind::Slash,
+                        RawTokenKind::Caret => TokenKind::Caret,
+                        RawTokenKind::Percent => TokenKind::Percent,
+                        RawTokenKind::Unknown => TokenKind::Unknown,
                     };
 
                     Token { span, kind }
@@ -158,23 +161,23 @@ impl Lexer {
             }
 
             // just manually add a <eof> token for easier parsing
-            vec.push(Token { span: Span::new(file, span_index, span_index), kind: TokenType::Eof });
+            vec.push(Token { span: Span::new(file, span_index, span_index), kind: TokenKind::Eof });
             vec
         })
     }
 }
 
-impl Display for TokenType {
+impl Display for TokenKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            TokenType::Ident(sym) => write!(f, "identifier `{}`", sym),
+            TokenKind::Ident(sym) => write!(f, "identifier `{}`", sym),
             _ => write!(f, "{:?}", self),
         }
     }
 }
 /// token kind that has been further processed to include keywords
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum TokenType {
+pub enum TokenKind {
     Ident(Symbol),
     Break,
     Trait,

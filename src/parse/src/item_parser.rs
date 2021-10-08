@@ -1,21 +1,21 @@
 use crate::*;
 use ast::*;
-use lex::TokenType;
+use lex::TokenKind;
 use span::{with_source_map, ModuleKind};
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 11] = [
-    TokenType::Fn,
-    TokenType::Macro,
-    TokenType::Struct,
-    TokenType::Enum,
-    TokenType::Const,
-    TokenType::Impl,
-    TokenType::Extern,
-    TokenType::Type,
-    TokenType::Use,
-    TokenType::Mod,
-    TokenType::Trait,
+const ITEM_KEYWORDS: [TokenKind; 11] = [
+    TokenKind::Fn,
+    TokenKind::Macro,
+    TokenKind::Struct,
+    TokenKind::Enum,
+    TokenKind::Const,
+    TokenKind::Impl,
+    TokenKind::Extern,
+    TokenKind::Type,
+    TokenKind::Use,
+    TokenKind::Mod,
+    TokenKind::Trait,
 ];
 
 pub struct ItemParser;
@@ -27,17 +27,17 @@ impl<'a> Parse<'a> for ItemParser {
         let vis = VisibilityParser.parse(parser)?;
 
         // these items have a different syntax to the rest
-        if let Some(_impl_kw) = parser.accept(TokenType::Impl) {
+        if let Some(_impl_kw) = parser.accept(TokenKind::Impl) {
             return ImplParser { vis }.parse(parser);
-        } else if let Some(_extern_kw) = parser.accept(TokenType::Extern) {
+        } else if let Some(_extern_kw) = parser.accept(TokenKind::Extern) {
             return ExternParser { vis }.parse(parser);
-        } else if let Some(_use_kw) = parser.accept(TokenType::Use) {
+        } else if let Some(_use_kw) = parser.accept(TokenKind::Use) {
             return UseParser { vis }.parse(parser);
         }
 
-        if let Some(mod_kw) = parser.accept(TokenType::Mod) {
+        if let Some(mod_kw) = parser.accept(TokenKind::Mod) {
             let name = parser.expect_lident()?;
-            parser.expect(TokenType::Semi)?;
+            parser.expect(TokenKind::Semi)?;
             let span = mod_kw.span.merge(name.span);
             let module = SubModuleParser { span, name }.parse(parser)?;
             return Ok(parser.mk_item(vis.span.merge(name.span), vis, name, ItemKind::Mod(module)));
@@ -46,19 +46,19 @@ impl<'a> Parse<'a> for ItemParser {
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
-            &mut |parser: &mut Parser<'a>| match kw.kind {
-                TokenType::Fn => FnParser.parse(parser),
-                TokenType::Macro => MacroParser.parse(parser),
-                TokenType::Struct => StructDeclParser.parse(parser),
-                TokenType::Enum => EnumParser.parse(parser),
-                TokenType::Type => TypeAliasParser.parse(parser),
-                TokenType::Trait => TraitParser.parse(parser),
+            parse_fn(|parser| match kw.kind {
+                TokenKind::Fn => FnParser.parse(parser),
+                TokenKind::Macro => MacroParser.parse(parser),
+                TokenKind::Struct => StructDeclParser.parse(parser),
+                TokenKind::Enum => EnumParser.parse(parser),
+                TokenKind::Type => TypeAliasParser.parse(parser),
+                TokenKind::Trait => TraitParser.parse(parser),
                 _ => unreachable!(),
-            },
+            }),
             false,
         )?;
 
-        parser.accept(TokenType::Semi);
+        parser.accept(TokenKind::Semi);
 
         Ok(parser.mk_item(vis.span.merge(kind_span), vis, ident, kind))
     }
@@ -137,7 +137,7 @@ impl<'a> Parse<'a> for UseParser {
         let path = parser.parse_module_path()?;
         let span = self.vis.span.merge(path.span);
         let kind = ItemKind::Use(path);
-        parser.expect(TokenType::Semi)?;
+        parser.expect(TokenKind::Semi)?;
         Ok(parser.mk_item(span, self.vis, Ident::empty(), kind))
     }
 }
@@ -151,10 +151,10 @@ impl<'a> Parse<'a> for ExternParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let abi = parser.parse_abi()?;
-        parser.expect(TokenType::OpenBrace)?;
+        parser.expect(TokenKind::OpenBrace)?;
         let mut foreign_items = vec![];
         let close_brace = loop {
-            if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
+            if let Some(close_brace) = parser.accept(TokenKind::CloseBrace) {
                 break close_brace;
             }
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
@@ -180,7 +180,7 @@ impl<'a> Parse<'a> for TraitParser {
     type Output = ItemKind;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        parser.expect(TokenType::OpenBrace)?;
+        parser.expect(TokenKind::OpenBrace)?;
         let generics = parser.parse_generics()?;
         let items = ItemParser
             .many()
@@ -197,7 +197,7 @@ impl<'a> Parse<'a> for TraitParser {
                 }
             })
             .collect();
-        parser.expect(TokenType::CloseBrace)?;
+        parser.expect(TokenKind::CloseBrace)?;
         Ok(ItemKind::Trait { generics, items })
     }
 }
@@ -211,17 +211,17 @@ impl<'a> Parse<'a> for ImplParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = parser.parse_generics()?;
         let mut trait_path = Some(parser.parse_type_path()?);
-        let self_ty = if parser.accept(TokenType::For).is_some() {
+        let self_ty = if parser.accept(TokenKind::For).is_some() {
             parser.parse_ty(false)
         } else {
             // reinterpret the trait path as the self type
             let ty_path = trait_path.take().unwrap();
             parser.mk_ty(ty_path.span, TyKind::Path(ty_path))
         };
-        parser.expect(TokenType::OpenBrace)?;
+        parser.expect(TokenKind::OpenBrace)?;
         let mut items = vec![];
         let close_brace = loop {
-            if let Some(close_brace) = parser.accept(TokenType::CloseBrace) {
+            if let Some(close_brace) = parser.accept(TokenKind::CloseBrace) {
                 break close_brace;
             }
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
@@ -244,9 +244,9 @@ impl<'a> Parse<'a> for TypeAliasParser {
     /// type <ident> "<" <generics> ">" = <type>
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = parser.parse_generics()?;
-        parser.expect(TokenType::Eq)?;
+        parser.expect(TokenKind::Eq)?;
         let ty = parser.parse_ty(false);
-        parser.expect(TokenType::Semi)?;
+        parser.expect(TokenKind::Semi)?;
         Ok(ItemKind::TypeAlias(generics, ty))
     }
 }
@@ -268,7 +268,7 @@ impl<'a> Parse<'a> for FieldDeclParser {
         let ident = match self.form {
             FieldForm::Struct => {
                 let ident = parser.expect_lident()?;
-                parser.expect(TokenType::Colon)?;
+                parser.expect(TokenKind::Colon)?;
                 Some(ident)
             }
             FieldForm::Tuple => None,
@@ -298,17 +298,17 @@ impl<'a> Parse<'a> for VariantKindParser {
     type Output = VariantKind;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if parser.accept(TokenType::OpenParen).is_some() {
+        if parser.accept(TokenKind::OpenParen).is_some() {
             let form = FieldForm::Tuple;
             let fields = TupleParser { inner: FieldDeclParser { form } }.parse(parser)?;
             Ok(VariantKind::Tuple(fields))
-        } else if parser.accept(TokenType::OpenBrace).is_some() {
+        } else if parser.accept(TokenKind::OpenBrace).is_some() {
             let fields = PunctuatedParser {
                 inner: FieldDeclParser { form: FieldForm::Struct },
-                separator: TokenType::Comma,
+                separator: TokenKind::Comma,
             }
             .parse(parser)?;
-            parser.expect(TokenType::CloseBrace)?;
+            parser.expect(TokenKind::CloseBrace)?;
             Ok(VariantKind::Struct(fields))
         } else {
             Ok(VariantKind::Unit)
@@ -325,7 +325,7 @@ impl<'a> Parse<'a> for StructDeclParser {
         let generics = GenericsParser.parse(parser)?;
         let kind = VariantKindParser.parse(parser)?;
         if let VariantKind::Tuple(_) | VariantKind::Unit = kind {
-            parser.expect(TokenType::Semi)?;
+            parser.expect(TokenKind::Semi)?;
         }
         Ok(ItemKind::Struct(generics, kind))
     }
@@ -338,10 +338,10 @@ impl<'a> Parse<'a> for EnumParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = GenericsParser.parse(parser)?;
-        parser.expect(TokenType::OpenBrace)?;
+        parser.expect(TokenKind::OpenBrace)?;
         let variants =
-            PunctuatedParser { inner: VariantParser, separator: TokenType::Comma }.parse(parser)?;
-        parser.expect(TokenType::CloseBrace)?;
+            PunctuatedParser { inner: VariantParser, separator: TokenKind::Comma }.parse(parser)?;
+        parser.expect(TokenKind::CloseBrace)?;
         Ok(ItemKind::Enum(generics, variants))
     }
 }
@@ -355,10 +355,10 @@ impl<'a> Parse<'a> for FnParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let generics = GenericsParser.parse(parser)?;
         let sig = FnSigParser { require_type_annotations: true }.parse(parser)?;
-        let block = if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+        let block = if let Some(open_brace) = parser.accept(TokenKind::OpenBrace) {
             Some(parser.parse_block(open_brace)?)
         } else {
-            parser.expect(TokenType::Semi)?;
+            parser.expect(TokenKind::Semi)?;
             None
         };
         let expr = block.map(|block| parser.mk_expr(block.span, ExprKind::Block(block)));

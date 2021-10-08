@@ -1,19 +1,12 @@
-use phf::phf_map;
-
 use super::*;
-
-impl<'a> Parser<'a> {
-    fn parse_macro_matcher(&self) -> MacroMatcher {
-        todo!()
-    }
-}
+use phf::phf_map;
 
 pub struct MacroParser;
 
 impl<'a> Parse<'a> for MacroParser {
     type Output = ItemKind;
 
-    /// assumes that { <vis> macro <ident> } has already been parsed
+    /// assumes that `<vis> macro <ident>` has already been parsed
     ///
     /// <macro> ::= <vis> macro <ident> {
     ///    <macro-rule> +
@@ -23,8 +16,9 @@ impl<'a> Parse<'a> for MacroParser {
     /// <token-tree> ::= <token>*
     /// <macro-repetition-operator> ::= * | + | ?
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        parser.expect(TokenType::OpenBrace)?;
-        let rules = todo!();
+        parser.expect(TokenKind::OpenBrace)?;
+        let rules = Punctuated1Parser { inner: MacroRuleParser, separator: TokenKind::Semi }
+            .parse(parser)?;
         let m = Macro { rules };
         Ok(ItemKind::Macro(m))
     }
@@ -36,7 +30,10 @@ impl<'a> Parse<'a> for MacroRuleParser {
     type Output = MacroRule;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        todo!()
+        let matcher = MacroMatcherParser.parse(parser)?;
+        parser.expect(TokenKind::RFArrow)?;
+        let transcriber = parser.in_braces(parse_fn(|parser| parser.parse_tt()))?;
+        Ok(MacroRule { matcher, transcriber })
     }
 }
 
@@ -48,35 +45,14 @@ impl<'a> Parse<'a> for MacroRuleParser {
 ///     | <token>
 struct MacroMatcherParser;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub enum FragmentSpecifier {
-    Item,
-    Block,
-    Stmt,
-    Pat,
-    Expr,
-    Ty,
-    Ident,
-    Path,
-    Tt,
-    Lit,
-    Err,
-}
-
-pub enum MacroMatcher {
-    Token(Token),
-    Matcher(Box<MacroMatcher>),
-    Fragment(Ident, FragmentSpecifier),
-}
-
 impl<'a> Parse<'a> for MacroMatcherParser {
     type Output = MacroMatcher;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        parser.expect(TokenType::OpenParen)?;
-        let matcher = if parser.accept(TokenType::Dollar).is_some() {
+        parser.expect(TokenKind::OpenParen)?;
+        let matcher = if parser.accept(TokenKind::Dollar).is_some() {
             if let Some(ident) = parser.accept_lident() {
-                parser.expect(TokenType::Colon)?;
+                parser.expect(TokenKind::Colon)?;
                 let specifier = MacroFragmentSpecifierParser.parse(parser)?;
                 MacroMatcher::Fragment(ident, specifier)
             } else {
@@ -85,7 +61,7 @@ impl<'a> Parse<'a> for MacroMatcherParser {
         } else {
             MacroMatcher::Token(parser.safe_peek()?)
         };
-        parser.expect(TokenType::CloseParen)?;
+        parser.expect(TokenKind::CloseParen)?;
         Ok(matcher)
     }
 }

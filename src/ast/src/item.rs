@@ -1,4 +1,5 @@
 use super::*;
+use lex::TokenTree;
 use span::Span;
 use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
@@ -57,26 +58,6 @@ pub enum ItemKind {
         self_ty: P<Ty>,
         items: Vec<P<AssocItem>>,
     },
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Macro {
-    pub rules: Vec<MacroRule>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct MacroRule {}
-
-impl Display for Macro {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        todo!()
-    }
-}
-
-impl Display for MacroRule {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        todo!()
-    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -177,5 +158,50 @@ impl Display for Item {
             ItemKind::Impl { .. } => todo!(),
             ItemKind::Trait { .. } => todo!(),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Macro {
+    pub rules: Vec<MacroRule>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct MacroRule {
+    pub matcher: MacroMatcher,
+    pub transcriber: TokenTree,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum FragmentSpecifier {
+    Item,
+    Block,
+    Stmt,
+    Pat,
+    Expr,
+    Ty,
+    Ident,
+    Path,
+    Tt,
+    Lit,
+    Err,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MacroMatcher {
+    Token(Token),
+    Matcher(Box<MacroMatcher>),
+    Fragment(Ident, FragmentSpecifier),
+}
+
+impl Display for Macro {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+}
+
+impl Display for MacroRule {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
     }
 }

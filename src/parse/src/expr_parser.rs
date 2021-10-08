@@ -2,13 +2,13 @@ use super::*;
 use ast::*;
 use lex::*;
 
-const UNARY_OPS: [TokenType; 4] =
-    [TokenType::Not, TokenType::Minus, TokenType::Star, TokenType::And];
-const POSTFIX_OPS: [TokenType; 3] =
-    [TokenType::Dot, TokenType::OpenSqBracket, TokenType::OpenParen];
-const CMP_OPS: [TokenType; 2] = [TokenType::Lt, TokenType::Gt];
-const TERM_OPS: [TokenType; 2] = [TokenType::Plus, TokenType::Minus];
-const FACTOR_OPS: [TokenType; 2] = [TokenType::Star, TokenType::Slash];
+const UNARY_OPS: [TokenKind; 4] =
+    [TokenKind::Not, TokenKind::Minus, TokenKind::Star, TokenKind::And];
+const POSTFIX_OPS: [TokenKind; 3] =
+    [TokenKind::Dot, TokenKind::OpenSqBracket, TokenKind::OpenParen];
+const CMP_OPS: [TokenKind; 2] = [TokenKind::Lt, TokenKind::Gt];
+const TERM_OPS: [TokenKind; 2] = [TokenKind::Plus, TokenKind::Minus];
+const FACTOR_OPS: [TokenKind; 2] = [TokenKind::Star, TokenKind::Slash];
 
 // expr parsers are written in increasing order of precedence
 
@@ -29,7 +29,7 @@ impl<'a> Parse<'a> for BoxExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(kw) = parser.accept(TokenType::Box) {
+        if let Some(kw) = parser.accept(TokenKind::Box) {
             let expr = parser.parse_expr();
             Ok(parser.mk_expr(kw.span.merge(expr.span), ExprKind::Box(expr)))
         } else {
@@ -45,7 +45,7 @@ impl<'a> Parse<'a> for AssnExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = CmpExprParser.parse(parser)?;
-        while let Some(_eq) = parser.accept(TokenType::Eq) {
+        while let Some(_eq) = parser.accept(TokenKind::Eq) {
             let right = self.parse(parser)?;
             expr = parser.mk_expr(expr.span.merge(right.span), ExprKind::Assign(expr, right));
         }
@@ -111,13 +111,13 @@ impl<'a> Parse<'a> for PostfixExprParser {
         let mut expr = PrimaryExprParser.parse(parser)?;
         while let Some(t) = parser.accept_one_of(&POSTFIX_OPS) {
             match t.kind {
-                TokenType::OpenParen => {
+                TokenKind::OpenParen => {
                     let (arg_span, args) =
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;
                     expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
-                TokenType::Dot => expr = FieldAccessParser { expr }.parse(parser)?,
-                TokenType::OpenSqBracket => todo!(),
+                TokenKind::Dot => expr = FieldAccessParser { expr }.parse(parser)?,
+                TokenKind::OpenSqBracket => todo!(),
                 _ => unreachable!(),
             }
         }
@@ -131,7 +131,7 @@ impl<'a> Parse<'a> for PrimaryExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(_open_paren) = parser.accept(TokenType::OpenParen) {
+        if let Some(_open_paren) = parser.accept(TokenKind::OpenParen) {
             // we first try to parse as a parenthesization, if there is a comma then it will fail
             // and we will backtrack and parse it as a tuple instead
             let mut paren_parser = ParenParser { inner: ExprParser }.spanned(true);
@@ -144,9 +144,9 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             }
         } else if let Some((kind, span)) = parser.accept_literal() {
             LiteralParser { kind, span }.parse(parser)
-        } else if let Some(ret_kw) = parser.accept(TokenType::Return) {
+        } else if let Some(ret_kw) = parser.accept(TokenKind::Return) {
             RetParser { ret_kw }.parse(parser)
-        } else if let Some(self_kw) = parser.accept(TokenType::LSelf) {
+        } else if let Some(self_kw) = parser.accept(TokenKind::LSelf) {
             let segment = PathSegment {
                 id: parser.mk_id(),
                 ident: Ident::new(self_kw.span, kw::LSelf),
@@ -156,35 +156,35 @@ impl<'a> Parse<'a> for PrimaryExprParser {
             Ok(parser.mk_expr(self_kw.span, ExprKind::Path(path)))
         } else if parser.is_ident()?.is_some() {
             PathExprParser.parse(parser)
-        } else if let Some(tok) = parser.accept(TokenType::False) {
+        } else if let Some(tok) = parser.accept(TokenKind::False) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(false))))
-        } else if let Some(tok) = parser.accept(TokenType::True) {
+        } else if let Some(tok) = parser.accept(TokenKind::True) {
             Ok(parser.mk_expr(tok.span, ExprKind::Lit(Lit::Bool(true))))
-        } else if let Some(open_brace) = parser.accept(TokenType::OpenBrace) {
+        } else if let Some(open_brace) = parser.accept(TokenKind::OpenBrace) {
             let block = BlockParser { open_brace, is_unsafe: false }.parse(parser)?;
             Ok(parser.mk_expr(block.span, ExprKind::Block(block)))
-        } else if let Some(fn_kw) = parser.accept(TokenType::Fn) {
+        } else if let Some(fn_kw) = parser.accept(TokenKind::Fn) {
             ClosureParser { fn_kw }.parse(parser)
-        } else if let Some(if_kw) = parser.accept(TokenType::If) {
+        } else if let Some(if_kw) = parser.accept(TokenKind::If) {
             IfParser { if_kw }.parse(parser)
-        } else if let Some(unsafe_kw) = parser.accept(TokenType::Unsafe) {
-            let open_brace = parser.expect(TokenType::OpenBrace)?;
+        } else if let Some(unsafe_kw) = parser.accept(TokenKind::Unsafe) {
+            let open_brace = parser.expect(TokenKind::OpenBrace)?;
             let blk = BlockParser { open_brace, is_unsafe: true }.parse(parser)?;
             Ok(parser.mk_expr(unsafe_kw.span.merge(blk.span), ExprKind::Block(blk)))
-        } else if let Some(match_kw) = parser.accept(TokenType::Match) {
+        } else if let Some(match_kw) = parser.accept(TokenKind::Match) {
             MatchParser { match_kw }.parse(parser)
-        } else if let Some(loop_kw) = parser.accept(TokenType::Loop) {
-            let open_brace = parser.expect(TokenType::OpenBrace)?;
+        } else if let Some(loop_kw) = parser.accept(TokenKind::Loop) {
+            let open_brace = parser.expect(TokenKind::OpenBrace)?;
             let block = parser.parse_block(open_brace)?;
             Ok(parser.mk_expr(loop_kw.span.merge(block.span), ExprKind::Loop(block)))
-        } else if let Some(while_kw) = parser.accept(TokenType::While) {
+        } else if let Some(while_kw) = parser.accept(TokenKind::While) {
             let condition = parser.parse_expr();
-            let open_brace = parser.expect(TokenType::OpenBrace)?;
+            let open_brace = parser.expect(TokenKind::OpenBrace)?;
             let block = parser.parse_block(open_brace)?;
             Ok(parser.mk_expr(while_kw.span.merge(block.span), ExprKind::While(condition, block)))
-        } else if let Some(break_kw) = parser.accept(TokenType::Break) {
+        } else if let Some(break_kw) = parser.accept(TokenKind::Break) {
             Ok(parser.mk_expr(break_kw.span, ExprKind::Break))
-        } else if let Some(continue_kw) = parser.accept(TokenType::Continue) {
+        } else if let Some(continue_kw) = parser.accept(TokenKind::Continue) {
             Ok(parser.mk_expr(continue_kw.span, ExprKind::Continue))
         } else {
             Err(parser.build_err(parser.empty_span(), ParseError::Unimpl))
@@ -200,7 +200,7 @@ pub(super) struct LBinaryExprParser<'i, Q, I> {
 
 impl<'a, 'i, Q, I> Parse<'a> for LBinaryExprParser<'i, Q, I>
 where
-    &'i I: IntoIterator<Item = &'i TokenType>,
+    &'i I: IntoIterator<Item = &'i TokenKind>,
     Q: Parse<'a, Output = P<Expr>>,
 {
     type Output = P<Expr>;

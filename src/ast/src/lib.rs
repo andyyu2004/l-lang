@@ -25,7 +25,7 @@ pub use visit::*;
 pub type P<T> = Box<T>;
 
 use index::{newtype_index, Idx};
-use lex::{Token, TokenType};
+use lex::{Token, TokenKind};
 use span::{kw, Span, Symbol};
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -364,12 +364,12 @@ impl Display for BinOp {
 impl From<Token> for BinOp {
     fn from(t: Token) -> Self {
         match t.kind {
-            TokenType::Plus => Self::Add,
-            TokenType::Minus => Self::Sub,
-            TokenType::Star => Self::Mul,
-            TokenType::Slash => Self::Div,
-            TokenType::Gt => Self::Gt,
-            TokenType::Lt => Self::Lt,
+            TokenKind::Plus => Self::Add,
+            TokenKind::Minus => Self::Sub,
+            TokenKind::Star => Self::Mul,
+            TokenKind::Slash => Self::Div,
+            TokenKind::Gt => Self::Gt,
+            TokenKind::Lt => Self::Lt,
             k => panic!("invalid binary operator `{:?}`", k),
         }
     }
@@ -401,10 +401,10 @@ impl Display for UnaryOp {
 impl From<Token> for UnaryOp {
     fn from(t: Token) -> Self {
         match t.kind {
-            TokenType::Minus => Self::Neg,
-            TokenType::Not => Self::Not,
-            TokenType::Star => Self::Deref,
-            TokenType::And => Self::Ref,
+            TokenKind::Minus => Self::Neg,
+            TokenKind::Not => Self::Not,
+            TokenKind::Star => Self::Deref,
+            TokenKind::And => Self::Ref,
             k => panic!("invalid unary operator `{:?}`", k),
         }
     }
