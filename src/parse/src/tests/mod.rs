@@ -1,3 +1,5 @@
+mod macro_parse_tests;
+
 use super::*;
 use index::Idx;
 use span::{Span, ROOT_FILE_IDX};
@@ -5,6 +7,25 @@ use span::{Span, ROOT_FILE_IDX};
 macro expect_parse_err($src:expr) {{
     let driver = ldriver::Driver::from_src($src);
     driver.parse().unwrap_err()
+}}
+
+macro parse_expr($src:expr) {{
+    let driver = ldriver::Driver::from_src($src);
+    driver.parse_expr().unwrap()
+}}
+
+macro fmt_expr($src:expr) {{
+    let expr = parse_expr!($src);
+    format!("{}", expr)
+}}
+
+macro parse_macro($src:tt) {{
+    let s = stringify!($src);
+    let mut chars = s.chars();
+    assert_eq!(chars.next().unwrap(), '{');
+    assert_eq!(chars.next_back().unwrap(), '}');
+    let driver = ldriver::Driver::from_src(s);
+    driver.parse_macro().unwrap()
 }}
 
 #[test]
@@ -18,16 +39,6 @@ fn parse_fn_sig_missing_type_annotation() {
     let src = "fn f(x) { x }";
     expect_parse_err!(src);
 }
-
-macro parse_expr($src:expr) {{
-    let driver = ldriver::Driver::from_src($src);
-    driver.parse_expr().unwrap()
-}}
-
-macro fmt_expr($src:expr) {{
-    let expr = parse_expr!($src);
-    format!("{}", expr)
-}}
 
 #[test]
 fn parse_deref() {

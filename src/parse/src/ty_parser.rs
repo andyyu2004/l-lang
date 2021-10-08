@@ -35,9 +35,9 @@ impl<'a> Parse<'a> for TyParser {
         } else if let Some(star) = parser.accept(TokenKind::Star) {
             let ty = self.parse(parser)?;
             Ok(parser.mk_ty(star.span.merge(ty.span), TyKind::Ptr(ty)))
-        } else if let Some(lsq) = parser.accept(TokenKind::OpenSqBracket) {
+        } else if let Some(lsq) = parser.accept(TokenKind::OpenBracket) {
             let ty = self.parse(parser)?;
-            let rsq = parser.expect(TokenKind::CloseSqBracket)?;
+            let rsq = parser.expect(TokenKind::CloseBracket)?;
             Ok(parser.mk_ty(lsq.span.merge(rsq.span), TyKind::Array(ty)))
         } else if parser.is_ident()?.is_some() {
             let path = parser.parse_type_path()?;

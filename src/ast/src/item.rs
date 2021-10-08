@@ -188,10 +188,23 @@ pub enum FragmentSpecifier {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum MacroMatcher {
+pub struct MacroMatcher {
+    pub matches: Vec<MacroMatch>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MacroMatch {
     Token(Token),
-    Matcher(Box<MacroMatcher>),
+    Matcher(Box<MacroMatch>),
+    Repetition(Vec<MacroMatch>, Option<Token>, MacroRepetitor),
     Fragment(Ident, FragmentSpecifier),
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum MacroRepetitor {
+    Star,
+    Plus,
+    Opt,
 }
 
 impl Display for Macro {

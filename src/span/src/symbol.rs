@@ -49,12 +49,12 @@ impl Symbol {
         with_interner(|interner| interner.get_str(self))
     }
 
-    pub fn intern_str(string: &str) -> Self {
+    pub fn intern(string: &str) -> Self {
         with_interner(|interner| interner.intern(string))
     }
 
-    pub fn intern<D: Display + ?Sized>(disp: &D) -> Self {
-        Self::intern_str(&disp.to_string())
+    pub fn intern_str(s: &str) -> &'static str {
+        with_interner(|interner| interner.intern_str(s))
     }
 }
 
@@ -115,6 +115,16 @@ impl Interner {
         self.strs.push(ss);
         self.symbols.insert(ss, symbol);
         symbol
+    }
+
+    pub fn intern_str(&mut self, s: &str) -> &'static str {
+        if s.is_empty() {
+            return "";
+        }
+
+        let interned =
+            unsafe { std::str::from_utf8_unchecked(self.arena.alloc_slice(s.as_bytes())) };
+        unsafe { &*(interned as *const str) }
     }
 
     /// get the string which the symbol represents

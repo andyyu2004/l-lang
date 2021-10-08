@@ -4,8 +4,7 @@ use lex::*;
 
 const UNARY_OPS: [TokenKind; 4] =
     [TokenKind::Not, TokenKind::Minus, TokenKind::Star, TokenKind::And];
-const POSTFIX_OPS: [TokenKind; 3] =
-    [TokenKind::Dot, TokenKind::OpenSqBracket, TokenKind::OpenParen];
+const POSTFIX_OPS: [TokenKind; 3] = [TokenKind::Dot, TokenKind::OpenBracket, TokenKind::OpenParen];
 const CMP_OPS: [TokenKind; 2] = [TokenKind::Lt, TokenKind::Gt];
 const TERM_OPS: [TokenKind; 2] = [TokenKind::Plus, TokenKind::Minus];
 const FACTOR_OPS: [TokenKind; 2] = [TokenKind::Star, TokenKind::Slash];
@@ -59,7 +58,7 @@ impl<'a> Parse<'a> for CmpExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        LBinaryExprParser { ops: &CMP_OPS, inner: TermExprParser }.parse(parser)
+        LBinaryExprParser { ops: CMP_OPS, inner: TermExprParser }.parse(parser)
     }
 }
 
@@ -69,7 +68,7 @@ impl<'a> Parse<'a> for TermExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        LBinaryExprParser { ops: &TERM_OPS, inner: FactorExprParser }.parse(parser)
+        LBinaryExprParser { ops: TERM_OPS, inner: FactorExprParser }.parse(parser)
     }
 }
 
@@ -79,7 +78,7 @@ impl<'a> Parse<'a> for FactorExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        LBinaryExprParser { ops: &FACTOR_OPS, inner: UnaryExprParser }.parse(parser)
+        LBinaryExprParser { ops: FACTOR_OPS, inner: UnaryExprParser }.parse(parser)
     }
 }
 
@@ -89,7 +88,7 @@ impl<'a> Parse<'a> for UnaryExprParser {
     type Output = P<Expr>;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        if let Some(t) = parser.accept_one_of(&UNARY_OPS) {
+        if let Some(t) = parser.accept_one_of(UNARY_OPS) {
             let unary_op = UnaryOp::from(t);
             let expr = self.parse(parser)?;
             let span = t.span.merge(expr.span);
@@ -109,7 +108,7 @@ impl<'a> Parse<'a> for PostfixExprParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = PrimaryExprParser.parse(parser)?;
-        while let Some(t) = parser.accept_one_of(&POSTFIX_OPS) {
+        while let Some(t) = parser.accept_one_of(POSTFIX_OPS) {
             match t.kind {
                 TokenKind::OpenParen => {
                     let (arg_span, args) =
@@ -117,7 +116,7 @@ impl<'a> Parse<'a> for PostfixExprParser {
                     expr = parser.mk_expr(expr.span.merge(arg_span), ExprKind::Call(expr, args));
                 }
                 TokenKind::Dot => expr = FieldAccessParser { expr }.parse(parser)?,
-                TokenKind::OpenSqBracket => todo!(),
+                TokenKind::OpenBracket => todo!(),
                 _ => unreachable!(),
             }
         }
@@ -193,14 +192,14 @@ impl<'a> Parse<'a> for PrimaryExprParser {
 }
 
 /// left associative binary expr parse
-pub(super) struct LBinaryExprParser<'i, Q, I> {
-    ops: &'i I,
+pub(super) struct LBinaryExprParser<Q, I> {
+    ops: I,
     inner: Q,
 }
 
-impl<'a, 'i, Q, I> Parse<'a> for LBinaryExprParser<'i, Q, I>
+impl<'a, Q, I> Parse<'a> for LBinaryExprParser<Q, I>
 where
-    &'i I: IntoIterator<Item = &'i TokenKind>,
+    I: IntoIterator<Item = TokenKind> + Copy,
     Q: Parse<'a, Output = P<Expr>>,
 {
     type Output = P<Expr>;

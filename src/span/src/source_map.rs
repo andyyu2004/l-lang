@@ -82,20 +82,24 @@ impl SourceMap {
 pub struct SourceFile {
     pub file: ModuleFile,
     name: String,
-    src: String,
+    src: &'static str,
     line_starts: Vec<usize>,
 }
 
 impl SourceFile {
     pub fn new(file: ModuleFile) -> Self {
-        let src = std::fs::read_to_string(&file.path).unwrap();
+        let src = Symbol::intern_str(&std::fs::read_to_string(&file.path).unwrap());
 
         Self {
             name: file.path.file_name().unwrap().to_str().unwrap().to_owned(),
-            line_starts: line_starts(&src).collect(),
+            line_starts: line_starts(src).collect(),
             file,
             src,
         }
+    }
+
+    pub fn source(&self) -> &'static str {
+        &self.src
     }
 
     fn line_start(&self, line_index: usize) -> Option<usize> {
@@ -112,7 +116,7 @@ impl SourceFile {
 impl Deref for SourceFile {
     type Target = str;
 
-    fn deref(&self) -> &Self::Target {
+    fn deref(&self) -> &'static str {
         &self.src
     }
 }
@@ -165,19 +169,16 @@ impl SourceMap {
         source_map
     }
 
-    pub fn span_to_slice(&self, span: Span) -> &str {
-        &self.modules[span.file].src[span.start().to_usize()..span.end().to_usize()]
-    }
-
-    pub fn span_to_string(&self, span: Span) -> String {
-        self.span_to_slice(span).to_owned()
+    pub fn span_as_str(&self, span: Span) -> &'static str {
+        let src: &'static str = &self.modules[span.file].src;
+        &src[span.range()]
     }
 }
 
 impl<'a> Index<Span> for &'a SourceFile {
     type Output = str;
 
-    fn index(&self, span: Span) -> &Self::Output {
+    fn index(&self, span: Span) -> &'static str {
         &self.src[span.start().to_usize()..span.end().to_usize()]
     }
 }

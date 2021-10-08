@@ -1,10 +1,20 @@
 use super::*;
 use phf::phf_map;
 
+pub struct MacroItemParser;
+
+impl<'a> Parse<'a> for MacroItemParser {
+    type Output = ItemKind;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        parser.parse_macro().map(ItemKind::Macro)
+    }
+}
+
 pub struct MacroParser;
 
 impl<'a> Parse<'a> for MacroParser {
-    type Output = ItemKind;
+    type Output = Macro;
 
     /// assumes that `<vis> macro <ident>` has already been parsed
     ///
@@ -16,11 +26,8 @@ impl<'a> Parse<'a> for MacroParser {
     /// <token-tree> ::= <token>*
     /// <macro-repetition-operator> ::= * | + | ?
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        parser.expect(TokenKind::OpenBrace)?;
-        let rules = Punctuated1Parser { inner: MacroRuleParser, separator: TokenKind::Semi }
-            .parse(parser)?;
-        let m = Macro { rules };
-        Ok(ItemKind::Macro(m))
+        let rules = parser.in_braces(MacroRuleParser.punctuated1(TokenKind::Semi))?;
+        Ok(Macro { rules })
     }
 }
 
@@ -42,27 +49,68 @@ impl<'a> Parse<'a> for MacroRuleParser {
 ///     | $<lident> : <macro-fragment-specifier>
 ///     | $( <macro-match>+ ) <macro-repetition-separator> <macro-repetition-operator>
 ///     | <macro-matcher>
-///     | <token>
+///     | <token> (except delimiters)
+
 struct MacroMatcherParser;
 
 impl<'a> Parse<'a> for MacroMatcherParser {
     type Output = MacroMatcher;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        parser.expect(TokenKind::OpenParen)?;
+        // TODO need custom logic rather than using `many` as we need to stop when we hit a delimiter
+        let matches = parser.in_parens(MacroMatchParser.many())?;
+        Ok(MacroMatcher { matches })
+    }
+}
+
+struct MacroMatchParser;
+
+impl<'a> Parse<'a> for MacroMatchParser {
+    type Output = MacroMatch;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let matcher = if parser.accept(TokenKind::Dollar).is_some() {
             if let Some(ident) = parser.accept_lident() {
                 parser.expect(TokenKind::Colon)?;
                 let specifier = MacroFragmentSpecifierParser.parse(parser)?;
-                MacroMatcher::Fragment(ident, specifier)
+                MacroMatch::Fragment(ident, specifier)
             } else {
-                MacroMatcher::Matcher(Box::new(Self.parse(parser)?))
+                let matches = parser.in_parens(self.many1())?;
+                let (sep, repetitor) = match MacroRepetitorParser.parse(parser) {
+                    Ok(rep) => (None, rep),
+                    Err(_) => {
+                        let sep = parser.safe_next().ok();
+                        let rep = MacroRepetitorParser.parse(parser)?;
+                        (sep, rep)
+                    }
+                };
+                MacroMatch::Repetition(matches, sep, repetitor)
             }
         } else {
-            MacroMatcher::Token(parser.safe_peek()?)
+            // The NOT $ cases
+            let token = parser.safe_peek()?;
+            // TODO The caller must ensure this?
+            assert!(!token.kind.is_delimiter());
+            MacroMatch::Token(parser.next())
         };
-        parser.expect(TokenKind::CloseParen)?;
         Ok(matcher)
+    }
+}
+
+pub struct MacroRepetitorParser;
+
+impl<'a> Parse<'a> for MacroRepetitorParser {
+    type Output = MacroRepetitor;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        parser.expect_one_of([TokenKind::Plus, TokenKind::Star, TokenKind::Question]).map(|token| {
+            match token.kind {
+                TokenKind::Plus => MacroRepetitor::Plus,
+                TokenKind::Star => MacroRepetitor::Star,
+                TokenKind::Question => MacroRepetitor::Opt,
+                _ => unreachable!(),
+            }
+        })
     }
 }
 

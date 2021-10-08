@@ -18,7 +18,7 @@ pub use symbol::{kw, sym, Symbol};
 use codespan::ByteIndex;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Range};
 
 #[derive(Default, Debug)]
 pub struct SpanGlobals {
@@ -76,12 +76,16 @@ impl Span {
         Self { file, span: codespan::Span::new(start.into(), end.into()) }
     }
 
+    pub fn range(self) -> Range<usize> {
+        self.start().to_usize()..self.end().to_usize()
+    }
+
     pub fn intern(self) -> Symbol {
-        with_source_map(|map| with_interner(|interner| interner.intern(map.span_to_slice(self))))
+        with_source_map(|map| with_interner(|interner| interner.intern(map.span_as_str(self))))
     }
 
     pub fn with_slice<R>(self, f: impl FnOnce(&str) -> R) -> R {
-        with_source_map(|map| f(map.span_to_slice(self)))
+        with_source_map(|map| f(map.span_as_str(self)))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -96,7 +100,7 @@ impl Span {
 
 impl Display for Span {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", with_source_map(|smap| smap.span_to_string(*self)))
+        write!(f, "{}", with_source_map(|source_map| source_map.span_as_str(*self)))
     }
 }
 

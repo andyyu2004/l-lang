@@ -12,6 +12,9 @@ mod passes;
 mod queries;
 
 #[macro_use]
+extern crate log;
+
+#[macro_use]
 extern crate colour;
 
 #[macro_use]
@@ -248,6 +251,17 @@ impl<'tcx> Driver<'tcx> {
         match &expr.kind {
             ExprKind::Err => None,
             _ => Some(expr),
+        }
+    }
+
+    pub fn parse_macro(&self) -> Option<ast::Macro> {
+        let mut parser = Parser::new(&self.sess);
+        match parser.test_parse_macro() {
+            Ok(mac) => Some(mac),
+            Err(err) => {
+                err.emit();
+                None
+            }
         }
     }
 }

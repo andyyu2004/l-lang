@@ -43,12 +43,12 @@ impl<'a> Parse<'a> for ItemParser {
             return Ok(parser.mk_item(vis.span.merge(name.span), vis, name, ItemKind::Mod(module)));
         }
 
-        let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
+        let kw = parser.expect_one_of(ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
             parse_fn(|parser| match kw.kind {
                 TokenKind::Fn => FnParser.parse(parser),
-                TokenKind::Macro => MacroParser.parse(parser),
+                TokenKind::Macro => MacroItemParser.parse(parser),
                 TokenKind::Struct => StructDeclParser.parse(parser),
                 TokenKind::Enum => EnumParser.parse(parser),
                 TokenKind::Type => TypeAliasParser.parse(parser),

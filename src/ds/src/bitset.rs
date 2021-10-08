@@ -1,6 +1,5 @@
-use std::marker::PhantomData;
-
 use index::Idx;
+use std::marker::PhantomData;
 
 type Word = u8;
 const WORD_BYTES: usize = std::mem::size_of::<Word>();

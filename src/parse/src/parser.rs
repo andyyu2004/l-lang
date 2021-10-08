@@ -86,6 +86,13 @@ impl<'a> Parser<'a> {
         Ok(r)
     }
 
+    crate fn in_parens<R>(&mut self, mut parser: impl Parse<'a, Output = R>) -> ParseResult<'a, R> {
+        self.expect(TokenKind::OpenParen)?;
+        let r = parser.parse(self)?;
+        self.expect(TokenKind::CloseParen)?;
+        Ok(r)
+    }
+
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
     crate fn with_span<R>(
@@ -160,11 +167,19 @@ impl<'a> Parser<'a> {
         self.with_file(ROOT_FILE_IDX, |parser| parser.parse_expr())
     }
 
+    pub fn test_parse_macro(&mut self) -> ParseResult<Macro> {
+        self.with_file(ROOT_FILE_IDX, |parser| parser.parse_macro())
+    }
+
     pub fn parse_expr(&mut self) -> P<Expr> {
         ExprParser.parse(self).unwrap_or_else(|err| {
             err.emit();
             self.mk_expr(err.get_first_span(), ExprKind::Err)
         })
+    }
+
+    pub fn parse_macro(&mut self) -> ParseResult<'a, Macro> {
+        MacroParser.parse(self)
     }
 
     pub fn parse_generics(&mut self) -> ParseResult<'a, Generics> {
@@ -282,7 +297,7 @@ impl<'a> Parser<'a> {
         tok
     }
 
-    crate fn safe_next(&mut self) -> ParseResult<Token> {
+    crate fn safe_next(&mut self) -> ParseResult<'a, Token> {
         let tok = self.safe_peek();
         self.idx += 1;
         tok
@@ -365,11 +380,11 @@ impl<'a> Parser<'a> {
         self.expect(ttype).ok()
     }
 
-    crate fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Token>
-    where
-        &'i I: IntoIterator<Item = &'i TokenKind>,
-    {
-        ttypes.into_iter().fold(None, |acc, &t| acc.or_else(|| self.accept(t)))
+    crate fn accept_one_of(
+        &mut self,
+        ttypes: impl IntoIterator<Item = TokenKind>,
+    ) -> Option<Token> {
+        ttypes.into_iter().fold(None, |acc, t| acc.or_else(|| self.accept(t)))
     }
 
     crate fn parse_abi(&mut self) -> ParseResult<'a, Abi> {
@@ -396,8 +411,7 @@ impl<'a> Parser<'a> {
                     return Err(self.build_err(span, ParseError::UnterminatedStringLiteral));
                 }
                 // the span includes the surrounding quotes, so we just chop them off
-                let symbol =
-                    span.with_slice(|slice| Symbol::intern_str(&slice[1..slice.len() - 1]));
+                let symbol = span.with_slice(|slice| Symbol::intern(&slice[1..slice.len() - 1]));
                 Ok(Ident::new(span, symbol))
             }
             _ => todo!(),
@@ -414,13 +428,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Token>
-    where
-        &'i I: IntoIterator<Item = &'i TokenKind>,
-    {
-        self.accept_one_of(ttypes).ok_or_else(|| {
+    crate fn expect_one_of(
+        &mut self,
+        tkinds: impl IntoIterator<Item = TokenKind> + Copy,
+    ) -> ParseResult<'a, Token> {
+        self.accept_one_of(tkinds).ok_or_else(|| {
             let tok = self.peek();
-            let err = ParseError::ExpectedOneOf(ttypes.into_iter().cloned().collect(), tok);
+            let err = ParseError::ExpectedOneOf(tkinds.into_iter().collect(), tok);
             self.build_err(tok.span, err)
         })
     }

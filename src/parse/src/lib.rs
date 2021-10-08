@@ -25,7 +25,7 @@ pub use parser::Parser;
 use ast::*;
 use expr_parser::*;
 use item_parser::*;
-use lex::{Base, LiteralKind, Token, TokenKind, TokenTree, TokenTreeGroup};
+use lex::{Base, LiteralKind, Token, TokenGroup, TokenKind, TokenTree};
 use macro_parser::*;
 use parse_error::{ParseError, ParseResult};
 use pattern_parser::*;
@@ -40,6 +40,14 @@ pub trait Parse<'a>: Sized {
 
     fn many(self) -> ManyParser<Self> {
         ManyParser { inner: self }
+    }
+
+    fn many1(self) -> Many1Parser<Self> {
+        Many1Parser { inner: self }
+    }
+
+    fn punctuated1<S: Parse<'a>>(self, separator: S) -> Punctuated1Parser<Self, S> {
+        Punctuated1Parser { inner: self, separator }
     }
 
     fn or<P>(self, other: P) -> OrParser<Self, P>
@@ -74,6 +82,22 @@ impl<'a, P: Parse<'a>> Parse<'a> for ManyParser<P> {
     }
 }
 
+pub struct Many1Parser<P> {
+    inner: P,
+}
+
+impl<'a, P: Parse<'a>> Parse<'a> for Many1Parser<P> {
+    type Output = Vec<P::Output>;
+
+    fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
+        let mut vec = vec![self.inner.parse(parser)?];
+        while let Some(x) = self.inner.try_parse(parser) {
+            vec.push(x);
+        }
+        Ok(vec)
+    }
+}
+
 impl<'a, 'p, P> Parse<'a> for &'p mut P
 where
     P: Parse<'a>,
@@ -81,7 +105,7 @@ where
     type Output = P::Output;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        self.parse(parser)
+        (**self).parse(parser)
     }
 }
 

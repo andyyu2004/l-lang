@@ -190,7 +190,7 @@ pub enum RawTokenKind {
     Unknown,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LiteralKind {
     /// "12_u8", "0o100", "0b120i99"
     Int { base: Base, empty_int: bool },
@@ -214,7 +214,7 @@ pub enum LiteralKind {
 /// - `r##~"abcde"##`: `InvalidStarter`
 /// - `r###"abcde"##`: `NoTerminator { expected: 3, found: 2, possible_terminator_offset: Some(11)`
 /// - Too many `#`s (>65535): `TooManyDelimiters`
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RawStrError {
     /// Non `#` characters exist between `r` and `"` eg. `r#~"..`
     InvalidStarter { bad_char: char },
@@ -226,7 +226,7 @@ pub enum RawStrError {
 }
 
 /// Base of numeric literal encoding according to its prefix.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum Base {
     /// Literal starts with "0b".

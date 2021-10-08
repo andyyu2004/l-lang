@@ -211,7 +211,8 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         self.with_def_id(field.id, |lctx| {
             let &FieldDecl { span, ident, vis, id, ref ty } = field;
             // if it is a tuple struct/variant, the field will just be named after its index
-            let ident = ident.unwrap_or_else(|| Ident::new(field.span, Symbol::intern(&i)));
+            let ident =
+                ident.unwrap_or_else(|| Ident::new(field.span, Symbol::intern(&i.to_string())));
             ir::FieldDecl { span, ident, vis, id: lctx.lower_node_id(id), ty: lctx.lower_ty(ty) }
         })
     }
