@@ -31,7 +31,7 @@ use inkwell::context::Context as LLVMCtx;
 use inkwell::OptimizationLevel;
 use ir::{PkgId, Resolutions};
 use lcore::{GlobalCtx, TyCtx};
-use lex::{Lexer, Tok};
+use lex::{Lexer, Token};
 use log::LevelFilter;
 use meta::PkgMetadata;
 use parse::Parser;
@@ -236,7 +236,7 @@ impl<'tcx> Driver<'tcx> {
         self.sess.has_errors()
     }
 
-    pub fn lex(&self) -> LResult<Vec<Tok>> {
+    pub fn lex(&self) -> LResult<Vec<Token>> {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(ROOT_FILE_IDX);
         Ok(tokens)

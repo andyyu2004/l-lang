@@ -45,9 +45,10 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
                     ir::ItemKind::TypeAlias(generics, ty)
                 }
                 ItemKind::Use(path) => ir::ItemKind::Use(lctx.lower_path(path)),
+                ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
+                ItemKind::Macro(_) => todo!(),
                 ItemKind::Impl { generics, trait_path, self_ty, items } =>
                     lctx.lower_impl(generics, trait_path.as_ref(), self_ty, items),
-                ItemKind::Mod(module) => ir::ItemKind::Mod(lctx.lower_module(module)),
                 ItemKind::Trait { generics, items } => ir::ItemKind::Trait {
                     generics: lctx.lower_generics(generics),
                     trait_item_refs: lctx

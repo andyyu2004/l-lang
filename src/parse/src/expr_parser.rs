@@ -110,7 +110,7 @@ impl<'a> Parse<'a> for PostfixExprParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let mut expr = PrimaryExprParser.parse(parser)?;
         while let Some(t) = parser.accept_one_of(&POSTFIX_OPS) {
-            match t.ttype {
+            match t.kind {
                 TokenType::OpenParen => {
                     let (arg_span, args) =
                         TupleParser { inner: ExprParser }.spanned(true).parse(parser)?;

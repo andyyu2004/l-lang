@@ -1,6 +1,6 @@
 use ast::{Ident, ItemKind};
 use error::DiagnosticBuilder;
-use lex::{Tok, TokenType};
+use lex::{Token, TokenType};
 use span::Symbol;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -9,12 +9,12 @@ pub type ParseResult<'a, T> = Result<T, DiagnosticBuilder<'a>>;
 
 #[derive(Debug, Error)]
 pub enum ParseError {
-    #[error("expected `{0:?}` found `{}`", .1.ttype)]
-    Expected(TokenType, Tok),
+    #[error("expected `{0:?}` found `{}`", .1.kind)]
+    Expected(TokenType, Token),
     #[error("invalid abi `{0}`\nvalid abi's include \"l\", \"l-instrinsic")]
     InvalidAbi(String),
-    #[error("expected one of `{0:?}` found `{}`", .1.ttype)]
-    ExpectedOneOf(Vec<TokenType>, Tok),
+    #[error("expected one of `{0:?}` found `{}`", .1.kind)]
+    ExpectedOneOf(Vec<TokenType>, Token),
     #[error("invalid impl item kind: {}", .0.descr())]
     InvalidImplItem(ItemKind),
     #[error("invalid trait item kind: {}", .0.descr())]
@@ -49,4 +49,6 @@ pub enum ParseError {
     ElidedTypeNotAllowedInThisContext,
     #[error("unterminated string literal")]
     UnterminatedStringLiteral,
+    #[error("missing fragment specifier")]
+    MissingFragmentSpecifier,
 }

@@ -21,7 +21,8 @@ impl Item {
             | ItemKind::TypeAlias(generics, _)
             | ItemKind::Trait { generics, .. }
             | ItemKind::Enum(generics, _) => Some(generics),
-            ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) => None,
+            ItemKind::Macro(..) | ItemKind::Mod(..) | ItemKind::Use(..) | ItemKind::Extern(..) =>
+                None,
         }
     }
 }
@@ -30,6 +31,8 @@ impl Item {
 pub enum ItemKind {
     /// fn f() {}
     Fn(FnSig, Generics, Option<P<Expr>>),
+    /// macro m() { ... }
+    Macro(Macro),
     /// enum E {}
     Enum(Generics, Vec<Variant>),
     /// struct S {}
@@ -57,6 +60,26 @@ pub enum ItemKind {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Macro {
+    pub rules: Vec<MacroRule>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct MacroRule {}
+
+impl Display for Macro {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+}
+
+impl Display for MacroRule {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Module {
     // no identifier stored here
     // refer to the `Item` struct wrapping this
@@ -71,6 +94,7 @@ impl ItemKind {
                 Some(_) => "function",
                 None => "bodyless function",
             },
+            ItemKind::Macro(_) => "macro",
             ItemKind::Enum(..) => "enum",
             ItemKind::Struct(..) => "struct",
             ItemKind::Impl { .. } => "impl block",
@@ -100,6 +124,7 @@ impl TryFrom<ItemKind> for AssocItemKind {
             | ItemKind::Extern(..)
             | ItemKind::Enum(..)
             | ItemKind::Struct(..)
+            | ItemKind::Macro(..)
             | ItemKind::Trait { .. }
             | ItemKind::Impl { .. } => Err(kind),
         }
@@ -141,6 +166,7 @@ impl Display for Item {
                 sig.ret_ty,
                 body.as_ref().unwrap()
             ),
+            ItemKind::Macro(m) => write!(f, "{} macro {}, {}", self.vis.node, self.ident, m),
             ItemKind::TypeAlias(generics, ty) =>
                 write!(f, "{} type {}<{}> = {}", self.vis.node, self.ident, generics, ty),
             ItemKind::Enum(_generics, _variants) => todo!(),

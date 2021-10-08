@@ -10,6 +10,7 @@ mod tests;
 
 mod expr_parser;
 mod item_parser;
+mod macro_parser;
 mod parse_error;
 mod parser;
 mod pattern_parser;
@@ -21,7 +22,8 @@ mod validate;
 use ast::*;
 use expr_parser::*;
 use item_parser::*;
-use lex::{Base, LiteralKind, Tok, TokenType};
+use lex::{Base, LiteralKind, Token, TokenType};
+use macro_parser::*;
 use parse_error::{ParseError, ParseResult};
 pub use parser::Parser;
 use pattern_parser::*;
@@ -154,7 +156,7 @@ impl<'a> Parse<'a> for FieldAccessParser {
 }
 
 pub struct RetParser {
-    pub ret_kw: Tok,
+    pub ret_kw: Token,
 }
 
 impl<'a> Parse<'a> for RetParser {
@@ -289,7 +291,7 @@ impl<'a> Parse<'a> for VisibilityParser {
 
 /// implement Parser for TokenType to be used as a separator
 impl<'a> Parse<'a> for TokenType {
-    type Output = Tok;
+    type Output = Token;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         parser.expect(*self)
@@ -564,7 +566,7 @@ impl<'a> Parse<'a> for GenericArgsParser {
 }
 
 pub struct BlockParser {
-    pub open_brace: Tok,
+    pub open_brace: Token,
     pub is_unsafe: bool,
 }
 
@@ -584,7 +586,7 @@ impl<'a> Parse<'a> for BlockParser {
                 Err(err) => {
                     err.emit();
                     loop {
-                        match parser.peek().ttype {
+                        match parser.peek().kind {
                             TokenType::Eof =>
                                 return Err(parser.build_err(parser.empty_span(), ParseError::Eof)),
                             TokenType::CloseBrace => break,
@@ -623,7 +625,7 @@ impl<'a> Parse<'a> for BlockParser {
 /// "=>" is optional if body is a block expression
 /// xs.map(fn(x) => y);
 pub struct ClosureParser {
-    pub fn_kw: Tok,
+    pub fn_kw: Token,
 }
 
 impl<'a> Parse<'a> for ClosureParser {
@@ -685,7 +687,7 @@ impl<'a> Parse<'a> for ArmParser {
 }
 
 pub struct MatchParser {
-    pub match_kw: Tok,
+    pub match_kw: Token,
 }
 
 impl<'a> Parse<'a> for MatchParser {
@@ -702,7 +704,7 @@ impl<'a> Parse<'a> for MatchParser {
 }
 
 pub struct IfParser {
-    pub if_kw: Tok,
+    pub if_kw: Token,
 }
 
 impl<'a> Parse<'a> for IfParser {
@@ -723,7 +725,7 @@ impl<'a> Parse<'a> for IfParser {
 }
 
 pub struct ElseParser {
-    pub else_kw: Tok,
+    pub else_kw: Token,
 }
 
 impl<'a> Parse<'a> for ElseParser {

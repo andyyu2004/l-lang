@@ -347,6 +347,8 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_generics(generics);
             visitor.visit_fn(sig, body.as_deref())
         }
+
+        ItemKind::Macro(_) => todo!(),
         ItemKind::TypeAlias(generics, ty) => {
             visitor.visit_generics(generics);
             visitor.visit_ty(ty);

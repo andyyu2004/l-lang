@@ -1,6 +1,6 @@
 use super::*;
 use ast::{Let, Stmt, StmtKind, P};
-use lex::{Tok, TokenType};
+use lex::{Token, TokenType};
 
 pub struct StmtParser;
 
@@ -23,7 +23,7 @@ impl<'a> Parse<'a> for StmtParser {
 
 /// let <pat>:<ty> = ( <expr> )?;
 pub struct LetParser {
-    let_kw: Tok,
+    let_kw: Token,
 }
 
 impl<'a> Parse<'a> for LetParser {

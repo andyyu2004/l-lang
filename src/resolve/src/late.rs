@@ -103,6 +103,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
             }),
             ItemKind::Impl { generics, trait_path, self_ty, items } =>
                 self.resolve_impl(item, generics, trait_path.as_ref(), self_ty, items),
+            ItemKind::Macro(_) => todo!(),
         }
     }
 

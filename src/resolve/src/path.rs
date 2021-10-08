@@ -84,6 +84,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
                     ),
                 DefKind::TyParam(..) | DefKind::Extern | DefKind::Use | DefKind::Impl => panic!(),
                 DefKind::Ctor(..)
+                | DefKind::Macro
                 | DefKind::Fn
                 | DefKind::TypeAlias
                 | DefKind::AssocFn

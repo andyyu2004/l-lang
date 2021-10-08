@@ -16,6 +16,7 @@ log = "0.4.11"
 codespan = "0.9.5"
 rustc-hash = "1"
 salsa = "0.16.0"
+phf = { version = "0.10", features = ["macros"] }
 
 [dev-dependencies]
 ldriver = { path = "../ldriver" }

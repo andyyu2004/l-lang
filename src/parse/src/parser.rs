@@ -19,7 +19,7 @@ pub struct Parser<'a> {
 /// parser for a single source file
 pub struct FileParser {
     crate file: FileIdx,
-    tokens: Vec<Tok>,
+    tokens: Vec<Token>,
     idx: usize,
 }
 
@@ -54,7 +54,7 @@ impl<'a> Parser<'a> {
 
     pub fn dump_token_stream(&self) {
         for token in &self.tokens[self.idx..] {
-            eprintln!("{:?}", token.ttype);
+            eprintln!("{:?}", token.kind);
         }
     }
 
@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
     /// similar to `accept_ident` except the token stream is not advanced
     pub fn is_ident(&self) -> ParseResult<'a, Option<Ident>> {
         let tok = self.safe_peek()?;
-        Ok(if let TokenType::Ident(symbol) = tok.ttype {
+        Ok(if let TokenType::Ident(symbol) = tok.kind {
             Some(Ident::new(tok.span, symbol))
         } else {
             None
@@ -113,7 +113,7 @@ impl<'a> Parser<'a> {
         let token = self.prev();
         let span = token.span;
 
-        let s = match token.ttype {
+        let s = match token.kind {
             TokenType::Literal { kind: LiteralKind::Float { .. }, suffix_start: _ } =>
                 span.to_string(),
             _ => unreachable!(),
@@ -164,7 +164,7 @@ impl<'a> Parser<'a> {
         GenericsParser.parse(self)
     }
 
-    pub fn parse_block(&mut self, open_brace: Tok) -> ParseResult<'a, P<Block>> {
+    pub fn parse_block(&mut self, open_brace: Token) -> ParseResult<'a, P<Block>> {
         BlockParser { open_brace, is_unsafe: false }.parse(self)
     }
 
@@ -269,17 +269,23 @@ impl<'a> Parser<'a> {
         self.next();
     }
 
-    crate fn next(&mut self) -> Tok {
+    crate fn next(&mut self) -> Token {
         let tok = self.peek();
         self.idx += 1;
         tok
     }
 
-    crate fn reached_eof(&self) -> bool {
-        self.tokens[self.idx].ttype == TokenType::Eof
+    crate fn safe_next(&mut self) -> ParseResult<Token> {
+        let tok = self.safe_peek();
+        self.idx += 1;
+        tok
     }
 
-    crate fn safe_peek(&self) -> ParseResult<'a, Tok> {
+    crate fn reached_eof(&self) -> bool {
+        self.tokens[self.idx].kind == TokenType::Eof
+    }
+
+    crate fn safe_peek(&self) -> ParseResult<'a, Token> {
         if !self.reached_eof() {
             Ok(self.tokens[self.idx])
         } else {
@@ -287,11 +293,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn peek(&self) -> Tok {
+    crate fn peek(&self) -> Token {
         self.safe_peek().ok().unwrap()
     }
 
-    crate fn prev(&self) -> Tok {
+    crate fn prev(&self) -> Token {
         self.tokens[self.idx - 1]
     }
 
@@ -300,7 +306,7 @@ impl<'a> Parser<'a> {
     }
 
     crate fn expect_literal(&mut self) -> ParseResult<'a, (LiteralKind, Span)> {
-        let Tok { span, ttype } = self.safe_peek()?;
+        let Token { span, kind: ttype } = self.safe_peek()?;
         match ttype {
             TokenType::Literal { kind, .. } => {
                 self.idx += 1;
@@ -333,7 +339,7 @@ impl<'a> Parser<'a> {
     // use only for path segments where both lidents and uidents are valid
     crate fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
         let token = self.safe_peek()?;
-        let Tok { span, ttype } = token;
+        let Token { span, kind: ttype } = token;
         match ttype {
             TokenType::Ident(symbol) => {
                 self.idx += 1;
@@ -348,11 +354,11 @@ impl<'a> Parser<'a> {
         self.expect_lident().ok()
     }
 
-    crate fn accept(&mut self, ttype: TokenType) -> Option<Tok> {
+    crate fn accept(&mut self, ttype: TokenType) -> Option<Token> {
         self.expect(ttype).ok()
     }
 
-    crate fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Tok>
+    crate fn accept_one_of<'i, I>(&mut self, ttypes: &'i I) -> Option<Token>
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {
@@ -391,9 +397,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Tok> {
+    crate fn expect(&mut self, ttype: TokenType) -> ParseResult<'a, Token> {
         let t = self.safe_peek()?;
-        if t.ttype == ttype {
+        if t.kind == ttype {
             self.idx += 1;
             Ok(t)
         } else {
@@ -401,7 +407,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Tok>
+    crate fn expect_one_of<'i, I>(&mut self, ttypes: &'i I) -> ParseResult<'a, Token>
     where
         &'i I: IntoIterator<Item = &'i TokenType>,
     {

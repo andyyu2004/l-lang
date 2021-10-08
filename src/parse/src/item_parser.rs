@@ -25,6 +25,7 @@ impl<'a> Parse<'a> for ItemParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let vis = VisibilityParser.parse(parser)?;
+
         // these items have a different syntax to the rest
         if let Some(_impl_kw) = parser.accept(TokenType::Impl) {
             return ImplParser { vis }.parse(parser);
@@ -33,6 +34,7 @@ impl<'a> Parse<'a> for ItemParser {
         } else if let Some(_use_kw) = parser.accept(TokenType::Use) {
             return UseParser { vis }.parse(parser);
         }
+
         if let Some(mod_kw) = parser.accept(TokenType::Mod) {
             let name = parser.expect_lident()?;
             parser.expect(TokenType::Semi)?;
@@ -44,8 +46,9 @@ impl<'a> Parse<'a> for ItemParser {
         let kw = parser.expect_one_of(&ITEM_KEYWORDS)?;
         let ident = parser.expect_ident()?;
         let (kind_span, kind) = parser.with_span(
-            &mut |parser: &mut Parser<'a>| match kw.ttype {
+            &mut |parser: &mut Parser<'a>| match kw.kind {
                 TokenType::Fn => FnParser.parse(parser),
+                TokenType::Macro => MacroParser.parse(parser),
                 TokenType::Struct => StructDeclParser.parse(parser),
                 TokenType::Enum => EnumParser.parse(parser),
                 TokenType::Type => TypeAliasParser.parse(parser),

@@ -1,5 +1,5 @@
 use self::LiteralKind::*;
-use self::TokenKind::*;
+use self::RawTokenKind::*;
 use std::convert::TryFrom;
 use std::str::Chars;
 
@@ -89,20 +89,20 @@ impl<'a> Cursor<'a> {
 /// It doesn't contain information about data that has been parsed,
 /// only the type of the token and its size.
 #[derive(Debug, PartialEq, Copy, Clone, Eq)]
-pub struct Token {
-    pub kind: TokenKind,
+pub struct RawToken {
+    pub kind: RawTokenKind,
     pub len: usize,
 }
 
-impl Token {
-    fn new(kind: TokenKind, len: usize) -> Token {
-        Token { kind, len }
+impl RawToken {
+    fn new(kind: RawTokenKind, len: usize) -> RawToken {
+        RawToken { kind, len }
     }
 }
 
 /// Enum representing common lexeme types.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum TokenKind {
+pub enum RawTokenKind {
     // Multi-char tokens:
     /// "// comment"
     LineComment,
@@ -252,10 +252,12 @@ pub fn strip_shebang(input: &str) -> Option<usize> {
         let next_non_whitespace_token = tokenize(input_tail).map(|tok| tok.kind).find(|tok| {
             !matches!(
                 tok,
-                TokenKind::Whitespace | TokenKind::LineComment | TokenKind::BlockComment { .. }
+                RawTokenKind::Whitespace
+                    | RawTokenKind::LineComment
+                    | RawTokenKind::BlockComment { .. }
             )
         });
-        if next_non_whitespace_token != Some(TokenKind::OpenBracket) {
+        if next_non_whitespace_token != Some(RawTokenKind::OpenBracket) {
             // No other choice than to consider this a shebang.
             return Some(2 + input_tail.lines().next().unwrap_or_default().len());
         }
@@ -264,13 +266,13 @@ pub fn strip_shebang(input: &str) -> Option<usize> {
 }
 
 /// Parses the first token from the provided input string.
-pub fn first_token(input: &str) -> Token {
+pub fn first_token(input: &str) -> RawToken {
     debug_assert!(!input.is_empty());
     Cursor::new(input).advance_token()
 }
 
 /// Creates an iterator that produces tokens from the input string.
-pub fn tokenize(mut input: &str) -> impl Iterator<Item = Token> + '_ {
+pub fn tokenize(mut input: &str) -> impl Iterator<Item = RawToken> + '_ {
     std::iter::from_fn(move || {
         if input.is_empty() {
             return None;
@@ -341,7 +343,7 @@ pub fn is_id_continue(c: char) -> bool {
 
 impl Cursor<'_> {
     /// Parses a token from the input string.
-    fn advance_token(&mut self) -> Token {
+    fn advance_token(&mut self) -> RawToken {
         let first_char = self.bump().unwrap();
         let token_kind = match first_char {
             // Slash, comment or block comment.
@@ -413,7 +415,7 @@ impl Cursor<'_> {
                 let literal_kind = self.number(c);
                 let suffix_start = self.len_consumed();
                 self.eat_literal_suffix();
-                TokenKind::Literal { kind: literal_kind, suffix_start }
+                RawTokenKind::Literal { kind: literal_kind, suffix_start }
             }
 
             // One-symbol tokens.
@@ -460,17 +462,17 @@ impl Cursor<'_> {
             }
             _ => Unknown,
         };
-        Token::new(token_kind, self.len_consumed())
+        RawToken::new(token_kind, self.len_consumed())
     }
 
-    fn line_comment(&mut self) -> TokenKind {
+    fn line_comment(&mut self) -> RawTokenKind {
         debug_assert!(self.prev() == '/' && self.first() == '/');
         self.bump();
         self.eat_while(|c| c != '\n');
         LineComment
     }
 
-    fn block_comment(&mut self) -> TokenKind {
+    fn block_comment(&mut self) -> RawTokenKind {
         debug_assert!(self.prev() == '/' && self.first() == '*');
         self.bump();
         let mut depth = 1usize;
@@ -497,13 +499,13 @@ impl Cursor<'_> {
         BlockComment { terminated: depth == 0 }
     }
 
-    fn whitespace(&mut self) -> TokenKind {
+    fn whitespace(&mut self) -> RawTokenKind {
         debug_assert!(is_whitespace(self.prev()));
         self.eat_while(is_whitespace);
         Whitespace
     }
 
-    fn raw_ident(&mut self) -> TokenKind {
+    fn raw_ident(&mut self) -> RawTokenKind {
         debug_assert!(self.prev() == 'r' && self.first() == '#' && is_id_start(self.second()));
         // Eat "#" symbol.
         self.bump();
@@ -512,7 +514,7 @@ impl Cursor<'_> {
         RawIdent
     }
 
-    fn ident(&mut self) -> TokenKind {
+    fn ident(&mut self) -> RawTokenKind {
         debug_assert!(is_id_start(self.prev()));
         // Start is already eaten, eat the rest of identifier.
         self.eat_while(is_id_continue);
@@ -588,7 +590,7 @@ impl Cursor<'_> {
         }
     }
 
-    fn lifetime_or_char(&mut self) -> TokenKind {
+    fn lifetime_or_char(&mut self) -> RawTokenKind {
         debug_assert!(self.prev() == '\'');
 
         let can_be_a_lifetime = if self.second() == '\'' {

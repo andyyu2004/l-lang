@@ -10,7 +10,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::fs;
 use std::io;
 use std::path::Path;
-use std::process::{Command, ExitStatus};
+use std::process::{Command};
 
 use error::ErrorFormat;
 

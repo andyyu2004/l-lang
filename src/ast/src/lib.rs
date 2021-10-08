@@ -13,21 +13,6 @@ mod stmt;
 mod ty;
 mod visit;
 
-index::newtype_index!(
-    pub struct NodeId {
-        DEBUG_FORMAT = "NodeId({})"
-    }
-);
-
-pub type P<T> = Box<T>;
-
-use index::Idx;
-use lex::{Tok, TokenType};
-use span::{kw, Span, Symbol};
-use std::fmt::{self, Display, Formatter};
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-
 pub use error::*;
 pub use expr::*;
 pub use item::*;
@@ -36,6 +21,21 @@ pub use prog::Ast;
 pub use stmt::*;
 pub use ty::*;
 pub use visit::*;
+
+pub type P<T> = Box<T>;
+
+use index::{newtype_index, Idx};
+use lex::{Token, TokenType};
+use span::{kw, Span, Symbol};
+use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+
+newtype_index!(
+    pub struct NodeId {
+        DEBUG_FORMAT = "NodeId({})"
+    }
+);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Arm {
@@ -361,9 +361,9 @@ impl Display for BinOp {
     }
 }
 
-impl From<Tok> for BinOp {
-    fn from(t: Tok) -> Self {
-        match t.ttype {
+impl From<Token> for BinOp {
+    fn from(t: Token) -> Self {
+        match t.kind {
             TokenType::Plus => Self::Add,
             TokenType::Minus => Self::Sub,
             TokenType::Star => Self::Mul,
@@ -398,9 +398,9 @@ impl Display for UnaryOp {
     }
 }
 
-impl From<Tok> for UnaryOp {
-    fn from(t: Tok) -> Self {
-        match t.ttype {
+impl From<Token> for UnaryOp {
+    fn from(t: Token) -> Self {
+        match t.kind {
             TokenType::Minus => Self::Neg,
             TokenType::Not => Self::Not,
             TokenType::Star => Self::Deref,

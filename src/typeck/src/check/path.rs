@@ -106,6 +106,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             | DefKind::Struct => self.instantiate(xpat, def_id),
             DefKind::Trait => todo!(),
             DefKind::TyParam(..)
+            | DefKind::Macro
             | DefKind::Impl
             | DefKind::Use
             | DefKind::Mod

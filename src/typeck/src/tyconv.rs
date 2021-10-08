@@ -105,7 +105,7 @@ pub trait TyConv<'tcx> {
             }
             DefKind::Ctor(..) | DefKind::Trait | DefKind::Fn | DefKind::AssocFn | DefKind::Impl =>
                 todo!(),
-            DefKind::Mod | DefKind::Extern | DefKind::Use =>
+            DefKind::Macro | DefKind::Mod | DefKind::Extern | DefKind::Use =>
                 unreachable!("unexpected defkind `{}`", def_kind),
         }
     }
