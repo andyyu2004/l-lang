@@ -59,7 +59,6 @@ struct TestCtx {
 
 #[derive(Debug)]
 struct Output {
-    status: ExitStatus,
     stdout: String,
     stderr: String,
 }
@@ -170,10 +169,9 @@ impl TestCtx {
         cmd.arg("run").arg(path);
         cmd.arg(format!("--error-format={}", error_format));
         let output = cmd.output()?;
-        let status = output.status;
         let stdout = String::from_utf8(output.stdout).unwrap();
         let stderr = String::from_utf8(output.stderr).unwrap();
-        Ok(Output { status, stdout, stderr })
+        Ok(Output { stdout, stderr })
     }
 
     fn run_test(&mut self, path: &Path, kind: TestKind) -> io::Result<()> {

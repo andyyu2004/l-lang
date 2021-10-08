@@ -118,26 +118,26 @@ fn llvm_multiple_returns() {
 }
 
 // #[test]
-fn llvm_non_escaping_closure() {
-    let src = r#"
-    fn main() -> int {
-        let x = 5;
-        (fn () => x + 4)()
-    }
-    "#;
-    assert_eq!(llvm_jit!(src), 9);
-}
+// fn llvm_non_escaping_closure() {
+//     let src = r#"
+//     fn main() -> int {
+//         let x = 5;
+//         (fn () => x + 4)()
+//     }
+//     "#;
+//     assert_eq!(llvm_jit!(src), 9);
+// }
 
 // #[test]
-fn llvm_lambda_no_capture() {
-    let src = r#"
-    fn main() -> int {
-        let f = fn() => 5;
-        2 + f()
-    }
-    "#;
-    assert_eq!(llvm_jit!(src), 7)
-}
+// fn llvm_lambda_no_capture() {
+//     let src = r#"
+//     fn main() -> int {
+//         let f = fn() => 5;
+//         2 + f()
+//     }
+//     "#;
+//     assert_eq!(llvm_jit!(src), 7)
+// }
 
 #[test]
 fn llvm_fib_all_explicit_returns() {

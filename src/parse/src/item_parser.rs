@@ -4,8 +4,9 @@ use lex::TokenType;
 use span::{with_source_map, ModuleKind};
 use std::convert::TryFrom;
 
-const ITEM_KEYWORDS: [TokenType; 10] = [
+const ITEM_KEYWORDS: [TokenType; 11] = [
     TokenType::Fn,
+    TokenType::Macro,
     TokenType::Struct,
     TokenType::Enum,
     TokenType::Const,

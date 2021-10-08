@@ -59,6 +59,7 @@ impl<'tcx> Candidate<'tcx> {
 crate struct MethodResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
     // the expression or pattern that we are resolving
+    #[allow(unused)]
     xpat: &'a dyn ir::ExprOrPat<'tcx>,
     self_ty: Ty<'tcx>,
     ident: Ident,
@@ -105,6 +106,7 @@ impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
         self.inherent_candidates.push(candidate);
     }
 
+    #[allow(unused)]
     fn impl_self_ty(&self, impl_def_id: DefId) -> Ty<'tcx> {
         let self_ty = self.type_of(impl_def_id);
         let substs = self.fresh_substs_for_item(impl_def_id);

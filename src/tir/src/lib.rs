@@ -2,9 +2,6 @@
 
 #![feature(box_syntax, box_patterns)]
 
-#[macro_use]
-extern crate log;
-
 mod expr;
 mod fmt;
 mod item;

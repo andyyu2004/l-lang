@@ -16,6 +16,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 }
 
 struct WritebackCtx<'a, 'tcx> {
+    #[allow(unused)]
     fcx: &'a FnCtx<'a, 'tcx>,
     tables: TypeckTables<'tcx>,
 }

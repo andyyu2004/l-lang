@@ -1,4 +1,3 @@
-#![feature(bindings_after_at)]
 #![feature(crate_visibility_modifier)]
 #![feature(const_panic)]
 #![feature(decl_macro)]

@@ -15,6 +15,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
 /// finds all the variables the closure references that are nonlocal
 struct UpvarVisitor<'a, 'tcx> {
+    #[allow(unused)]
     tcx: TyCtx<'tcx>,
     closure_id: ir::Id,
     locals: &'a FxHashSet<ir::Id>,

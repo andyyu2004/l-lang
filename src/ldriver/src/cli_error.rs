@@ -1,5 +1,3 @@
-pub type CliResult<T> = Result<T, CliError>;
-
 macro_rules! impl_from {
     ($from:ty, $variant:ident) => {
         impl From<$from> for CliError {

@@ -10,14 +10,12 @@ const WORD_BITS: usize = WORD_BYTES * 8;
 #[derive(Debug, Clone)]
 pub struct Bitset<T: Idx> {
     words: Vec<Word>,
-    /// the size the set was constructed with
-    size: usize,
     pd: std::marker::PhantomData<T>,
 }
 
 impl<T: Idx> Bitset<T> {
     pub fn new(size: usize) -> Self {
-        Self { size, words: vec![0; Self::words_required(size)], pd: std::marker::PhantomData }
+        Self { words: vec![0; Self::words_required(size)], pd: std::marker::PhantomData }
     }
 
     /// return whether the set has changed

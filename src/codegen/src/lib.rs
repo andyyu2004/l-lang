@@ -55,8 +55,3 @@ struct ValueRef<'tcx> {
     val: BasicValueEnum<'tcx>,
     ty: Ty<'tcx>,
 }
-
-#[derive(Debug, Clone, Copy)]
-struct LLVMVar<'tcx> {
-    ptr: PointerValue<'tcx>,
-}

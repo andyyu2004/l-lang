@@ -13,6 +13,7 @@ use std::ops::Range;
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = hashmap! {
         "fn" => TokenType::Fn,
+        "macro" => TokenType::Macro,
         "box" => TokenType::Box,
         "trait" => TokenType::Trait,
         "break" => TokenType::Break,
@@ -204,6 +205,7 @@ pub enum TokenType {
     Struct,
     Enum,
     Fn,
+    Macro,
     False,
     True,
     If,

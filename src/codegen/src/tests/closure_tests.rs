@@ -1,13 +1,13 @@
-use super::*;
+// use super::*;
 
 // #[test]
-fn llvm_simple_closure() {
-    let src = r#"
-    fn main() -> int {
-        let x = 5;
-        let f = fn() => x;
-        return f();
-    }"#;
+// fn llvm_simple_closure() {
+//     let src = r#"
+//     fn main() -> int {
+//         let x = 5;
+//         let f = fn() => x;
+//         return f();
+//     }"#;
 
-    llvm_jit!(src);
-}
+//     llvm_jit!(src);
+// }

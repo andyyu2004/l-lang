@@ -12,16 +12,10 @@ mod passes;
 mod queries;
 
 #[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
 extern crate colour;
 
 #[macro_use]
 extern crate serde;
-
-#[macro_use]
-extern crate log;
 
 use ast::{ExprKind, P};
 use astlowering::AstLoweringCtx;
@@ -44,9 +38,7 @@ use parse::Parser;
 use resolve::{Resolver, ResolverArenas};
 pub use session::{CompilerOptions, Session};
 use span::{sym, SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
-use std::env::temp_dir;
 use std::fs::File;
-use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::lazy::OnceCell;
 use std::path::PathBuf;

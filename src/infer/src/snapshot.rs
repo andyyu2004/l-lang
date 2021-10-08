@@ -4,6 +4,7 @@ use std::cell::Ref;
 
 pub struct InferCtxSnapshot<'a, 'tcx> {
     snapshot: Snapshot<'tcx>,
+    #[allow(unused)]
     tables: Ref<'a, TypeckTables<'tcx>>,
 }
 
