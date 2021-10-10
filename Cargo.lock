@@ -443,6 +443,7 @@ dependencies = [
  "lc-codegen",
  "lc-core",
  "lc-error",
+ "lc-expand",
  "lc-index",
  "lc-ir",
  "lc-lex",
@@ -484,6 +485,13 @@ dependencies = [
  "serde",
  "serde_json",
  "termcolor",
+]
+
+[[package]]
+name = "lc-expand"
+version = "0.1.0"
+dependencies = [
+ "lc-ast",
 ]
 
 [[package]]

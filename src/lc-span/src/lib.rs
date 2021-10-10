@@ -1,6 +1,5 @@
 #![feature(min_specialization)]
 #![feature(type_ascription)]
-#![feature(const_panic)]
 
 #[macro_use]
 extern crate lc_macros;

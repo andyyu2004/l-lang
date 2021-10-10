@@ -36,7 +36,7 @@ impl<'a> Parser<'a> {
     }
 
     /// entry point to parsing; parses starting from root file
-    pub fn parse(&mut self) -> Option<P<Ast>> {
+    pub fn parse(&mut self) -> Option<Ast> {
         self.with_file(ROOT_FILE_IDX, |parser| {
             let ast = AstParser.parse(parser).map_err(|err| err.emit()).ok()?;
             validate::AstValidator::default().visit_ast(&ast);

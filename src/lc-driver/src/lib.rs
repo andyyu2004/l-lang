@@ -28,6 +28,7 @@ use codespan_reporting::term;
 use config::LConfig;
 use inkwell::context::Context as LLVMCtx;
 use inkwell::OptimizationLevel;
+use lazy_static::lazy_static;
 use lc_ast::{ExprKind, P};
 use lc_astlowering::AstLoweringCtx;
 use lc_codegen::CodegenCtx;
@@ -48,7 +49,7 @@ use std::lazy::OnceCell;
 use std::path::PathBuf;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
-lazy_static::lazy_static! {
+lazy_static! {
     /// just a dummy to allow us to use codespan to print out our panics
     static ref SIMPLE_FILES: SimpleFiles<&'static str, &'static str> = SimpleFiles::new();
 }
@@ -158,7 +159,7 @@ impl<'tcx> Driver<'tcx> {
         }
     }
 
-    pub fn parse(&self) -> LResult<P<lc_ast::Ast>> {
+    pub fn parse(&self) -> LResult<lc_ast::Ast> {
         // assume one file for now
         let mut parser = Parser::new(&self.sess);
         let ast = parser.parse();
@@ -166,13 +167,13 @@ impl<'tcx> Driver<'tcx> {
         check_errors!(self, ast.unwrap())
     }
 
-    pub fn expand(&self) -> LResult<P<lc_ast::Ast>> {
+    pub fn expand(&self) -> LResult<lc_ast::Ast> {
         let ast = self.parse()?;
-        todo!()
+        Ok(lc_expand::MacroExpander::new().expand(ast))
     }
 
     pub fn gen_ir(&'tcx self) -> LResult<(&'tcx lc_ir::Ir<'tcx>, Resolutions)> {
-        let ast = self.parse()?;
+        let ast = self.expand()?;
         let mut resolver = Resolver::new(&self.sess, &self.resolver_arenas, &self.dependencies);
         resolver.resolve(&ast);
         let lctx = AstLoweringCtx::new(&self.ir_arena, &self.sess, &mut resolver);

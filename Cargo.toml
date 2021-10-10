@@ -10,13 +10,12 @@ members = [
     "src/lc-driver",
     "src/lc-ds",
     "src/lc-error",
-    "src/lc-error",
+    "src/lc-expand",
     "src/lc-gc",
     "src/lc-index",
     "src/lc-infer",
     "src/lc-ir",
     "src/lc-lex",
-    "src/lc-util",
     "src/lc-macros",
     "src/lc-meta",
     "src/lc-mir",
@@ -29,6 +28,7 @@ members = [
     "src/lc-tir",
     "src/lc-traits",
     "src/lc-typeck",
+    "src/lc-util",
     "tests/runner",
 ]
 

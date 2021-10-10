@@ -4,11 +4,11 @@ use lc_ast::{Ast, P};
 pub struct AstParser;
 
 impl<'a> Parse<'a> for AstParser {
-    type Output = P<Ast>;
+    type Output = Ast;
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let module = ModuleParser.parse(parser)?;
-        Ok(box Ast { module })
+        Ok(Ast { module })
     }
 }
 

@@ -16,6 +16,5 @@ itertools = "0.9"
 log = "0.4.11"
 rustc-hash = "1"
 
-
 [dev-dependencies]
 lc-driver = { path = "../lc-driver" }

@@ -5,23 +5,24 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-lc-span = { path = "../lc-span" }
-lc-lex = { path = "../lc-lex" }
-lc-parse = { path = "../lc-parse" }
-lc-index = { path = "../lc-index" }
 lc-ast = { path = "../lc-ast" }
-lc-ir = { path = "../lc-ir" }
-lc-tir = { path = "../lc-tir" }
-lc-mir = { path = "../lc-mir" }
-lc-mirgen = { path = "../lc-mirgen" }
-lc-meta = { path = "../lc-meta" }
-lc-core = { path = "../lc-core" }
 lc-astlowering = { path = "../lc-astlowering" }
 lc-codegen = { path = "../lc-codegen" }
-lc-session = { path = "../lc-session" }
+lc-core = { path = "../lc-core" }
 lc-error = { path = "../lc-error" }
-lc-typeck = { path = "../lc-typeck" }
+lc-expand = { path = "../lc-expand" }
+lc-index = { path = "../lc-index" }
+lc-ir = { path = "../lc-ir" }
+lc-lex = { path = "../lc-lex" }
+lc-meta = { path = "../lc-meta" }
+lc-mir = { path = "../lc-mir" }
+lc-mirgen = { path = "../lc-mirgen" }
+lc-parse = { path = "../lc-parse" }
 lc-resolve = { path = "../lc-resolve" }
+lc-session = { path = "../lc-session" }
+lc-span = { path = "../lc-span" }
+lc-tir = { path = "../lc-tir" }
+lc-typeck = { path = "../lc-typeck" }
 lc-util = { path = "../lc-util" }
 serde = "1"
 serde_derive = "1"
