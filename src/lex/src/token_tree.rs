@@ -4,7 +4,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::Index;
 use std::rc::Rc;
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct TokenStream {
     token_trees: Rc<Vec<TokenTree>>,
 }
@@ -30,12 +30,6 @@ impl Index<usize> for TokenStream {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.token_trees[index]
-    }
-}
-
-impl Debug for TokenStream {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("TokenStream").finish()
     }
 }
 

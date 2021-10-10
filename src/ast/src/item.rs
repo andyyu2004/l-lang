@@ -1,5 +1,5 @@
 use super::*;
-use lex::TokenTree;
+use lex::{TokenGroup, TokenTree};
 use span::Span;
 use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
@@ -169,7 +169,7 @@ pub struct Macro {
 #[derive(Debug, PartialEq, Clone)]
 pub struct MacroRule {
     pub matcher: MacroMatcher,
-    pub transcriber: TokenTree,
+    pub transcriber: TokenGroup,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

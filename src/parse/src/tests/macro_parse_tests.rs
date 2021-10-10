@@ -2,9 +2,9 @@ use super::*;
 
 #[test]
 fn parse_macro() {
-    // let mac = parse_macro!({
-    //     ($($tt:tt)*, $($expr:expr):*) => {
-
-    //     }
-    // });
+    parse_macro!({
+        ($($tt:tt)*, random_thing $($expr:expr):*) => {
+            $($tt)* : $($expr)*
+        }
+    });
 }

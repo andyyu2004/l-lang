@@ -43,8 +43,26 @@ impl<'a> TokenTreeParser<'a> {
         builder.to_stream()
     }
 
+    pub fn parse_token_tree(&mut self) -> ParseResult<'a, TokenTree> {
+        use TokenKind::*;
+        let token: Token = match self.tokens.peek() {
+            Some(&token) => token,
+            None => return Err(self.sess.build_error(Span::default(), ParseError::Eof)),
+        };
+        match token.kind {
+            OpenBrace | OpenBracket | OpenParen => Ok(TokenTree::Group(self.parse_token_group())),
+            CloseBrace | CloseBracket | CloseParen => Err(self
+                .sess
+                .build_error(token.span, ParseError::UnmatchedCloseTokenTreeDelimiter(token.kind))),
+            _ => {
+                self.tokens.next();
+                Ok(TokenTree::Token(token))
+            }
+        }
+    }
+
     /// Expects the iterator to be non-empty and at the start of a group including the opening delimiter
-    fn parse_token_group(&mut self) -> TokenGroup {
+    pub fn parse_token_group(&mut self) -> TokenGroup {
         let open_delimiter = self.tokens.next().unwrap();
         let stream = self.parse_token_stream_inner();
         // TODO should we consume the token if it is a mismatch or just peek it?

@@ -64,7 +64,8 @@ impl Token {
 
 pub struct Lexer {}
 
-pub type TokenIterator = impl Iterator<Item = Token>;
+// pub type TokenIterator = impl Iterator<Item = Token>;
+pub type TokenIterator = std::vec::IntoIter<Token>;
 
 impl Lexer {
     pub fn new() -> Self {
