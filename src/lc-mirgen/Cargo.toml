@@ -1,0 +1,29 @@
+[package]
+name = "lc-mirgen"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-arena = { path = "../lc-arena" }
+lc-span = { path = "../lc-span" }
+lc-ds = { path = "../lc-ds" }
+lc-core = { path = "../lc-core" }
+lc-ast = { path = "../lc-ast" }
+lc-index = { path = "../lc-index" }
+lc-error = { path = "../lc-error" }
+lc-mir = { path = "../lc-mir" }
+lc-ir = { path = "../lc-ir" }
+lc-tir = { path = "../lc-tir" }
+lc-util = { path = "../lc-util" }
+thiserror = "1"
+maplit = "1"
+rustc-hash = "1"
+smallvec = "1"
+itertools = "0.9"
+log = "0.4.11"
+derivative = "2.1.1"
+indexmap = "1.6.0"
+
+[dev-dependencies]
+lc-driver = { path = "../lc-driver" }

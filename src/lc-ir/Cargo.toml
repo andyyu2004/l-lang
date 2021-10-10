@@ -1,0 +1,15 @@
+[package]
+name = "lc-ir"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lc-index = { path = "../lc-index" }
+lc-ast = { path = "../lc-ast" }
+lc-span = { path = "../lc-span" }
+lc-util = { path = "../lc-util" }
+rustc-hash = "1"
+serde = { version = "1", features = ["derive"] }

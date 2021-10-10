@@ -1,0 +1,15 @@
+[package]
+name = "lc-macros"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+synstructure = "0.12.1"
+syn = { version = "1", features = ["full"] }
+proc-macro2 = "1"
+quote = "1"
+

@@ -3,6 +3,7 @@
 
 mod errors;
 
+use lc_error::ErrorFormat;
 use std::cell::Cell;
 use std::env;
 use std::error::Error;
@@ -10,9 +11,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::fs;
 use std::io;
 use std::path::Path;
-use std::process::{Command};
-
-use error::ErrorFormat;
+use std::process::Command;
 
 #[derive(Copy, Clone)]
 enum TestKind {
@@ -71,7 +70,7 @@ impl TestCtx {
 
         let errc = self.errc.get();
         if errc > 0 {
-            panic!("{} error{} occured", errc, lutil::pluralize!(errc))
+            panic!("{} error{} occured", errc, lc_util::pluralize!(errc))
         } else {
             eprintln!("passed {} tests", self.testc)
         }
@@ -110,7 +109,7 @@ impl TestCtx {
                         kind,
                         path.display(),
                         errc,
-                        lutil::pluralize!(errc)
+                        lc_util::pluralize!(errc)
                     );
                 } else {
                     eprintln!("passed {} test at `{}`", kind, path.display());

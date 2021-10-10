@@ -1,0 +1,17 @@
+[package]
+name = "lc-tir"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-ir = { path = "../lc-ir" }
+lc-ast = { path = "../lc-ast" }
+lc-span = { path = "../lc-span" }
+lc-index = { path = "../lc-index" }
+lc-util = { path = "../lc-util" }
+lc-core = { path = "../lc-core" }
+smallvec = "1.4.2"
+log = "0.4.11"
+itertools = "0.9"
+rustc-hash = "1"

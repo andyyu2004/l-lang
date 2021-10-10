@@ -1,13 +1,13 @@
 [package]
-name = "runner"
+name = "lc-runner"
 version = "0.1.0"
 authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-ldriver = { path = "../../src/ldriver" }
-lutil = { path = "../../src/lutil" }
-error = { path = "../../src/error" }
+lc-driver = { path = "../../src/lc-driver" }
+lc-util = { path = "../../src/lc-util" }
+lc-error = { path = "../../src/lc-error" }
 regex = "1"
 thiserror = "1"
 serde_json = "1"

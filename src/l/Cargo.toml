@@ -3,9 +3,7 @@ name = "l"
 version = "0.1.0"
 authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
-
 default-run = "l"
 
 [dependencies]
-cli = { path = "../cli" }
-
+lc-cli = { path = "../lc-cli" }

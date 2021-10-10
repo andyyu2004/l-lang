@@ -1,0 +1,23 @@
+[package]
+name = "lc-parse"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-index = { path = "../lc-index" }
+lc-span = { path = "../lc-span" }
+lc-lex = { path = "../lc-lex" }
+lc-ast = { path = "../lc-ast" }
+lc-session = { path = "../lc-session" }
+lc-error = { path = "../lc-error" }
+thiserror = "1"
+log = "0.4.11"
+codespan = "0.9.5"
+rustc-hash = "1"
+salsa = "0.16.0"
+paste = "1"
+phf = { version = "0.10", features = ["macros"] }
+
+[dev-dependencies]
+lc-driver = { path = "../lc-driver" }

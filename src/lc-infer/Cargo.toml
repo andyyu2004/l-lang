@@ -1,0 +1,19 @@
+[package]
+name = "lc-infer"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-error = { path = "../lc-error" }
+lc-core = { path = "../lc-core" }
+lc-span = { path = "../lc-span" }
+lc-ast = { path = "../lc-ast" }
+lc-index = { path = "../lc-index" }
+lc-ir = { path = "../lc-ir" }
+lc-util = { path = "../lc-util" }
+smallvec = "1.4.2"
+itertools = "0.9"
+rustc-hash = "1"
+ena = "0.14"
+log = "0.4.11"

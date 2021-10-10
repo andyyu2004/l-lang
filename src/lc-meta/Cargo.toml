@@ -1,0 +1,12 @@
+[package]
+name = "lc-meta"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+lc-core = { path = "../lc-core" }
+lc-ir = { path = "../lc-ir" }
+serde = { version = "1", features = ["derive"] }
+rustc-hash = "1"

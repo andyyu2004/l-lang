@@ -1,0 +1,39 @@
+[package]
+name = "lc-driver"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-span = { path = "../lc-span" }
+lc-lex = { path = "../lc-lex" }
+lc-parse = { path = "../lc-parse" }
+lc-index = { path = "../lc-index" }
+lc-ast = { path = "../lc-ast" }
+lc-ir = { path = "../lc-ir" }
+lc-tir = { path = "../lc-tir" }
+lc-mir = { path = "../lc-mir" }
+lc-mirgen = { path = "../lc-mirgen" }
+lc-meta = { path = "../lc-meta" }
+lc-core = { path = "../lc-core" }
+lc-astlowering = { path = "../lc-astlowering" }
+lc-codegen = { path = "../lc-codegen" }
+lc-session = { path = "../lc-session" }
+lc-error = { path = "../lc-error" }
+lc-typeck = { path = "../lc-typeck" }
+lc-resolve = { path = "../lc-resolve" }
+lc-util = { path = "../lc-util" }
+serde = "1"
+serde_derive = "1"
+clap = { version = "3.0.0-beta.1", features=["yaml"] }
+inkwell = { git = "https://github.com/andyyu2004/inkwell", branch = "llvm10-0" }
+codespan-reporting = "0.9.5"
+termcolor = "1.1.0"
+colour = "0.5"
+toml = "0.5.7"
+log = "0.4.11"
+lazy_static = "1"
+semver = { version = "0.11.0", features=["serde"] }
+simple-logging = "2.0.2"
+
+tempfile = "3"

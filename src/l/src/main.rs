@@ -1,4 +1,4 @@
 fn main() -> std::io::Result<()> {
-    cli::main()?;
+    lc_cli::main()?;
     Ok(())
 }

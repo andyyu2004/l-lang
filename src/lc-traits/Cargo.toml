@@ -1,0 +1,13 @@
+[package]
+name = "lc-traits"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-typeck = { path = "../lc-typeck" }
+lc-core = { path = "../lc-core" }
+# logic-ir = { git = "ssh://git@gitlab.com/andyyu2004/logic.git" }
+
+[dev-dependencies]
+lc-driver = { path = "../lc-driver" }

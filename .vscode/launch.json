@@ -217,11 +217,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in library 'lcore'",
+      "name": "Debug unit tests in library 'lc-core'",
       "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=lcore"],
+        "args": ["test", "--no-run", "--lib", "--package=lc-core"],
         "filter": {
-          "name": "lcore",
+          "name": "lc-core",
           "kind": "lib"
         }
       },

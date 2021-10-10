@@ -1,0 +1,9 @@
+[package]
+name = "lc-cli"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-driver = { path = "../lc-driver" }
+clap = "3.0.0-beta.2"

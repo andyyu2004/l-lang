@@ -1,0 +1,21 @@
+[package]
+name = "lc-astlowering"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-resolve = { path = "../lc-resolve" }
+lc-session = { path = "../lc-session" }
+lc-ir = { path = "../lc-ir" }
+lc-ast = { path = "../lc-ast" }
+lc-arena = { path = "../lc-arena" }
+lc-span = { path = "../lc-span" }
+lc-index = { path = "../lc-index" }
+itertools = "0.9"
+log = "0.4.11"
+rustc-hash = "1"
+
+
+[dev-dependencies]
+lc-driver = { path = "../lc-driver" }

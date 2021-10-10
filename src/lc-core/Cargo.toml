@@ -1,0 +1,26 @@
+[package]
+name = "lc-core"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-arena = { path = "../lc-arena" }
+lc-ir = { path = "../lc-ir" }
+lc-ast = { path = "../lc-ast" }
+lc-ds = { path = "../lc-ds" }
+lc-span = { path = "../lc-span" }
+lc-index = { path = "../lc-index" }
+lc-session = { path = "../lc-session" }
+lc-error = { path = "../lc-error" }
+lc-macros = { path = "../lc-macros" }
+lc-util = { path = "../lc-util" }
+smallvec = "1.4.2"
+log = "0.4.11"
+itertools = "0.9"
+rustc-hash = "1"
+thiserror = "1"
+ena = "0.14"
+serde = "1"
+serde_derive = "1"
+bitflags = "1.2.1"

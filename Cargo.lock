@@ -18,43 +18,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b2d54853319fd101b8dd81de382bcbf3e03410a64d8928bbee85a3e7dcde483"
 
 [[package]]
-name = "arena"
-version = "0.1.0"
-dependencies = [
- "smallvec",
-]
-
-[[package]]
-name = "ast"
-version = "0.1.0"
-dependencies = [
- "index",
- "lex",
- "lutil",
- "rustc-hash",
- "serde",
- "span",
- "thiserror",
-]
-
-[[package]]
-name = "astlowering"
-version = "0.1.0"
-dependencies = [
- "arena",
- "ast",
- "index",
- "ir",
- "itertools",
- "ldriver",
- "log",
- "resolve",
- "rustc-hash",
- "session",
- "span",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -135,40 +98,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "ldriver",
-]
-
-[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "codegen"
-version = "0.1.0"
-dependencies = [
- "ast",
- "error",
- "index",
- "inkwell",
- "ir",
- "itertools",
- "lcore",
- "ldriver",
- "llvm-sys",
- "log",
- "maplit",
- "rustc-hash",
- "span",
- "thiserror",
 ]
 
 [[package]]
@@ -248,13 +183,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ds"
-version = "0.1.0"
-dependencies = [
- "index",
-]
-
-[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -267,19 +195,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7402b94a93c24e742487327a7cd839dc9d36fec9de9fb25b09f2dae459f36c3"
 dependencies = [
  "log",
-]
-
-[[package]]
-name = "error"
-version = "0.1.0"
-dependencies = [
- "codespan",
- "codespan-reporting",
- "lutil",
- "serde",
- "serde_json",
- "span",
- "termcolor",
 ]
 
 [[package]]
@@ -297,13 +212,6 @@ name = "fuchsia-zircon-sys"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
-
-[[package]]
-name = "gc"
-version = "0.1.0"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "getrandom"
@@ -341,13 +249,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "index"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "indexmap"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -355,24 +256,6 @@ checksum = "4fb1fa934250de4de8aef298d81c729a7d33d8c239daa3a7575e6b92bfc7313b"
 dependencies = [
  "autocfg",
  "hashbrown",
-]
-
-[[package]]
-name = "infer"
-version = "0.1.0"
-dependencies = [
- "ast",
- "ena",
- "error",
- "index",
- "ir",
- "itertools",
- "lcore",
- "log",
- "lutil",
- "rustc-hash",
- "smallvec",
- "span",
 ]
 
 [[package]]
@@ -419,18 +302,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ir"
-version = "0.1.0"
-dependencies = [
- "ast",
- "index",
- "lutil",
- "rustc-hash",
- "serde",
- "span",
-]
-
-[[package]]
 name = "itertools"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -459,7 +330,7 @@ dependencies = [
 name = "l"
 version = "0.1.0"
 dependencies = [
- "cli",
+ "lc-cli",
 ]
 
 [[package]]
@@ -469,77 +340,405 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "lcore"
+name = "lc-arena"
 version = "0.1.0"
 dependencies = [
- "arena",
- "ast",
- "bitflags",
- "ds",
- "ena",
- "error",
- "index",
- "ir",
- "itertools",
- "log",
- "lutil",
- "macros",
+ "smallvec",
+]
+
+[[package]]
+name = "lc-ast"
+version = "0.1.0"
+dependencies = [
+ "lc-index",
+ "lc-lex",
+ "lc-span",
+ "lc-util",
  "rustc-hash",
  "serde",
- "serde_derive",
- "session",
- "smallvec",
- "span",
  "thiserror",
 ]
 
 [[package]]
-name = "ldriver"
+name = "lc-astlowering"
 version = "0.1.0"
 dependencies = [
- "ast",
- "astlowering",
- "clap",
- "codegen",
- "codespan-reporting",
- "colour",
- "error",
- "index",
- "inkwell",
- "ir",
- "lazy_static",
- "lcore",
- "lex",
+ "itertools",
+ "lc-arena",
+ "lc-ast",
+ "lc-driver",
+ "lc-index",
+ "lc-ir",
+ "lc-resolve",
+ "lc-session",
+ "lc-span",
  "log",
- "lutil",
- "meta",
- "mir",
- "mirgen",
- "parse",
- "resolve",
- "semver 0.11.0",
- "serde",
- "serde_derive",
- "session",
- "simple-logging",
- "span",
- "tempfile",
- "termcolor",
- "tir",
- "toml",
- "typeck",
+ "rustc-hash",
 ]
 
 [[package]]
-name = "lex"
+name = "lc-cli"
 version = "0.1.0"
 dependencies = [
- "index",
+ "clap",
+ "lc-driver",
+]
+
+[[package]]
+name = "lc-codegen"
+version = "0.1.0"
+dependencies = [
+ "inkwell",
+ "itertools",
+ "lc-ast",
+ "lc-core",
+ "lc-driver",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-span",
+ "llvm-sys",
+ "log",
+ "maplit",
+ "rustc-hash",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-core"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "ena",
+ "itertools",
+ "lc-arena",
+ "lc-ast",
+ "lc-ds",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-macros",
+ "lc-session",
+ "lc-span",
+ "lc-util",
+ "log",
+ "rustc-hash",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-driver"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "codespan-reporting",
+ "colour",
+ "inkwell",
+ "lazy_static",
+ "lc-ast",
+ "lc-astlowering",
+ "lc-codegen",
+ "lc-core",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-lex",
+ "lc-meta",
+ "lc-mir",
+ "lc-mirgen",
+ "lc-parse",
+ "lc-resolve",
+ "lc-session",
+ "lc-span",
+ "lc-tir",
+ "lc-typeck",
+ "lc-util",
+ "log",
+ "semver 0.11.0",
+ "serde",
+ "serde_derive",
+ "simple-logging",
+ "tempfile",
+ "termcolor",
+ "toml",
+]
+
+[[package]]
+name = "lc-ds"
+version = "0.1.0"
+dependencies = [
+ "lc-index",
+]
+
+[[package]]
+name = "lc-error"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "codespan-reporting",
+ "lc-span",
+ "lc-util",
+ "serde",
+ "serde_json",
+ "termcolor",
+]
+
+[[package]]
+name = "lc-gc"
+version = "0.1.0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "lc-index"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "lc-infer"
+version = "0.1.0"
+dependencies = [
+ "ena",
+ "itertools",
+ "lc-ast",
+ "lc-core",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-span",
+ "lc-util",
+ "log",
+ "rustc-hash",
+ "smallvec",
+]
+
+[[package]]
+name = "lc-ir"
+version = "0.1.0"
+dependencies = [
+ "lc-ast",
+ "lc-index",
+ "lc-span",
+ "lc-util",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
+name = "lc-lex"
+version = "0.1.0"
+dependencies = [
  "itertools",
  "lazy_static",
+ "lc-index",
+ "lc-span",
  "maplit",
- "span",
  "unicode-xid",
+]
+
+[[package]]
+name = "lc-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "synstructure",
+]
+
+[[package]]
+name = "lc-meta"
+version = "0.1.0"
+dependencies = [
+ "lc-core",
+ "lc-ir",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
+name = "lc-mir"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "lc-ast",
+ "lc-core",
+ "lc-driver",
+ "lc-ds",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-span",
+ "log",
+ "rustc-hash",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-mirgen"
+version = "0.1.0"
+dependencies = [
+ "derivative",
+ "indexmap",
+ "itertools",
+ "lc-arena",
+ "lc-ast",
+ "lc-core",
+ "lc-driver",
+ "lc-ds",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-mir",
+ "lc-span",
+ "lc-tir",
+ "lc-util",
+ "log",
+ "maplit",
+ "rustc-hash",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-parse"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "lc-ast",
+ "lc-driver",
+ "lc-error",
+ "lc-index",
+ "lc-lex",
+ "lc-session",
+ "lc-span",
+ "log",
+ "paste",
+ "phf",
+ "rustc-hash",
+ "salsa",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-queries"
+version = "0.1.0"
+dependencies = [
+ "salsa",
+]
+
+[[package]]
+name = "lc-resolve"
+version = "0.1.0"
+dependencies = [
+ "lc-arena",
+ "lc-ast",
+ "lc-driver",
+ "lc-error",
+ "lc-index",
+ "lc-ir",
+ "lc-lex",
+ "lc-meta",
+ "lc-session",
+ "lc-span",
+ "log",
+ "rustc-hash",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-runner"
+version = "0.1.0"
+dependencies = [
+ "lc-driver",
+ "lc-error",
+ "lc-util",
+ "regex",
+ "serde_json",
+ "strip-ansi-escapes",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-session"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "lc-error",
+ "log",
+ "serde",
+]
+
+[[package]]
+name = "lc-span"
+version = "0.1.0"
+dependencies = [
+ "codespan",
+ "codespan-reporting",
+ "lc-arena",
+ "lc-index",
+ "lc-macros",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
+name = "lc-tir"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "lc-ast",
+ "lc-core",
+ "lc-index",
+ "lc-ir",
+ "lc-span",
+ "lc-util",
+ "log",
+ "rustc-hash",
+ "smallvec",
+]
+
+[[package]]
+name = "lc-traits"
+version = "0.1.0"
+dependencies = [
+ "lc-core",
+ "lc-driver",
+ "lc-typeck",
+]
+
+[[package]]
+name = "lc-typeck"
+version = "0.1.0"
+dependencies = [
+ "bimap",
+ "itertools",
+ "lc-ast",
+ "lc-core",
+ "lc-driver",
+ "lc-error",
+ "lc-index",
+ "lc-infer",
+ "lc-ir",
+ "lc-span",
+ "lc-util",
+ "log",
+ "rustc-hash",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-util"
+version = "0.1.0"
+dependencies = [
+ "itertools",
 ]
 
 [[package]]
@@ -595,23 +794,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lutil"
-version = "0.1.0"
-dependencies = [
- "itertools",
-]
-
-[[package]]
-name = "macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "synstructure",
-]
-
-[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -622,16 +804,6 @@ name = "memchr"
 version = "2.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
-
-[[package]]
-name = "meta"
-version = "0.1.0"
-dependencies = [
- "ir",
- "lcore",
- "rustc-hash",
- "serde",
-]
 
 [[package]]
 name = "mio"
@@ -662,51 +834,6 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
-]
-
-[[package]]
-name = "mir"
-version = "0.1.0"
-dependencies = [
- "ast",
- "ds",
- "error",
- "index",
- "ir",
- "itertools",
- "lcore",
- "ldriver",
- "log",
- "rustc-hash",
- "smallvec",
- "span",
- "thiserror",
-]
-
-[[package]]
-name = "mirgen"
-version = "0.1.0"
-dependencies = [
- "arena",
- "ast",
- "derivative",
- "ds",
- "error",
- "index",
- "indexmap",
- "ir",
- "itertools",
- "lcore",
- "ldriver",
- "log",
- "lutil",
- "maplit",
- "mir",
- "rustc-hash",
- "smallvec",
- "span",
- "thiserror",
- "tir",
 ]
 
 [[package]]
@@ -785,26 +912,6 @@ dependencies = [
  "redox_syscall 0.1.57",
  "smallvec",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "parse"
-version = "0.1.0"
-dependencies = [
- "ast",
- "codespan",
- "error",
- "index",
- "ldriver",
- "lex",
- "log",
- "paste",
- "phf",
- "rustc-hash",
- "salsa",
- "session",
- "span",
- "thiserror",
 ]
 
 [[package]]
@@ -912,13 +1019,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "queries"
-version = "0.1.0"
-dependencies = [
- "salsa",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1007,38 +1107,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "resolve"
-version = "0.1.0"
-dependencies = [
- "arena",
- "ast",
- "error",
- "index",
- "ir",
- "ldriver",
- "lex",
- "log",
- "meta",
- "rustc-hash",
- "session",
- "span",
- "thiserror",
-]
-
-[[package]]
-name = "runner"
-version = "0.1.0"
-dependencies = [
- "error",
- "ldriver",
- "lutil",
- "regex",
- "serde_json",
- "strip-ansi-escapes",
- "thiserror",
 ]
 
 [[package]]
@@ -1154,16 +1222,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "session"
-version = "0.1.0"
-dependencies = [
- "clap",
- "error",
- "log",
- "serde",
-]
-
-[[package]]
 name = "signal-hook"
 version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1211,19 +1269,6 @@ name = "smallvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a55ca5f3b68e41c979bf8c46a6f1da892ca4db8f94023ce0bd32407573b1ac0"
-
-[[package]]
-name = "span"
-version = "0.1.0"
-dependencies = [
- "arena",
- "codespan",
- "codespan-reporting",
- "index",
- "macros",
- "rustc-hash",
- "serde",
-]
 
 [[package]]
 name = "static-alloc"
@@ -1345,57 +1390,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "tir"
-version = "0.1.0"
-dependencies = [
- "ast",
- "index",
- "ir",
- "itertools",
- "lcore",
- "log",
- "lutil",
- "rustc-hash",
- "smallvec",
- "span",
-]
-
-[[package]]
 name = "toml"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "traits"
-version = "0.1.0"
-dependencies = [
- "lcore",
- "ldriver",
- "typeck",
-]
-
-[[package]]
-name = "typeck"
-version = "0.1.0"
-dependencies = [
- "ast",
- "bimap",
- "error",
- "index",
- "infer",
- "ir",
- "itertools",
- "lcore",
- "ldriver",
- "log",
- "lutil",
- "rustc-hash",
- "span",
- "thiserror",
 ]
 
 [[package]]

@@ -1,0 +1,22 @@
+[package]
+name = "lc-resolve"
+version = "0.1.0"
+authors = ["Andy Yu <andyyu2004@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lc-span = { path = "../lc-span" }
+lc-lex = { path = "../lc-lex" }
+lc-ast = { path = "../lc-ast" }
+lc-session = { path = "../lc-session" }
+lc-meta = { path = "../lc-meta" }
+lc-index = { path = "../lc-index" }
+lc-error = { path = "../lc-error" }
+lc-arena = { path = "../lc-arena" }
+lc-ir = { path = "../lc-ir" }
+thiserror = "1"
+rustc-hash = "1"
+log = "0.4.11"
+
+[dev-dependencies]
+lc-driver = { path = "../lc-driver" }

@@ -1,5 +1,5 @@
 use crate::{Output, TestCtx};
-use error::{JsonDiagnostic, Severity};
+use lc_error::{JsonDiagnostic, Severity};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestFailure {
-    #[error("expected {0} error{}, but found {}\n {:?}", lutil::pluralize!(*.0), .1.len(), .1)]
+    #[error("expected {0} error{}, but found {}\n {:?}", lc_util::pluralize!(*.0), .1.len(), .1)]
     UnexpectedNumberOfErrors(usize, Vec<JsonDiagnostic>),
 }
 
