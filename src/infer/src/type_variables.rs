@@ -53,7 +53,7 @@ impl<'tcx> Rollback<TyVarUndoLog<'tcx>> for TypeVariableStorage<'tcx> {
 }
 
 impl<'tcx> TypeVariableStorage<'tcx> {
-    crate fn with_log<'a>(
+    pub(crate) fn with_log<'a>(
         &'a mut self,
         undo_log: &'a mut InferCtxUndoLogs<'tcx>,
     ) -> TypeVariableTable<'a, 'tcx> {

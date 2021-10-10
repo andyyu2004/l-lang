@@ -77,7 +77,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
         }
     }
 
-    crate fn build_binary_op(
+    pub(crate) fn build_binary_op(
         &mut self,
         block: BlockId,
         _span: Span,

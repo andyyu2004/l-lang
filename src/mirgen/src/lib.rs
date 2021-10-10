@@ -1,7 +1,6 @@
 #![feature(decl_macro)]
 #![feature(crate_visibility_modifier)]
 #![feature(slice_index_methods)]
-#![feature(once_cell)]
 #![feature(box_patterns, box_syntax)]
 
 mod cfg;

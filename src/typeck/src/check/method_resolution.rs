@@ -28,7 +28,7 @@ pub enum MethodError<'tcx> {
 // }
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    crate fn resolve_type_relative_path(
+    pub(crate) fn resolve_type_relative_path(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         self_ty: Ty<'tcx>,

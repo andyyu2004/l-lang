@@ -5,3 +5,5 @@ log.txt
 *.log
 *.bc
 *.out
+test.l
+l-test

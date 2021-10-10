@@ -2,7 +2,7 @@ use super::AstLoweringCtx;
 use ast::*;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
-    crate fn lower_qpath(&mut self, path: &Path) -> &'ir ir::QPath<'ir> {
+    pub(crate) fn lower_qpath(&mut self, path: &Path) -> &'ir ir::QPath<'ir> {
         let partial_res = self.resolver.partial_res(path.id);
         let unresolved_start = path.segments.len() - partial_res.unresolved;
 
@@ -21,7 +21,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         qpath
     }
 
-    crate fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
+    pub(crate) fn lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
         // this following line checks that this path is a fully resolved path
         // otherwise, `lower_qpath` should be used
         self.resolver.full_res(path.id);
@@ -29,7 +29,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
     }
 
     /// lowers the resolved portion of the path
-    crate fn partial_lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
+    pub(crate) fn partial_lower_path(&mut self, path: &Path) -> &'ir ir::Path<'ir> {
         let partial_res = self.resolver.partial_res(path.id);
         let unresolved_start = path.segments.len() - partial_res.unresolved;
         let res = self.lower_res(partial_res.resolved);

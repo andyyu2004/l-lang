@@ -33,7 +33,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ptr;
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     instance::provide(queries);
 }
 

@@ -23,19 +23,19 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         }
     }
 
-    crate fn with_module<R>(&mut self, name: Ident, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_module<R>(&mut self, name: Ident, f: impl FnOnce(&mut Self) -> R) -> R {
         let module_id = self.resolve_module(name).unwrap();
         self.with_module_id(module_id, f)
     }
 
-    crate fn with_module_id<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_module_id<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.current_module.push(module);
         let ret = f(self);
         self.current_module.pop();
         ret
     }
 
-    crate fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_val_scope<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         self.scopes[NS::Value].push(Scope::default());
         let ret = f(self);
         self.scopes[NS::Value].pop();
@@ -60,7 +60,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         })
     }
 
-    crate fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
+    pub(crate) fn def_val(&mut self, ident: Ident, res: Res<NodeId>) {
         self.scopes[NS::Value].def(ident, res);
     }
 
@@ -68,17 +68,17 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         PatternResolutionCtx::new(self).resolve_pattern(pat);
     }
 
-    crate fn curr_module(&self) -> ModuleId {
+    pub(crate) fn curr_module(&self) -> ModuleId {
         self.current_module.last().copied().unwrap()
     }
 
     /// searches for an item with name = `ident` in the current module
-    crate fn try_resolve_item(&self, ident: Ident) -> Option<Res<NodeId>> {
+    pub(crate) fn try_resolve_item(&self, ident: Ident) -> Option<Res<NodeId>> {
         self.resolver.resolve_item(self.curr_module(), ident)
     }
 
     /// search for a local variable in scope otherwise look for a resolution to an item
-    crate fn resolve_ident(&mut self, ident: Ident) -> Option<Res<NodeId>> {
+    pub(crate) fn resolve_ident(&mut self, ident: Ident) -> Option<Res<NodeId>> {
         match self.scopes[NS::Value].lookup(ident) {
             Some(&res) => Some(res),
             None => self.try_resolve_item(ident),

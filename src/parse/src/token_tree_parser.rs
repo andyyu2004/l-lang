@@ -1,24 +1,82 @@
-use super::*;
+use std::iter::Peekable;
 
-impl<'a> Parser<'a> {
-    pub fn parse_tt(&mut self) -> ParseResult<'a, TokenTree> {
-        let token = self.safe_peek()?;
-        let tt = match token.kind {
-            TokenKind::OpenParen => todo!(),
-            TokenKind::OpenBrace => todo!(),
-            TokenKind::OpenBracket => todo!(),
-            _ => TokenTree::Token(token),
-        };
-        Ok(tt)
+use super::*;
+use lex::{Delimiter, TokenIterator, TokenStream, TokenStreamBuilder};
+use session::Session;
+
+pub struct TokenTreeParser<'a> {
+    sess: &'a Session,
+    tokens: Peekable<TokenIterator>,
+}
+
+impl<'a> TokenTreeParser<'a> {
+    pub fn new(sess: &'a Session, tokens: TokenIterator) -> Self {
+        Self { sess, tokens: tokens.peekable() }
+    }
+}
+
+impl<'a> TokenTreeParser<'a> {
+    pub fn parse_token_stream(&mut self) -> TokenStream {
+        let stream = self.parse_token_stream_inner();
+        assert!(self.tokens.peek().is_none());
+        stream
     }
 
-    pub fn parse_tt_group(&mut self) -> ParseResult<'a, TokenGroup> {
-        match self.safe_peek()?.kind {
-            TokenKind::OpenParen => {}
-            TokenKind::OpenBrace => {}
-            TokenKind::OpenBracket => {}
-            _ => todo!(),
+    pub fn parse_token_stream_inner(&mut self) -> TokenStream {
+        use TokenKind::*;
+        let mut builder = TokenStreamBuilder::default();
+        loop {
+            let token: Token = match self.tokens.peek() {
+                Some(&token) => token,
+                None => break,
+            };
+            match token.kind {
+                OpenBrace | OpenBracket | OpenParen =>
+                    builder.push(TokenTree::Group(self.parse_token_group())),
+                CloseBrace | CloseBracket | CloseParen => break,
+                _ => {
+                    self.tokens.next();
+                    builder.push_token(token);
+                }
+            }
         }
-        todo!()
+        builder.to_stream()
+    }
+
+    /// Expects the iterator to be non-empty and at the start of a group including the opening delimiter
+    fn parse_token_group(&mut self) -> TokenGroup {
+        let open_delimiter = self.tokens.next().unwrap();
+        let stream = self.parse_token_stream_inner();
+        // TODO should we consume the token if it is a mismatch or just peek it?
+        let next = self.tokens.peek().copied();
+        let open_delimiter: Delimiter = open_delimiter.into();
+        match next {
+            Some(token) => {
+                let span = open_delimiter.span.merge(token.span);
+                let expected_close_token_kind = open_delimiter.kind.close_token_kind();
+                if token.kind != expected_close_token_kind {
+                    let err = ParseError::MismatchedTokenTreeDelimiter(
+                        expected_close_token_kind,
+                        token.kind,
+                    );
+                    self.sess.emit_error(span, err);
+                } else {
+                    self.tokens.next();
+                }
+
+                let delimiter = Delimiter {
+                    span: open_delimiter.span.merge(token.span),
+                    kind: open_delimiter.kind,
+                };
+                TokenGroup { delimiter, stream }
+            }
+            None => {
+                let span = open_delimiter.span.merge(stream.span());
+                let err = ParseError::UnmatchedOpenTokenTreeDelimiter(open_delimiter.kind);
+                self.sess.emit_error(span, err);
+                let delimiter = Delimiter { span, kind: open_delimiter.kind };
+                TokenGroup { delimiter, stream }
+            }
+        }
     }
 }

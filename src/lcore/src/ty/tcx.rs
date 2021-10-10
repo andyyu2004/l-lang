@@ -22,7 +22,7 @@ pub mod tls {
     // stores a pointer to the gcx
     thread_local! (static GCX: Cell<usize> = Cell::new(0));
 
-    crate fn enter_tcx<'tcx, R>(gcx: &GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+    pub(crate) fn enter_tcx<'tcx, R>(gcx: &GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
         // permanently sets the pointer
         GCX.with(|ptr| ptr.set(gcx as *const _ as _));
         with_tcx(f)

@@ -5,7 +5,7 @@ use rustc_hash::FxHashSet;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
     /// write the upvars mentioned by `closure` to `TypeckOutputs`
-    crate fn record_upvars(&mut self, closure: &ir::Expr, body: &ir::Body) {
+    pub(crate) fn record_upvars(&mut self, closure: &ir::Expr, body: &ir::Body) {
         let locals = LocalsVisitor::find_locals(body);
         let upvar_visitor = UpvarVisitor::new(self.tcx, closure.id, &locals);
         let upvars = upvar_visitor.resolve_upvars(body);

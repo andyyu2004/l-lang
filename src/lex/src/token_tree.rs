@@ -1,35 +1,41 @@
 use crate::{Token, TokenKind};
-use std::fmt::{self, Debug, Formatter};
+use span::Span;
+use std::fmt::{self, Debug, Display, Formatter};
+use std::ops::Index;
 use std::rc::Rc;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 pub struct TokenStream {
     token_trees: Rc<Vec<TokenTree>>,
+}
+
+impl TokenStream {
+    pub fn span(&self) -> Span {
+        assert!(!self.is_empty(), "todo?");
+        let tts = &self.token_trees;
+        tts[0].span().merge(tts[tts.len() - 1].span())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.token_trees.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.token_trees.len()
+    }
+}
+
+impl Index<usize> for TokenStream {
+    type Output = TokenTree;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.token_trees[index]
+    }
 }
 
 impl Debug for TokenStream {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("TokenStream").finish()
-    }
-}
-
-impl TokenStream {
-    pub fn from_tokens(tokens: impl IntoIterator<Item = Token>) -> Self {
-        let mut tokens = tokens.into_iter();
-        let token_trees = vec![];
-        loop {
-            let token = match tokens.next() {
-                Some(token) => token,
-                None => break,
-            };
-            let token_tree = match token.kind {
-                TokenKind::OpenParen => {}
-                TokenKind::OpenBracket => {}
-                TokenKind::OpenBrace => {}
-                _ => todo!(),
-            };
-        }
-        Self { token_trees: Rc::new(token_trees) }
     }
 }
 
@@ -41,6 +47,25 @@ impl Iterator for TokenStream {
     }
 }
 
+#[derive(Default, Debug)]
+pub struct TokenStreamBuilder {
+    token_trees: Vec<TokenTree>,
+}
+
+impl TokenStreamBuilder {
+    pub fn push(&mut self, tt: TokenTree) {
+        self.token_trees.push(tt)
+    }
+
+    pub fn push_token(&mut self, token: Token) {
+        self.push(TokenTree::Token(token))
+    }
+
+    pub fn to_stream(self) -> TokenStream {
+        TokenStream { token_trees: Rc::new(self.token_trees) }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenTree {
     Token(Token),
@@ -48,61 +73,77 @@ pub enum TokenTree {
 }
 
 impl TokenTree {
-    /// Consumes enough of the tokens to form a complete token tree.
-    /// Returns `None` if the iterator is empty
-    pub fn from_tokens(tokens: &mut impl Iterator<Item = Token>) -> Option<Self> {
-        let mut tokens = tokens.peekable();
-        let token = match tokens.next() {
-            Some(token) => token,
-            None => return None,
-        };
-
-        macro_rules! parse_group {
-            ($close_token_kind:path) => {{
-                let mut grouped_tokens = vec![];
-                loop {
-                    let token = match tokens.peek() {
-                        Some(&token) => token,
-                        None => todo!("unmatched delimiter"),
-                    };
-                    match token.kind {
-                        $close_token_kind => break,
-                        kind if kind.is_delimiter() => todo!("mismatched delimiter"),
-                        _ => grouped_tokens.push(token),
-                    }
-                }
-                let stream = TokenStream::from_tokens(grouped_tokens);
-                TokenGroup { stream, delimiter: Delimiter::from($close_token_kind) }
-            }};
+    pub fn span(&self) -> Span {
+        match self {
+            TokenTree::Token(token) => token.span,
+            TokenTree::Group(group) => group.span(),
         }
+    }
 
-        let token_tree = match token.kind {
-            TokenKind::OpenParen => todo!(),
-            TokenKind::OpenBracket => parse_group!(TokenKind::CloseBracket),
-            TokenKind::OpenBrace => todo!(),
-            TokenKind::CloseParen => todo!(),
-            TokenKind::CloseBracket => todo!(),
-            TokenKind::CloseBrace => todo!(),
-            _ => todo!(),
-        };
-        todo!()
+    pub fn try_into_token(self) -> Result<Token, Self> {
+        if let Self::Token(v) = self { Ok(v) } else { Err(self) }
+    }
+
+    pub fn try_into_group(self) -> Result<TokenGroup, Self> {
+        if let Self::Group(v) = self { Ok(v) } else { Err(self) }
+    }
+
+    pub fn as_token(&self) -> Option<&Token> {
+        if let Self::Token(v) = self { Some(v) } else { None }
+    }
+
+    pub fn as_group(&self) -> Option<&TokenGroup> {
+        if let Self::Group(v) = self { Some(v) } else { None }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TokenGroup {
-    delimiter: Delimiter,
-    stream: TokenStream,
+    pub delimiter: Delimiter,
+    pub stream: TokenStream,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Delimiter {
+pub struct Delimiter {
+    pub span: Span,
+    pub kind: DelimiterKind,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum DelimiterKind {
     Bracket,
     Brace,
     Paren,
 }
 
-impl From<TokenKind> for Delimiter {
+impl DelimiterKind {
+    pub fn close_token_kind(self) -> TokenKind {
+        match self {
+            DelimiterKind::Bracket => TokenKind::CloseBracket,
+            DelimiterKind::Brace => TokenKind::CloseBrace,
+            DelimiterKind::Paren => TokenKind::CloseParen,
+        }
+    }
+}
+
+impl Display for DelimiterKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            DelimiterKind::Bracket => "[",
+            DelimiterKind::Brace => "{",
+            DelimiterKind::Paren => "(",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl From<Token> for Delimiter {
+    fn from(Token { span, kind }: Token) -> Self {
+        Delimiter { span, kind: kind.into() }
+    }
+}
+
+impl From<TokenKind> for DelimiterKind {
     fn from(kind: TokenKind) -> Self {
         use TokenKind::*;
         match kind {
@@ -111,5 +152,12 @@ impl From<TokenKind> for Delimiter {
             OpenBracket | CloseBracket => Self::Bracket,
             _ => panic!("invalid delimiter"),
         }
+    }
+}
+
+impl TokenGroup {
+    #[inline(always)]
+    pub fn span(&self) -> Span {
+        self.delimiter.span
     }
 }

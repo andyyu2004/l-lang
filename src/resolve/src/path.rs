@@ -6,7 +6,7 @@ use ir::{PartialRes, Res};
 
 impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
     /// `id` belongs to the `Ty` or `Expr`
-    crate fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
+    pub(crate) fn resolve_path(&mut self, path: &'ast Path, ns: NS) {
         let partial_res = match ns {
             NS::Value => self.resolve_val_path(path),
             NS::Type => self.resolve_ty_path(path).map(PartialRes::resolved),
@@ -22,7 +22,7 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         self.resolve_val_path_segments(path, &path.segments)
     }
 
-    crate fn resolve_module(&mut self, ident: Ident) -> Option<ModuleId> {
+    pub(crate) fn resolve_module(&mut self, ident: Ident) -> Option<ModuleId> {
         self.resolver.find_module(self.curr_module(), ident)
     }
 

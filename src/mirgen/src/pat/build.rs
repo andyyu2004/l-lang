@@ -8,7 +8,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
     /// bind (a, b) l
     /// a <- l.0; b <- l.1
     ///
-    crate fn bind_pat_to_lvalue(
+    pub(crate) fn bind_pat_to_lvalue(
         &mut self,
         mut block: BlockId,
         irref_pat: &tir::Pattern<'tcx>,

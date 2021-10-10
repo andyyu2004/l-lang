@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
-    crate fn build_closure(
+    pub(crate) fn build_closure(
         &mut self,
         block: BlockId,
         closure: &tir::Expr<'tcx>,

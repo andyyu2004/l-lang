@@ -102,7 +102,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         ir::ExprKind::Match(scrutinee, self.alloc_from_iter(arms), ir::MatchSource::If)
     }
 
-    crate fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {
+    pub(crate) fn lower_block(&mut self, block: &Block) -> &'ir ir::Block<'ir> {
         let mut expr = None;
         let mut stmts = block.stmts.iter().map(|stmt| self.lower_stmt_inner(stmt)).collect_vec();
         if let Some(&ir::StmtKind::Expr(e)) = stmts.last().map(|s| &s.kind) {

@@ -28,11 +28,11 @@ impl Diagnostics {
         }
     }
 
-    crate fn inc_err_count(&self) {
+    pub(crate) fn inc_err_count(&self) {
         self.error_count.set(1 + self.error_count.get());
     }
 
-    crate fn inc_warning_count(&self) {
+    pub(crate) fn inc_warning_count(&self) {
         self.warning_count.set(1 + self.warning_count.get());
     }
 
@@ -71,9 +71,8 @@ impl Diagnostics {
         DiagnosticBuilder::new(self, Severity::Warning, span, err).emit()
     }
 
-    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) -> ErrorReported {
+    pub fn emit_error(&self, span: impl Into<MultiSpan>, err: impl Error) {
         self.build_error(span, err).emit();
-        ErrorReported
     }
 }
 
@@ -174,7 +173,7 @@ impl<'a> DiagnosticBuilder<'a> {
         self.diagnostics.emitter.borrow_mut().emit(self)
     }
 
-    crate fn new(
+    pub(crate) fn new(
         diagnostics: &'a Diagnostics,
         severity: Severity,
         span: impl Into<MultiSpan>,

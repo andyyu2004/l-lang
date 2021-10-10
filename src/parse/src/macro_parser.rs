@@ -26,7 +26,7 @@ impl<'a> Parse<'a> for MacroParser {
     /// <token-tree> ::= <token>*
     /// <macro-repetition-operator> ::= * | + | ?
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let rules = parser.in_braces(MacroRuleParser.punctuated1(TokenKind::Semi))?;
+        let rules = parser.within_braces(MacroRuleParser.punctuated1(TokenKind::Semi))?;
         Ok(Macro { rules })
     }
 }
@@ -39,8 +39,9 @@ impl<'a> Parse<'a> for MacroRuleParser {
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         let matcher = MacroMatcherParser.parse(parser)?;
         parser.expect(TokenKind::RFArrow)?;
-        let transcriber = parser.in_braces(parse_fn(|parser| parser.parse_tt()))?;
-        Ok(MacroRule { matcher, transcriber })
+        todo!();
+        // let transcriber = parser.in_braces(parse_fn(|parser| parser.parse_tt()))?;
+        // Ok(MacroRule { matcher, transcriber })
     }
 }
 
@@ -58,7 +59,7 @@ impl<'a> Parse<'a> for MacroMatcherParser {
 
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
         // TODO need custom logic rather than using `many` as we need to stop when we hit a delimiter
-        let matches = parser.in_parens(MacroMatchParser.many())?;
+        let matches = parser.within_parens(MacroMatchParser.many())?;
         Ok(MacroMatcher { matches })
     }
 }
@@ -75,7 +76,7 @@ impl<'a> Parse<'a> for MacroMatchParser {
                 let specifier = MacroFragmentSpecifierParser.parse(parser)?;
                 MacroMatch::Fragment(ident, specifier)
             } else {
-                let matches = parser.in_parens(self.many1())?;
+                let matches = parser.within_parens(self.many1())?;
                 let (sep, repetitor) = match MacroRepetitorParser.parse(parser) {
                     Ok(rep) => (None, rep),
                     Err(_) => {

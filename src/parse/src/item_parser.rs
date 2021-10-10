@@ -88,9 +88,9 @@ impl<'a> Parse<'a> for ModuleParser {
 
 pub struct SubModuleParser {
     /// the span of the declaration
-    crate span: Span,
+    pub(crate) span: Span,
     /// the name of the module
-    crate name: Ident,
+    pub(crate) name: Ident,
 }
 
 impl<'a> Parse<'a> for SubModuleParser {

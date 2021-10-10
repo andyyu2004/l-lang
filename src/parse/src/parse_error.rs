@@ -1,6 +1,6 @@
 use ast::{Ident, ItemKind};
 use error::DiagnosticBuilder;
-use lex::{Token, TokenKind};
+use lex::{DelimiterKind, Token, TokenKind, TokenTree};
 use span::Symbol;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -51,4 +51,12 @@ pub enum ParseError {
     UnterminatedStringLiteral,
     #[error("missing fragment specifier")]
     MissingFragmentSpecifier,
+    #[error("expected token `{0}` to close group, found `{1}`")]
+    MismatchedTokenTreeDelimiter(TokenKind, TokenKind),
+    #[error("unmatched opening delimiter `{0}`")]
+    UnmatchedOpenTokenTreeDelimiter(DelimiterKind),
+    #[error("unmatched closing delimiter `{0}`")]
+    UnmatchedCloseTokenTreeDelimiter(TokenKind),
+    #[error("expected token, found token group")]
+    ExpectedTokenFoundTokenGroup,
 }

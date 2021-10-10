@@ -5,7 +5,7 @@ use ir::DefId;
 use rustc_hash::FxHashSet;
 use std::fmt::{self, Display, Formatter};
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     *queries = Queries { resolve_instance, ..*queries }
 }
 

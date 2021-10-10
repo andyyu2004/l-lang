@@ -9,7 +9,7 @@ use lcore::queries::Queries;
 use lcore::ty::{self, TraitImpls, TyCtx};
 use rustc_hash::FxHashMap;
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     *queries = Queries { trait_impls: |tcx, ()| trait_impls(tcx), trait_impls_of, ..*queries }
 }
 

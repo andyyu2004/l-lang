@@ -1,7 +1,11 @@
 use super::*;
 
 impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
-    crate fn build_stmt(&mut self, mut block: BlockId, stmt: &tir::Stmt<'tcx>) -> BlockAnd<()> {
+    pub(crate) fn build_stmt(
+        &mut self,
+        mut block: BlockId,
+        stmt: &tir::Stmt<'tcx>,
+    ) -> BlockAnd<()> {
         match &stmt.kind {
             tir::StmtKind::Let(tir::Let { pat, init, .. }) => {
                 let lvalue = match init {
@@ -16,7 +20,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
 
     // some expressions can have a more efficient implementation if we know the return value will
     // be unused (as it is an expression statement)
-    crate fn build_expr_stmt(
+    pub(crate) fn build_expr_stmt(
         &mut self,
         mut block: BlockId,
         expr: &tir::Expr<'tcx>,

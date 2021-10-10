@@ -46,11 +46,11 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         Self { inherited, sig, unsafe_ctx: false }
     }
 
-    crate fn in_unsafe_ctx(&self) -> bool {
+    pub(crate) fn in_unsafe_ctx(&self) -> bool {
         self.unsafe_ctx
     }
 
-    crate fn with_unsafe_ctx<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_unsafe_ctx<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
         let old = self.unsafe_ctx;
         self.unsafe_ctx = true;
         let ret = f(self);

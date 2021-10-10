@@ -91,11 +91,11 @@ impl TestCtx {
         Ok(())
     }
 
-    crate fn inc_errc(&self) {
+    pub(crate) fn inc_errc(&self) {
         self.errc.set(1 + self.errc.get());
     }
 
-    crate fn report_error(&self, error: impl Error) {
+    pub(crate) fn report_error(&self, error: impl Error) {
         self.inc_errc();
         eprintln!("{}", error)
     }

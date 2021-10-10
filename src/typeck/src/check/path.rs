@@ -3,7 +3,7 @@ use ir::{CtorKind, DefId, DefKind, QPath, Res};
 use lcore::ty::*;
 
 impl<'a, 'tcx> FnCtx<'a, 'tcx> {
-    crate fn check_struct_path(
+    pub(crate) fn check_struct_path(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &ir::QPath<'tcx>,
@@ -34,7 +34,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         })
     }
 
-    crate fn check_qpath(
+    pub(crate) fn check_qpath(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &QPath<'tcx>,
@@ -43,7 +43,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ty
     }
 
-    crate fn resolve_qpath(
+    pub(crate) fn resolve_qpath(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         qpath: &QPath<'tcx>,
@@ -55,7 +55,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         }
     }
 
-    crate fn check_type_relative_path(
+    pub(crate) fn check_type_relative_path(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         self_ty: Ty<'tcx>,
@@ -71,7 +71,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         (res, ty)
     }
 
-    crate fn check_expr_path(
+    pub(crate) fn check_expr_path(
         &mut self,
         xpat: &dyn ir::ExprOrPat<'tcx>,
         path: &ir::Path,

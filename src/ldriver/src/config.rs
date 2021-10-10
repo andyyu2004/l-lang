@@ -18,7 +18,7 @@ pub struct LConfig {
     crate opts: CompilerOptions,
 }
 
-crate fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
+pub(crate) fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
     let path = opts
         .input_path
         .canonicalize()

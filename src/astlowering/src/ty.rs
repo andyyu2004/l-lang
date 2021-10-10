@@ -11,7 +11,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
         self.arena.alloc(self.lower_ty_inner(ty))
     }
 
-    crate fn lower_ty_inner(&mut self, ty: &Ty) -> ir::Ty<'ir> {
+    pub(crate) fn lower_ty_inner(&mut self, ty: &Ty) -> ir::Ty<'ir> {
         let &Ty { span, id, ref kind } = ty;
         let kind = match kind {
             TyKind::Fn(params, ret) =>

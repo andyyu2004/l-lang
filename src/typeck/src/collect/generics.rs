@@ -3,7 +3,7 @@ use ir::{DefId, DefNode};
 use lcore::queries::Queries;
 use lcore::ty::{self, TyCtx, TyParam};
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     *queries = Queries { generics_of, ..*queries }
 }
 

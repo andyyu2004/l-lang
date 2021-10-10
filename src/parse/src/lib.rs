@@ -1,6 +1,7 @@
 #![feature(box_syntax, box_patterns)]
-#![feature(crate_visibility_modifier)]
+#![feature(once_cell)]
 #![feature(decl_macro)]
+#![feature(result_copied)]
 
 #[macro_use]
 extern crate log;
@@ -32,6 +33,7 @@ use pattern_parser::*;
 use prog_parser::AstParser;
 use span::{kw, Span};
 use stmt_parser::StmtParser;
+use token_tree_parser::TokenTreeParser;
 use ty_parser::*;
 
 pub trait Parse<'a>: Sized {

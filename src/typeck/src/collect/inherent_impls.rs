@@ -6,7 +6,7 @@ use lcore::queries::Queries;
 use lcore::ty::{self, InherentImpls, TyCtx};
 use rustc_hash::FxHashMap;
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     *queries =
         Queries { inherent_impls: |tcx, ()| inherent_impls(tcx), inherent_impls_of, ..*queries }
 }

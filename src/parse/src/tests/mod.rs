@@ -1,4 +1,5 @@
 mod macro_parse_tests;
+mod token_tree_parse_tests;
 
 use super::*;
 use index::Idx;
@@ -24,7 +25,7 @@ macro parse_macro($src:tt) {{
     let mut chars = s.chars();
     assert_eq!(chars.next().unwrap(), '{');
     assert_eq!(chars.next_back().unwrap(), '}');
-    let driver = ldriver::Driver::from_src(s);
+    let driver = ldriver::Driver::from_src(chars.as_str());
     driver.parse_macro().unwrap()
 }}
 

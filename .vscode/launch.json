@@ -1,16 +1,428 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug",
-            "program": "${workspaceFolder}/<your program>",
-            "args": [],
-            "cwd": "${workspaceFolder}"
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'l'",
+      "cargo": {
+        "args": ["build", "--bin=l", "--package=l"],
+        "filter": {
+          "name": "l",
+          "kind": "bin"
         }
-    ]
+      },
+      "args": ["run", "l-test"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'l'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=l", "--package=l"],
+        "filter": {
+          "name": "l",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'cli'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=cli"],
+        "filter": {
+          "name": "cli",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'ldriver'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=ldriver"],
+        "filter": {
+          "name": "ldriver",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'ast'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=ast"],
+        "filter": {
+          "name": "ast",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'index'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=index"],
+        "filter": {
+          "name": "index",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'lex'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=lex"],
+        "filter": {
+          "name": "lex",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'span'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=span"],
+        "filter": {
+          "name": "span",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'arena'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=arena"],
+        "filter": {
+          "name": "arena",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'lutil'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=lutil"],
+        "filter": {
+          "name": "lutil",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'astlowering'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=astlowering"],
+        "filter": {
+          "name": "astlowering",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'ir'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=ir"],
+        "filter": {
+          "name": "ir",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'resolve'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=resolve"],
+        "filter": {
+          "name": "resolve",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'error'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=error"],
+        "filter": {
+          "name": "error",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'meta'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=meta"],
+        "filter": {
+          "name": "meta",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'lcore'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=lcore"],
+        "filter": {
+          "name": "lcore",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'ds'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=ds"],
+        "filter": {
+          "name": "ds",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'session'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=session"],
+        "filter": {
+          "name": "session",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'codegen'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=codegen"],
+        "filter": {
+          "name": "codegen",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'mir'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=mir"],
+        "filter": {
+          "name": "mir",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'mirgen'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=mirgen"],
+        "filter": {
+          "name": "mirgen",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'tir'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=tir"],
+        "filter": {
+          "name": "tir",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'parse'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=parse"],
+        "filter": {
+          "name": "parse",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'typeck'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=typeck"],
+        "filter": {
+          "name": "typeck",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'infer'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=infer"],
+        "filter": {
+          "name": "infer",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'gc'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=gc"],
+        "filter": {
+          "name": "gc",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'queries'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=queries"],
+        "filter": {
+          "name": "queries",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'traits'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=traits"],
+        "filter": {
+          "name": "traits",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'runner'",
+      "cargo": {
+        "args": ["build", "--bin=runner", "--package=runner"],
+        "filter": {
+          "name": "runner",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'runner'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=runner", "--package=runner"],
+        "filter": {
+          "name": "runner",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
 }

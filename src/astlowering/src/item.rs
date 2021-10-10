@@ -62,7 +62,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         });
     }
 
-    crate fn lower_module(&mut self, module: &Module) -> ir::Mod<'ir> {
+    pub(crate) fn lower_module(&mut self, module: &Module) -> ir::Mod<'ir> {
         let items = self.arena.alloc_from_iter(module.items.iter().map(|item| {
             self.lower_item(item);
             self.lower_node_id(item.id).def
@@ -72,7 +72,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
 
     /// inserts DefId -> DefNode mapping into the `DefMap`
     /// returns the same T for convenience
-    crate fn mk_def_node<T>(&mut self, def_id: DefId, node: T)
+    pub(crate) fn mk_def_node<T>(&mut self, def_id: DefId, node: T)
     where
         T: Into<DefNode<'ir>>,
     {
@@ -225,7 +225,7 @@ impl<'a, 'ir> AstLoweringCtx<'a, 'ir> {
         }
     }
 
-    crate fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
+    pub(crate) fn lower_fn_sig(&mut self, sig: &FnSig) -> &'ir ir::FnSig<'ir> {
         let inputs =
             self.arena.alloc_from_iter(sig.params.iter().map(|p| self.lower_ty_inner(&p.ty)));
         let output = sig.ret_ty.as_ref().map(|ty| self.lower_ty(ty));

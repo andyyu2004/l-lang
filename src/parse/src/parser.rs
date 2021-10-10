@@ -18,14 +18,14 @@ pub struct Parser<'a> {
 
 /// parser for a single source file
 pub struct FileParser {
-    crate file: FileIdx,
+    pub(crate) file: FileIdx,
     tokens: Vec<Token>,
     idx: usize,
 }
 
 impl FileParser {
     pub fn new(file: FileIdx) -> Self {
-        let tokens = Lexer::new().lex(file);
+        let tokens = Lexer::new().lex(file).into_iter().collect();
         Self { file, tokens, idx: 0 }
     }
 }
@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    crate fn with_file<R>(&mut self, file: FileIdx, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_file<R>(&mut self, file: FileIdx, f: impl FnOnce(&mut Self) -> R) -> R {
         let fparser = self.fparser.take();
         self.fparser = Some(FileParser::new(file));
         let ret = f(self);
@@ -79,14 +79,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn in_braces<R>(&mut self, mut parser: impl Parse<'a, Output = R>) -> ParseResult<'a, R> {
+    pub(crate) fn within_braces<R>(
+        &mut self,
+        mut parser: impl Parse<'a, Output = R>,
+    ) -> ParseResult<'a, R> {
         self.expect(TokenKind::OpenBrace)?;
         let r = parser.parse(self)?;
         self.expect(TokenKind::CloseBrace)?;
         Ok(r)
     }
 
-    crate fn in_parens<R>(&mut self, mut parser: impl Parse<'a, Output = R>) -> ParseResult<'a, R> {
+    pub(crate) fn within_parens<R>(
+        &mut self,
+        mut parser: impl Parse<'a, Output = R>,
+    ) -> ParseResult<'a, R> {
         self.expect(TokenKind::OpenParen)?;
         let r = parser.parse(self)?;
         self.expect(TokenKind::CloseParen)?;
@@ -95,7 +101,7 @@ impl<'a> Parser<'a> {
 
     /// runs some parser and returns the result and the span that it consumed
     /// `include_prev` indicates whether the previous token is to be included in the span or not
-    crate fn with_span<R>(
+    pub(crate) fn with_span<R>(
         &mut self,
         mut parser: impl Parse<'a, Output = R>,
         include_prev: bool,
@@ -167,6 +173,11 @@ impl<'a> Parser<'a> {
         self.with_file(ROOT_FILE_IDX, |parser| parser.parse_expr())
     }
 
+    pub fn test_parse_tt(&mut self) -> TokenStream {
+        let tokens = Lexer::new().lex(ROOT_FILE_IDX);
+        TokenTreeParser::new(self.sess, tokens).parse_token_stream()
+    }
+
     pub fn test_parse_macro(&mut self) -> ParseResult<Macro> {
         self.with_file(ROOT_FILE_IDX, |parser| parser.parse_macro())
     }
@@ -213,13 +224,13 @@ impl<'a> Parser<'a> {
         PathParser { kind: PathKind::Expr }.parse(self)
     }
 
-    crate fn mk_id(&self) -> NodeId {
+    pub(crate) fn mk_id(&self) -> NodeId {
         let id = self.id_counter.get();
         self.id_counter.set(id + 1);
         NodeId::new(id)
     }
 
-    crate fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
+    pub(crate) fn try_parse<R, P>(&mut self, parser: &mut P) -> Option<R>
     where
         P: Parse<'a, Output = R>,
     {
@@ -232,27 +243,27 @@ impl<'a> Parser<'a> {
         })
     }
 
-    crate fn mk_path(&self, span: Span, segments: Vec<PathSegment>) -> Path {
+    pub(crate) fn mk_path(&self, span: Span, segments: Vec<PathSegment>) -> Path {
         Path { id: self.mk_id(), span, segments }
     }
 
-    crate fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
+    pub(crate) fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
         box Expr { span, id: self.mk_id(), kind }
     }
 
-    crate fn mk_infer_ty(&self) -> P<Ty> {
+    pub(crate) fn mk_infer_ty(&self) -> P<Ty> {
         self.mk_ty(self.empty_span(), TyKind::Infer)
     }
 
-    crate fn mk_ty_err(&self, span: Span) -> P<Ty> {
+    pub(crate) fn mk_ty_err(&self, span: Span) -> P<Ty> {
         self.mk_ty(span, TyKind::Err)
     }
 
-    crate fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
+    pub(crate) fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
         box Ty { span, id: self.mk_id(), kind }
     }
 
-    crate fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
+    pub(crate) fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
         if let PatternKind::Ident(ident, _, _) = kind {
             if !ident.is_lower() {
                 self.build_err(span, ParseError::ExpectLowercaseIdentifier(*ident)).emit();
@@ -261,11 +272,17 @@ impl<'a> Parser<'a> {
         box Pattern { span, id: self.mk_id(), kind }
     }
 
-    crate fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
+    pub(crate) fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
         box Stmt { span, id: self.mk_id(), kind }
     }
 
-    crate fn mk_item(&self, span: Span, vis: Visibility, ident: Ident, kind: ItemKind) -> P<Item> {
+    pub(crate) fn mk_item(
+        &self,
+        span: Span,
+        vis: Visibility,
+        ident: Ident,
+        kind: ItemKind,
+    ) -> P<Item> {
         // validates identifier and visibility
         match kind {
             ItemKind::Fn(..) if !ident.is_lower() =>
@@ -287,27 +304,27 @@ impl<'a> Parser<'a> {
     }
 
     // same as next except the return value is suppressed
-    crate fn bump(&mut self) {
+    pub(crate) fn bump(&mut self) {
         self.next();
     }
 
-    crate fn next(&mut self) -> Token {
+    pub(crate) fn next(&mut self) -> Token {
         let tok = self.peek();
         self.idx += 1;
         tok
     }
 
-    crate fn safe_next(&mut self) -> ParseResult<'a, Token> {
+    pub(crate) fn safe_next(&mut self) -> ParseResult<'a, Token> {
         let tok = self.safe_peek();
         self.idx += 1;
         tok
     }
 
-    crate fn reached_eof(&self) -> bool {
+    pub(crate) fn reached_eof(&self) -> bool {
         self.tokens[self.idx].kind == TokenKind::Eof
     }
 
-    crate fn safe_peek(&self) -> ParseResult<'a, Token> {
+    pub(crate) fn safe_peek(&self) -> ParseResult<'a, Token> {
         if !self.reached_eof() {
             Ok(self.tokens[self.idx])
         } else {
@@ -315,19 +332,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn peek(&self) -> Token {
+    pub(crate) fn peek(&self) -> Token {
         self.safe_peek().ok().unwrap()
     }
 
-    crate fn prev(&self) -> Token {
+    pub(crate) fn prev(&self) -> Token {
         self.tokens[self.idx - 1]
     }
 
-    crate fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
+    pub(crate) fn accept_literal(&mut self) -> Option<(LiteralKind, Span)> {
         self.expect_literal().ok()
     }
 
-    crate fn expect_literal(&mut self) -> ParseResult<'a, (LiteralKind, Span)> {
+    pub(crate) fn expect_literal(&mut self) -> ParseResult<'a, (LiteralKind, Span)> {
         let Token { span, kind: ttype } = self.safe_peek()?;
         match ttype {
             TokenKind::Literal { kind, .. } => {
@@ -340,7 +357,7 @@ impl<'a> Parser<'a> {
 
     /// expect identifier starting with uppercase letter
     /// see comments on `expect_lident` on return values
-    crate fn expect_uident(&mut self) -> ParseResult<'a, Ident> {
+    pub(crate) fn expect_uident(&mut self) -> ParseResult<'a, Ident> {
         let ident = self.expect_ident()?;
         if !ident.is_upper() {
             self.build_err(ident.span, ParseError::ExpectUppercaseIdentifier(*ident)).emit();
@@ -350,7 +367,7 @@ impl<'a> Parser<'a> {
 
     /// expect lowercase identifier (starts with lowercase letter or _)
     /// we return an `Ok` as we can still continue parsing, but we report an error immediately
-    crate fn expect_lident(&mut self) -> ParseResult<'a, Ident> {
+    pub(crate) fn expect_lident(&mut self) -> ParseResult<'a, Ident> {
         let ident = self.expect_ident()?;
         if !ident.is_lower() {
             self.build_err(ident.span, ParseError::ExpectLowercaseIdentifier(*ident)).emit();
@@ -359,7 +376,7 @@ impl<'a> Parser<'a> {
     }
 
     // use only for path segments where both lidents and uidents are valid
-    crate fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
+    pub(crate) fn expect_ident(&mut self) -> ParseResult<'a, Ident> {
         let token = self.safe_peek()?;
         let Token { span, kind: ttype } = token;
         match ttype {
@@ -372,22 +389,22 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn accept_lident(&mut self) -> Option<Ident> {
+    pub(crate) fn accept_lident(&mut self) -> Option<Ident> {
         self.expect_lident().ok()
     }
 
-    crate fn accept(&mut self, ttype: TokenKind) -> Option<Token> {
+    pub(crate) fn accept(&mut self, ttype: TokenKind) -> Option<Token> {
         self.expect(ttype).ok()
     }
 
-    crate fn accept_one_of(
+    pub(crate) fn accept_one_of(
         &mut self,
         ttypes: impl IntoIterator<Item = TokenKind>,
     ) -> Option<Token> {
         ttypes.into_iter().fold(None, |acc, t| acc.or_else(|| self.accept(t)))
     }
 
-    crate fn parse_abi(&mut self) -> ParseResult<'a, Abi> {
+    pub(crate) fn parse_abi(&mut self) -> ParseResult<'a, Abi> {
         let symbol = self.accept_str();
         let symbol = match symbol {
             Some(symbol) => symbol,
@@ -399,11 +416,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn accept_str(&mut self) -> Option<Ident> {
+    pub(crate) fn accept_str(&mut self) -> Option<Ident> {
         self.expect_str().ok()
     }
 
-    crate fn expect_str(&mut self) -> ParseResult<'a, Ident> {
+    pub(crate) fn expect_str(&mut self) -> ParseResult<'a, Ident> {
         let (kind, span) = self.expect_literal()?;
         match kind {
             LiteralKind::Str { terminated } => {
@@ -418,7 +435,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect(&mut self, ttype: TokenKind) -> ParseResult<'a, Token> {
+    pub(crate) fn expect(&mut self, ttype: TokenKind) -> ParseResult<'a, Token> {
         let t = self.safe_peek()?;
         if t.kind == ttype {
             self.idx += 1;
@@ -428,7 +445,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    crate fn expect_one_of(
+    pub(crate) fn expect_one_of(
         &mut self,
         tkinds: impl IntoIterator<Item = TokenKind> + Copy,
     ) -> ParseResult<'a, Token> {

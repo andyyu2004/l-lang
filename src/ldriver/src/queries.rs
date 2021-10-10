@@ -1,7 +1,7 @@
 use crate::passes;
 use lcore::queries::{Queries, QueryCtx};
 
-crate fn query_ctx<'tcx>() -> QueryCtx<'tcx> {
+pub(crate) fn query_ctx<'tcx>() -> QueryCtx<'tcx> {
     let mut queries = Queries::default();
 
     passes::provide(&mut queries);

@@ -6,7 +6,7 @@ use lcore::queries::Queries;
 use lcore::ty::{AdtKind, AdtTy, FieldTy, TyCtx, TypeError, VariantTy};
 use rustc_hash::FxHashMap;
 
-crate fn provide(queries: &mut Queries) {
+pub(crate) fn provide(queries: &mut Queries) {
     *queries = Queries { adt_ty, ..*queries }
 }
 

@@ -18,7 +18,7 @@ pub struct Error {
     msg: String,
 }
 
-crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
+pub(crate) fn parse(path: impl AsRef<Path>) -> Vec<Error> {
     let reader = BufReader::new(File::open(path).unwrap());
     reader
         .lines()
@@ -29,7 +29,7 @@ crate fn parse(path: impl AsRef<Path>) -> Vec<Error> {
 }
 
 impl TestCtx {
-    crate fn compare_expected_errors(&mut self, expected: &[Error], output: &Output) {
+    pub(crate) fn compare_expected_errors(&mut self, expected: &[Error], output: &Output) {
         let mut errors = serde_json::from_str::<Vec<JsonDiagnostic>>(&output.stderr).unwrap();
         if errors.len() != expected.len() {
             return self

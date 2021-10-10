@@ -4,7 +4,7 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 
 
-crate fn new(config: NewCmd) -> io::Result<()> {
+pub(crate) fn new(config: NewCmd) -> io::Result<()> {
     let path = &config.path;
     let name = path.file_name().unwrap().to_str().unwrap();
     fs::create_dir_all(path)?;

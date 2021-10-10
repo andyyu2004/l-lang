@@ -9,18 +9,18 @@ pub struct InferCtxSnapshot<'a, 'tcx> {
 }
 
 impl<'tcx> InferCtxUndoLogs<'tcx> {
-    crate fn start_snapshot(&mut self) -> Snapshot<'tcx> {
+    pub(crate) fn start_snapshot(&mut self) -> Snapshot<'tcx> {
         self.open_snapshots_count += 1;
         Snapshot { undo_logs_count: self.logs.len(), marker: std::marker::PhantomData }
     }
 }
 
 impl<'a, 'tcx> InferCtx<'a, 'tcx> {
-    crate fn rollback_to(&self, snapshot: InferCtxSnapshot<'a, 'tcx>) {
+    pub(crate) fn rollback_to(&self, snapshot: InferCtxSnapshot<'a, 'tcx>) {
         self.inner.borrow_mut().rollback_to(snapshot.snapshot)
     }
 
-    crate fn start_snapshot(&self) -> InferCtxSnapshot<'a, 'tcx> {
+    pub(crate) fn start_snapshot(&self) -> InferCtxSnapshot<'a, 'tcx> {
         // ensure the borrow finishes by the time we return the snapshot
         // otherwise we are sure to run into BorrowMut errors
         let snapshot = self.inner.borrow_mut().undo_logs.start_snapshot();
