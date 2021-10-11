@@ -33,7 +33,7 @@ impl<'tcx> CtxInterners<'tcx> {
     pub fn intern_ty(&self, kind: TyKind<'tcx>) -> Ty<'tcx> {
         let mut types = self.types.borrow_mut();
         match types.get(&kind) {
-            Some(ty) => *ty,
+            Some(&ty) => ty,
             None => {
                 let flags = kind.ty_flags();
                 let ty = self.arena.alloc(Type { kind, flags });

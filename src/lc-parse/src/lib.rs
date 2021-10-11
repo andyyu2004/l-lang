@@ -23,15 +23,15 @@ mod validate;
 
 pub use parser::Parser;
 
-use lc_ast::*;
 use expr_parser::*;
 use item_parser::*;
+use lc_ast::*;
 use lc_lex::{Base, LiteralKind, Token, TokenGroup, TokenKind, TokenTree};
+use lc_span::{kw, Span};
 use macro_parser::*;
 use parse_error::{ParseError, ParseResult};
 use pattern_parser::*;
 use prog_parser::AstParser;
-use lc_span::{kw, Span};
 use stmt_parser::StmtParser;
 use token_tree_parser::TokenTreeParser;
 use ty_parser::*;
@@ -506,6 +506,7 @@ impl<'a> Parse<'a> for FieldParser {
     }
 }
 
+/// Parser for expressions that start with a path (including paths, struct, and macro expressions)
 pub struct PathExprParser;
 
 impl<'a> Parse<'a> for PathExprParser {
@@ -531,6 +532,9 @@ impl<'a> Parse<'a> for PathExprParser {
                     Ok(parser.mk_expr(span, ExprKind::Path(struct_parser.path)))
                 }
             }
+        } else if parser.accept(TokenKind::Not).is_some() {
+            let tokens = parser.parse_tt_group();
+            Ok(parser.mk_expr(span, ExprKind::Macro(path, tokens)))
         } else {
             Ok(parser.mk_expr(span, ExprKind::Path(path)))
         }

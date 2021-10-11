@@ -86,14 +86,14 @@ impl<'a> TokenTreeParser<'a> {
                     span: open_delimiter.span.merge(token.span),
                     kind: open_delimiter.kind,
                 };
-                TokenGroup { delimiter, stream }
+                TokenGroup::new(delimiter, stream)
             }
             None => {
                 let span = open_delimiter.span.merge(stream.span());
                 let err = ParseError::UnmatchedOpenTokenTreeDelimiter(open_delimiter.kind);
                 self.sess.emit_error(span, err);
                 let delimiter = Delimiter { span, kind: open_delimiter.kind };
-                TokenGroup { delimiter, stream }
+                TokenGroup::new(delimiter, stream)
             }
         }
     }

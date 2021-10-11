@@ -6,10 +6,16 @@ use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TokenStream {
+    size: usize,
     token_trees: Rc<Vec<TokenTree>>,
 }
 
 impl TokenStream {
+    pub fn new(token_trees: Rc<Vec<TokenTree>>) -> Self {
+        let size = token_trees.iter().map(|tt| tt.size()).sum();
+        Self { size, token_trees }
+    }
+
     pub fn span(&self) -> Span {
         assert!(!self.is_empty(), "todo?");
         let tts = &self.token_trees;
@@ -20,8 +26,14 @@ impl TokenStream {
         self.token_trees.is_empty()
     }
 
+    /// The number of token trees in the stream
     pub fn len(&self) -> usize {
         self.token_trees.len()
+    }
+
+    /// The number of tokens in the stream
+    pub fn size(&self) -> usize {
+        self.size
     }
 }
 
@@ -30,14 +42,6 @@ impl Index<usize> for TokenStream {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.token_trees[index]
-    }
-}
-
-impl Iterator for TokenStream {
-    type Item = TokenTree;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
     }
 }
 
@@ -56,7 +60,7 @@ impl TokenStreamBuilder {
     }
 
     pub fn to_stream(self) -> TokenStream {
-        TokenStream { token_trees: Rc::new(self.token_trees) }
+        TokenStream::new(Rc::new(self.token_trees))
     }
 }
 
@@ -89,12 +93,32 @@ impl TokenTree {
     pub fn as_group(&self) -> Option<&TokenGroup> {
         if let Self::Group(v) = self { Some(v) } else { None }
     }
+
+    fn size(&self) -> usize {
+        match self {
+            TokenTree::Token(..) => 1,
+            TokenTree::Group(group) => group.size(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TokenGroup {
-    pub delimiter: Delimiter,
-    pub stream: TokenStream,
+    size: usize,
+    delimiter: Delimiter,
+    stream: TokenStream,
+}
+
+impl TokenGroup {
+    pub fn new(delimiter: Delimiter, stream: TokenStream) -> Self {
+        let size = 2 + stream.size();
+        Self { delimiter, stream, size }
+    }
+
+    /// The number of tokens in this group (including the two delimiters)
+    pub fn size(&self) -> usize {
+        self.size
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

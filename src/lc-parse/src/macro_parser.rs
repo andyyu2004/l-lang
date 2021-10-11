@@ -42,7 +42,6 @@ impl<'a> Parse<'a> for MacroRuleParser {
         let matcher = MacroMatcherParser.parse(parser)?;
         parser.expect(TokenKind::RFArrow)?;
         let transcriber = parser.parse_tt_group();
-        dbg!(&transcriber);
         Ok(MacroRule { matcher, transcriber })
     }
 }

@@ -397,10 +397,12 @@ impl<'a> Parser<'a> {
         self.expect(ttype).ok()
     }
 
-    pub(crate) fn parse_tt_group(&self) -> TokenGroup {
+    pub(crate) fn parse_tt_group(&mut self) -> TokenGroup {
         // HACK abusing the fact that [TokenIterator] is current of type [std::vec::IntoIter]
-        TokenTreeParser::new(self.sess, self.tokens[self.idx..].to_vec().into_iter())
-            .parse_token_group()
+        let group = TokenTreeParser::new(self.sess, self.tokens[self.idx..].to_vec().into_iter())
+            .parse_token_group();
+        self.idx += group.size();
+        group
     }
 
     pub(crate) fn accept_one_of(

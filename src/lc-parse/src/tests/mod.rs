@@ -75,6 +75,15 @@ fn parse_call_expr() {
 }
 
 #[test]
+fn parse_macro_expr() {
+    let _expr = parse_expr!("some_macro!()");
+    let _expr = parse_expr!("some_macro!{}");
+    let _expr = parse_expr!("some_macro![]");
+    let _expr = parse_expr!("some_macro! { whatever goes + in here * }");
+    dbg!(_expr);
+}
+
+#[test]
 fn parse_left_assoc_call_expr() {
     let expr = fmt_expr!("1(2)(3)(4)");
     assert_eq!(expr, "(((1 2) 3) 4)")

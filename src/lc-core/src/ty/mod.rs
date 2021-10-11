@@ -23,9 +23,9 @@ pub use InferTy::*;
 pub use TyKind::*;
 
 use crate::queries::Queries;
-use lc_ast::{Ident, Visibility};
 use bitflags::bitflags;
 use ir::{self, CtorKind, DefId, FieldIdx, ParamIdx, Res, VariantIdx};
+use lc_ast::{Ident, Visibility};
 use lc_index::{Idx, IndexVec};
 use lc_span::Span;
 use rustc_hash::FxHashMap;
