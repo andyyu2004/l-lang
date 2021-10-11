@@ -1,7 +1,7 @@
 use crate::*;
+use ir::{ParamIdx, Res};
 use lc_ast::*;
 use lc_index::Idx;
-use ir::{ParamIdx, Res};
 use lc_span::kw;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
@@ -28,7 +28,11 @@ impl<'a, 'r, 'ast> LateResolver<'a, 'r, 'ast> {
         self.with_module_id(module_id, f)
     }
 
-    pub(crate) fn with_module_id<R>(&mut self, module: ModuleId, f: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn with_module_id<R>(
+        &mut self,
+        module: ModuleId,
+        f: impl FnOnce(&mut Self) -> R,
+    ) -> R {
         self.current_module.push(module);
         let ret = f(self);
         self.current_module.pop();

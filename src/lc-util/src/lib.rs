@@ -22,3 +22,14 @@ macro_rules! pluralize {
         if $x != 1 { "s" } else { "" }
     };
 }
+
+#[macro_export]
+macro_rules! stringify_tt {
+    ($tt:tt) => {{
+        let s = stringify!($tt);
+        let mut chars = s.chars();
+        assert_eq!(chars.next().unwrap(), '{');
+        assert_eq!(chars.next_back().unwrap(), '}');
+        chars.as_str()
+    }};
+}

@@ -349,7 +349,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_fn(sig, body.as_deref())
         }
 
-        ItemKind::Macro(_) => todo!(),
         ItemKind::TypeAlias(generics, ty) => {
             visitor.visit_generics(generics);
             visitor.visit_ty(ty);
@@ -376,5 +375,6 @@ pub fn walk_item<'ast>(visitor: &mut impl Visitor<'ast>, item: &'ast Item) {
             visitor.visit_ty(self_ty);
             items.iter().for_each(|item| visitor.visit_assoc_item(item));
         }
+        ItemKind::Macro(_) => {}
     }
 }

@@ -4,6 +4,7 @@ mod token_tree_parse_tests;
 use super::*;
 use lc_index::Idx;
 use lc_span::{Span, ROOT_FILE_IDX};
+use lc_util::stringify_tt;
 
 macro expect_parse_err($src:expr) {{
     let driver = lc_driver::Driver::from_src($src);
@@ -21,11 +22,8 @@ macro fmt_expr($src:expr) {{
 }}
 
 macro parse_macro($src:tt) {{
-    let s = stringify!($src);
-    let mut chars = s.chars();
-    assert_eq!(chars.next().unwrap(), '{');
-    assert_eq!(chars.next_back().unwrap(), '}');
-    let driver = lc_driver::Driver::from_src(chars.as_str());
+    let s = stringify_tt!($src);
+    let driver = lc_driver::Driver::from_src(s);
     driver.parse_macro().unwrap()
 }}
 
@@ -80,7 +78,6 @@ fn parse_macro_expr() {
     let _expr = parse_expr!("some_macro!{}");
     let _expr = parse_expr!("some_macro![]");
     let _expr = parse_expr!("some_macro! { whatever goes + in here * }");
-    dbg!(_expr);
 }
 
 #[test]

@@ -28,7 +28,7 @@ impl<'a> Parse<'a> for MacroParser {
     /// <token-tree> ::= <token>* | <token-group>
     /// <macro-repetition-operator> ::= * | + | ?
     fn parse(&mut self, parser: &mut Parser<'a>) -> ParseResult<'a, Self::Output> {
-        let rules = MacroRuleParser.punctuated1(TokenKind::Semi).parse(parser)?;
+        let rules = parser.within_braces(MacroRuleParser.many1())?;
         Ok(Macro { rules })
     }
 }

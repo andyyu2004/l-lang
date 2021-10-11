@@ -5,12 +5,13 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-lc-index = { path = "../lc-index" }
-lc-span = { path = "../lc-span" }
-lc-lex = { path = "../lc-lex" }
 lc-ast = { path = "../lc-ast" }
-lc-session = { path = "../lc-session" }
 lc-error = { path = "../lc-error" }
+lc-index = { path = "../lc-index" }
+lc-lex = { path = "../lc-lex" }
+lc-session = { path = "../lc-session" }
+lc-span = { path = "../lc-span" }
+lc-util = { path = "../lc-util" }
 thiserror = "1"
 log = "0.4.11"
 codespan = "0.9.5"
