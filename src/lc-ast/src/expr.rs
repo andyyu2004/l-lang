@@ -1,4 +1,5 @@
 use super::*;
+use lc_lex::TokenGroup;
 use lc_span::Span;
 use std::fmt::{self, Display, Formatter};
 
@@ -39,6 +40,7 @@ impl Expr {
             | ExprKind::Call(..)
             | ExprKind::Struct(..)
             | ExprKind::Field(..)
+            | ExprKind::Macro(..)
             | ExprKind::Err
             | ExprKind::Break
             | ExprKind::Continue => false,
@@ -83,6 +85,7 @@ pub enum ExprKind {
     Struct(Path, Vec<Field>),
     Field(P<Expr>, Ident),
     Match(P<Expr>, Vec<Arm>),
+    Macro(Path, TokenGroup),
     Break,
     Continue,
     Err,
@@ -118,6 +121,7 @@ impl Display for ExprKind {
                 None => write!(fmt, "if {} {}", c, l),
             },
             Self::Match(_, _) => todo!(),
+            Self::Macro(..) => todo!(),
             Self::Err => write!(fmt, "<expr-err>"),
             Self::Continue => write!(fmt, "continue"),
             Self::Break => write!(fmt, "break"),

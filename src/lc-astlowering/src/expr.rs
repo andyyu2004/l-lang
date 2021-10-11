@@ -1,6 +1,6 @@
 use crate::AstLoweringCtx;
-use lc_ast::*;
 use itertools::Itertools;
+use lc_ast::*;
 use lc_span::Span;
 use std::array::IntoIter;
 
@@ -50,6 +50,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Continue => ir::ExprKind::Continue,
             ExprKind::Break => ir::ExprKind::Break,
             ExprKind::Err => ir::ExprKind::Err,
+            ExprKind::Macro(_, _) => todo!(),
         };
 
         ir::Expr { span: expr.span, id: self.lower_node_id(expr.id), kind }

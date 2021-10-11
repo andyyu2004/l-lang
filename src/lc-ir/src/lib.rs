@@ -1,5 +1,3 @@
-#![feature(const_panic)]
-
 #[macro_use]
 extern crate serde;
 

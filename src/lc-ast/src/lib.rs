@@ -1,5 +1,4 @@
 #![feature(crate_visibility_modifier)]
-#![feature(const_panic)]
 
 #[macro_use]
 extern crate serde;

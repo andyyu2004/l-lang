@@ -251,6 +251,7 @@ pub fn walk_expr<'ast>(visitor: &mut impl Visitor<'ast>, expr: &'ast Expr) {
             visitor.visit_expr(expr);
             visitor.visit_block(block);
         }
+        ExprKind::Macro(path, _) => visitor.visit_path(path),
     }
 }
 
