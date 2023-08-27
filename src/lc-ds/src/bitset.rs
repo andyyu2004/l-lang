@@ -88,17 +88,15 @@ impl<'a, T: Idx> Iterator for BitsetIter<'a, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            while self.word == 0 {
-                self.word = *self.words.next()?;
-                self.count += 1;
-            }
-
-            let bit_idx = self.word.trailing_zeros() as usize;
-            // unset the bit we return so we don't return it again
-            self.word ^= 1 << bit_idx;
-            return Some(T::new(bit_idx + (self.count - 1) * WORD_BITS));
+        while self.word == 0 {
+            self.word = *self.words.next()?;
+            self.count += 1;
         }
+
+        let bit_idx = self.word.trailing_zeros() as usize;
+        // unset the bit we return so we don't return it again
+        self.word ^= 1 << bit_idx;
+        Some(T::new(bit_idx + (self.count - 1) * WORD_BITS))
     }
 }
 

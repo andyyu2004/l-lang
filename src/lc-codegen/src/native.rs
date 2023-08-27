@@ -36,7 +36,7 @@ impl<'a, 'tcx> NativeFunctionsBuilder<'a, 'tcx> {
         let unit = self.struct_type(&[], false);
         let printfn = self.module.add_function(
             "print_addr",
-            unit.fn_type(&[self.i8_type().ptr_type(AddressSpace::Generic).into()], false),
+            unit.fn_type(&[self.i8_type().ptr_type(AddressSpace::default()).into()], false),
             None,
         );
         let bb = self.append_basic_block(printfn, "printint");
@@ -49,11 +49,11 @@ impl<'a, 'tcx> NativeFunctionsBuilder<'a, 'tcx> {
         builder.build_store(alloca, vec);
         let ptr = builder.build_bitcast(
             alloca,
-            self.i8_type().ptr_type(AddressSpace::Generic),
+            self.i8_type().ptr_type(AddressSpace::default()),
             "bitcast",
         );
         let printf = self.module.get_function("printf").unwrap();
-        builder.build_call(printf, &[ptr, param], "printf");
+        builder.build_call(printf, &[ptr.into(), param.into()], "printf");
         builder.build_return(Some(&self.const_struct(&[], false)));
         printfn
     }
@@ -72,11 +72,11 @@ impl<'a, 'tcx> NativeFunctionsBuilder<'a, 'tcx> {
         builder.build_store(alloca, vec);
         let ptr = builder.build_bitcast(
             alloca,
-            self.i8_type().ptr_type(AddressSpace::Generic),
+            self.i8_type().ptr_type(AddressSpace::default()),
             "bitcast",
         );
         let printf = self.module.get_function("printf").unwrap();
-        builder.build_call(printf, &[ptr, param], "printf");
+        builder.build_call(printf, &[ptr.into(), param.into()], "printf");
         builder.build_return(Some(&self.const_struct(&[], false)));
         printfn
     }
@@ -84,7 +84,8 @@ impl<'a, 'tcx> NativeFunctionsBuilder<'a, 'tcx> {
     fn build_printf(&self) -> FunctionValue<'tcx> {
         self.module.add_function(
             "printf",
-            self.i32_type().fn_type(&[self.i8_type().ptr_type(AddressSpace::Generic).into()], true),
+            self.i32_type()
+                .fn_type(&[self.i8_type().ptr_type(AddressSpace::default()).into()], true),
             Some(Linkage::External),
         )
     }

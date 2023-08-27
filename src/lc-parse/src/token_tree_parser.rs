@@ -25,11 +25,7 @@ impl<'a> TokenTreeParser<'a> {
     pub fn parse_token_stream_inner(&mut self) -> TokenStream {
         use TokenKind::*;
         let mut builder = TokenStreamBuilder::default();
-        loop {
-            let token: Token = match self.tokens.peek() {
-                Some(&token) => token,
-                None => break,
-            };
+        while let Some(&token) = self.tokens.peek() {
             match token.kind {
                 OpenBrace | OpenBracket | OpenParen =>
                     builder.push(TokenTree::Group(self.parse_token_group())),
@@ -41,24 +37,6 @@ impl<'a> TokenTreeParser<'a> {
             }
         }
         builder.to_stream()
-    }
-
-    pub fn parse_token_tree(&mut self) -> ParseResult<'a, TokenTree> {
-        use TokenKind::*;
-        let token: Token = match self.tokens.peek() {
-            Some(&token) => token,
-            None => return Err(self.sess.build_error(Span::default(), ParseError::Eof)),
-        };
-        match token.kind {
-            OpenBrace | OpenBracket | OpenParen => Ok(TokenTree::Group(self.parse_token_group())),
-            CloseBrace | CloseBracket | CloseParen => Err(self
-                .sess
-                .build_error(token.span, ParseError::UnmatchedCloseTokenTreeDelimiter(token.kind))),
-            _ => {
-                self.tokens.next();
-                Ok(TokenTree::Token(token))
-            }
-        }
     }
 
     /// Expects the iterator to be non-empty and at the start of a group including the opening delimiter

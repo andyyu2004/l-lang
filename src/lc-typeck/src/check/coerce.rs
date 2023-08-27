@@ -41,7 +41,7 @@ impl<'a, 'tcx> Coercion<'a, 'tcx> {
         }
         let ty = self.partially_resolve_ty(self.span, ty);
         self.relate_tys(ty, target)?;
-        return Ok(vec![]);
+        Ok(vec![])
     }
 }
 
@@ -64,9 +64,9 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         ty: Ty<'tcx>,
         target: Ty<'tcx>,
     ) -> TypeResult<'tcx, Ty<'tcx>> {
-        Coercion::new(self, expr.span).coerce(ty, target).and_then(|adjustments| {
+        Coercion::new(self, expr.span).coerce(ty, target).map(|adjustments| {
             self.record_adjustments(expr.id, adjustments);
-            Ok(if ty.contains_err() { self.set_ty_err() } else { target })
+            if ty.contains_err() { self.set_ty_err() } else { target }
         })
     }
 }
@@ -75,6 +75,6 @@ impl<'a, 'tcx> Deref for Coercion<'a, 'tcx> {
     type Target = FnCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.fcx
+        self.fcx
     }
 }

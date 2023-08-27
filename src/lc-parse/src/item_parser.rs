@@ -159,7 +159,7 @@ impl<'a> Parse<'a> for ExternParser {
             }
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match ForeignItemKind::try_from(kind) {
-                Ok(kind) => foreign_items.push(box Item { span, id, vis, ident, kind }),
+                Ok(kind) => foreign_items.push(Box::new(Item { span, id, vis, ident, kind })),
                 Err(kind) => parser.build_err(span, ParseError::InvalidForeignItem(kind)).emit(),
             };
         };
@@ -189,7 +189,7 @@ impl<'a> Parse<'a> for TraitParser {
             .filter_map(|item| {
                 let Item { span, id, vis, ident, .. } = *item;
                 match AssocItemKind::try_from(item.kind) {
-                    Ok(kind) => Some(box Item { span, id, vis, ident, kind }),
+                    Ok(kind) => Some(Box::new(Item { span, id, vis, ident, kind })),
                     Err(kind) => {
                         parser.build_err(span, ParseError::InvalidTraitItem(kind)).emit();
                         None
@@ -226,7 +226,7 @@ impl<'a> Parse<'a> for ImplParser {
             }
             let box Item { span, id, kind, vis, ident } = parser.parse_item()?;
             match AssocItemKind::try_from(kind) {
-                Ok(kind) => items.push(box Item { span, id, vis, ident, kind }),
+                Ok(kind) => items.push(Box::new(Item { span, id, vis, ident, kind })),
                 Err(kind) => parser.build_err(span, ParseError::InvalidImplItem(kind)).emit(),
             };
         };

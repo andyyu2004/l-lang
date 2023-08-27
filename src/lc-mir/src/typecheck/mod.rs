@@ -4,7 +4,7 @@
 use lc_core::mir::*;
 use lc_core::ty::{Ty, TyCtx};
 
-pub fn typecheck<'a, 'tcx>(tcx: TyCtx<'tcx>, mir: &'a Mir<'tcx>) {
+pub fn typecheck<'tcx>(tcx: TyCtx<'tcx>, mir: &Mir<'tcx>) {
     Typechecker::new(tcx, mir).typecheck()
 }
 

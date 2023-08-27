@@ -3,7 +3,6 @@ use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
 
-
 pub(crate) fn new(config: NewCmd) -> io::Result<()> {
     let path = &config.path;
     let name = path.file_name().unwrap().to_str().unwrap();
@@ -11,7 +10,7 @@ pub(crate) fn new(config: NewCmd) -> io::Result<()> {
     env::set_current_dir(path)?;
 
     let mut file = File::create("L.toml")?;
-    file.write(
+    file.write_all(
         format!(
             r#"[package]
 name = "{}"
@@ -27,7 +26,7 @@ version = "0.1.0"
     fs::create_dir("src")?;
     env::set_current_dir("src")?;
     let mut file = File::create("main.l")?;
-    file.write(r#"fn main() -> int { 0 }"#.as_bytes())?;
+    file.write_all(r#"fn main() -> int { 0 }"#.as_bytes())?;
 
     Ok(())
 }

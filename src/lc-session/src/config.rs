@@ -1,9 +1,9 @@
-use clap::Clap;
+use clap::Parser;
 use lc_error::ErrorFormat;
 use serde::Deserialize;
 use std::path::PathBuf;
 
-#[derive(Clone, Debug, Default, Clap, Deserialize)]
+#[derive(Clone, Debug, Default, Parser, Deserialize)]
 pub struct CompilerOptions {
     /// the path of either the directory holding `L.toml`
     /// or the path of the main `.l` file

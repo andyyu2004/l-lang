@@ -99,7 +99,7 @@ impl SourceFile {
     }
 
     pub fn source(&self) -> &'static str {
-        &self.src
+        self.src
     }
 
     fn line_start(&self, line_index: usize) -> Option<usize> {
@@ -117,7 +117,7 @@ impl Deref for SourceFile {
     type Target = str;
 
     fn deref(&self) -> &'static str {
-        &self.src
+        self.src
     }
 }
 
@@ -140,7 +140,7 @@ impl<'a> Files<'a> for SourceMap {
     }
 
     fn source(&'a self, id: Self::FileId) -> Option<Self::Source> {
-        Some(&self.modules[id].src)
+        Some(self.modules[id].src)
     }
 
     fn line_index(&'a self, id: Self::FileId, byte_index: usize) -> Option<usize> {
@@ -170,7 +170,7 @@ impl SourceMap {
     }
 
     pub fn span_as_str(&self, span: Span) -> &'static str {
-        let src: &'static str = &self.modules[span.file].src;
+        let src: &'static str = self.modules[span.file].src;
         &src[span.range()]
     }
 }

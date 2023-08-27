@@ -1,4 +1,4 @@
-use super::*;
+
 
 macro_rules! parse_token_tree {
     ($src:tt) => {{
@@ -13,7 +13,7 @@ macro_rules! parse_token_tree {
 
 #[test]
 fn test_parse_simple_token_tree() {
-    println!("");
+    println!();
     let stream = parse_token_tree!({
         fn main() {
         }

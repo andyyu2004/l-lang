@@ -25,7 +25,7 @@ pub struct FileParser {
 
 impl FileParser {
     pub fn new(file: FileIdx) -> Self {
-        let tokens = Lexer::new().lex(file).into_iter().collect();
+        let tokens = Lexer::new().lex(file).collect();
         Self { file, tokens, idx: 0 }
     }
 }
@@ -248,7 +248,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn mk_expr(&self, span: Span, kind: ExprKind) -> P<Expr> {
-        box Expr { span, id: self.mk_id(), kind }
+        Box::new(Expr { span, id: self.mk_id(), kind })
     }
 
     pub(crate) fn mk_infer_ty(&self) -> P<Ty> {
@@ -260,7 +260,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn mk_ty(&self, span: Span, kind: TyKind) -> P<Ty> {
-        box Ty { span, id: self.mk_id(), kind }
+        Box::new(Ty { span, id: self.mk_id(), kind })
     }
 
     pub(crate) fn mk_pat(&self, span: Span, kind: PatternKind) -> P<Pattern> {
@@ -269,11 +269,11 @@ impl<'a> Parser<'a> {
                 self.build_err(span, ParseError::ExpectLowercaseIdentifier(*ident)).emit();
             }
         }
-        box Pattern { span, id: self.mk_id(), kind }
+        Box::new(Pattern { span, id: self.mk_id(), kind })
     }
 
     pub(crate) fn mk_stmt(&self, span: Span, kind: StmtKind) -> P<Stmt> {
-        box Stmt { span, id: self.mk_id(), kind }
+        Box::new(Stmt { span, id: self.mk_id(), kind })
     }
 
     pub(crate) fn mk_item(
@@ -300,7 +300,7 @@ impl<'a> Parser<'a> {
             _ => {}
         }
 
-        box Item { span, id: self.mk_id(), ident, vis, kind }
+        Box::new(Item { span, id: self.mk_id(), ident, vis, kind })
     }
 
     // same as next except the return value is suppressed

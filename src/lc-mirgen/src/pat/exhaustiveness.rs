@@ -92,7 +92,7 @@ impl<'p, 'tcx> MatchCtxt<'p, 'tcx> {
 }
 
 #[derive(Default, Debug)]
-crate struct Witness<'p, 'tcx> {
+pub(crate) struct Witness<'p, 'tcx> {
     pats: Vec<Pat<'p, 'tcx>>,
 }
 
@@ -120,7 +120,7 @@ impl<'p, 'tcx> Deref for UsefulnessCtxt<'_, 'p, 'tcx> {
     type Target = MatchCtxt<'p, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.pcx
+        self.pcx
     }
 }
 
@@ -217,7 +217,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
     /// returns a set of all constructors of `ty`
     fn all_ctors_of_ty(&self, ty: Ty<'tcx>) -> IndexSet<Ctor<'tcx>> {
         match ty.kind {
-            TyKind::Box(ty) => indexset! { Ctor::new(self.intern_substs(&[ty]), CtorKind::Box) },
+            TyKind::Boxed(ty) => indexset! { Ctor::new(self.intern_substs(&[ty]), CtorKind::Box) },
             TyKind::Tuple(tys) => indexset! { Ctor::new(tys, CtorKind::Tuple) },
             TyKind::Adt(adt, _) => adt
                 .variants
@@ -272,7 +272,7 @@ impl<'a, 'p, 'tcx> UsefulnessCtxt<'a, 'p, 'tcx> {
                 fields.pats.to_vec()
             }
             PatKind::Wildcard =>
-                qfields.into_iter().map(|pat| Pat { ty: pat.ty, kind: PatKind::Wildcard }).collect(),
+                qfields.iter().map(|pat| Pat { ty: pat.ty, kind: PatKind::Wildcard }).collect(),
         };
         row.extend_from_slice(&vector[1..]);
         debug_assert_eq!(row.len(), vector.len() + qfields.len() - 1);
@@ -331,7 +331,7 @@ impl<'p, 'tcx> FromIterator<PatternVector<'p, 'tcx>> for Matrix<'p, 'tcx> {
     }
 }
 
-crate struct PatternVector<'p, 'tcx> {
+pub(crate) struct PatternVector<'p, 'tcx> {
     /// the elements of the (row) vector
     pats: &'p [Pat<'p, 'tcx>],
 }
@@ -375,7 +375,7 @@ impl<'p, 'tcx> Deref for Fields<'p, 'tcx> {
 }
 
 #[derive(Clone, Copy)]
-crate struct Pat<'p, 'tcx> {
+pub(crate) struct Pat<'p, 'tcx> {
     ty: Ty<'tcx>,
     kind: PatKind<'p, 'tcx>,
 }

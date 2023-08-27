@@ -208,13 +208,13 @@ pub enum MacroRepetitor {
 }
 
 impl Display for Macro {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         todo!()
     }
 }
 
 impl Display for MacroRule {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         todo!()
     }
 }

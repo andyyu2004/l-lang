@@ -13,5 +13,11 @@ impl MacroExpander {
     }
 }
 
+impl Default for MacroExpander {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ast::Visitor<'_> for MacroExpander {
 }

@@ -37,7 +37,7 @@ pub mod kw {
 pub struct Symbol(pub usize);
 
 fn with_interner<T, F: FnOnce(&mut Interner) -> T>(f: F) -> T {
-    SPAN_GLOBALS.with(|session_globals| f(&mut *session_globals.symbol_interner.borrow_mut()))
+    SPAN_GLOBALS.with(|session_globals| f(&mut session_globals.symbol_interner.borrow_mut()))
 }
 
 impl Symbol {

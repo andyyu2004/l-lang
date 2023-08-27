@@ -29,6 +29,6 @@ impl<'a, 'tcx> Deref for At<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.infcx
+        self.infcx
     }
 }

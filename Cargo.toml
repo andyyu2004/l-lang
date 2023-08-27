@@ -1,7 +1,7 @@
 [workspace]
+resolver = "2"
 members = [
     "src/l",
-    "src/lc-arena",
     "src/lc-ast",
     "src/lc-astlowering",
     "src/lc-cli",

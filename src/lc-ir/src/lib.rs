@@ -184,10 +184,7 @@ pub enum VariantKind<'ir> {
 
 impl<'ir> VariantKind<'ir> {
     pub fn is_tuple(&self) -> bool {
-        match self {
-            VariantKind::Tuple(_) => true,
-            _ => false,
-        }
+        matches!(self, VariantKind::Tuple(_))
     }
 }
 
@@ -322,10 +319,7 @@ pub struct Path<'ir> {
 
 impl<'ir> Path<'ir> {
     pub fn is_enum_ctor(&self) -> bool {
-        match self.res {
-            Res::Def(_, DefKind::Ctor(..)) => true,
-            _ => false,
-        }
+        matches!(self.res, Res::Def(_, DefKind::Ctor(..)))
     }
 }
 

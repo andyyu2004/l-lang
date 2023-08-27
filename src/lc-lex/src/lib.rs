@@ -8,9 +8,9 @@ pub use token_tree::*;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use lc_span::{self, with_interner, with_source_map, FileIdx, Span, Symbol};
 use lexing::RawTokenKind;
 use maplit::hashmap;
-use lc_span::{self, with_interner, with_source_map, FileIdx, Span, Symbol};
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 use std::ops::Range;
@@ -79,7 +79,7 @@ impl Lexer {
         let mut span_index = 0;
 
         // note: it is important to filter after so that the spans are correct
-        let n = lexing::strip_shebang(&src).unwrap_or(0);
+        let n = lexing::strip_shebang(src).unwrap_or(0);
         let tokens = lexing::tokenize(&src[n..]).collect_vec();
         let mut i = 0;
         let mut vec = vec![];
@@ -175,6 +175,12 @@ impl Lexer {
         // just manually add a <eof> token for easier parsing
         vec.push(Token { span: Span::new(file, span_index, span_index), kind: TokenKind::Eof });
         vec.into_iter()
+    }
+}
+
+impl Default for Lexer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

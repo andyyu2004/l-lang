@@ -3,8 +3,8 @@ use crate::ty::*;
 
 #[macro_export]
 macro_rules! arena_types {
-    ($macro:path, $args:tt, $tcx:lifetime) => (
-        $macro!($args, [
+    ($macro:path, $tcx:lifetime) => (
+        $macro!([
             [] adt_def: AdtTy,
             [] consts: Const<$tcx>,
             [] fields: FieldTy,
@@ -16,8 +16,8 @@ macro_rules! arena_types {
             [] typeck_tables: TypeckTables<$tcx>,
             [] typarams: TyParam<'tcx>,
             [] types: Type<$tcx>,
-        ], $tcx);
+        ]);
     )
 }
 
-arena_types!(lc_arena::declare_arena, [], 'tcx);
+arena_types!(lc_arena::declare_arena, 'tcx);

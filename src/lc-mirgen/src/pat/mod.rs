@@ -6,8 +6,8 @@ use exhaustiveness::Witness;
 use std::ops::Deref;
 use thiserror::Error;
 
-crate struct MatchCtxt<'p, 'tcx> {
-    crate lcx: &'p LoweringCtx<'tcx>,
+pub(crate) struct MatchCtxt<'p, 'tcx> {
+    pub(crate) lcx: &'p LoweringCtx<'tcx>,
 }
 
 #[derive(Debug, Error)]
@@ -22,6 +22,6 @@ impl<'p, 'tcx> Deref for MatchCtxt<'p, 'tcx> {
     type Target = LoweringCtx<'tcx>;
 
     fn deref(&self) -> &'p Self::Target {
-        &self.lcx
+        self.lcx
     }
 }

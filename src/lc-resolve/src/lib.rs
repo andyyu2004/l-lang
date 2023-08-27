@@ -1,4 +1,3 @@
-#![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
 #[cfg(test)]

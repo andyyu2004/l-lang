@@ -34,14 +34,14 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
             tir::ExprKind::Loop(ir) => self.build_loop(block, dest, expr, ir),
             tir::ExprKind::Call(f, args) => self.build_call(block, dest, expr, f, args),
             tir::ExprKind::Match(scrut, arms) => {
-                self.build_naive_match(block, dest, expr, &scrut, &arms)
+                self.build_naive_match(block, dest, expr, scrut, arms)
                 // self.build_match(block, dest, expr, scrut, arms)
             }
             // these expressions have `!` type, so have no return value so we can build them as a
             // expression statement
             tir::ExprKind::Ret(..) | tir::ExprKind::Break | tir::ExprKind::Continue =>
                 self.build_expr_stmt(block, expr),
-            tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, &xs),
+            tir::ExprKind::Tuple(xs) => self.build_tuple(block, dest, expr, xs),
             tir::ExprKind::Box(..)
             | tir::ExprKind::VarRef(..)
             | tir::ExprKind::Ref(..)

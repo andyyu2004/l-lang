@@ -91,7 +91,11 @@ fn test_parser_span() {
     let expr = parse_expr!("    3");
     assert_eq!(
         expr,
-        box Expr::new(Span::new(ROOT_FILE_IDX, 4, 5), NodeId::new(0), ExprKind::Lit(Lit::Int(3)))
+        Box::new(Expr::new(
+            Span::new(ROOT_FILE_IDX, 4, 5),
+            NodeId::new(0),
+            ExprKind::Lit(Lit::Int(3))
+        ))
     );
 }
 
@@ -100,7 +104,11 @@ fn parse_empty_tuple() {
     let expr = parse_expr!("()");
     assert_eq!(
         expr,
-        box Expr::new(Span::new(ROOT_FILE_IDX, 0, 2), NodeId::new(0), ExprKind::Tuple(vec![]))
+        Box::new(Expr::new(
+            Span::new(ROOT_FILE_IDX, 0, 2),
+            NodeId::new(0),
+            ExprKind::Tuple(vec![])
+        ))
     );
 }
 
@@ -114,22 +122,22 @@ fn parse_tuple() {
     let expr = parse_expr!("(2, 3)");
     assert_eq!(
         expr,
-        box Expr::new(
+        Box::new(Expr::new(
             Span::new(ROOT_FILE_IDX, 0, 6),
             NodeId::new(2),
             ExprKind::Tuple(vec![
-                box Expr::new(
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 1, 2),
                     NodeId::new(0),
-                    ExprKind::Lit(Lit::Int(2))
-                ),
-                box Expr::new(
+                    ExprKind::Lit(Lit::Int(2)),
+                )),
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 4, 5),
                     NodeId::new(1),
-                    ExprKind::Lit(Lit::Int(3))
-                )
-            ])
-        )
+                    ExprKind::Lit(Lit::Int(3)),
+                ))
+            ],),
+        ))
     );
 }
 
@@ -138,7 +146,11 @@ fn parse_int_literal() {
     let expr = parse_expr!("2");
     assert_eq!(
         expr,
-        box Expr::new(Span::new(ROOT_FILE_IDX, 0, 1), NodeId::new(0), ExprKind::Lit(Lit::Int(2)))
+        Box::new(Expr::new(
+            Span::new(ROOT_FILE_IDX, 0, 1),
+            NodeId::new(0),
+            ExprKind::Lit(Lit::Int(2))
+        ))
     );
 }
 
@@ -147,23 +159,23 @@ fn parse_simple_binary_expr() {
     let expr = parse_expr!("2 + 3");
     assert_eq!(
         expr,
-        box Expr::new(
+        Box::new(Expr::new(
             Span::new(ROOT_FILE_IDX, 0, 5),
             NodeId::new(2),
             ExprKind::Bin(
                 BinOp::Add,
-                box Expr::new(
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 0, 1),
                     NodeId::new(0),
-                    ExprKind::Lit(Lit::Int(2))
-                ),
-                box Expr::new(
+                    ExprKind::Lit(Lit::Int(2)),
+                )),
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 4, 5),
                     NodeId::new(1),
-                    ExprKind::Lit(Lit::Int(3))
-                ),
-            )
-        )
+                    ExprKind::Lit(Lit::Int(3)),
+                )),
+            ),
+        ))
     );
 }
 
@@ -192,34 +204,34 @@ fn parse_precedence_expr() {
     let expr = parse_expr!("2 + 3 * 4");
     assert_eq!(
         expr,
-        box Expr::new(
+        Box::new(Expr::new(
             Span::new(ROOT_FILE_IDX, 0, 9),
             NodeId::new(4),
             ExprKind::Bin(
                 BinOp::Add,
-                box Expr::new(
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 0, 1),
                     NodeId::new(0),
-                    ExprKind::Lit(Lit::Int(2))
-                ),
-                box Expr::new(
+                    ExprKind::Lit(Lit::Int(2)),
+                )),
+                Box::new(Expr::new(
                     Span::new(ROOT_FILE_IDX, 4, 9),
                     NodeId::new(3),
                     ExprKind::Bin(
                         BinOp::Mul,
-                        box Expr::new(
+                        Box::new(Expr::new(
                             Span::new(ROOT_FILE_IDX, 4, 5),
                             NodeId::new(1),
-                            ExprKind::Lit(Lit::Int(3))
-                        ),
-                        box Expr::new(
+                            ExprKind::Lit(Lit::Int(3)),
+                        )),
+                        Box::new(Expr::new(
                             Span::new(ROOT_FILE_IDX, 8, 9),
                             NodeId::new(2),
-                            ExprKind::Lit(Lit::Int(4))
-                        ),
-                    )
-                ),
-            )
-        )
+                            ExprKind::Lit(Lit::Int(4)),
+                        )),
+                    ),
+                )),
+            ),
+        ))
     );
 }

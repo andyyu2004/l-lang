@@ -1,6 +1,6 @@
 //! typed ir
 
-#![feature(box_syntax, box_patterns)]
+#![feature(box_patterns)]
 
 mod expr;
 mod fmt;

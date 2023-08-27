@@ -71,6 +71,6 @@ impl<'tcx> Snapshots<UndoLog<'tcx>> for InferCtxInner<'tcx> {
 
 pub struct Snapshot<'tcx> {
     /// the number of undo logs at the point of this snapshot
-    crate undo_logs_count: usize,
+    pub(crate) undo_logs_count: usize,
     marker: std::marker::PhantomData<&'tcx ()>,
 }

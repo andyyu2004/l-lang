@@ -12,7 +12,7 @@ impl Stmt {
     /// if the stmt is diverging e.g. return, break, continue,
     /// then change `Semi` to `Expr` for easier typechecking
     pub fn upgrade_diverging_to_expr(self) -> Self {
-        return self;
+        self
     }
 }
 

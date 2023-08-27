@@ -1,14 +1,14 @@
 use self::mir::MirTy;
 use crate::*;
-use lc_ast::BinOp;
-use lc_index::{Idx, IndexVec};
 use inkwell::basic_block::BasicBlock;
 use inkwell::types::BasicType;
 use inkwell::values::*;
 use inkwell::{AddressSpace, FloatPredicate, IntPredicate};
 use itertools::Itertools;
+use lc_ast::BinOp;
 use lc_core::mir::{self, BlockId, VarId};
 use lc_core::ty::*;
+use lc_index::{Idx, IndexVec};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 
@@ -55,7 +55,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         let alloca = |var_id| {
             let mir_var = self.mir.vars[var_id];
             let ty = mir_var.ty.subst(self.tcx, self.instance.substs);
-            let ptr = self.build_alloca(self.llvm_ty(ty), &mir_var.to_string());
+            let ptr = self.build_alloca(self.llty(ty), &mir_var.to_string());
             LvalueRef { ptr, ty }
         };
 
@@ -125,7 +125,12 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
                             let field_ptr = self
-                                .build_struct_gep(lvalue_ref.ptr, i as u32, "struct_gep")
+                                .build_struct_gep(
+                                    self.llty(lvalue_ref.ty),
+                                    lvalue_ref.ptr,
+                                    i as u32,
+                                    "struct_gep",
+                                )
                                 .unwrap();
                             self.build_store(field_ptr, operand.val);
                         }
@@ -134,22 +139,39 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                         let (adt_ty, substs) = (lvalue_ref.ty, self.instance.substs);
                         debug_assert!(!adt_ty.has_ty_params());
                         let idx = variant_idx.index() as u64;
-                        let discr_ptr =
-                            self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
+                        let discr_ptr = self
+                            .build_struct_gep(
+                                self.llty(lvalue_ref.ty),
+                                lvalue_ref.ptr,
+                                0,
+                                "discr_gep",
+                            )
+                            .unwrap();
                         self.build_store(discr_ptr, self.types.discr.const_int(idx, false));
-                        let content_ptr =
-                            self.build_struct_gep(lvalue_ref.ptr, 1, "enum_gep").unwrap();
+                        let content_ptr = self
+                            .build_struct_gep(
+                                self.llty(lvalue_ref.ty),
+                                lvalue_ref.ptr,
+                                1,
+                                "enum_gep",
+                            )
+                            .unwrap();
                         let variant_ty =
                             self.variant_ty_to_llvm_ty(&adt.variants[*variant_idx], substs);
                         let content_ptr = self.build_pointer_cast(
                             content_ptr,
-                            variant_ty.ptr_type(AddressSpace::Generic),
+                            variant_ty.ptr_type(AddressSpace::default()),
                             "enum_ptr_cast",
                         );
                         for (i, f) in fields.iter().enumerate() {
                             let operand = self.codegen_operand(f);
                             let field_ptr = self
-                                .build_struct_gep(content_ptr, i as u32, "enum_content_gep")
+                                .build_struct_gep(
+                                    variant_ty,
+                                    content_ptr,
+                                    i as u32,
+                                    "enum_content_gep",
+                                )
                                 .unwrap();
                             self.build_store(field_ptr, operand.val);
                         }
@@ -181,16 +203,20 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                 match proj {
                     Projection::Field(f, ty) => {
                         let index = f.index() as u32;
-                        let ptr = self.build_struct_gep(var.ptr, index, "struct_gep").unwrap();
+                        let ptr = self
+                            .build_struct_gep(self.llty(var.ty), var.ptr, index, "struct_gep")
+                            .unwrap();
                         LvalueRef { ptr, ty }
                     }
                     Projection::Deref => {
-                        let ptr = self.build_load(var.ptr, "load_deref").into_pointer_value();
+                        let ptr = self
+                            .build_load(self.llty(var.ty), var.ptr, "load_deref")
+                            .into_pointer_value();
                         let ty = var.ty.deref_ty();
                         LvalueRef { ptr, ty }
                     }
                     Projection::PointerCast(ty) => {
-                        let llty = self.llvm_ty(ty).ptr_type(AddressSpace::Generic);
+                        let llty = self.llty(ty).ptr_type(AddressSpace::default());
                         let ptr = self.build_pointer_cast(var.ptr, llty, "lvalue_pointer_cast");
                         LvalueRef { ptr, ty }
                     }
@@ -212,7 +238,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             mir::Rvalue::Operand(operand) => self.codegen_operand(operand),
             mir::Rvalue::Box(operand) => {
                 let operand_ty = operand.ty(self.tcx, self.mir);
-                let llty = self.llvm_ty(operand_ty);
+                let llty = self.llty(operand_ty);
                 let operand = self.codegen_operand(operand);
 
                 let gc_ptr = self
@@ -250,8 +276,10 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::Rvalue::Discriminant(lvalue) => {
                 let lvalue_ref = self.codegen_lvalue(*lvalue);
-                let discr_ptr = self.build_struct_gep(lvalue_ref.ptr, 0, "discr_gep").unwrap();
-                let val = self.build_load(discr_ptr, "load_discr");
+                let discr_ptr = self
+                    .build_struct_gep(self.llty(lvalue_ref.ty), lvalue_ref.ptr, 0, "discr_gep")
+                    .unwrap();
+                let val = self.build_load(self.llty(self.tcx.types.int), discr_ptr, "load_discr");
                 ValueRef { val, ty: self.tcx.types.int }
             }
             mir::Rvalue::Unary(_, _) => todo!(),
@@ -283,7 +311,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             },
             mir::Operand::Lvalue(lvalue) => {
                 let var = self.codegen_lvalue(lvalue);
-                let val = self.build_load(var.ptr, "load").into();
+                let val = self.build_load(self.llty(var.ty), var.ptr, "load");
                 ValueRef { val, ty: var.ty }
             }
             mir::Operand::Item(def_id, substs) => {
@@ -293,7 +321,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
                     InstanceKind::Item => self.instances.borrow()[&instance],
                     InstanceKind::Intrinsic => self.intrinsics.borrow()[&instance],
                 };
-                let val = llfn.as_llvm_ptr().into();
+                let val = llfn.into_llvm_ptr().into();
                 ValueRef { val, ty: instance.ty(self.tcx) }
             }
         }
@@ -395,7 +423,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         match &terminator.kind {
             mir::TerminatorKind::Return => {
                 let var = self.vars[mir::RET_VAR];
-                let val = self.build_load(var.ptr, "load_ret");
+                let val = self.build_load(self.llty(var.ty), var.ptr, "load_ret");
                 let dyn_val = &val as &dyn BasicValue;
                 self.build_return(Some(dyn_val));
             }
@@ -412,8 +440,15 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
             }
             mir::TerminatorKind::Call { f, args, lvalue, target, unwind: _ } => {
                 let f = self.codegen_operand(f).val.into_pointer_value();
-                let args = args.iter().map(|arg| self.codegen_operand(arg).val).collect_vec();
-                let value = self.build_call(f, &args, "fcall").try_as_basic_value().left().unwrap();
+                let args =
+                    args.iter().map(|arg| self.codegen_operand(arg).val.into()).collect_vec();
+                let value = self
+                    // Safety, we transmuted the function value into a pointer value just to shove
+                    // it into the enum, now transmute it back
+                    .build_call(unsafe { std::mem::transmute(f) }, &args[..], "fcall")
+                    .try_as_basic_value()
+                    .left()
+                    .unwrap();
                 let lvalue_ref = self.codegen_lvalue(*lvalue);
                 self.build_store(lvalue_ref.ptr, value);
                 self.build_unconditional_branch(self.blocks[*target]);
@@ -463,6 +498,6 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
     type Target = CodegenCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.cctx
+        self.cctx
     }
 }

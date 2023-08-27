@@ -59,12 +59,12 @@ impl<'a, 'r> Deref for ImportResolver<'a, 'r> {
     type Target = Resolver<'r>;
 
     fn deref(&self) -> &Self::Target {
-        &self.resolver
+        self.resolver
     }
 }
 
 impl<'a, 'r> DerefMut for ImportResolver<'a, 'r> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.resolver
+        self.resolver
     }
 }

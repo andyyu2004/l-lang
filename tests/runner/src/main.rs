@@ -1,6 +1,3 @@
-#![feature(crate_visibility_modifier)]
-#![feature(once_cell)]
-
 mod errors;
 
 use lc_error::ErrorFormat;
@@ -42,7 +39,7 @@ fn main() -> io::Result<()> {
     // this cds to the root `l` directory
     env::set_current_dir("../../")?;
     // install a release build of the compiler locally
-    let status = Command::new("cargo").args(&["install", "--path", "src/l"]).status()?;
+    let status = Command::new("cargo").args(["install", "--path", "src/l"]).status()?;
     assert!(status.success());
 
     TestCtx::default().run_test_suite()?;
@@ -102,7 +99,7 @@ impl TestCtx {
     fn check_test(&mut self, path: &Path, kind: TestKind) -> io::Result<()> {
         match path.extension() {
             Some(ext) if ext.to_str() == Some("l") => {
-                let errc = self.with_err_count(|this| this.run_test(&path, kind))?;
+                let errc = self.with_err_count(|this| this.run_test(path, kind))?;
                 if errc > 0 {
                     eprintln!(
                         "failed {} test at `{}` with `{}` error{}",
@@ -116,7 +113,7 @@ impl TestCtx {
                 }
                 Ok(())
             }
-            _ => return Ok(()),
+            _ => Ok(()),
         }
     }
 
@@ -137,8 +134,8 @@ impl TestCtx {
         assert!(stderr_path.set_extension("stderr"));
 
         // if no file, it means there should be no output
-        let expected_stdout = fs::read_to_string(stdout_path).ok().unwrap_or_else(String::new);
-        let expected_stderr = fs::read_to_string(stderr_path).ok().unwrap_or_else(String::new);
+        let expected_stdout = fs::read_to_string(stdout_path).ok().unwrap_or_default();
+        let expected_stderr = fs::read_to_string(stderr_path).ok().unwrap_or_default();
 
         // remove ansi escape codes
         let processed_stderr =

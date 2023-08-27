@@ -221,9 +221,9 @@ impl<'ir> DefNode<'ir> {
 
 macro_rules! into_def_node {
     ($variant:ident,$ty:ty) => {
-        impl<'ir> Into<DefNode<'ir>> for $ty {
-            fn into(self) -> DefNode<'ir> {
-                DefNode::$variant(self)
+        impl<'ir> From<$ty> for DefNode<'ir> {
+            fn from(node: $ty) -> Self {
+                DefNode::$variant(node)
             }
         }
     };
@@ -236,10 +236,10 @@ into_def_node!(ForeignItem, &'ir ir::ForeignItem<'ir>);
 into_def_node!(Field, &'ir ir::FieldDecl<'ir>);
 into_def_node!(TyParam, &'ir ir::TyParam<'ir>);
 
-impl<'ir> Into<DefNode<'ir>> for &'ir ir::Variant<'ir> {
-    fn into(self) -> DefNode<'ir> {
+impl<'ir> From<&'ir ir::Variant<'ir>> for DefNode<'ir> {
+    fn from(val: &'ir ir::Variant<'ir>) -> Self {
         // the variant can either become a constructor or a variant node depending on its kind
-        if self.kind.is_tuple() { DefNode::Ctor(self) } else { DefNode::Variant(self) }
+        if val.kind.is_tuple() { DefNode::Ctor(val) } else { DefNode::Variant(val) }
     }
 }
 

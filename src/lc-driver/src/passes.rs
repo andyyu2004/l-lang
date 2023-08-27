@@ -27,7 +27,7 @@ pub fn provide(queries: &mut Queries) {
 /// runs all phases of analyses using the api that the query system provides
 /// if no errors are caught during these analyses, then the code should be correct
 /// and safe to codegen
-fn analyze<'tcx>(tcx: TyCtx<'tcx>) {
+fn analyze(tcx: TyCtx<'_>) {
     tcx.sess.prof.time("analysis", || {
         PassRunner { tcx }.run_passes(&mut [
             &mut ItemTypeCollectionPass { tcx },

@@ -52,12 +52,12 @@ impl<'a, 'b, 'r, 'ast> Deref for PatternResolutionCtx<'a, 'b, 'r, 'ast> {
     type Target = LateResolver<'b, 'r, 'ast>;
 
     fn deref(&self) -> &Self::Target {
-        &self.resolver
+        self.resolver
     }
 }
 
 impl<'a, 'b, 'r, 'ast> DerefMut for PatternResolutionCtx<'a, 'b, 'r, 'ast> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.resolver
+        self.resolver
     }
 }

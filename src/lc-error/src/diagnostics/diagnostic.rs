@@ -17,8 +17,8 @@ pub struct Diagnostics {
 impl Diagnostics {
     pub fn with_error_format(error_format: ErrorFormat) -> Self {
         let emitter: Box<dyn Emitter> = match error_format {
-            ErrorFormat::Text => box TextEmitter::default(),
-            ErrorFormat::Json => box JsonEmitter::default(),
+            ErrorFormat::Text => Box::<TextEmitter>::default(),
+            ErrorFormat::Json => Box::<JsonEmitter>::default(),
         };
 
         Self {
@@ -80,11 +80,11 @@ impl Diagnostics {
 #[derive(Debug)]
 pub struct Diagnostic {
     /// the primary message of the diagnostic
-    crate severity: Severity,
-    crate msg: String,
-    crate spans: Vec<Span>,
-    crate labelled_spans: Vec<(Span, String)>,
-    crate notes: Vec<String>,
+    pub(crate) severity: Severity,
+    pub(crate) msg: String,
+    pub(crate) spans: Vec<Span>,
+    pub(crate) labelled_spans: Vec<(Span, String)>,
+    pub(crate) notes: Vec<String>,
 }
 
 #[derive(Debug)]

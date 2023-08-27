@@ -22,7 +22,7 @@ pub trait Monomorphize<'tcx> {
 /// collects all references to generic items along with substitutions representing
 /// each unique instantiation of the generic parameters
 /// we refer to these non-generic items as "roots"
-fn monomorphization_instances<'tcx>(tcx: TyCtx<'tcx>) -> &'tcx FxHashSet<Instance<'tcx>> {
+fn monomorphization_instances(tcx: TyCtx<'_>) -> &FxHashSet<Instance<'_>> {
     let roots = RootCollector::new(tcx).collect_roots();
     let instances = MonomorphizationCollector::new(tcx, &roots).collect_instances();
     tcx.alloc(instances)
@@ -140,6 +140,6 @@ impl<'a, 'tcx> Deref for InstanceCollector<'a, 'tcx> {
     type Target = MonomorphizationCollector<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.collector
+        self.collector
     }
 }

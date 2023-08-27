@@ -23,7 +23,6 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
 
                 // creates the correctly ordered struct fields
                 let fields = (0..adt.variants[variant_idx].fields.len())
-                    .into_iter()
                     .map(FieldIdx::new)
                     .map(|idx| index_field_map[&idx])
                     .collect_vec();
@@ -38,7 +37,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
             tir::ExprKind::Closure { ref upvars, ref body } =>
                 self.build_closure(block, expr, upvars, body),
             tir::ExprKind::Unary(op, ref expr) => {
-                let operand = set!(block = self.as_operand(block, &expr));
+                let operand = set!(block = self.as_operand(block, expr));
                 block.and(Rvalue::Unary(op.into(), operand))
             }
             // assign is a bit out of place here,
@@ -55,7 +54,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
                 block.and(Rvalue::Box(operand))
             }
             tir::ExprKind::Ref(ref expr) => {
-                let lvalue = set!(block = self.as_lvalue(block, &expr));
+                let lvalue = set!(block = self.as_lvalue(block, expr));
                 block.and(Rvalue::Ref(lvalue))
             }
             tir::ExprKind::Block(..)

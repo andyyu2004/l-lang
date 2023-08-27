@@ -160,7 +160,13 @@ pub fn symbols(input: TokenStream) -> TokenStream {
         panic!("errors in `Keywords` and/or `Symbols`");
     }
 
-    let tt = TokenStream::from(quote! {
+    
+
+    // To see the generated code generated, uncomment this line, recompile, and
+    // run the resulting output through `rustfmt`.
+    //eprintln!("{}", tt);
+
+    TokenStream::from(quote! {
         macro_rules! keywords {
             () => {
                 #keyword_stream
@@ -185,11 +191,5 @@ pub fn symbols(input: TokenStream) -> TokenStream {
                 ])
             }
         }
-    });
-
-    // To see the generated code generated, uncomment this line, recompile, and
-    // run the resulting output through `rustfmt`.
-    //eprintln!("{}", tt);
-
-    tt
+    })
 }

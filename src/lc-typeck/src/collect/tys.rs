@@ -10,7 +10,7 @@ pub(crate) fn provide(queries: &mut Queries) {
     *queries = Queries { adt_ty, ..*queries }
 }
 
-fn adt_ty<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx AdtTy {
+fn adt_ty(tcx: TyCtx<'_>, def_id: DefId) -> &AdtTy {
     let item = match tcx.defs().get(def_id) {
         ir::DefNode::Item(item) => item,
         _ => panic!(),

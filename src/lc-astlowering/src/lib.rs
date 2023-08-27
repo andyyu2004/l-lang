@@ -1,4 +1,3 @@
-#![feature(crate_visibility_modifier)]
 #![feature(decl_macro)]
 
 #[macro_use]
@@ -31,12 +30,12 @@ use std::collections::BTreeMap;
 macro_rules! arena_vec {
     ($this:expr; $($x:expr),*) => ({
         let a = [$($x),*];
-        $this.arena.alloc_from_iter(std::array::IntoIter::new(a))
+        $this.arena.alloc_from_iter(a)
     });
 
 }
 
-ir::arena_types!(lc_arena::declare_arena, [], 'tcx);
+ir::arena_types!(lc_arena::declare_arena, 'tcx);
 
 pub struct AstLoweringCtx<'a, 'ir> {
     arena: &'ir Arena<'ir>,

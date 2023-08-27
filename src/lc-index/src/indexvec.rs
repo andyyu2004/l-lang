@@ -550,6 +550,7 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.raw.is_empty()
     }
 
+    #[allow(clippy::should_implement_trait)]
     #[inline]
     pub fn into_iter(self) -> vec::IntoIter<T> {
         self.raw.into_iter()
@@ -586,18 +587,15 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
 
     #[inline]
-    pub fn drain<'a, R: RangeBounds<usize>>(
-        &'a mut self,
-        range: R,
-    ) -> impl Iterator<Item = T> + 'a {
+    pub fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> impl Iterator<Item = T> + '_ {
         self.raw.drain(range)
     }
 
     #[inline]
-    pub fn drain_enumerated<'a, R: RangeBounds<usize>>(
-        &'a mut self,
+    pub fn drain_enumerated<R: RangeBounds<usize>>(
+        &mut self,
         range: R,
-    ) -> impl Iterator<Item = (I, T)> + 'a {
+    ) -> impl Iterator<Item = (I, T)> + '_ {
         self.raw.drain(range).enumerate().map(IntoIdx { _marker: PhantomData })
     }
 

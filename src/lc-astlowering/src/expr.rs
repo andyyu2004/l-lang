@@ -2,7 +2,6 @@ use crate::AstLoweringCtx;
 use itertools::Itertools;
 use lc_ast::*;
 use lc_span::Span;
-use std::array::IntoIter;
 
 impl<'ir> AstLoweringCtx<'_, 'ir> {
     fn lower_exprs(&mut self, exprs: &[Box<Expr>]) -> &'ir [ir::Expr<'ir>] {
@@ -21,13 +20,13 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             ExprKind::Lit(lit) => ir::ExprKind::Lit(*lit),
             ExprKind::Ret(expr) =>
                 ir::ExprKind::Ret(expr.as_deref().map(|expr| self.lower_expr(expr))),
-            ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(&expr)),
-            ExprKind::Paren(expr) => return self.lower_expr_inner(&expr),
+            ExprKind::Unary(op, expr) => ir::ExprKind::Unary(*op, self.lower_expr(expr)),
+            ExprKind::Paren(expr) => return self.lower_expr_inner(expr),
             ExprKind::Block(block) => ir::ExprKind::Block(self.lower_block(block)),
             ExprKind::Path(path) => ir::ExprKind::Path(self.lower_qpath(path)),
             ExprKind::Tuple(xs) => ir::ExprKind::Tuple(self.lower_exprs(xs)),
             ExprKind::Bin(op, l, r) =>
-                ir::ExprKind::Bin(*op, self.lower_expr(&l), self.lower_expr(&r)),
+                ir::ExprKind::Bin(*op, self.lower_expr(l), self.lower_expr(r)),
             ExprKind::Closure(_name, sig, expr) => {
                 let lowered_sig = self.lower_fn_sig(sig);
                 let body = self.lower_body(sig, expr);
@@ -35,7 +34,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             }
             ExprKind::Call(f, args) =>
                 ir::ExprKind::Call(self.lower_expr(f), self.lower_exprs(args)),
-            ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, &c, &l, r.as_deref()),
+            ExprKind::If(c, l, r) => self.lower_expr_if(expr.span, c, l, r.as_deref()),
             ExprKind::Struct(path, fields) => ir::ExprKind::Struct(
                 self.lower_qpath(path),
                 self.arena.alloc_from_iter(fields.iter().map(|f| self.lower_field(f))),
@@ -99,7 +98,7 @@ impl<'ir> AstLoweringCtx<'_, 'ir> {
             None => self.mk_empty_block_expr(span),
         };
         let else_arm = self.mk_arm(else_pat, else_expr);
-        let arms = IntoIter::new([then_arm, else_arm]);
+        let arms = [then_arm, else_arm];
         ir::ExprKind::Match(scrutinee, self.alloc_from_iter(arms), ir::MatchSource::If)
     }
 

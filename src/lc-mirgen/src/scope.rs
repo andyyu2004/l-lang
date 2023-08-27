@@ -3,7 +3,7 @@ use crate::set;
 use std::marker::PhantomData;
 
 #[derive(Default, Debug)]
-crate struct Scopes<'tcx> {
+pub(crate) struct Scopes<'tcx> {
     scopes: Vec<Scope<'tcx>>,
     breakable_scopes: Vec<BreakableScope<'tcx>>,
 }
@@ -31,7 +31,7 @@ impl<'tcx> Scopes<'tcx> {
 }
 
 #[derive(Debug)]
-crate struct ReleaseInfo {
+pub(crate) struct ReleaseInfo {
     pub info: SpanInfo,
     pub var: VarId,
 }
@@ -56,7 +56,7 @@ struct BreakableScope<'tcx> {
 }
 
 #[derive(Debug)]
-crate enum BreakType {
+pub(crate) enum BreakType {
     Continue,
     Break,
 }

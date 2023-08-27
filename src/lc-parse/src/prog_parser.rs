@@ -1,5 +1,5 @@
 use super::*;
-use lc_ast::{Ast, P};
+use lc_ast::{Ast};
 
 pub struct AstParser;
 

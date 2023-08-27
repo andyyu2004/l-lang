@@ -1,4 +1,4 @@
-use super::*;
+
 use crate::resolve;
 
 // check Self type exists inside impl scope

@@ -37,7 +37,7 @@ impl<'a, 'tcx> Iterator for &mut Autoderef<'a, 'tcx> {
         let ty = self.curr_ty?;
         self.curr_ty = match ty.kind {
             // do not autoderef on raw pointer
-            TyKind::Box(ty) => {
+            TyKind::Boxed(ty) => {
                 self.adjustments.push(Adjustment::new_deref(ty));
                 Some(ty)
             }

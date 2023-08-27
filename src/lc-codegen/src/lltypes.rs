@@ -34,7 +34,7 @@ macro_rules! llvm_ty {
         $ctx.void_type()
     };
     ($ctx:expr, *$($ty:tt)+) => {
-        llvm_ty!($ctx, $($ty)*).ptr_type(inkwell::AddressSpace::Generic)
+        llvm_ty!($ctx, $($ty)*).ptr_type(inkwell::AddressSpace::default())
     };
     ($ctx:expr, fn($($ty:tt),*)) => {
         $ctx.void_type().fn_type(&[$(llvm_ty!($ctx, $ty).into()),*], false)
@@ -65,16 +65,16 @@ impl<'tcx> CodegenCtx<'tcx> {
 
     // use a separate function for fn types as `FunctionType<'tcx>` is not considered a basic type
     pub fn llvm_fn_ty(&self, sig: FnSig<'tcx>) -> FunctionType<'tcx> {
-        self.llvm_ty(sig.ret)
-            .fn_type(&sig.params.iter().map(|ty| self.llvm_ty(ty)).collect_vec(), false)
+        self.llty(sig.ret)
+            .fn_type(&sig.params.iter().map(|ty| self.llty(ty).into()).collect_vec(), false)
     }
 
     pub fn llvm_ptr_ty(&self, ty: Ty<'tcx>) -> PointerType<'tcx> {
-        self.llvm_ty(ty).into_pointer_type()
+        self.llty(ty).into_pointer_type()
     }
 
     /// converts a L type into a llvm representation
-    pub fn llvm_ty(&self, ty: Ty<'tcx>) -> BasicTypeEnum<'tcx> {
+    pub fn llty(&self, ty: Ty<'tcx>) -> BasicTypeEnum<'tcx> {
         if let Some(&llty) = self.lltypes.borrow().get(ty) {
             return llty;
         }
@@ -86,10 +86,10 @@ impl<'tcx> CodegenCtx<'tcx> {
             TyKind::Char => todo!(),
             TyKind::Tuple(xs) if xs.is_empty() => self.types.unit.into(),
             TyKind::Array(_ty, _n) => todo!(),
-            TyKind::FnPtr(sig) => self.llvm_fn_ty(sig).ptr_type(AddressSpace::Generic).into(),
+            TyKind::FnPtr(sig) => self.llvm_fn_ty(sig).ptr_type(AddressSpace::default()).into(),
             TyKind::Tuple(tys) => {
                 // tuples are represented as anonymous structs
-                let lltys = tys.iter().map(|ty| self.llvm_ty(ty)).collect_vec();
+                let lltys = tys.iter().map(|ty| self.llty(ty)).collect_vec();
                 self.llctx.struct_type(&lltys, false).into()
             }
             TyKind::Adt(adt, substs) => {
@@ -104,7 +104,7 @@ impl<'tcx> CodegenCtx<'tcx> {
                         let tys = variant
                             .fields
                             .iter()
-                            .map(|f| self.llvm_ty(f.ty(self.tcx, substs)))
+                            .map(|f| self.llty(f.ty(self.tcx, substs)))
                             .collect_vec();
                         opaque_ty.set_body(&tys, false);
                     }
@@ -124,8 +124,8 @@ impl<'tcx> CodegenCtx<'tcx> {
             }
             // boxes and pointers have the same runtime type
             // however, boxes will have a refcount implicitly stored after the content
-            TyKind::Box(ty) | TyKind::Ptr(ty) =>
-                self.llvm_ty(ty).ptr_type(AddressSpace::Generic).into(),
+            TyKind::Boxed(ty) | TyKind::Ptr(ty) =>
+                self.llty(ty).ptr_type(AddressSpace::default()).into(),
             TyKind::Opaque(..) => todo!(),
             TyKind::Param(..) | TyKind::Infer(..) | TyKind::Never | TyKind::Error =>
                 unreachable!("{}", ty),
@@ -141,7 +141,7 @@ impl<'tcx> CodegenCtx<'tcx> {
     ) -> StructType<'tcx> {
         // TODO cache results
         // note we preserve the field declaration order of the struct
-        let tys = variant.fields.iter().map(|f| self.llvm_ty(f.ty(self.tcx, substs))).collect_vec();
+        let tys = variant.fields.iter().map(|f| self.llty(f.ty(self.tcx, substs))).collect_vec();
         self.llctx.struct_type(&tys, false)
     }
 }

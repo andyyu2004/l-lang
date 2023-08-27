@@ -4,29 +4,17 @@ use lc_core::TyCtx;
 use lc_ds::Bitset;
 use lc_index::Idx;
 
-pub fn early_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, mir: &'a mut Mir<'tcx>) {
+pub fn early_opt<'tcx>(_tcx: TyCtx<'tcx>, mir: &mut Mir<'tcx>) {
     self::remove_dead_blocks(mir);
 }
 
-pub fn late_opt<'a, 'tcx>(_tcx: TyCtx<'tcx>, _mir: &'a mut Mir<'tcx>) {
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use lc_core::mir::BasicBlock;
-
-    #[test]
-    fn test_removal_dead_blocks() {
-        let mut mir = Mir::default();
-        mir.basic_blocks = vec![BasicBlock::default(); 4].into_iter().collect();
-    }
+pub fn late_opt<'tcx>(_tcx: TyCtx<'tcx>, _mir: &mut Mir<'tcx>) {
 }
 
 /// remove's unreachable blocks
 /// this should be run before `typecheck` as some unreachable blocks
 /// may be type incorrect
-fn remove_dead_blocks<'a, 'tcx>(mir: &'a mut Mir<'tcx>) {
+fn remove_dead_blocks(mir: &mut Mir<'_>) {
     let mut reachable = Bitset::new(mir.len());
     mir::preorder(mir).for_each(|(block_id, _)| reachable.set(block_id));
 

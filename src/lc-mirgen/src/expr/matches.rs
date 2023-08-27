@@ -226,12 +226,12 @@ impl<'a, 'b, 'tcx> Deref for PatternBuilder<'a, 'b, 'tcx> {
     type Target = MirBuilder<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.builder
+        self.builder
     }
 }
 
 impl<'a, 'b, 'tcx> DerefMut for PatternBuilder<'a, 'b, 'tcx> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.builder
+        self.builder
     }
 }

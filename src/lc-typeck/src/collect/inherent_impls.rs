@@ -11,11 +11,11 @@ pub(crate) fn provide(queries: &mut Queries) {
         Queries { inherent_impls: |tcx, ()| inherent_impls(tcx), inherent_impls_of, ..*queries }
 }
 
-fn inherent_impls_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx [DefId] {
-    tcx.inherent_impls(()).inherent_impls.get(&def_id).map_or(&[], |xs| &xs)
+fn inherent_impls_of(tcx: TyCtx<'_>, def_id: DefId) -> &[DefId] {
+    tcx.inherent_impls(()).inherent_impls.get(&def_id).map_or(&[], |xs| xs)
 }
 
-fn inherent_impls<'tcx>(tcx: TyCtx<'tcx>) -> &'tcx InherentImpls {
+fn inherent_impls(tcx: TyCtx<'_>) -> &InherentImpls {
     tcx.alloc(InherentCollector::new(tcx).collect())
 }
 
@@ -41,7 +41,7 @@ impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
         debug_assert_eq!(self_ty, tcx.type_of(item.id.def));
 
         match self_ty.kind {
-            ty::Box(..) => todo!(),
+            ty::Boxed(..) => todo!(),
             ty::Array(..) => todo!(),
             ty::FnPtr(..) => todo!(),
             ty::Tuple(..) => todo!(),
@@ -52,7 +52,7 @@ impl<'tcx> ir::Visitor<'tcx> for InherentCollector<'tcx> {
             ty::Adt(adt, _) => self.visit_def(adt.def_id, item.id.def),
             ty::Bool | ty::Discr | ty::Char | ty::Float | ty::Int => todo!(),
             ty::Never => todo!(),
-            ty::Error => return,
+            ty::Error => (),
         }
     }
 }
