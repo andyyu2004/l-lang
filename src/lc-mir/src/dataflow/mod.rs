@@ -8,7 +8,7 @@ use std::ops::Deref;
 
 use self::error::MirError;
 
-pub fn analyze<'a, 'tcx>(tcx: TyCtx<'tcx>, mir: &'a Mir<'tcx>) {
+pub fn analyze<'tcx>(tcx: TyCtx<'tcx>, mir: &Mir<'tcx>) {
     MirAnalysisCtxt::new(tcx, mir).analyze()
 }
 

@@ -1,6 +1,6 @@
 use lc_ast::{Ident, ItemKind};
 use lc_error::DiagnosticBuilder;
-use lc_lex::{DelimiterKind, Token, TokenKind, TokenTree};
+use lc_lex::{DelimiterKind, Token, TokenKind};
 use lc_span::Symbol;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -43,8 +43,6 @@ pub enum ParseError {
     RedundantVisibilityModifier,
     #[error("generic arguments not allowed in module paths")]
     GenericArgsInModulePath,
-    #[error("generic arguments in expression path require `::` prefix")]
-    AmbiguousGenericArgsInExprPath,
     #[error("elided type annotation not allowed here")]
     ElidedTypeNotAllowedInThisContext,
     #[error("unterminated string literal")]
@@ -55,8 +53,4 @@ pub enum ParseError {
     MismatchedTokenTreeDelimiter(TokenKind, TokenKind),
     #[error("unmatched opening delimiter `{0}`")]
     UnmatchedOpenTokenTreeDelimiter(DelimiterKind),
-    #[error("unmatched closing delimiter `{0}`")]
-    UnmatchedCloseTokenTreeDelimiter(TokenKind),
-    #[error("expected token, found token group")]
-    ExpectedTokenFoundTokenGroup,
 }

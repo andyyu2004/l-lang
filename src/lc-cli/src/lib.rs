@@ -1,21 +1,18 @@
-#![feature(crate_visibility_modifier)]
-#![feature(process_exitcode_placeholder)]
-
 mod subcommands;
 
-use clap::{AppSettings, Clap};
+use clap::{AppSettings, Parser};
 use lc_driver::CompilerOptions;
 use std::io;
 use std::path::PathBuf;
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 #[clap(setting(AppSettings::InferSubcommands))]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 enum SubCommand {
     Jit(CompilerOptions),
     Build(CompilerOptions),
@@ -25,12 +22,12 @@ enum SubCommand {
     Test(TestCmd),
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 struct NewCmd {
     path: PathBuf,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 struct TestCmd {}
 
 pub fn main() -> io::Result<()> {

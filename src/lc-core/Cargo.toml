@@ -5,9 +5,9 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-lc-arena = { path = "../lc-arena" }
 lc-ir = { path = "../lc-ir" }
 lc-ast = { path = "../lc-ast" }
+lc-arena = { path = "../lc-arena" }
 lc-ds = { path = "../lc-ds" }
 lc-span = { path = "../lc-span" }
 lc-index = { path = "../lc-index" }

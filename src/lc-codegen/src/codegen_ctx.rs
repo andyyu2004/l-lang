@@ -73,9 +73,9 @@ impl<'tcx> CodegenCtx<'tcx> {
             float: llctx.f64_type(),
             byte: llctx.i8_type(),
             bool: llctx.bool_type(),
-            i8ptr: llctx.i8_type().ptr_type(AddressSpace::Generic),
-            i32ptr: llctx.i32_type().ptr_type(AddressSpace::Generic),
-            i64ptr: llctx.i64_type().ptr_type(AddressSpace::Generic),
+            i8ptr: llctx.i8_type().ptr_type(AddressSpace::default()),
+            i32ptr: llctx.i32_type().ptr_type(AddressSpace::default()),
+            i64ptr: llctx.i64_type().ptr_type(AddressSpace::default()),
             discr: llctx.i16_type(),
         };
 

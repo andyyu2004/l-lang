@@ -16,12 +16,8 @@ log = "0.4.11"
 rustc-hash = "1"
 thiserror = "1"
 itertools = "0.9"
-llvm-sys = "100"
-
-[dependencies.inkwell]
-git = "https://github.com/andyyu2004/inkwell"
-branch = "llvm10-0"
-features = ["experimental"]
+llvm-sys = "150"
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm15-0-prefer-dynamic"] }
 
 [dev-dependencies]
 lc-driver = { path = "../lc-driver" }

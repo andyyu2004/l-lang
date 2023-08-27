@@ -322,8 +322,8 @@ pub fn is_whitespace(c: char) -> bool {
 pub fn is_id_start(c: char) -> bool {
     // This is XID_Start OR '_' (which formally is not a XID_Start).
     // We also add fast-path for ascii idents
-    ('a' <= c && c <= 'z')
-        || ('A' <= c && c <= 'Z')
+    c.is_ascii_lowercase()
+        || c.is_ascii_uppercase()
         || c == '_'
         || (c > '\x7f' && unicode_xid::UnicodeXID::is_xid_start(c))
 }
@@ -334,9 +334,9 @@ pub fn is_id_start(c: char) -> bool {
 pub fn is_id_continue(c: char) -> bool {
     // This is exactly XID_Continue.
     // We also add fast-path for ascii idents
-    ('a' <= c && c <= 'z')
-        || ('A' <= c && c <= 'Z')
-        || ('0' <= c && c <= '9')
+    c.is_ascii_lowercase()
+        || c.is_ascii_uppercase()
+        || c.is_ascii_digit()
         || c == '_'
         || (c > '\x7f' && unicode_xid::UnicodeXID::is_xid_continue(c))
 }
@@ -569,7 +569,7 @@ impl Cursor<'_> {
                 // with a number
                 self.bump();
                 let mut empty_exponent = false;
-                if self.first().is_digit(10) {
+                if self.first().is_ascii_digit() {
                     self.eat_decimal_digits();
                     match self.first() {
                         'e' | 'E' => {
@@ -600,7 +600,7 @@ impl Cursor<'_> {
             // If the first symbol is valid for identifier, it can be a lifetime.
             // Also check if it's a number for a better error reporting (so '0 will
             // be reported as invalid lifetime and not as unterminated char literal).
-            is_id_start(self.first()) || self.first().is_digit(10)
+            is_id_start(self.first()) || self.first().is_ascii_digit()
         };
 
         if !can_be_a_lifetime {
@@ -616,7 +616,7 @@ impl Cursor<'_> {
         // Either a lifetime or a character literal with
         // length greater than 1.
 
-        let starts_with_number = self.first().is_digit(10);
+        let starts_with_number = self.first().is_ascii_digit();
 
         // Skip the literal contents.
         // First symbol can be a number (which isn't a valid identifier start),

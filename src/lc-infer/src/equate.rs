@@ -39,6 +39,6 @@ impl<'a, 'tcx> Deref for Equate<'a, 'tcx> {
     type Target = At<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.at
+        self.at
     }
 }

@@ -1,18 +1,11 @@
-#![feature(crate_visibility_modifier)]
-#![feature(process_exitcode_placeholder)]
-#![feature(box_syntax)]
 #![feature(never_type)]
 #![feature(panic_info_message)]
-#![feature(once_cell)]
 #![feature(decl_macro)]
 
 mod cli_error;
 mod config;
 mod passes;
 mod queries;
-
-#[macro_use]
-extern crate log;
 
 #[macro_use]
 extern crate colour;
@@ -43,9 +36,9 @@ use lc_resolve::{Resolver, ResolverArenas};
 pub use lc_session::{CompilerOptions, Session};
 use lc_span::{sym, SourceMap, ROOT_FILE_IDX, SPAN_GLOBALS};
 use log::LevelFilter;
+use std::cell::OnceCell;
 use std::fs::File;
 use std::io::Write;
-use std::lazy::OnceCell;
 use std::path::PathBuf;
 use termcolor::{BufferedStandardStream, ColorChoice};
 
@@ -60,7 +53,7 @@ pub fn run_compiler<R>(
 ) -> R {
     // our error handling in here is basically just using panic!()
     // this makes the output look nicer and consistent with the compiler errors
-    std::panic::set_hook(box move |info| {
+    std::panic::set_hook(Box::new(move |info| {
         if let Some(msg) = info.message() {
             let mut buf = String::new();
             std::fmt::write(&mut buf, *msg).unwrap();
@@ -71,7 +64,7 @@ pub fn run_compiler<R>(
             writer.flush().unwrap();
             std::process::exit(1);
         }
-    });
+    }));
 
     let _ = std::fs::remove_file("l.log");
     let level_filter = if cfg!(debug_assertions) { LevelFilter::Trace } else { LevelFilter::Info };
@@ -136,7 +129,7 @@ impl<'tcx> Driver<'tcx> {
         // we need it later in the `run` stage
         let main_path = tempdir.into_path().join("main.l");
         let mut file = File::create(&main_path).unwrap();
-        file.write(src.as_bytes()).unwrap();
+        file.write_all(src.as_bytes()).unwrap();
         Self::new(LConfig::from_main_path(main_path))
     }
 

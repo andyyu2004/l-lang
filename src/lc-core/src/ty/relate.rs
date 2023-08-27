@@ -18,7 +18,7 @@ pub trait TypeRelation<'tcx>: Sized {
     fn relate_inner(&mut self, a: Ty<'tcx>, b: Ty<'tcx>) -> TypeResult<'tcx, Ty<'tcx>> {
         let tcx = self.tcx();
         match (a.kind, b.kind) {
-            (ty::Box(t), ty::Box(u)) => self.relate(t, u),
+            (ty::Boxed(t), ty::Boxed(u)) => self.relate(t, u),
             (ty::Param(t), ty::Param(u)) if t.idx == u.idx => Ok(a),
             (ty::Tuple(xs), ty::Tuple(ys)) => self.relate_tuples(xs, ys),
             (ty::Array(t, m), ty::Array(u, n)) if m == n => self.relate(t, u),

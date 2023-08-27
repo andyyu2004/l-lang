@@ -52,7 +52,7 @@ impl<'tcx> CtxInterners<'tcx> {
             Some(&projs) => projs,
             None => {
                 let projs = List::from_arena(self.arena, projs);
-                projections.insert(&projs, projs);
+                projections.insert(projs, projs);
                 projs
             }
         }
@@ -79,7 +79,7 @@ impl<'tcx> CtxInterners<'tcx> {
             Some(&substs_ref) => substs_ref,
             None => {
                 let substs_ref = List::from_arena(self.arena, slice);
-                substs.insert(&substs_ref, substs_ref);
+                substs.insert(substs_ref, substs_ref);
                 substs_ref
             }
         }

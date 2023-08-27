@@ -265,7 +265,9 @@ pub fn walk_closure<'ast>(
     sig: &'ast FnSig,
     expr: &'ast Expr,
 ) {
-    name.map(|ident| visitor.visit_ident(ident));
+    if let Some(ident) = name {
+        visitor.visit_ident(ident)
+    }
     visitor.visit_fn_sig(sig);
     visitor.visit_expr(expr);
 }
@@ -318,7 +320,9 @@ pub fn walk_field<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast Field) {
 }
 
 pub fn walk_field_decl<'ast>(visitor: &mut impl Visitor<'ast>, field: &'ast FieldDecl) {
-    field.ident.map(|ident| visitor.visit_ident(ident));
+    if let Some(ident) = field.ident {
+        visitor.visit_ident(ident)
+    }
     visitor.visit_id(field.id);
     visitor.visit_vis(&field.vis);
     visitor.visit_ty(&field.ty);

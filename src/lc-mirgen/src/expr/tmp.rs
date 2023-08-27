@@ -6,11 +6,9 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
         let info = self.span_info(expr.span);
         let var = self.alloc_tmp(info, expr.ty);
         // include a pattern below if some expressions require special treatment
-        match expr.kind {
-            _ => {
-                set!(block = self.write_expr(block, var.into(), expr));
-                block.and(var)
-            }
+        {
+            set!(block = self.write_expr(block, var.into(), expr));
+            block.and(var)
         }
     }
 }

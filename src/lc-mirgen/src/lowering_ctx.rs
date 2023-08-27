@@ -15,10 +15,10 @@ use std::ops::Deref;
 /// ir -> tir -> mir
 pub struct LoweringCtx<'tcx> {
     pub tcx: TyCtx<'tcx>,
-    crate tables: &'tcx TypeckTables<'tcx>,
+    pub(crate) tables: &'tcx TypeckTables<'tcx>,
     // currently used for allocating temporary patterns
     // for exhaustiveness and usefulness checks
-    crate arena: DroplessArena,
+    pub(crate) arena: DroplessArena,
 }
 
 impl<'tcx> Deref for LoweringCtx<'tcx> {
@@ -81,7 +81,7 @@ impl<'tcx> LoweringCtx<'tcx> {
             .enumerate()
             .map(|(i, pat)| tir::FieldPat {
                 index: ir::FieldIdx::new(i),
-                pat: box pat.to_tir(self),
+                pat: std::boxed::Box::new(pat.to_tir(self)),
             })
             .collect()
     }
@@ -100,7 +100,7 @@ impl<'tcx> Tir<'tcx> for ir::Field<'tcx> {
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         tir::Field {
             index: ctx.tables.field_index(self.id),
-            expr: box self.expr.to_tir(ctx),
+            expr: std::boxed::Box::new(self.expr.to_tir(ctx)),
             ident: self.ident,
         }
     }
@@ -114,7 +114,11 @@ impl<'tcx> Tir<'tcx> for ir::Item<'tcx> {
         match kind {
             ir::ItemKind::Fn(_sig, generics, body) => {
                 let ty = ctx.type_of(self.id.def);
-                let kind = tir::ItemKind::Fn(ty, generics.to_tir(ctx), box body.to_tir(ctx));
+                let kind = tir::ItemKind::Fn(
+                    ty,
+                    generics.to_tir(ctx),
+                    std::boxed::Box::new(body.to_tir(ctx)),
+                );
                 tir::Item { kind, span, id, ident, vis }
             }
             ir::ItemKind::Extern(..) => todo!(),
@@ -133,8 +137,8 @@ impl<'tcx> Tir<'tcx> for ir::Param<'tcx> {
     type Output = tir::Param<'tcx>;
 
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
-        let &Self { id, span, ref pat } = self;
-        tir::Param { id, span, pat: box pat.to_tir(ctx) }
+        let &Self { id, span, pat } = self;
+        tir::Param { id, span, pat: std::boxed::Box::new(pat.to_tir(ctx)) }
     }
 }
 
@@ -144,11 +148,12 @@ impl<'tcx> Tir<'tcx> for ir::Pattern<'tcx> {
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let &Self { id, span, kind } = self;
         let kind = match kind {
-            ir::PatternKind::Box(pat) => tir::PatternKind::Box(box pat.to_tir(ctx)),
+            ir::PatternKind::Box(pat) =>
+                tir::PatternKind::Box(std::boxed::Box::new(pat.to_tir(ctx))),
             ir::PatternKind::Path(qpath) => ctx.lower_variant_pat(self, qpath, &[]),
             ir::PatternKind::Struct(qpath, fields) => ctx.lower_struct_pat(self, qpath, fields),
             ir::PatternKind::Binding(ident, sub, m) => {
-                let subpat = sub.map(|pat| box pat.to_tir(ctx));
+                let subpat = sub.map(|pat| std::boxed::Box::new(pat.to_tir(ctx)));
                 tir::PatternKind::Binding(m, ident, subpat)
             }
             ir::PatternKind::Tuple(pats) => tir::PatternKind::Field(ctx.lower_tuple_subpats(pats)),
@@ -190,20 +195,22 @@ impl<'tcx> LoweringCtx<'tcx> {
         let mut vec = (0..variant.fields.len())
             .map(|i| tir::FieldPat {
                 index: FieldIdx::new(i),
-                pat: box tir::Pattern {
+                pat: std::boxed::Box::new(tir::Pattern {
                     id: ir::Id::dummy(),
                     span: Span::default(),
                     ty: variant.fields[i].ty(self.tcx, substs),
                     kind: tir::PatternKind::Wildcard,
-                },
+                }),
             })
             .collect_vec();
 
         // then we manually set the pattern for the field indices we actually have bound
         for field in fields {
             let index = self.tables.field_index(field.pat.id).index();
-            vec[index] =
-                tir::FieldPat { index: FieldIdx::new(index), pat: box field.pat.to_tir(self) };
+            vec[index] = tir::FieldPat {
+                index: FieldIdx::new(index),
+                pat: std::boxed::Box::new(field.pat.to_tir(self)),
+            };
         }
         tir::PatternKind::Field(vec)
     }
@@ -224,7 +231,7 @@ impl<'tcx> LoweringCtx<'tcx> {
     // useful impl ideas
     // https://stackoverflow.com/questions/43171341/swift-function-object-wrapper-in-apple-swift
     fn lower_closure(&mut self, closure: &ir::Expr, body: &ir::Body<'tcx>) -> tir::ExprKind<'tcx> {
-        let body = box body.to_tir(self);
+        let body = std::boxed::Box::new(body.to_tir(self));
         let upvar_captures = self.tables.upvar_captures_for_closure(closure.id);
         let upvars =
             upvar_captures.iter().map(|&upvar| self.capture_upvar(closure, upvar)).collect();
@@ -237,7 +244,8 @@ impl<'tcx> LoweringCtx<'tcx> {
         let span = closure.span;
         let ty = self.node_ty(id);
         // rebuild the `VarRef` expressions that the upvar refers to
-        let captured = box tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) };
+        let captured =
+            std::boxed::Box::new(tir::Expr { span, ty, kind: tir::ExprKind::VarRef(id) });
         // construct a mutable pointer expression to the captured upvar
         let borrow_expr =
             tir::Expr { span, ty: self.mk_ptr_ty(ty), kind: tir::ExprKind::Ref(captured) };
@@ -250,7 +258,7 @@ impl<'tcx> Tir<'tcx> for ir::Body<'tcx> {
 
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let params = self.params.to_tir(ctx);
-        tir::Body { params, expr: box self.expr.to_tir(ctx) }
+        tir::Body { params, expr: std::boxed::Box::new(self.expr.to_tir(ctx)) }
     }
 }
 
@@ -268,8 +276,8 @@ impl<'tcx> Tir<'tcx> for ir::Let<'tcx> {
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         tir::Let {
             id: self.id,
-            pat: box self.pat.to_tir(ctx),
-            init: self.init.map(|init| box init.to_tir(ctx)),
+            pat: Box::new(self.pat.to_tir(ctx)),
+            init: self.init.map(|init| Box::new(init.to_tir(ctx))),
         }
     }
 }
@@ -284,7 +292,7 @@ impl<'tcx> Tir<'tcx> for ir::Stmt<'tcx> {
             // we can map both semi and expr to expressions and their distinction is no longer
             // important after typechecking is done
             ir::StmtKind::Expr(expr) | ir::StmtKind::Semi(expr) =>
-                tir::StmtKind::Expr(box expr.to_tir(ctx)),
+                tir::StmtKind::Expr(Box::new(expr.to_tir(ctx))),
         };
         tir::Stmt { id, span, kind }
     }
@@ -295,7 +303,7 @@ impl<'tcx> Tir<'tcx> for ir::Block<'tcx> {
 
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
         let stmts = self.stmts.iter().map(|stmt| stmt.to_tir(ctx)).collect();
-        let expr = self.expr.map(|expr| box expr.to_tir(ctx));
+        let expr = self.expr.map(|expr| Box::new(expr.to_tir(ctx)));
         tir::Block { id: self.id, stmts, expr }
     }
 }
@@ -404,7 +412,7 @@ impl<'tcx> LoweringCtx<'tcx> {
         scrut: &ir::Expr<'tcx>,
         arms: &[ir::Arm<'tcx>],
     ) -> tir::ExprKind<'tcx> {
-        let scrut = box scrut.to_tir(self);
+        let scrut = Box::new(scrut.to_tir(self));
         let arms = arms.to_tir(self);
         MatchCtxt { lcx: self }.check_match(expr.span, &scrut, &arms);
         tir::ExprKind::Match(scrut, arms)
@@ -414,20 +422,21 @@ impl<'tcx> LoweringCtx<'tcx> {
         let &ir::Expr { span, ref kind, .. } = expr;
         let ty = self.node_ty(expr.id);
         let kind = match kind {
-            ir::ExprKind::Box(expr) => tir::ExprKind::Box(box expr.to_tir(self)),
+            ir::ExprKind::Box(expr) => tir::ExprKind::Box(Box::new(expr.to_tir(self))),
             ir::ExprKind::Bin(op, l, r) =>
-                tir::ExprKind::Bin(*op, box l.to_tir(self), box r.to_tir(self)),
+                tir::ExprKind::Bin(*op, Box::new(l.to_tir(self)), Box::new(r.to_tir(self))),
             ir::ExprKind::Unary(UnaryOp::Deref, expr) =>
-                tir::ExprKind::Deref(box expr.to_tir(self)),
-            ir::ExprKind::Unary(UnaryOp::Ref, expr) => tir::ExprKind::Ref(box expr.to_tir(self)),
-            ir::ExprKind::Loop(block) => tir::ExprKind::Loop(box block.to_tir(self)),
-            ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, box expr.to_tir(self)),
-            ir::ExprKind::Block(block) => tir::ExprKind::Block(box block.to_tir(self)),
+                tir::ExprKind::Deref(Box::new(expr.to_tir(self))),
+            ir::ExprKind::Unary(UnaryOp::Ref, expr) =>
+                tir::ExprKind::Ref(Box::new(expr.to_tir(self))),
+            ir::ExprKind::Loop(block) => tir::ExprKind::Loop(Box::new(block.to_tir(self))),
+            ir::ExprKind::Unary(op, expr) => tir::ExprKind::Unary(*op, Box::new(expr.to_tir(self))),
+            ir::ExprKind::Block(block) => tir::ExprKind::Block(Box::new(block.to_tir(self))),
             ir::ExprKind::Path(qpath) => self.lower_qpath(expr, qpath),
             ir::ExprKind::Tuple(xs) => tir::ExprKind::Tuple(xs.to_tir(self)),
             ir::ExprKind::Closure(_sig, body) => self.lower_closure(expr, body),
             ir::ExprKind::Call(f, args) =>
-                tir::ExprKind::Call(box f.to_tir(self), args.to_tir(self)),
+                tir::ExprKind::Call(Box::new(f.to_tir(self)), args.to_tir(self)),
             ir::ExprKind::Lit(lit) => tir::ExprKind::Const(lit.to_tir(self)),
             ir::ExprKind::Match(scrut, arms, _) => self.lower_match(expr, scrut, arms),
             ir::ExprKind::Struct(_path, fields) => match ty.kind {
@@ -446,11 +455,12 @@ impl<'tcx> LoweringCtx<'tcx> {
                 },
                 _ => unreachable!(),
             },
-            ir::ExprKind::Ret(expr) => tir::ExprKind::Ret(expr.map(|expr| box expr.to_tir(self))),
+            ir::ExprKind::Ret(expr) =>
+                tir::ExprKind::Ret(expr.map(|expr| Box::new(expr.to_tir(self)))),
             ir::ExprKind::Assign(l, r) =>
-                tir::ExprKind::Assign(box l.to_tir(self), box r.to_tir(self)),
+                tir::ExprKind::Assign(Box::new(l.to_tir(self)), Box::new(r.to_tir(self))),
             ir::ExprKind::Field(base, _) =>
-                tir::ExprKind::Field(box base.to_tir(self), self.tables.field_index(expr.id)),
+                tir::ExprKind::Field(Box::new(base.to_tir(self)), self.tables.field_index(expr.id)),
             ir::ExprKind::Break => tir::ExprKind::Break,
             ir::ExprKind::Continue => tir::ExprKind::Continue,
             ir::ExprKind::Err => unreachable!(),
@@ -479,7 +489,7 @@ impl<'tcx> LoweringCtx<'tcx> {
     ) -> tir::Expr<'tcx> {
         let span = expr.span;
         let kind = match adjustment.kind {
-            AdjustmentKind::Deref => tir::ExprKind::Deref(box expr),
+            AdjustmentKind::Deref => tir::ExprKind::Deref(Box::new(expr)),
             AdjustmentKind::NeverToAny => todo!(),
             AdjustmentKind::Cast(_cast) => todo!(),
         };
@@ -503,13 +513,13 @@ impl<'tcx> Tir<'tcx> for ir::Arm<'tcx> {
     type Output = tir::Arm<'tcx>;
 
     fn to_tir(&self, ctx: &mut LoweringCtx<'tcx>) -> Self::Output {
-        let &ir::Arm { id, span, ref pat, ref body, ref guard } = self;
+        let &ir::Arm { id, span, pat, body, ref guard } = self;
         tir::Arm {
             id,
             span,
-            pat: box pat.to_tir(ctx),
-            body: box body.to_tir(ctx),
-            guard: guard.map(|expr| box expr.to_tir(ctx)),
+            pat: Box::new(pat.to_tir(ctx)),
+            body: Box::new(body.to_tir(ctx)),
+            guard: guard.map(|expr| Box::new(expr.to_tir(ctx))),
         }
     }
 }

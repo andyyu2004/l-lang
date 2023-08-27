@@ -23,10 +23,10 @@ impl<'tcx> CodegenCtx<'tcx> {
         let ident = self.tcx.defs().ident(instance.def_id);
         let name = format!("{}<{}>", ident, instance.substs);
         let t = instance.substs[0];
-        let llty = self.llvm_ty(t);
+        let llty = self.llty(t);
         // `addr<T>: fn(&T) -> int` where the returned int is the address as an i64
         let addr_fn_ty =
-            self.types.i64.fn_type(&[llty.ptr_type(AddressSpace::Generic).into()], false);
+            self.types.i64.fn_type(&[llty.ptr_type(AddressSpace::default()).into()], false);
         let llfn = self.module.add_function(&name, addr_fn_ty, None);
         let block = self.llctx.append_basic_block(llfn, "addr_entry");
 

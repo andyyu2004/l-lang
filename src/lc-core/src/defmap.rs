@@ -6,7 +6,7 @@ use lc_span::Span;
 
 impl<'tcx> TyCtx<'tcx> {
     pub fn impl_item(self, id: ir::ImplItemId) -> &'tcx ir::ImplItem<'tcx> {
-        &self.ir.impl_items[&id]
+        self.ir.impl_items[&id]
     }
 
     pub fn defs(self) -> DefMap<'tcx> {

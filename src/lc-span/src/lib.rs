@@ -30,14 +30,14 @@ pub fn with_interner<R>(f: impl FnOnce(&mut symbol::Interner) -> R) -> R {
 }
 
 pub fn with_source_map<R>(f: impl FnOnce(&mut SourceMap) -> R) -> R {
-    SPAN_GLOBALS.with(|globals| f(&mut *globals.source_map.borrow_mut()))
+    SPAN_GLOBALS.with(|globals| f(&mut globals.source_map.borrow_mut()))
 }
 
 thread_local!(pub static SPAN_GLOBALS: SpanGlobals = Default::default());
 
-impl Into<Label<FileIdx>> for Span {
-    fn into(self) -> Label<FileIdx> {
-        Label::primary(self.file, *self)
+impl From<Span> for Label<FileIdx> {
+    fn from(val: Span) -> Self {
+        Label::primary(val.file, *val)
     }
 }
 

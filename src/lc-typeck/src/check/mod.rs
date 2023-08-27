@@ -23,7 +23,7 @@ pub fn provide(queries: &mut Queries) {
 }
 
 /// checks the bodies of item
-fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx TypeckTables<'tcx> {
+fn typeck(tcx: TyCtx<'_>, def_id: DefId) -> &TypeckTables<'_> {
     let body = tcx.defs().body(def_id);
     InheritedCtx::build(tcx, def_id).enter(|inherited| {
         match tcx.sess.try_run(|| inherited.check_fn_item(def_id, body)) {
@@ -36,7 +36,7 @@ fn typeck<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx TypeckTables<'tcx> {
 }
 
 pub struct FnCtx<'a, 'tcx> {
-    crate sig: FnSig<'tcx>,
+    pub(crate) sig: FnSig<'tcx>,
     inherited: &'a InheritedCtx<'a, 'tcx>,
     unsafe_ctx: bool,
 }
@@ -63,7 +63,7 @@ impl<'a, 'tcx> Deref for FnCtx<'a, 'tcx> {
     type Target = InheritedCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.inherited
+        self.inherited
     }
 }
 
@@ -91,7 +91,7 @@ impl<'a, 'tcx> Deref for InheritedCtx<'a, 'tcx> {
     type Target = InferCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.infcx
+        self.infcx
     }
 }
 
@@ -99,7 +99,7 @@ impl<'a, 'tcx> Deref for InheritedCtx<'a, 'tcx> {
 /// nested lambdas will have their own `FnCtx` but will share `Inherited` will outer lambdas as
 /// well as the outermost fn item
 pub struct InheritedCtx<'a, 'tcx> {
-    crate infcx: &'a InferCtx<'a, 'tcx>,
+    pub(crate) infcx: &'a InferCtx<'a, 'tcx>,
     locals: RefCell<FxHashMap<ir::Id, LocalTy<'tcx>>>,
 }
 

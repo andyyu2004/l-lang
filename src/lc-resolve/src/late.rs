@@ -7,9 +7,9 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 pub struct LateResolver<'a, 'r, 'ast> {
-    crate resolver: &'a mut Resolver<'r>,
-    crate scopes: PerNS<Scopes<Res<NodeId>>>,
-    crate current_module: Vec<ModuleId>,
+    pub(crate) resolver: &'a mut Resolver<'r>,
+    pub(crate) scopes: PerNS<Scopes<Res<NodeId>>>,
+    pub(crate) current_module: Vec<ModuleId>,
     _pd: &'ast PhantomData<()>,
 }
 
@@ -249,12 +249,12 @@ impl<'r> Deref for LateResolver<'_, 'r, '_> {
     type Target = Resolver<'r>;
 
     fn deref(&self) -> &Self::Target {
-        &self.resolver
+        self.resolver
     }
 }
 
 impl<'r> DerefMut for LateResolver<'_, 'r, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.resolver
+        self.resolver
     }
 }

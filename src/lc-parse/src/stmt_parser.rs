@@ -35,6 +35,9 @@ impl<'a> Parse<'a> for LetParser {
         let init = parser.accept(TokenKind::Eq).map(|_| parser.parse_expr());
         let semi = parser.expect(TokenKind::Semi)?;
         let span = self.let_kw.span.merge(semi.span);
-        Ok(parser.mk_stmt(span, StmtKind::Let(box Let { id: parser.mk_id(), span, pat, ty, init })))
+        Ok(parser.mk_stmt(
+            span,
+            StmtKind::Let(Box::new(Let { id: parser.mk_id(), span, pat, ty, init })),
+        ))
     }
 }

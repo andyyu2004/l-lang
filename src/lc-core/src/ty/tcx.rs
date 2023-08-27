@@ -108,7 +108,7 @@ impl<'tcx> TyCtx<'tcx> {
     }
 
     pub fn mk_box_ty(self, ty: Ty<'tcx>) -> Ty<'tcx> {
-        self.mk_ty(TyKind::Box(ty))
+        self.mk_ty(TyKind::Boxed(ty))
     }
 
     pub fn mk_ty_param(self, def_id: DefId, idx: ParamIdx, ident: Ident) -> Ty<'tcx> {
@@ -300,7 +300,7 @@ impl<'tcx> Deref for TyCtx<'tcx> {
     type Target = GlobalCtx<'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.gcx
+        self.gcx
     }
 }
 

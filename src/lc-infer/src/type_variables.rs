@@ -3,8 +3,8 @@ use ena::snapshot_vec as sv;
 use ena::undo_log::Rollback;
 use ena::unify as ut;
 use lc_core::ty::{self, Ty, TyKind, TyVid, TypeError, TypeResult};
-use rustc_hash::FxHashMap;
 use lc_span::Span;
+use rustc_hash::FxHashMap;
 use std::marker::PhantomData;
 
 pub enum TyVarUndoLog<'tcx> {
@@ -38,7 +38,7 @@ pub struct TyVarData {
 
 #[derive(Default, Debug)]
 pub struct TypeVariableStorage<'tcx> {
-    crate tyvar_data: FxHashMap<TyVid, TyVarData>,
+    pub(crate) tyvar_data: FxHashMap<TyVid, TyVarData>,
     /// the number of type variables that have been generated
     eq_relations: ut::UnificationTableStorage<TyVidEqKey<'tcx>>,
 }
@@ -61,12 +61,12 @@ impl<'tcx> TypeVariableStorage<'tcx> {
     }
 }
 
-crate type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
+pub(crate) type UnificationTable<'a, 'tcx, T> = ut::UnificationTable<
     ut::InPlace<T, &'a mut ut::UnificationStorage<T>, &'a mut InferCtxUndoLogs<'tcx>>,
 >;
 
 pub struct TypeVariableTable<'a, 'tcx> {
-    crate storage: &'a mut TypeVariableStorage<'tcx>,
+    pub(crate) storage: &'a mut TypeVariableStorage<'tcx>,
     undo_log: &'a mut InferCtxUndoLogs<'tcx>,
 }
 

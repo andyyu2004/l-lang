@@ -5,8 +5,8 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-lc-arena = { path = "../lc-arena" }
 lc-ast = { path = "../lc-ast" }
+lc-arena = { path = "../lc-arena" }
 lc-error = { path = "../lc-error" }
 lc-index = { path = "../lc-index" }
 lc-ir = { path = "../lc-ir" }
@@ -18,6 +18,7 @@ lc-util = { path = "../lc-util" }
 thiserror = "1"
 rustc-hash = "1"
 log = "0.4.11"
+typed-arena = "2.0.2"
 
 [dev-dependencies]
 lc-driver = { path = "../lc-driver" }

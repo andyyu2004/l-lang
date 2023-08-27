@@ -139,7 +139,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
         if !l.is_syntactic_lvalue() {
             self.emit_ty_err(
                 l.span,
-                TypeError::Msg(format!("expected lvalue as target of assignment")),
+                TypeError::Msg("expected lvalue as target of assignment".to_string()),
             );
         }
     }
@@ -219,7 +219,7 @@ impl<'a, 'tcx> FnCtx<'a, 'tcx> {
 
         if !remaining_fields.is_empty() {
             has_error = true;
-            self.emit_ty_err(expr.span, TypeError::Msg(format!("incomplete fields")));
+            self.emit_ty_err(expr.span, TypeError::Msg("incomplete fields".to_string()));
         }
 
         has_error

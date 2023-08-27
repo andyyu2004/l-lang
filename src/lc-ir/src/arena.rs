@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! arena_types {
-    ($macro:path, $args:tt, $tcx:lifetime) => (
-        $macro!($args, [
+    ($macro:path, $tcx:lifetime) => (
+        $macro!([
             // HIR types
             [few] ir: ir::Ir<$tcx>,
             [] bodies: ir::Body<$tcx>,
@@ -30,6 +30,6 @@ macro_rules! arena_types {
             [] ty_param: ir::TyParam<$tcx>,
             [] tys: ir::Ty<$tcx>,
             [] variants: ir::Variant<$tcx>,
-        ], $tcx);
+        ]);
     )
 }

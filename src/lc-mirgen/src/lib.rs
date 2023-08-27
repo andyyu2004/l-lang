@@ -1,7 +1,6 @@
 #![feature(decl_macro)]
-#![feature(crate_visibility_modifier)]
 #![feature(slice_index_methods)]
-#![feature(box_patterns, box_syntax)]
+#![feature(box_patterns)]
 
 mod cfg;
 mod ctor;
@@ -31,6 +30,7 @@ use cfg::Cfg;
 pub use ctor::build_variant_ctor;
 pub use lowering_ctx::LoweringCtx;
 
+use self::scope::{BreakType, Scopes};
 use ir::{DefId, DefNode, FnVisitor, ItemVisitor};
 use lc_ast::Mutability;
 use lc_core::queries::Queries;
@@ -40,7 +40,6 @@ use lc_error::{ErrorReported, LResult};
 use lc_index::{Idx, IndexVec};
 use lc_span::Span;
 use rustc_hash::FxHashMap;
-use scope::{BreakType, ReleaseInfo, Scopes};
 use std::collections::BTreeMap;
 use std::io::Write;
 
@@ -61,7 +60,7 @@ fn instance_mir<'tcx>(tcx: TyCtx<'tcx>, instance: Instance<'tcx>) -> &'tcx Mir<'
     }
 }
 
-fn mir_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> &'tcx Mir<'tcx> {
+fn mir_of(tcx: TyCtx<'_>, def_id: DefId) -> &Mir<'_> {
     let node = tcx.defs().get(def_id);
     match node {
         DefNode::Ctor(variant) => self::build_variant_ctor(tcx, variant),
@@ -99,7 +98,7 @@ fn with_lowering_ctx<'tcx, R>(
 }
 
 // used only in old tests
-pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
+pub fn build_tir(tcx: TyCtx<'_>) -> LResult<tir::Prog<'_>> {
     let prog = tcx.ir;
     let mut items = BTreeMap::new();
 
@@ -126,7 +125,7 @@ pub fn build_tir<'tcx>(tcx: TyCtx<'tcx>) -> LResult<tir::Prog<'tcx>> {
     Ok(tir::Prog { items })
 }
 
-pub fn dump_mir<'tcx>(tcx: TyCtx<'tcx>, writer: &mut dyn Write) {
+pub fn dump_mir(tcx: TyCtx<'_>, writer: &mut dyn Write) {
     let mut mir_dump = MirDump { tcx, writer };
     mir_dump.visit_ir(tcx.ir);
 }
@@ -147,7 +146,7 @@ impl<'a, 'tcx> FnVisitor<'tcx> for MirDump<'a, 'tcx> {
 }
 
 /// lowers `tir::Body` into `mir::Body`
-pub fn build_fn<'a, 'tcx>(ctx: &'a LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
+pub fn build_fn<'tcx>(ctx: &LoweringCtx<'tcx>, body: tir::Body<'tcx>) -> &'tcx Mir<'tcx> {
     let tcx = ctx.tcx;
     let mut builder = MirBuilder::new(ctx, &body);
     let _ = builder.build_body();

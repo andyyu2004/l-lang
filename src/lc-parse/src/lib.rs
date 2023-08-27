@@ -1,7 +1,5 @@
-#![feature(box_syntax, box_patterns)]
-#![feature(once_cell)]
+#![feature(box_patterns)]
 #![feature(decl_macro)]
-#![feature(result_copied)]
 
 #[macro_use]
 extern crate log;
@@ -277,17 +275,15 @@ impl<'a> Parse<'a> for SelfParser {
         };
         let ty = if parser.accept(TokenKind::Colon).is_some() {
             parser.parse_ty(false)
+        } else if let Some(amp) = boxed {
+            // these two blocks are intentionally separate
+            // for nicer spans as we want the `&` to be part
+            // of `self_ty`s span
+            let span = amp.span.merge(self_tok.span);
+            let self_ty = parser.mk_ty(span, TyKind::ImplicitSelf);
+            parser.mk_ty(span, TyKind::Box(self_ty))
         } else {
-            if let Some(amp) = boxed {
-                // these two blocks are intentionally separate
-                // for nicer spans as we want the `&` to be part
-                // of `self_ty`s span
-                let span = amp.span.merge(self_tok.span);
-                let self_ty = parser.mk_ty(span, TyKind::ImplicitSelf);
-                parser.mk_ty(span, TyKind::Box(self_ty))
-            } else {
-                parser.mk_ty(self_tok.span, TyKind::ImplicitSelf)
-            }
+            parser.mk_ty(self_tok.span, TyKind::ImplicitSelf)
         };
         let span = boxed.map(|tok| tok.span).unwrap_or(self_tok.span).merge(ty.span);
         let pattern = parser.mk_pat(
@@ -521,7 +517,7 @@ impl<'a> Parse<'a> for PathExprParser {
         //    y: bool,
         // }
         // however, it could also be an identifier followed by a block
-        if let Some(_) = parser.accept(TokenKind::OpenBrace) {
+        if parser.accept(TokenKind::OpenBrace).is_some() {
             let mut struct_parser = StructExprParser { path };
             match struct_parser.try_parse(parser) {
                 Some(struct_expr) => Ok(struct_expr),
@@ -674,11 +670,11 @@ impl<'a> Parse<'a> for BlockParser {
                 }
             }
             // for easier typechecking when the final statement is diverging
-            let expr = box stmts.pop().unwrap().upgrade_diverging_to_expr();
+            let expr = Box::new(stmts.pop().unwrap().upgrade_diverging_to_expr());
             stmts.push(expr);
         }
 
-        Ok(box Block { span, is_unsafe: self.is_unsafe, id: parser.mk_id(), stmts })
+        Ok(Box::new(Block { span, is_unsafe: self.is_unsafe, id: parser.mk_id(), stmts }))
     }
 }
 

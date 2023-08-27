@@ -7,7 +7,7 @@ pub fn provide(queries: &mut Queries) {
     *queries = Queries { type_of, fn_sig, ..*queries }
 }
 
-fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
+fn type_of(tcx: TyCtx<'_>, def_id: DefId) -> Ty<'_> {
     let def_node = tcx.defs().get(def_id);
     match def_node {
         ir::DefNode::Item(item) => match item.kind {
@@ -36,7 +36,7 @@ fn type_of<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
 }
 
 /// return the type of a function (as a `ty::FnSig`)
-fn fn_sig<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> FnSig<'tcx> {
+fn fn_sig(tcx: TyCtx<'_>, def_id: DefId) -> FnSig<'_> {
     match tcx.defs().get(def_id) {
         DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(sig, ..) => tcx.lower_fn_sig(sig),
@@ -82,7 +82,7 @@ fn type_of_variant<'tcx>(tcx: TyCtx<'tcx>, variant: &'tcx ir::Variant<'tcx>) -> 
     }
 }
 
-fn type_of_adt<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) -> Ty<'tcx> {
+fn type_of_adt(tcx: TyCtx<'_>, def_id: DefId) -> Ty<'_> {
     let adt = tcx.adt_ty(def_id);
     let substs = Substs::id_for_def(tcx, def_id);
     tcx.mk_adt_ty(adt, substs)

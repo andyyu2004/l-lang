@@ -31,8 +31,6 @@ pub enum TyKind {
 
 impl Display for Ty {
     fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
-        match self.kind {
-            _ => todo!(),
-        }
+        todo!()
     }
 }

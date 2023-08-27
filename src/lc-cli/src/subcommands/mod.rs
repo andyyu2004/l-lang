@@ -1,3 +1,3 @@
 mod new;
 
-crate use new::new;
+pub(crate) use new::new;

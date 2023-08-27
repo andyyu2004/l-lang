@@ -6,7 +6,7 @@ pub fn provide(queries: &mut Queries) {
     *queries = Queries { validate_item_type, ..*queries }
 }
 
-fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
+fn validate_item_type(tcx: TyCtx<'_>, def_id: DefId) {
     match tcx.defs().get(def_id) {
         ir::DefNode::Item(item) => match item.kind {
             ir::ItemKind::Fn(..) => {}
@@ -31,7 +31,7 @@ fn validate_item_type<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
 /// we check for things such as the following
 /// incorrect number of generic arguments of the fields in the adt decl
 /// unrepresentable adts (i.e. infinite sized) (todo)
-fn validate_adt<'tcx>(tcx: TyCtx<'tcx>, def_id: DefId) {
+fn validate_adt(tcx: TyCtx<'_>, def_id: DefId) {
     let adt = tcx.adt_ty(def_id);
 
     // we validate the fields of an adt by converting all the fields from

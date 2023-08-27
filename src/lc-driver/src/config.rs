@@ -13,9 +13,9 @@ use std::path::{Path, PathBuf};
 pub struct LConfig {
     /// root path of the project itself
     /// i.e. the parent of the `L.toml`
-    crate root_path: PathBuf,
-    crate toml: TomlConfig,
-    crate opts: CompilerOptions,
+    pub(crate) root_path: PathBuf,
+    pub(crate) toml: TomlConfig,
+    pub(crate) opts: CompilerOptions,
 }
 
 pub(crate) fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
@@ -44,7 +44,7 @@ pub(crate) fn load_config(opts: CompilerOptions) -> io::Result<LConfig> {
         }
     } else {
         // if `path` is a file, we just run that file
-        LConfig::from_main_path(path.to_path_buf())
+        LConfig::from_main_path(path)
     };
 
     config.opts = opts;

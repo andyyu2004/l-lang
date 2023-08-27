@@ -9,9 +9,9 @@ pub enum UndoLog<'tcx> {
 }
 
 #[derive(Default)]
-crate struct InferCtxUndoLogs<'tcx> {
-    crate logs: Vec<UndoLog<'tcx>>,
-    crate open_snapshots_count: usize,
+pub(crate) struct InferCtxUndoLogs<'tcx> {
+    pub(crate) logs: Vec<UndoLog<'tcx>>,
+    pub(crate) open_snapshots_count: usize,
 }
 
 impl<'tcx, T> UndoLogs<T> for InferCtxInner<'tcx>

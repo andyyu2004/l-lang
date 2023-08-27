@@ -78,6 +78,5 @@ impl Emitter for JsonEmitter {
 impl Drop for JsonEmitter {
     fn drop(&mut self) {
         eprintln!("{}", serde_json::to_string_pretty(&self.errors).unwrap());
-        drop(&mut self.errors)
     }
 }

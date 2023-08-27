@@ -1,5 +1,3 @@
-#![feature(crate_visibility_modifier)]
-
 #[macro_use]
 extern crate log;
 
@@ -11,6 +9,7 @@ mod snapshot;
 mod type_variables;
 mod undo;
 
+use self::type_variables::*;
 use at::At;
 use equate::Equate;
 use ir::{DefId, FieldIdx, Res};
@@ -21,7 +20,6 @@ use lc_span::Span;
 use snapshot::*;
 use std::cell::{Cell, RefCell};
 use std::ops::Deref;
-use type_variables::*;
 use undo::*;
 
 pub struct InferCtxBuilder<'tcx> {
@@ -96,7 +94,7 @@ impl<'a, 'tcx> InferCtx<'a, 'tcx> {
     pub fn deref_ty(&self, span: Span, ty: Ty<'tcx>) -> Ty<'tcx> {
         let ty = self.partially_resolve_ty(span, ty);
         match ty.kind {
-            TyKind::Box(ty) | TyKind::Ptr(ty) => ty,
+            TyKind::Boxed(ty) | TyKind::Ptr(ty) => ty,
             _ => self.emit_ty_err(span, TypeError::InvalidDereference(ty)),
         }
     }

@@ -1,6 +1,6 @@
 use crate::FnCtx;
-use lc_ast::Ident;
 use ir::{DefId, DefKind, ImplItemRef, Res};
+use lc_ast::Ident;
 use lc_core::ty::{self, Subst, Ty};
 use std::ops::Deref;
 use thiserror::Error;
@@ -56,7 +56,7 @@ impl<'tcx> Candidate<'tcx> {
     }
 }
 
-crate struct MethodResolutionCtx<'a, 'tcx> {
+pub(crate) struct MethodResolutionCtx<'a, 'tcx> {
     fcx: &'a FnCtx<'a, 'tcx>,
     // the expression or pattern that we are resolving
     #[allow(unused)]
@@ -95,7 +95,7 @@ impl<'a, 'tcx> MethodResolutionCtx<'a, 'tcx> {
         if self.inherent_candidates.len() == 1 {
             let selected = self.inherent_candidates.pop().unwrap();
             Ok(Res::Def(selected.def_id, selected.def_kind))
-        } else if self.inherent_candidates.len() < 1 {
+        } else if self.inherent_candidates.is_empty() {
             Err(MethodError::None)
         } else {
             Err(MethodError::Ambiguous)
@@ -163,6 +163,6 @@ impl<'a, 'tcx> Deref for MethodResolutionCtx<'a, 'tcx> {
     type Target = FnCtx<'a, 'tcx>;
 
     fn deref(&self) -> &Self::Target {
-        &self.fcx
+        self.fcx
     }
 }

@@ -116,15 +116,12 @@ impl<'tcx> Type<'tcx> {
     }
 
     pub fn is_box(&self) -> bool {
-        match self.kind {
-            TyKind::Box(..) => true,
-            _ => false,
-        }
+        matches!(self.kind, TyKind::Boxed(..))
     }
 
     pub fn deref_ty(&self) -> Ty<'tcx> {
         match self.kind {
-            TyKind::Box(ty) | TyKind::Ptr(ty) => ty,
+            TyKind::Boxed(ty) | TyKind::Ptr(ty) => ty,
             _ => panic!("cannot dereference a non-pointer type"),
         }
     }
@@ -168,7 +165,7 @@ pub enum TyKind<'tcx> {
     /// box pointer to a type
     /// created by box expressions
     /// x: T => box x: &T
-    Box(Ty<'tcx>),
+    Boxed(Ty<'tcx>),
     /// fn(<ty>...) -> <ty>
     FnPtr(FnSig<'tcx>),
     /// [<ty>; n]
@@ -229,7 +226,7 @@ pub enum AdtKind {
     Enum,
 }
 
-#[derive(Debug, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Eq, Serialize, Deserialize)]
 pub struct AdtTy {
     pub def_id: DefId,
     pub kind: AdtKind,
@@ -246,6 +243,12 @@ impl AdtTy {
 impl PartialEq for AdtTy {
     fn eq(&self, other: &Self) -> bool {
         ptr::eq(self, other)
+    }
+}
+
+impl Hash for AdtTy {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (self as *const AdtTy).hash(state)
     }
 }
 
@@ -369,7 +372,7 @@ impl<'tcx> TyFlag for TyKind<'tcx> {
             TyKind::Infer(..) => TyFlags::HAS_INFER,
             TyKind::Param(..) => TyFlags::HAS_PARAM,
             TyKind::Adt(_, substs) => substs.ty_flags(),
-            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Box(ty) => ty.ty_flags(),
+            TyKind::Ptr(ty) | TyKind::Array(ty, _) | TyKind::Boxed(ty) => ty.ty_flags(),
             TyKind::Discr
             | TyKind::Float
             | TyKind::Never
@@ -390,7 +393,7 @@ impl<'tcx> Debug for TyKind<'tcx> {
 impl<'tcx> Display for TyKind<'tcx> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            TyKind::Box(ty) => write!(f, "&{}", ty),
+            TyKind::Boxed(ty) => write!(f, "&{}", ty),
             TyKind::Ptr(ty) => write!(f, "*{}", ty),
             TyKind::FnPtr(sig) => write!(f, "{}", sig),
             TyKind::Infer(infer_ty) => write!(f, "{}", infer_ty),
@@ -437,7 +440,7 @@ impl Ord for ParamTy {
 
 impl PartialOrd for ParamTy {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.idx.partial_cmp(&other.idx)
+        Some(self.cmp(other))
     }
 }
 

@@ -5,11 +5,11 @@ authors = ["Andy Yu <andyyu2004@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+lc-arena = { path = "../lc-arena" }
 lc-resolve = { path = "../lc-resolve" }
 lc-session = { path = "../lc-session" }
 lc-ir = { path = "../lc-ir" }
 lc-ast = { path = "../lc-ast" }
-lc-arena = { path = "../lc-arena" }
 lc-span = { path = "../lc-span" }
 lc-index = { path = "../lc-index" }
 itertools = "0.9"

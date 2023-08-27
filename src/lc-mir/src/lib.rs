@@ -1,10 +1,8 @@
 //! mir analyses and optimizations
 
 #![feature(decl_macro)]
-#![feature(crate_visibility_modifier)]
-#![feature(box_syntax, box_patterns)]
+#![feature(box_patterns)]
 
-#[macro_use]
 extern crate log;
 
 #[cfg(test)]

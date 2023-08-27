@@ -12,7 +12,7 @@ impl<'a, 'tcx> MirBuilder<'a, 'tcx> {
                     Some(expr) => set!(block = self.as_lvalue(block, expr)),
                     None => self.alloc_tmp(self.span_info(stmt.span), pat.ty).into(),
                 };
-                self.bind_pat_to_lvalue(block, &pat, lvalue)
+                self.bind_pat_to_lvalue(block, pat, lvalue)
             }
             tir::StmtKind::Expr(expr) => self.build_expr_stmt(block, expr),
         }
