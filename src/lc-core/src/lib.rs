@@ -1,3 +1,4 @@
+#![deny(rust_2018_idioms)]
 #![feature(hash_raw_entry)]
 #![feature(const_mut_refs)]
 #![feature(extern_types)]

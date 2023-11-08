@@ -80,49 +80,49 @@ impl<'tcx> TypeckTables<'tcx> {
         self.type_relative_resolutions().get(xpat.id()).copied().unwrap()
     }
 
-    pub fn node_types(&self) -> TableDefIdValidator<Ty<'tcx>> {
+    pub fn node_types(&self) -> TableDefIdValidator<'_, Ty<'tcx>> {
         TableDefIdValidator { def_id: self.def_id, table: &self.node_types }
     }
 
-    pub fn node_types_mut(&mut self) -> TableDefIdValidatorMut<Ty<'tcx>> {
+    pub fn node_types_mut(&mut self) -> TableDefIdValidatorMut<'_, Ty<'tcx>> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.node_types }
     }
 
-    pub fn node_substs(&self) -> TableDefIdValidator<SubstsRef<'tcx>> {
+    pub fn node_substs(&self) -> TableDefIdValidator<'_, SubstsRef<'tcx>> {
         TableDefIdValidator { def_id: self.def_id, table: &self.node_substs }
     }
 
-    pub fn node_substs_mut(&mut self) -> TableDefIdValidatorMut<SubstsRef<'tcx>> {
+    pub fn node_substs_mut(&mut self) -> TableDefIdValidatorMut<'_, SubstsRef<'tcx>> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.node_substs }
     }
 
-    pub fn field_indices(&self) -> TableDefIdValidator<FieldIdx> {
+    pub fn field_indices(&self) -> TableDefIdValidator<'_, FieldIdx> {
         TableDefIdValidator { def_id: self.def_id, table: &self.field_indices }
     }
 
-    pub fn field_indices_mut(&mut self) -> TableDefIdValidatorMut<FieldIdx> {
+    pub fn field_indices_mut(&mut self) -> TableDefIdValidatorMut<'_, FieldIdx> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.field_indices }
     }
 
-    pub fn adjustments_for_expr(&self, expr: &ir::Expr) -> &[Adjustment<'tcx>] {
+    pub fn adjustments_for_expr(&self, expr: &ir::Expr<'_>) -> &[Adjustment<'tcx>] {
         // can't use `self.adjustments()` due to lifetime issues
         assert_eq!(self.def_id, expr.id.def);
         self.adjustments.get(&expr.id.local).map_or(&[], |xs| &xs[..])
     }
 
-    pub fn adjustments(&self) -> TableDefIdValidator<Vec<Adjustment<'tcx>>> {
+    pub fn adjustments(&self) -> TableDefIdValidator<'_, Vec<Adjustment<'tcx>>> {
         TableDefIdValidator { def_id: self.def_id, table: &self.adjustments }
     }
 
-    pub fn adjustments_mut(&mut self) -> TableDefIdValidatorMut<Vec<Adjustment<'tcx>>> {
+    pub fn adjustments_mut(&mut self) -> TableDefIdValidatorMut<'_, Vec<Adjustment<'tcx>>> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.adjustments }
     }
 
-    pub fn type_relative_resolutions(&self) -> TableDefIdValidator<Res> {
+    pub fn type_relative_resolutions(&self) -> TableDefIdValidator<'_, Res> {
         TableDefIdValidator { def_id: self.def_id, table: &self.type_relative_resolutions }
     }
 
-    pub fn type_relative_resolutions_mut(&mut self) -> TableDefIdValidatorMut<Res> {
+    pub fn type_relative_resolutions_mut(&mut self) -> TableDefIdValidatorMut<'_, Res> {
         TableDefIdValidatorMut { def_id: self.def_id, table: &mut self.type_relative_resolutions }
     }
 }

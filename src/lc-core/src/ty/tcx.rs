@@ -22,14 +22,17 @@ pub mod tls {
     // stores a pointer to the gcx
     thread_local! (static GCX: Cell<usize> = Cell::new(0));
 
-    pub(crate) fn enter_tcx<'tcx, R>(gcx: &GlobalCtx<'tcx>, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+    pub(crate) fn enter_tcx<'tcx, R>(
+        gcx: &'tcx GlobalCtx<'tcx>,
+        f: impl FnOnce(TyCtx<'tcx>) -> R,
+    ) -> R {
         // permanently sets the pointer
         GCX.with(|ptr| ptr.set(gcx as *const _ as _));
         with_tcx(f)
     }
 
     pub fn with_tcx<'tcx, R>(f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
-        let gcx_ptr = GCX.with(|gcx| gcx.get()) as *const GlobalCtx;
+        let gcx_ptr = GCX.with(|gcx| gcx.get()) as *const GlobalCtx<'tcx>;
         let gcx = unsafe { &*gcx_ptr };
         let tcx = TyCtx { gcx };
         f(tcx)
@@ -42,8 +45,8 @@ impl<'tcx> TyCtx<'tcx> {
         T: ArenaAllocatable<'tcx>,
     {
         // these types have their own typed arena
-        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<TyKind>());
-        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<Const>());
+        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<TyKind<'tcx>>());
+        debug_assert!(std::any::type_name_of_val(&t) != std::any::type_name::<Const<'tcx>>());
         self.interners.arena.alloc(t)
     }
 
@@ -262,7 +265,7 @@ impl<'tcx> GlobalCtx<'tcx> {
         Self { types, ir, arena, interners, resolutions, sess, queries }
     }
 
-    pub fn enter_tcx<R>(&self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
+    pub fn enter_tcx<R>(&'tcx self, f: impl FnOnce(TyCtx<'tcx>) -> R) -> R {
         tls::enter_tcx(self, f)
     }
 }
